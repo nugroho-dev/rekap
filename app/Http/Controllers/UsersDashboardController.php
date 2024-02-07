@@ -23,7 +23,9 @@ class UsersDashboardController extends Controller
      */
     public function create()
     {
-        //
+        $judul = 'Buat Data User';
+        $items = Pegawai::where('del', 0)->whereNull('id_user')->get();
+        return view('admin.konfigurasi.users.create', compact('judul','items'));
     }
 
     /**
@@ -31,7 +33,9 @@ class UsersDashboardController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validatedData = $request->validate(['email' => 'required|max:255', 'password' => 'required|confirmed|min:8', 'nip' => 'required']);
+        User::create($validatedData);
+        return redirect('/konfigurasi/user')->with('success', 'User Baru Berhasil di Tambahkan !');
     }
 
     /**
