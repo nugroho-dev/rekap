@@ -54,8 +54,8 @@
                   <div class="mb-3">
                     <label class="form-label required">E-Mail</label>
                     <div>
-                      <input type="number" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Email" name="no_hp" value="{{ old('no_hp') }}">
-                      @error ('no_hp')
+                      <input type="email" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Email" name="email" value="{{ old('email') }}">
+                      @error ('email')
                       <small class="form-hint">{{ $message }} </small>
                        @enderror
                     </div>
@@ -63,7 +63,7 @@
                   <div class="mb-3">
                     <label class="form-label required">Password</label>
                     <div>
-                      <input type="password" class="form-control" aria-describedby="emailHelp" placeholder="Password" name="no_hp" value="{{ old('no_hp') }}">
+                      <input type="password" class="form-control" aria-describedby="emailHelp" placeholder="Password" name="password" value="{{ old('no_hp') }}">
                       @error ('no_hp')
                       <small class="form-hint">{{ $message }} </small>
                        @enderror
