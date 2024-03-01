@@ -40,6 +40,7 @@ class PegawaiController extends Controller
             $validatedData['foto'] = $request->file('foto')->store('public/foto-images');
         }
         $validatedData['del'] = 0;
+        $validatedData['user_status'] = 0;
         Pegawai::create($validatedData);
         return redirect('/konfigurasi/pegawai')->with('success', 'Pegawai Baru Berhasil di Tambahkan !');
     }

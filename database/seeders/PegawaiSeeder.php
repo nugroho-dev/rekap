@@ -20,6 +20,7 @@ class PegawaiSeeder extends Seeder
                 'nip'  => '1989111120152001',
                 'no_hp'  => '0821345899488',
                 'del'  => '0',
+                'user_status'  => '1',
             ]);
     }
 }

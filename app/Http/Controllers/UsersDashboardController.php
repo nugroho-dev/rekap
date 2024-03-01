@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Models\Pegawai;
+use Illuminate\Support\Facades\Hash;
+
 
 class UsersDashboardController extends Controller
 {
@@ -13,7 +15,7 @@ class UsersDashboardController extends Controller
      */
     public function index()
     {
-        $judul = 'Buat User';
+        $judul = 'Daftar User';
         $items = User::paginate(15);
         return view('admin.konfigurasi.users.index', compact('judul', 'items'));
     }
@@ -24,7 +26,7 @@ class UsersDashboardController extends Controller
     public function create()
     {
         $judul = 'Buat Data User';
-        $items = Pegawai::where('del', 0)->whereNull('id_user')->get();
+        $items = Pegawai::where('del', 0)->where('user_status', 0)->get();
         return view('admin.konfigurasi.users.create', compact('judul','items'));
     }
 
@@ -33,8 +35,12 @@ class UsersDashboardController extends Controller
      */
     public function store(Request $request)
     {
-        $validatedData = $request->validate(['email' => 'required|max:255', 'password' => 'required|confirmed|min:8', 'nip' => 'required']);
+        $validatedData = $request->validate(['email' => 'required|max:255', 'id_pegawai' => 'required', 'password' => 'required|confirmed|min:8' ]);
+        $validatedData['password'] = Hash::make($validatedData['password']);
         User::create($validatedData);
+        $id_pegawai=$validatedData['id_pegawai'];
+        $updateData['user_status'] = 1;
+        Pegawai::where('id', $id_pegawai)->update($updateData);
         return redirect('/konfigurasi/user')->with('success', 'User Baru Berhasil di Tambahkan !');
     }
 

@@ -51,11 +51,11 @@
                             </div>
                             <div class="col text-truncate">
                               <p  class="text-body d-block">
-                                {{ $item->nama }} <br> NIP. {{  $item->nip }} <br>No HP. {{ $item->no_hp }} <br>E-mail. {{ $item->email }}
+                                <span class="text-capitalize">{{ $item->nama }}</span> <br> NIP. {{  $item->nip }} <br>No HP. {{ $item->no_hp }}
                             
                               </p>
                              
-                            <div class="text-muted text-truncate mt-n1">{{ $item->instansi->nama_instansi }}</div>
+                            <div class="text-muted text-truncate mt-n1 text-capitalize">{{ $item->instansi->nama_instansi }}</div>
                             </div>
                             <div class="col-auto">
                               <span class="dropdown">

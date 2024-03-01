@@ -51,11 +51,11 @@
                             </div>
                             <div class="col text-truncate">
                               <p  class="text-body d-block">
-                                {{ $item->pegawai->nama }}<br> NIP. {{ $item->pegawai->nip }}  <br>No HP. {{ $item->pegawai->no_hp }}  <br>E-mail. {{ $item->email }} <br> Role
+                                <span class="text-capitalize">{{ $item->pegawai->nama }}</span><br> NIP. {{ $item->pegawai->nip }}  <br>No HP. {{ $item->pegawai->no_hp }}  <br>E-mail. {{ $item->email }} <br> Role
                                 
                               </p>
                              
-                            <div class="text-muted text-truncate mt-n1">{{ $item->pegawai->instansi->nama_instansi }}</div>
+                            <div class="text-muted text-truncate mt-n1 text-capitalize">{{ $item->pegawai->instansi->nama_instansi }}</div>
                             </div>
                             <div class="col-auto">
                               <span class="dropdown">

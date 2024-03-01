@@ -9,6 +9,7 @@ use Spatie\Permission\Models\Permission;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InstansiController;
+use App\Http\Controllers\KonsultasiDashboardController;
 use App\Http\Controllers\MaintenanceController;
 use App\Http\Controllers\PegawaiController;
 use App\Http\Controllers\SicantikApiController;
@@ -40,6 +41,7 @@ Route::get('/proses', [SicantikProsesController::class, 'index']);
 Route::post('/send-mail/{id}', [MailController::class, 'index']);
 Route::get('/login', [LoginController::class, 'index'])->name('login')->middleware('guest');
 Route::post('/login', [LoginController::class, 'authenticate']);
+Route::get('/logout', [LoginController::class, 'logout']);
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('auth');
 Route::get('/maintenance', [MaintenanceController::class, 'index'])->middleware('auth');
 Route::get('/konfigurasi/pegawai/checkSlug', [PegawaiController::class, 'checkSlug'])->middleware('auth');
@@ -48,6 +50,7 @@ Route::get('/konfigurasi/instansi/checkSlug', [InstansiController::class, 'check
 Route::resource('/konfigurasi/instansi', InstansiController::class)->middleware('auth');
 Route::get('/konfigurasi/user/checkSlug', [UsersDashboardController::class, 'checkSlug'])->middleware('auth');
 Route::resource('/konfigurasi/user', UsersDashboardController::class)->middleware('auth');
+Route::resource('/pelayanan/konsultasi', KonsultasiDashboardController::class)->middleware('auth');
 
 
 

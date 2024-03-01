@@ -30,6 +30,7 @@ return new class extends Migration
             $table->text('no_hp')->nullable();
             $table->binary('foto')->nullable();
             $table->boolean('del');
+            $table->boolean('user_status');
             $table->timestamps();
             $table->foreign('id_instansi')->references('id')->on('instansi');
            
