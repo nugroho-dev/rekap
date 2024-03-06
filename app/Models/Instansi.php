@@ -10,6 +10,7 @@ use Cviebrock\EloquentSluggable\Sluggable;
 class Instansi extends Model
 {
     use HasFactory, Sluggable;
+    protected $connection = 'mysql';
     protected $guarded = ['id'];
     public $table = "instansi";
     public function pegawai()

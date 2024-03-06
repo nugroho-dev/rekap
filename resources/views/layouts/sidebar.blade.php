@@ -389,6 +389,9 @@
                       <a class="dropdown-item" href="{{ url('/maintenance') }}">
                         BAP Pengawasan
                       </a>
+                      <a class="dropdown-item" href="{{ url('/pengawasan/sigumilang') }}">
+                        SiGumilang
+                      </a>
                       <a class="dropdown-item" href="{{ url('/maintenance') }}">
                         Laporan
                       </a>

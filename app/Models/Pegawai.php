@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class Pegawai extends Model
 {
     use HasFactory, Sluggable;
+    protected $connection = 'mysql';
     protected $guarded = ['id'];
     public $table = "pegawai";
     public function instansi()

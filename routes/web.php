@@ -12,8 +12,10 @@ use App\Http\Controllers\InstansiController;
 use App\Http\Controllers\KonsultasiDashboardController;
 use App\Http\Controllers\MaintenanceController;
 use App\Http\Controllers\PegawaiController;
+use App\Http\Controllers\PengawasanDashboardController;
 use App\Http\Controllers\SicantikApiController;
 use App\Http\Controllers\SicantikProsesController;
+use App\Http\Controllers\SigumilangDashboardController;
 use App\Http\Controllers\UsersDashboardController;
 use App\Models\Instansi;
 
@@ -51,6 +53,7 @@ Route::resource('/konfigurasi/instansi', InstansiController::class)->middleware(
 Route::get('/konfigurasi/user/checkSlug', [UsersDashboardController::class, 'checkSlug'])->middleware('auth');
 Route::resource('/konfigurasi/user', UsersDashboardController::class)->middleware('auth');
 Route::resource('/pelayanan/konsultasi', KonsultasiDashboardController::class)->middleware('auth');
+Route::resource('/pengawasan/sigumilang', SigumilangDashboardController::class)->middleware('auth');
 
 
 

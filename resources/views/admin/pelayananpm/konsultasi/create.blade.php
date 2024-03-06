@@ -53,7 +53,7 @@
                         </div>
                       </div>
                     </div>
-                    <div class="col-sm-6 col-md-6">
+                    <div class="col-sm-6 col-md-9">
                       <div class="mb-3">
                         <label class="form-label required">Nama</label>
                         <div>
@@ -66,32 +66,37 @@
                         </div>
                       </div>
                     </div>
-                    
-                    <div class="mb-3">
-                      <label class="form-label required">Alamat Instansi</label>
-                      <div>
-                        <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Instansi" name="alamat" value="{{ old('alamat') }}">
-                        @error ('alamat')
-                        <small class="form-hint">{{ $message }} </small>
-                        @enderror
+                    <div class="col-sm-6 col-md-3">
+                      <div class="mb-3">
+                        <label class="form-label required">Nomor Telp</label>
+                        <div>
+                          <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Instansi" name="alamat" value="{{ old('alamat') }}">
+                          @error ('alamat')
+                          <small class="form-hint">{{ $message }} </small>
+                          @enderror
+                        </div>
                       </div>
                     </div>
-                    <div class="mb-3">
-                      <label class="form-label required">Alamat Instansi</label>
-                      <div>
-                        <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Instansi" name="alamat" value="{{ old('alamat') }}">
-                        @error ('alamat')
-                        <small class="form-hint">{{ $message }} </small>
-                        @enderror
+                    <div class="col-sm-6 col-md-3">
+                      <div class="mb-3">
+                        <label class="form-label required">Atas Nama</label>
+                        <div>
+                          <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Instansi" name="alamat" value="{{ old('alamat') }}">
+                          @error ('alamat')
+                          <small class="form-hint">{{ $message }} </small>
+                          @enderror
+                        </div>
                       </div>
                     </div>
-                    <div class="mb-3">
-                      <label class="form-label required">Alamat Instansi</label>
-                      <div>
-                        <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Instansi" name="alamat" value="{{ old('alamat') }}">
-                        @error ('alamat')
-                        <small class="form-hint">{{ $message }} </small>
-                        @enderror
+                    <div class="col-sm-6 col-md-6">
+                      <div class="mb-3">
+                        <label class="form-label required">email</label>
+                        <div>
+                          <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Instansi" name="alamat" value="{{ old('alamat') }}">
+                          @error ('alamat')
+                          <small class="form-hint">{{ $message }} </small>
+                          @enderror
+                        </div>
                       </div>
                     </div>
                     <div class="mb-3">

@@ -8,7 +8,8 @@ class MaintenanceController extends Controller
 {
     public function index()
     {
-        return view('admin.maintenance.index');
+        $judul = 'Maintenance';
+        return view('admin.maintenance.index', compact('judul'));
     }
 }
 
