@@ -6,7 +6,7 @@
       <div class="row g-2 align-items-center">
         <div class="col">
           <h2 class="page-title">
-            Account Settings
+            Detil Pelaporan
           </h2>
         </div>
       </div>
@@ -19,89 +19,276 @@
         <div class="row g-0">
           <div class="col-3 d-none d-md-block border-end">
             <div class="card-body">
-              <h4 class="subheader">Business settings</h4>
+              <h4 class="subheader">Pelaporan LKPM</h4>
               <div class="list-group list-group-transparent">
-                <a href="./settings.html" class="list-group-item list-group-item-action d-flex align-items-center active">My Account</a>
-                <a href="#" class="list-group-item list-group-item-action d-flex align-items-center">My Notifications</a>
-                <a href="#" class="list-group-item list-group-item-action d-flex align-items-center">Connected Apps</a>
-                <a href="./settings-plan.html" class="list-group-item list-group-item-action d-flex align-items-center">Plans</a>
-                <a href="#" class="list-group-item list-group-item-action d-flex align-items-center">Billing &amp; Invoices</a>
-              </div>
-              <h4 class="subheader mt-4">Experience</h4>
-              <div class="list-group list-group-transparent">
-                <a href="#" class="list-group-item list-group-item-action">Give Feedback</a>
+                <a href="{{ url('/pengawasan/sigumilang/'.$sigumilang->id_proyek) }}" class="list-group-item list-group-item-action d-flex align-items-center active">Data Laporan</a>
+                <a href="{{ url('/pengawasan/sigumilang/histori/'.$sigumilang->nib) }}" class="list-group-item list-group-item-action d-flex align-items-center">Riwayat Pelaporan</a>
               </div>
             </div>
           </div>
           <div class="col d-flex flex-column">
-            <div class="card-body">
-              <h2 class="mb-4">My Account</h2>
-              <h3 class="card-title">Profile Details</h3>
-              <div class="row align-items-center">
-                <div class="col-auto"><span class="avatar avatar-xl" style="background-image: url(./static/avatars/000m.jpg)"></span>
-                </div>
-                <div class="col-auto"><a href="#" class="btn">
-                    Change avatar
-                  </a></div>
-                <div class="col-auto"><a href="#" class="btn btn-ghost-danger">
-                    Delete avatar
-                  </a></div>
-              </div>
-              <h3 class="card-title mt-4">Business Profile</h3>
-              <div class="row g-3">
-                <div class="col-md">
-                  <div class="form-label">Business Name</div>
-                  <input type="text" class="form-control" value="Tabler">
-                </div>
-                <div class="col-md">
-                  <div class="form-label">Business ID</div>
-                  <input type="text" class="form-control" value="{{ $sigumilang->modal_kerja }}">
-                </div>
-                <div class="col-md">
-                  <div class="form-label">Location</div>
-                  <input type="text" class="form-control" value="Peimei, China">
-                </div>
-              </div>
-              <h3 class="card-title mt-4">Email</h3>
-              <p class="card-subtitle">This contact will be shown to others publicly, so choose it carefully.</p>
-              <div>
-                <div class="row g-2">
-                  <div class="col-auto">
-                    <input type="text" class="form-control w-auto" value="paweluna@howstuffworks.com">
+            <form class="card">
+              <div class="card-body">
+                <h3 class="card-title">Data Laporan</h3>
+                <div class="row row-cards">
+                  <div class="col-sm-6 col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Tahun</label>
+                      <input type="text"  disabled="" class="form-control" placeholder="Company" value="{{ $sigumilang->tahun }}">
+                    </div>
                   </div>
-                  <div class="col-auto"><a href="#" class="btn">
-                      Change
-                    </a></div>
+                  <div class="col-sm-6 col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Periode</label>
+                      <input type="text" disabled="" class="form-control" placeholder="Last Name" value="{{ $sigumilang->periode }}">
+                    </div>
+                  </div>
+                  <div class="col-md-5">
+                    <div class="mb-3">
+                      <label class="form-label">Nama Perusahaan</label>
+                      <input type="text" class="form-control" disabled="" placeholder="Company" value="{{ $sigumilang->nama_perusahaan }}">
+                    </div>
+                  </div>
+                  <div class="col-sm-6 col-md-3">
+                    <div class="mb-3">
+                      <label class="form-label">NIB</label>
+                      <input type="text" class="form-control" disabled="" placeholder="Username" value="{{ $sigumilang->nib }}">
+                    </div>
+                  </div>
+                  <div class="col-sm-6 col-md-4">
+                    <div class="mb-3">
+                      <label class="form-label">No Telp</label>
+                      <input type="text"  disabled="" class="form-control" placeholder="Email" value="{{ $sigumilang->nomor_telp }}">
+                    </div>
+                  </div>
+                  <div class="col-sm-6 col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Nama Proyek</label>
+                      <input type="text"  disabled="" class="form-control" placeholder="Company" value="{{ $sigumilang->nama_proyek }}">
+                    </div>
+                  </div>
+                  <div class="col-sm-6 col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">id Proyek</label>
+                      <input type="text" disabled="" class="form-control" placeholder="Last Name" value="{{ $sigumilang->id_proyek }}">
+                    </div>
+                  </div>
+                  <div class="col-md-12">
+                    <div class="mb-3">
+                      <label class="form-label">Alamat Usaha</label>
+                      <input type="text" disabled="" class="form-control" placeholder="Home Address" value="{{ $sigumilang->alamat_usaha }}">
+                    </div>
+                  </div>
+                  <div class="col-sm-6 col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Modal Tetap</label>
+                      <input type="text" disabled="" class="form-control" placeholder="City" value="{{ $sigumilang->modal_tetap }}">
+                    </div>
+                  </div>
+                  <div class="col-sm-6 col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Modal Kerja</label>
+                      <input type="test" disabled="" class="form-control" placeholder="ZIP Code" value="{{ $sigumilang->modal_kerja}}">
+                    </div>
+                  </div>
+                  <div class="col-md-12">
+                    <div class="mb-3 mb-0">
+                      <label class="form-label">Katerangan</label>
+                      <textarea rows="5" disabled="" class="form-control" placeholder="Here can be your description" value="Mike">{{ $sigumilang->keterangan }}</textarea>
+                    </div>
+                  </div>
+                  <div class="col-sm-6 col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Produksi</label>
+                      <input type="text" disabled="" class="form-control" placeholder="City" value="{{ $sigumilang->produksi }}">
+                    </div>
+                  </div>
+                  <div class="col-sm-6 col-md-2">
+                    <div class="mb-3">
+                      <label class="form-label">Satuan</label>
+                      <input type="text" disabled="" class="form-control" placeholder="ZIP Code" value="{{ $sigumilang->satuan_produksi}}">
+                    </div>
+                  </div>
+                  <div class="col-sm-6 col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Ekspor</label>
+                      <input type="text" disabled="" class="form-control" placeholder="City" value="{{ $sigumilang->ekspor }}">
+                    </div>
+                  </div>
+                  <div class="col-sm-6 col-md-2">
+                    <div class="mb-3">
+                      <label class="form-label">satuan</label>
+                      <input type="text" disabled="" class="form-control" placeholder="ZIP Code" value="{{ $sigumilang->satuan_ekspor}}">
+                    </div>
+                  </div>
+                  <div class="col-sm-12 col-md-12">
+                    <div class="mb-3">
+                      <label class="form-label">Kemitraan</label>
+                      <input type="text" disabled="" class="form-control" placeholder="ZIP Code" value="{{ $sigumilang->kemitraan}}">
+                    </div>
+                  </div>
+                  <div class="col-sm-6 col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Tenaga Kerja Laki Laki</label>
+                      <input type="text" disabled="" class="form-control" placeholder="ZIP Code" value="{{ $sigumilang->tki_l}}">
+                    </div>
+                  </div>
+                  <div class="col-sm-6 col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Tenaga Kerja Perempuan</label>
+                      <input type="text" disabled="" class="form-control" placeholder="ZIP Code" value="{{ $sigumilang->tki_p}}">
+                    </div>
+                  </div>
+                  <div class="col-sm-12 col-md-12">
+                    <div class="mb-3">
+                      <label class="form-label">Kategori Permasalahan</label>
+               
+                      <select class="form-select" disabled="" id="exampleFormControlSelect1" aria-label="Default select example" name="kategori_masalah">
+                        @if(0== $sigumilang->kategori_masalah )
+                        <option value="0" selected>Tidak Ada Masalah</option>
+                        @else
+                        <option value="0">Tidak Ada Masalah</option>
+                        @endif
+
+
+
+                        @if(1==$sigumilang->kategori_masalah )
+                        <option value="1" selected>Perizinan Berusaha</option>
+                        @else
+                        <option value="1" >Perizinan Berusaha</option>
+                        @endif
+
+
+                        @if(2==$sigumilang->kategori_masalah)
+                        <option value="2" selected>Perizinan Berusaha Untuk Menunjang Kegiatan Usaha (PB UMKU)</option>
+                        @else
+                        <option value="2" >Perizinan Berusaha Untuk Menunjang Kegiatan Usaha (PB UMKU)</option>
+                        @endif
+
+
+                        @if(3==$sigumilang->kategori_masalah)
+                        <option value="3" selected>Persyaratan Dasar</option>
+                        @else
+                        <option value="3" >Persyaratan Dasar</option>
+                        @endif
+
+
+                        @if(4 ==$sigumilang->kategori_masalah)
+                        <option value="4" selected>Tenaga Kerja</option>
+                        @else
+                        <option value="4" >Tenaga Kerja</option>
+                        @endif
+
+
+                        @if(5 ==$sigumilang->kategori_masalah)
+                        <option value="5" selected>Tata Ruang</option>
+                        @else
+                        <option value="5" >Tata Ruang</option>
+                        @endif
+
+
+                        @if(6 ==$sigumilang->kategori_masalah)
+                        <option value="6" selected>Infrastruktur</option>
+                        @else
+                        <option value="6" >Infrastruktur</option>
+                        @endif
+
+
+                        @if(7 ==$sigumilang->kategori_masalah)
+                        <option value="7" selected>Kebutuhan Utilitas</option>
+                        @else
+                        <option value="7" >Kebutuhan Utilitas</option>
+                        @endif
+
+
+                        @if(8==$sigumilang->kategori_masalah)
+                        <option value="8" selected>Konflik Masyarakat</option>
+                        @else
+                        <option value="8" >Konflik Masyarakat</option>
+                        @endif
+
+
+                        @if(9==$sigumilang->kategori_masalah)
+                        <option value="9" selected>Lingkungan Hidup</option>
+                        @else
+                        <option value="9" >Lingkungan Hidup</option>
+                        @endif
+
+
+                        @if(10==$sigumilang->kategori_masalah)
+                        <option value="10" selected>Laporan Kegiatan Penanaman Modal (LKPM)</option>
+                        @else
+                        <option value="10" >Laporan Kegiatan Penanaman Modal (LKPM)</option>
+                        @endif
+
+                        
+                        @if(11==$sigumilang->kategori_masalah)
+                        <option value="11" selected>Sistem OSS</option>
+                        @else
+                        <option value="11" >Sistem OSS</option>
+                        @endif
+
+
+                        @if(12==$sigumilang->kategori_masalah)
+                        <option value="12" selected>Fiskal</option>
+                        @else
+                        <option value="12" >Fiskal</option>
+                        @endif
+
+
+                        @if(13==$sigumilang->kategori_masalah)
+                        <option value="13" selected>Masalah Lainnya</option>
+                        @else
+                        <option value="13">Masalah Lainnya</option>
+                        @endif
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-md-12">
+                    <div class="mb-3 mb-0">
+                      <label class="form-label">Masalah</label>
+                      <textarea rows="5" disabled="" class="form-control" placeholder="Here can be your description" value="Mike">{{ $sigumilang->permasalahan }}</textarea>
+                    </div>
+                  </div>
+                  <div class="col-sm-6 col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Nama Petugas</label>
+                      <input type="text" disabled="" class="form-control" placeholder="ZIP Code" value="{{ $sigumilang->nama_pegawai}}">
+                    </div>
+                  </div>
+                  <div class="col-sm-6 col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Jabatan</label>
+                      <input type="text" disabled="" class="form-control" placeholder="ZIP Code" value="{{ $sigumilang->jabatan}}">
+                    </div>
+                  </div>
+                  <div class="col-sm-6 col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">No HP/TELP</label>
+                      <input type="text" disabled="" class="form-control" placeholder="ZIP Code" value="{{ $sigumilang->no_hp}}">
+                    </div>
+                  </div>
+                  <div class="col-sm-6 col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">E-Mail</label>
+                      <input type="text" disabled="" class="form-control" placeholder="ZIP Code" value="{{ $sigumilang->email}}">
+                    </div>
+                  </div>
                 </div>
               </div>
-              <h3 class="card-title mt-4">Password</h3>
-              <p class="card-subtitle">You can set a permanent password if you don't want to use temporary login codes.</p>
-              <div>
-                <a href="#" class="btn">
-                  Set new password
-                </a>
+              <div class="card-footer text-end">
+                <!--<button type="submit" class="btn btn-primary">Update Profile</button>-->
               </div>
-              <h3 class="card-title mt-4">Public profile</h3>
-              <p class="card-subtitle">Making your profile public means that anyone on the Dashkit network will be able to find
-                you.</p>
-              <div>
-                <label class="form-check form-switch form-switch-lg">
-                  <input class="form-check-input" type="checkbox">
-                  <span class="form-check-label form-check-label-on">You're currently visible</span>
-                  <span class="form-check-label form-check-label-off">You're
-                    currently invisible</span>
-                </label>
-              </div>
-            </div>
+            </form>
             <div class="card-footer bg-transparent mt-auto">
-              <div class="btn-list justify-content-end">
+              <!--<div class="btn-list justify-content-end">
                 <a href="#" class="btn">
                   Cancel
                 </a>
                 <a href="#" class="btn btn-primary">
                   Submit
                 </a>
-              </div>
+              </div>-->
             </div>
           </div>
         </div>

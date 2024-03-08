@@ -8,6 +8,7 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        return view('admin.dashboard.index');
+        $judul='Data Hub DASHBOARD';
+        return view('admin.dashboard.index', compact('judul'));
     }
 }
