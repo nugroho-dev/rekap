@@ -22,7 +22,7 @@
               <h4 class="subheader">Pelaporan LKPM</h4>
               <div class="list-group list-group-transparent">
                 <a href="{{ url('/pengawasan/sigumilang/'.$sigumilang->id_proyek) }}" class="list-group-item list-group-item-action d-flex align-items-center active">Data Laporan</a>
-                <a href="{{ url('/pengawasan/sigumilang/histori/'.$sigumilang->nib) }}" class="list-group-item list-group-item-action d-flex align-items-center">Riwayat Pelaporan</a>
+                <a href="{{ url('/pengawasan/sigumilang/'.$sigumilang->id_proyek.'/histori/'.$sigumilang->nib) }}" class="list-group-item list-group-item-action d-flex align-items-center">Riwayat Pelaporan</a>
               </div>
             </div>
           </div>

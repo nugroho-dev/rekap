@@ -62,6 +62,14 @@
                     </div>
                   </div>
                   <div class="mb-3">
+                    <label class="form-label required">_token</label>
+                    <div>
+                      <input type="text"  class="form-control" name="pegawai_token" value="{{ Str::uuid() }}" readonly/>
+                    
+                    </div>
+                  </div>
+                  
+                  <div class="mb-3">
                     <label class="form-label required">NIP</label>
                     <div>
                       <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="NIP" name="nip" value="{{ old('nip') }}">

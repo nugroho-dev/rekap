@@ -23,6 +23,7 @@ return new class extends Migration
         
         Schema::create('pegawai', function (Blueprint $table) {
             $table->id();
+            $table->char('pegawai_token');
             $table->char('nama');
             $table->unsignedBigInteger('id_instansi');
             $table->char('slug');

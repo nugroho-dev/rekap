@@ -91,7 +91,7 @@
             <tbody class="font-monospace">
               @foreach ($items as $item)
               <tr>
-                <td>1</td>
+                <td>{{ $loop->iteration }}</td>
                 <td>{{ $item->nib }}</td>
                 <td>{{ $item->nama_perusahaan }}</td>
                 <td>{{ $item->nama_proyek }}</td>

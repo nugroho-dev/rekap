@@ -54,6 +54,7 @@ Route::get('/konfigurasi/user/checkSlug', [UsersDashboardController::class, 'che
 Route::resource('/konfigurasi/user', UsersDashboardController::class)->middleware('auth');
 Route::resource('/pelayanan/konsultasi', KonsultasiDashboardController::class)->middleware('auth');
 Route::resource('/pengawasan/sigumilang', SigumilangDashboardController::class)->middleware('auth');
+Route::get('/pengawasan/sigumilang/{id_proyek}/histori/{nib}', [SigumilangDashboardController::class,'histori'])->middleware('auth');
 
 
 

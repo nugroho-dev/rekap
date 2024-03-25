@@ -53,7 +53,7 @@
                         </div>
                       </div>
                     </div>
-                    <div class="col-sm-6 col-md-9">
+                    <div class="col-sm-6 col-md-12">
                       <div class="mb-3">
                         <label class="form-label required">Nama</label>
                         <div>
@@ -66,7 +66,20 @@
                         </div>
                       </div>
                     </div>
-                    <div class="col-sm-6 col-md-3">
+                    <div class="col-sm-6 col-md-12">
+                      <div class="mb-3">
+                        <label class="form-label required">slug</label>
+                        <div>
+                          <input type="text" class="form-control" placeholder="Slug" id="slug" name="slug" required value="{{ old('slug') }}" readonly>
+                          @error ('slug')
+                          <small class="form-hint text-danger">
+                            {{ $message }}  
+                          </small>
+                          @enderror
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-sm-6 col-md-4">
                       <div class="mb-3">
                         <label class="form-label required">Nomor Telp</label>
                         <div>
@@ -77,7 +90,7 @@
                         </div>
                       </div>
                     </div>
-                    <div class="col-sm-6 col-md-3">
+                    <div class="col-sm-6 col-md-4">
                       <div class="mb-3">
                         <label class="form-label required">Atas Nama</label>
                         <div>
@@ -88,7 +101,7 @@
                         </div>
                       </div>
                     </div>
-                    <div class="col-sm-6 col-md-6">
+                    <div class="col-sm-6 col-md-4">
                       <div class="mb-3">
                         <label class="form-label required">email</label>
                         <div>
@@ -99,8 +112,20 @@
                         </div>
                       </div>
                     </div>
+                    <div class="col-sm-6 col-md-12">
+                      <div class="mb-3">
+                        <label class="form-label required">Nama Perusahaan</label>
+                        <div>
+                          <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Instansi" name="alamat" value="{{ old('alamat') }}">
+                          @error ('alamat')
+                          <small class="form-hint">{{ $message }} </small>
+                          @enderror
+                        </div>
+                      </div>
+                    </div>
+                    
                     <div class="mb-3">
-                      <label class="form-label required">Alamat Instansi</label>
+                      <label class="form-label required">Alamat</label>
                       <div>
                         <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Instansi" name="alamat" value="{{ old('alamat') }}">
                         @error ('alamat')
@@ -108,8 +133,9 @@
                         @enderror
                       </div>
                     </div>
+                    <div class="col-sm-6 col-md-6">
                     <div class="mb-3">
-                      <label class="form-label required">Alamat Instansi</label>
+                      <label class="form-label required">NIB</label>
                       <div>
                         <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Instansi" name="alamat" value="{{ old('alamat') }}">
                         @error ('alamat')
@@ -117,8 +143,10 @@
                         @enderror
                       </div>
                     </div>
+                  </div>
+                  <div class="col-sm-6 col-md-6">
                     <div class="mb-3">
-                      <label class="form-label required">Alamat Instansi</label>
+                      <label class="form-label required">Sektor Bidang Usaha</label>
                       <div>
                         <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Instansi" name="alamat" value="{{ old('alamat') }}">
                         @error ('alamat')
@@ -126,8 +154,10 @@
                         @enderror
                       </div>
                     </div>
+                  </div>
+                  <div class="col-sm-6 col-md-12">
                     <div class="mb-3">
-                      <label class="form-label required">Alamat Instansi</label>
+                      <label class="form-label required">Lokasi Layanan</label>
                       <div>
                         <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Instansi" name="alamat" value="{{ old('alamat') }}">
                         @error ('alamat')
@@ -135,8 +165,10 @@
                         @enderror
                       </div>
                     </div>
+                  </div>
+                  
                     <div class="mb-3">
-                      <label class="form-label required">Alamat Instansi</label>
+                      <label class="form-label required">Kendala</label>
                       <div>
                         <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Instansi" name="alamat" value="{{ old('alamat') }}">
                         @error ('alamat')

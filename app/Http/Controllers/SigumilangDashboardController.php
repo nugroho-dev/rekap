@@ -68,4 +68,12 @@ class SigumilangDashboardController extends Controller
     {
         //
     }
+    public function histori(Request $request)
+    {
+        $judul = 'Riwayat Pelaporan SiGumilang';
+        $nib = request('nib');
+        $id_proyek = request('id_proyek');
+        $items = Sigumilang::where('nib', $nib)->paginate(15);
+        return view('admin.pengawasanpm.sigumilang.histori', compact('judul','items', 'id_proyek','nib'));
+    }
 }

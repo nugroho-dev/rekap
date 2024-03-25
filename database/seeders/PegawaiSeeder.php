@@ -15,6 +15,7 @@ class PegawaiSeeder extends Seeder
     {
         DB::table('pegawai')->insert([
                 'nama'  => 'didik nugroho',
+                'pegawai_token'  => '78340831-7889-4adb-a741-517b38bd958e',
                 'id_instansi'  => '1',
                 'slug'  => 'didik_nugroho',
                 'nip'  => '1989111120152001',
