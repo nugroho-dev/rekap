@@ -46,19 +46,19 @@
                       <div class="mb-3">
                         <label class="form-label required">Tanggal</label>
                         <div>
-                          <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Nama Instansi" id="title" value="{{ old('nama_instansi') }}" name='nama_instansi'>
-                            @error ('nama_instansi')
+                          <input type="date" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal') }}" name='tanggal'>
+                            @error ('tanggal')
                           <small class="form-hint text-danger">{{ $message }}  </small>
                           @enderror
                         </div>
                       </div>
                     </div>
-                    <div class="col-sm-6 col-md-12">
+                    <div class="col-sm-6 col-md-9">
                       <div class="mb-3">
                         <label class="form-label required">Nama</label>
                         <div>
-                          <input type="text" class="form-control" placeholder="Slug" id="slug" name="slug" required value="{{ old('slug') }}" readonly>
-                          @error ('slug')
+                          <input type="text" class="form-control" placeholder="Nama" id="nama" name="nama" required value="{{ old('nama') }}" readonly>
+                          @error ('nama')
                           <small class="form-hint text-danger">
                             {{ $message }}  
                           </small>
@@ -83,8 +83,8 @@
                       <div class="mb-3">
                         <label class="form-label required">Nomor Telp</label>
                         <div>
-                          <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Instansi" name="alamat" value="{{ old('alamat') }}">
-                          @error ('alamat')
+                          <input type="text" class="form-control"  placeholder="Nomor Telp" name="no_tlp" value="{{ old('no_tlp') }}">
+                          @error ('no_tlp')
                           <small class="form-hint">{{ $message }} </small>
                           @enderror
                         </div>
@@ -94,8 +94,8 @@
                       <div class="mb-3">
                         <label class="form-label required">Atas Nama</label>
                         <div>
-                          <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Instansi" name="alamat" value="{{ old('alamat') }}">
-                          @error ('alamat')
+                          <input type="text" class="form-control"  placeholder="Atas Nama" name="atas_nama" value="{{ old('atas_nama') }}">
+                          @error ('atas_nama')
                           <small class="form-hint">{{ $message }} </small>
                           @enderror
                         </div>
@@ -105,8 +105,8 @@
                       <div class="mb-3">
                         <label class="form-label required">email</label>
                         <div>
-                          <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Instansi" name="alamat" value="{{ old('alamat') }}">
-                          @error ('alamat')
+                          <input type="email" class="form-control"  placeholder="Email" name="email" value="{{ old('email') }}">
+                          @error ('email')
                           <small class="form-hint">{{ $message }} </small>
                           @enderror
                         </div>
@@ -116,8 +116,8 @@
                       <div class="mb-3">
                         <label class="form-label required">Nama Perusahaan</label>
                         <div>
-                          <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Instansi" name="alamat" value="{{ old('alamat') }}">
-                          @error ('alamat')
+                          <input type="text" class="form-control"  placeholder="Nama Perusahaan" name="nama_perusahaan" value="{{ old('nama_perusahaan') }}">
+                          @error ('nama_perusahaan')
                           <small class="form-hint">{{ $message }} </small>
                           @enderror
                         </div>
@@ -127,7 +127,7 @@
                     <div class="mb-3">
                       <label class="form-label required">Alamat</label>
                       <div>
-                        <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Instansi" name="alamat" value="{{ old('alamat') }}">
+                        <input type="text" class="form-control"  placeholder="Alamat" name="alamat" value="{{ old('alamat') }}">
                         @error ('alamat')
                         <small class="form-hint">{{ $message }} </small>
                         @enderror
@@ -137,8 +137,8 @@
                     <div class="mb-3">
                       <label class="form-label required">NIB</label>
                       <div>
-                        <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Instansi" name="alamat" value="{{ old('alamat') }}">
-                        @error ('alamat')
+                        <input type="text" class="form-control"  placeholder="Nomor Induk Berusaha" name="nib" value="{{ old('nib') }}">
+                        @error ('nib')
                         <small class="form-hint">{{ $message }} </small>
                         @enderror
                       </div>
@@ -148,8 +148,8 @@
                     <div class="mb-3">
                       <label class="form-label required">Sektor Bidang Usaha</label>
                       <div>
-                        <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Instansi" name="alamat" value="{{ old('alamat') }}">
-                        @error ('alamat')
+                        <input type="text" class="form-control"  placeholder="Bidang Usaha" name="bidang_usaha" value="{{ old('bidang_usaha') }}">
+                        @error ('bidang_usaha')
                         <small class="form-hint">{{ $message }} </small>
                         @enderror
                       </div>
@@ -159,8 +159,8 @@
                     <div class="mb-3">
                       <label class="form-label required">Lokasi Layanan</label>
                       <div>
-                        <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Instansi" name="alamat" value="{{ old('alamat') }}">
-                        @error ('alamat')
+                        <input type="text" class="form-control"  placeholder="Lokasi Layanan" name="lokasi_layanan" value="{{ old('lokasi_layanan') }}">
+                        @error ('lokasi_layanan')
                         <small class="form-hint">{{ $message }} </small>
                         @enderror
                       </div>
@@ -170,8 +170,8 @@
                     <div class="mb-3">
                       <label class="form-label required">Kendala</label>
                       <div>
-                        <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Instansi" name="alamat" value="{{ old('alamat') }}">
-                        @error ('alamat')
+                        <input type="text" class="form-control"  placeholder="kendala" name="kendala" value="{{ old('kendala') }}">
+                        @error ('kendala')
                         <small class="form-hint">{{ $message }} </small>
                         @enderror
                       </div>
