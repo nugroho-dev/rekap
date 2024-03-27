@@ -32,7 +32,10 @@ class KonsultasiDashboardController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validatedData = $request->validate(['id_pegawai' => 'required','tanggal' => 'required|max:255','nama' => 'required|max:255', 'slug' => 'required|unique:pegawai', 'no_tlp' => 'required', 'atas_nama' => 'required', 'nama_perusahaan' => 'required', 'email' => 'required', 'nib' => 'required','bidang_usaha' => 'required','alamat' => 'required','jenis_layanan' => 'required','alamat' => 'required','lokasi_layanan' => 'required','kendala' => 'required']);
+        $validatedData['del'] = 0;
+        Konsultasi::create($validatedData);
+        return redirect('/pelayanan/konsultasi')->with('success', 'Data Baru Berhasil di Tambahkan !');
     }
 
     /**

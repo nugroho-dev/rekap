@@ -35,7 +35,7 @@
         </div>
     </div>
              <div class="col-md-12 ">
-              <form class="card" method="post" action="{{ url('/konfigurasi/instansi') }}" enctype="multipart/form-data">
+              <form class="card" method="post" action="{{ url('/pelayanan/konsultasi') }}" enctype="multipart/form-data">
                  @csrf
                 <div class="card-header">
                   <h3 class="card-title">Data Konsultasi</h3>
@@ -170,7 +170,7 @@
                     <div class="mb-3">
                       <label class="form-label required">Kendala</label>
                       <div>
-                        <input type="text" class="form-control"  placeholder="kendala" name="kendala" value="{{ old('kendala') }}">
+                        <input type="text" class="form-control"  placeholder="Kendala" name="kendala" value="{{ old('kendala') }}">
                         @error ('kendala')
                         <small class="form-hint">{{ $message }} </small>
                         @enderror
@@ -179,7 +179,7 @@
                   </div>
                 </div>
                 <div class="card-footer text-end">
-                  <button type="submit" class="btn btn-primary">Submit</button>
+                  <button type="submit" class="btn btn-primary">Simpan</button>
                 </div>
               </form>
             </div>
