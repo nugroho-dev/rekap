@@ -57,7 +57,7 @@
                       <div class="mb-3">
                         <label class="form-label required">Nama</label>
                         <div>
-                          <input type="text" class="form-control" placeholder="Nama" id="nama" name="nama" required value="{{ old('nama') }}" readonly>
+                          <input type="text" class="form-control" placeholder="Nama" id="nama" name="nama" required value="{{ old('nama') }}" >
                           @error ('nama')
                           <small class="form-hint text-danger">
                             {{ $message }}  
