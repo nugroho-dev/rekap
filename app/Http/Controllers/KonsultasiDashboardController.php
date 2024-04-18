@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Konsultasi;
 use Illuminate\Http\Request;
+use \Cviebrock\EloquentSluggable\Services\SlugService;
 
 class KonsultasiDashboardController extends Controller
 {
@@ -68,5 +69,10 @@ class KonsultasiDashboardController extends Controller
     public function destroy(Konsultasi $konsultasi)
     {
         //
+    }
+    public function checkSlug(Request $request)
+    {
+        $slug = SlugService::createSlug(Konsultasi::class, 'slug', $request->title);
+        return response()->json(['slug' => $slug]);
     }
 }

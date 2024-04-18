@@ -57,7 +57,7 @@
                       <div class="mb-3">
                         <label class="form-label required">Nama</label>
                         <div>
-                          <input type="text" class="form-control" placeholder="Nama" id="nama" name="nama" required value="{{ old('nama') }}" >
+                          <input type="text" class="form-control" placeholder="Nama" id="title" name="nama" required value="{{ old('nama') }}" >
                           @error ('nama')
                           <small class="form-hint text-danger">
                             {{ $message }}  
@@ -94,10 +94,13 @@
                       <div class="mb-3">
                         <label class="form-label required">Atas Nama</label>
                         <div>
-                          <input type="text" class="form-control"  placeholder="Atas Nama" name="atas_nama" value="{{ old('atas_nama') }}">
-                          @error ('atas_nama')
-                          <small class="form-hint">{{ $message }} </small>
-                          @enderror
+                            <select class="form-select" name="atas_nama" >
+                                
+                                <option value="Non Perseorangan" selected>Non Perseorangan</option>
+                            
+                                <option value="Perseoranga">Perseorangan</option>
+                               
+                            </select>
                         </div>
                       </div>
                     </div>
@@ -148,7 +151,19 @@
                     <div class="mb-3">
                       <label class="form-label required">Sektor Bidang Usaha</label>
                       <div>
-                        <input type="text" class="form-control"  placeholder="Bidang Usaha" name="bidang_usaha" value="{{ old('bidang_usaha') }}">
+                       
+                        <select class="form-select" name="bidang_usaha" >
+                                
+                          <option value="energi dan sumber daya mineral" selected>Energi dan Sumber Daya Mineral</option>
+                          <option value="perdagangan">Perdagangan</option>
+                          <option value="perindustrian">Perindustrian</option>
+                          <option value="kesehatan">Kesehatan</option>
+                          <option value="koperasi">Koperasi</option>
+                          <option value="pariwisata">Pariwisata</option>
+                          <option value="pendidikan">Pendidikan</option>
+                          <option value="perhubungan (transportasi)">Perhubungan (Transportasi)</option>
+                         
+                      </select>
                         @error ('bidang_usaha')
                         <small class="form-hint">{{ $message }} </small>
                         @enderror
@@ -189,7 +204,7 @@
     const slug = document.querySelector('#slug');
 
     title.addEventListener('change', function(){
-        fetch('/konfigurasi/instansi/checkSlug?title='+ title.value)
+        fetch('/pelayanan/konsultasi/checkSlug?title='+ title.value)
         .then(response=>response.json())
         .then(data=>slug.value=data.slug)
     });
