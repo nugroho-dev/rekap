@@ -29,23 +29,33 @@ class SbuSeeder extends Seeder
             'del'  => '0',
         ]);
         DB::table('sbu')->insert([
-            'nama_sbu'  => 'Persyaratan Dasar',
-            'slug'  => 'Persayaratan-dasar',
+            'nama_sbu'  => 'Kesehatan',
+            'slug'  => 'kesehatan',
             'del'  => '0',
         ]);
         DB::table('sbu')->insert([
-            'nama_sbu'  => 'SiCantik',
-            'slug'  => 'sicantik',
+            'nama_sbu'  => 'Koperasi',
+            'slug'  => 'koperasi',
             'del'  => '0',
         ]);
         DB::table('sbu')->insert([
-            'nama_sbu'  => 'MPP Digital',
-            'slug'  => 'mpp-digital',
+            'nama_sbu'  => 'Pariwisata',
+            'slug'  => 'pariwisata',
             'del'  => '0',
         ]);
         DB::table('sbu')->insert([
-            'nama_sbu'  => 'OSS',
-            'slug'  => 'OSS',
+            'nama_sbu'  => 'Pendidikan',
+            'slug'  => 'Pendidikan',
+            'del'  => '0',
+        ]);
+        DB::table('sbu')->insert([
+            'nama_sbu'  => 'Perhubungan (transportasi)',
+            'slug'  => 'perhubungan',
+            'del'  => '0',
+        ]);
+        DB::table('sbu')->insert([
+            'nama_sbu'  => 'Lainnya',
+            'slug'  => 'lainnya',
             'del'  => '0',
         ]);
     }

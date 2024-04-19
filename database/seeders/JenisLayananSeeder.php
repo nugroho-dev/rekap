@@ -12,14 +12,39 @@ class JenisLayananSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::table('sbu')->insert([
-            'nama_sbu'  => 'Lainnya',
-            'slug'  => 'lainnya',
+        DB::table('jenis_layanan')->insert([
+            'nama_jenis_layanan'  => 'Perizinan Usaha',
+            'slug'  => 'perizinan-usaha',
             'del'  => '0',
         ]);
-        DB::table('sbu')->insert([
-            'nama_sbu'  => 'Perizinan Berusaha',
-            'slug'  => 'perizinan berusaha',
+        DB::table('jenis_layanan')->insert([
+            'nama_jenis_layanan'  => 'Lainnya',
+            'slug'  => 'Lainnya',
+            'del'  => '0',
+        ]);
+        DB::table('jenis_layanan')->insert([
+            'nama_jenis_layanan'  => 'NIB',
+            'slug'  => 'nib',
+            'del'  => '0',
+        ]);
+        DB::table('jenis_layanan')->insert([
+            'nama_jenis_layanan'  => 'Persyaratan Dasar',
+            'slug'  => 'Persayaratan-dasar',
+            'del'  => '0',
+        ]);
+        DB::table('jenis_layanan')->insert([
+            'nama_jenis_layanan'  => 'SiCantik',
+            'slug'  => 'sicantik',
+            'del'  => '0',
+        ]);
+        DB::table('jenis_layanan')->insert([
+            'nama_jenis_layanan'  => 'MPP Digital',
+            'slug'  => 'mpp-digital',
+            'del'  => '0',
+        ]);
+        DB::table('jenis_layanan')->insert([
+            'nama_jenis_layanan'  => 'OSS',
+            'slug'  => 'OSS',
             'del'  => '0',
         ]);
     }
