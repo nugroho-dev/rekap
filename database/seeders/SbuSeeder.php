@@ -23,7 +23,7 @@ class SbuSeeder extends Seeder
             'slug'  => 'Lainnya',
             'del'  => '0',
         ]);
-        DB::table('sbua')->insert([
+        DB::table('sbu')->insert([
             'nama_sbu'  => 'Perindustrian',
             'slug'  => 'nib',
             'del'  => '0',
