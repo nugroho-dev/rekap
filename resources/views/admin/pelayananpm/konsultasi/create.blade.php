@@ -47,6 +47,7 @@
                         <label class="form-label required">Tanggal</label>
                         <div>
                           <input type="date" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal') }}" name='tanggal'>
+                          <input type="hidden" name="id_pegawai" value="{{ auth()->user()->pegawai->id}}">
                             @error ('tanggal')
                           <small class="form-hint text-danger">{{ $message }}  </small>
                           @enderror
@@ -94,11 +95,10 @@
                       <div class="mb-3">
                         <label class="form-label required">Atas Nama</label>
                         <div>
-                            <select class="form-select" name="atas_nama" >
-                                
-                                <option value="Non Perseorangan" selected>Non Perseorangan</option>
-                            
-                                <option value="Perseoranga">Perseorangan</option>
+                            <select class="form-select" name="id_an" >
+                              @foreach ($atasnamaitems as $item)
+                              <option value="{{ $item->id }}">{{ $item->nama_an }}</option>
+                              @endforeach
                                
                             </select>
                         </div>
@@ -117,7 +117,7 @@
                     </div>
                     <div class="col-sm-6 col-md-12">
                       <div class="mb-3">
-                        <label class="form-label required">Nama Perusahaan</label>
+                        <label class="form-label">Nama Perusahaan</label>
                         <div>
                           <input type="text" class="form-control"  placeholder="Nama Perusahaan" name="nama_perusahaan" value="{{ old('nama_perusahaan') }}">
                           @error ('nama_perusahaan')
@@ -138,7 +138,7 @@
                     </div>
                     <div class="col-sm-6 col-md-6">
                     <div class="mb-3">
-                      <label class="form-label required">NIB</label>
+                      <label class="form-label">NIB</label>
                       <div>
                         <input type="text" class="form-control"  placeholder="Nomor Induk Berusaha" name="nib" value="{{ old('nib') }}">
                         @error ('nib')
@@ -152,16 +152,11 @@
                       <label class="form-label required">Sektor Bidang Usaha</label>
                       <div>
                        
-                        <select class="form-select" name="bidang_usaha" >
+                        <select class="form-select" name="id_sbu" >
                                 
-                          <option value="energi dan sumber daya mineral" selected>Energi dan Sumber Daya Mineral</option>
-                          <option value="perdagangan">Perdagangan</option>
-                          <option value="perindustrian">Perindustrian</option>
-                          <option value="kesehatan">Kesehatan</option>
-                          <option value="koperasi">Koperasi</option>
-                          <option value="pariwisata">Pariwisata</option>
-                          <option value="pendidikan">Pendidikan</option>
-                          <option value="perhubungan (transportasi)">Perhubungan (Transportasi)</option>
+                          @foreach ($sbuitems as $item)
+                                <option value="{{ $item->id }}">{{ $item->nama_sbu }}</option>
+                           @endforeach
                          
                       </select>
                         @error ('bidang_usaha')
@@ -170,9 +165,27 @@
                       </div>
                     </div>
                   </div>
-                  <div class="col-sm-6 col-md-12">
+                  <div class="col-sm-6 col-md-6">
                     <div class="mb-3">
-                      <label class="form-label required">Lokasi Layanan</label>
+                      <label class="form-label required">Jenis Layanan</label>
+                      <div>
+                       
+                        <select class="form-select" name="id_jenis_layanan" >
+                                
+                          @foreach ($jenislayananitems as $item)
+                          <option value="{{ $item->id }}">{{ $item->nama_jenis_layanan }}</option>
+                          @endforeach
+                         
+                      </select>
+                        @error ('bidang_usaha')
+                        <small class="form-hint">{{ $message }} </small>
+                        @enderror
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-sm-6 col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label required">Lokasi Layanan/ Media Layanan</label>
                       <div>
                         <input type="text" class="form-control"  placeholder="Lokasi Layanan" name="lokasi_layanan" value="{{ old('lokasi_layanan') }}">
                         @error ('lokasi_layanan')

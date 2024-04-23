@@ -77,27 +77,26 @@
           <table class="table card-table table-vcenter text-nowrap datatable ">
             <thead>
               <tr class="text-capitalize">
-                <th class="w-1">no</th>
-                <th class="w-1">Nama</th>
+                <th >no</th>
+                <th >Tanggal</th>
                 <th>nomor telepon</th>
+                <th>mail</th>
                 <th>nama</th>
-                <th>nama perusahaan</th>
-                <th>alamat</th>
-                <th>NIB</th>
-                <th>Lokasi layanan</th>
+                <th>atas nama</th>
+                <th>Kendala</th>
                 <th class="text-center">*</th>
               </tr>
             </thead>
             <tbody class="font-monospace">
+              @foreach ($items as $index => $item)
               <tr>
-                <td>1</td>
-                <td>001401</td>
-                <td>Design Works</td>
-                <td>Carlson Limited</td>
-                <td>87956621</td>
-                <td>15 Dec 2017</td>
-                <td>Paid</td>
-                <td>$887</td>
+                <td>{{ $loop->iteration + $items->firstItem()-1 }}</td>
+                <td>{{ $item->tanggal }}</td>
+                <td>{{ $item->no_tlp }}</td>
+                <td>{{ $item->email }}</td>
+                <td>{{ $item->nama }}</td>
+                <td>{{ $item->atas_nama->nama_an }}</td>
+                <td class="text-warp">{{ $item->kendala }}</td>
                 <td class="text-end">
                   <span class="dropdown">
                     <button class="btn dropdown-toggle align-text-top" data-bs-boundary="viewport" data-bs-toggle="dropdown">Actions</button>
@@ -115,35 +114,13 @@
                   </span>
                 </td>
               </tr>
-             
+              @endforeach
             </tbody>
           </table>
         </div>
         </div>
         <div class="card-footer d-flex align-items-center">
-          <p class="m-0 text-muted">Showing <span>1</span> to <span>8</span> of <span>16</span> entries</p>
-          <ul class="pagination m-0 ms-auto">
-            <li class="page-item disabled">
-              <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
-                <!-- Download SVG icon from http://tabler-icons.io/i/chevron-left -->
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M15 6l-6 6l6 6"></path></svg>
-                prev
-              </a>
-            </li>
-            <li class="page-item"><a class="page-link" href="#">1</a></li>
-            <li class="page-item active"><a class="page-link" href="#">2</a></li>
-            <li class="page-item"><a class="page-link" href="#">3</a></li>
-            <li class="page-item"><a class="page-link" href="#">4</a></li>
-            <li class="page-item"><a class="page-link" href="#">5</a></li>
-            <li class="page-item">
-              <a class="page-link" href="#">
-                next <!-- Download SVG icon from http://tabler-icons.io/i/chevron-right -->
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M9 6l6 6l-6 6"></path></svg>
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
+          {{ $items->links() }}
     </div>
 
     <div class="modal fade" id="modal-team" tabindex="-1" style="display: none;" aria-hidden="true">

@@ -42,13 +42,10 @@ return new class extends Migration
             $table->char('nama');
             $table->char('slug');
             $table->char('no_tlp');
-            $table->char('atas_nama');
             $table->char('nama_perusahaan');
             $table->char('email')->nullable();
             $table->char('nib')->nullable();
-            $table->char('bidang_usaha')->nullable();
             $table->text('alamat')->nullable();
-            $table->char('jenis_layanan')->nullable();
             $table->char('lokasi_layanan')->nullable();
             $table->boolean('del');
             $table->char('kendala')->nullable();

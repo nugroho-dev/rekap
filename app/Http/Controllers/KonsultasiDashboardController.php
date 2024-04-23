@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Atasnama;
+use App\Models\Jenislayanan;
 use App\Models\Konsultasi;
+use App\Models\Sbu;
 use Illuminate\Http\Request;
 use \Cviebrock\EloquentSluggable\Services\SlugService;
 
@@ -14,8 +17,8 @@ class KonsultasiDashboardController extends Controller
     public function index()
     {
         $judul = 'Daftar Konsultansi';
-       
-        return view('admin.pelayananpm.konsultasi.index', compact('judul'));
+        $items = Konsultasi::where('del', 0)->paginate(25);
+        return view('admin.pelayananpm.konsultasi.index', compact('judul','items'));
     }
 
     /**
@@ -24,8 +27,10 @@ class KonsultasiDashboardController extends Controller
     public function create()
     {
         $judul = 'Buat Konsultansi';
-       
-        return view('admin.pelayananpm.konsultasi.create', compact('judul'));
+        $sbuitems=Sbu::where('del', 0)->get();
+        $jenislayananitems=Jenislayanan::where('del', 0)->get();
+        $atasnamaitems=Atasnama::where('del', 0)->get();
+        return view('admin.pelayananpm.konsultasi.create', compact('judul','sbuitems','jenislayananitems','atasnamaitems'));
     }
 
     /**
@@ -33,9 +38,25 @@ class KonsultasiDashboardController extends Controller
      */
     public function store(Request $request)
     {
-        $validatedData = $request->validate(['id_pegawai' => 'required','tanggal' => 'required|max:255','nama' => 'required|max:255', 'slug' => 'required|unique:pegawai', 'no_tlp' => 'required', 'atas_nama' => 'required', 'nama_perusahaan' => 'required', 'email' => 'required', 'nib' => 'required','bidang_usaha' => 'required','alamat' => 'required','jenis_layanan' => 'required','alamat' => 'required','lokasi_layanan' => 'required','kendala' => 'required']);
+        
+        $validatedData = $request->validate([
+            'id_pegawai' => 'required',
+            'id_an' => 'required',
+            'id_sbu' => 'required',
+            'id_jenis_layanan' => 'required',
+            'tanggal' => 'required|date',
+            'nama' => 'required|max:255', 
+            'slug' => 'required|unique:konsultasi', 
+            'no_tlp' => 'required', 
+            'nama_perusahaan' => 'required', 
+            'email' => 'required', 
+            'nib' => 'nullable',
+            'alamat' => 'required',
+            'lokasi_layanan' => 'required',
+            'kendala' => 'required']);
         $validatedData['del'] = 0;
-        Konsultasi::create($validatedData);
+        
+       Konsultasi::create($validatedData);
         return redirect('/pelayanan/konsultasi')->with('success', 'Data Baru Berhasil di Tambahkan !');
     }
 
