@@ -1,4 +1,4 @@
-@extends('layouts.tableradmin')
+@extends('layouts.tableradmindisplay')
 
 @section('content')
     <div class="page-header d-print-none">
@@ -35,14 +35,14 @@
                   <span class="d-none d-sm-inline">
                    
                   </span>
-                  <a href="{{ url('/pelayanan/konsultasi/create') }}" class="btn btn-primary d-none d-sm-inline-block">
+                  <a href="{{ url('/pelayanan/konsultasi') }}" class="btn btn-primary d-none d-sm-inline-block">
                     <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg>
-                    Buat Laporan
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-back-up" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 14l-4 -4l4 -4" /><path d="M5 10h11a4 4 0 1 1 0 8h-1" /></svg>
+                    Kembali
                   </a>
-                  <a href="{{ url('/pelayanan/konsultasi/create') }}" class="btn btn-primary d-sm-none btn-icon">
+                  <a href="{{ url('/pelayanan/konsultasi') }}" class="btn btn-primary d-sm-none btn-icon">
                     <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-back-up" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 14l-4 -4l4 -4" /><path d="M5 10h11a4 4 0 1 1 0 8h-1" /></svg>
                   </a>
                 </div>
               </div>
@@ -63,13 +63,13 @@
                 <input type="text" class="form-control form-control-sm" value="8" size="3" aria-label="Invoices count">
               </div>
               entries
-            </div>-->
+            </div>
             <div class="ms-auto text-muted">
               Cari:
               <div class="ms-2 d-inline-block">
                 <input type="text" class="form-control form-control-sm" aria-label="Search invoice">
               </div>
-            </div>
+            </div>-->
           </div>
         </div>
         <div class="table-responsive ">
@@ -77,14 +77,20 @@
           <table class="table card-table table-vcenter text-nowrap datatable ">
             <thead>
               <tr class="text-capitalize">
-                <th >no</th>
-                <th >Tanggal</th>
+                <th>no</th>
+                <th>Tanggal</th>
                 <th>nomor telepon</th>
                 <th>mail</th>
                 <th>nama</th>
                 <th>atas nama</th>
+                <th>nama perusahaan</th>
+                <th>alamat</th>
+                <th>nib</th>
+                <th>sektor bidang usaha</th>
+                <th>jenis layanan</th>
+                <th>lokasi layanan</th>
                 <th>Kendala</th>
-                <th class="text-center">*</th>
+                
               </tr>
             </thead>
             <tbody class="font-monospace">
@@ -94,25 +100,17 @@
                 <td>{{ $item->tanggal }}</td>
                 <td>{{ $item->no_tlp }}</td>
                 <td>{{ $item->email }}</td>
-                <td>{{ $item->nama }}</td>
-                <td>{{ $item->atas_nama->nama_an }}</td>
+                <td class="text-wrap">{{ $item->nama }}</td>
+                <td class="text-wrap">{{ $item->atas_nama->nama_an }}</td>
+                <td class="text-wrap">{{ $item->nama_perusahaan }}</td>
+                <td class="text-wrap">{{ $item->alamat }}</td>
+                <td>{{ $item->nib }}</td>
+                <td class="text-wrap">{{ $item->sbu->nama_sbu }}</td>
+                <td class="text-wrap">{{ $item->jenis_layanan->nama_jenis_layanan }}</td>
+                <td class="text-wrap">{{ $item->lokasi_layanan }}</td>
+                
                 <td class="text-warp">{{ $item->kendala }}</td>
-                <td class="text-end">
-                  <span class="dropdown">
-                    <button class="btn dropdown-toggle align-text-top" data-bs-boundary="viewport" data-bs-toggle="dropdown">Actions</button>
-                    <div class="dropdown-menu dropdown-menu-end">
-                      <a class="dropdown-item" href="#">
-                        Lihat
-                      </a>
-                      <a class="dropdown-item" href="#">
-                        Edit
-                      </a>
-                      <a class="dropdown-item" href="#">
-                       Hapus
-                      </a>
-                    </div>
-                  </span>
-                </td>
+              
               </tr>
               @endforeach
             </tbody>
@@ -182,12 +180,12 @@
                   <span class="d-none d-sm-inline">
                    
                   </span>
-                  <a href="{{ url('/pelayanan/konsultasi/display') }}" class="btn btn-primary d-none d-sm-inline-block">
+                  <a href="{{ url('/konfigurasi/instansi/create') }}" class="btn btn-primary d-none d-sm-inline-block">
                     <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-device-desktop" width="24" height="24" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 5a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-10z" /><path d="M7 20h10" /><path d="M9 16v4" /><path d="M15 16v4" /></svg>
                     Tampilkan Dilayar
                   </a>
-                  <a href="{{ url('/pelayanan/konsultasi/display') }}" class="btn btn-primary d-sm-none btn-icon">
+                  <a href="#" class="btn btn-primary d-sm-none btn-icon">
                     <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-device-desktop" width="24" height="24" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 5a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-10z" /><path d="M7 20h10" /><path d="M9 16v4" /><path d="M15 16v4" /></svg>
                   </a>

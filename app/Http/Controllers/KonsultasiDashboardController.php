@@ -17,8 +17,16 @@ class KonsultasiDashboardController extends Controller
     public function index()
     {
         $judul = 'Daftar Konsultansi';
-        $items = Konsultasi::where('del', 0)->paginate(25);
-        return view('admin.pelayananpm.konsultasi.index', compact('judul','items'));
+        $nama=auth()->user()->pegawai->nama;
+        $items = Konsultasi::where('del', 0)->where('id_pegawai', auth()->user()->pegawai->id)->paginate(25);
+        return view('admin.pelayananpm.konsultasi.index', compact('judul','items','nama'));
+    }
+    public function display()
+    {
+        $judul = 'Daftar Konsultansi';
+        $nama=auth()->user()->pegawai->nama;
+        $items = Konsultasi::where('del', 0)->where('id_pegawai', auth()->user()->pegawai->id)->paginate(25);
+        return view('admin.pelayananpm.konsultasi.display', compact('judul','items', 'nama'));
     }
 
     /**
@@ -96,4 +104,5 @@ class KonsultasiDashboardController extends Controller
         $slug = SlugService::createSlug(Konsultasi::class, 'slug', $request->title);
         return response()->json(['slug' => $slug]);
     }
+    
 }

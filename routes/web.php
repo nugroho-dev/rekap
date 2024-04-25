@@ -52,6 +52,7 @@ Route::get('/konfigurasi/instansi/checkSlug', [InstansiController::class, 'check
 Route::resource('/konfigurasi/instansi', InstansiController::class)->middleware('auth');
 Route::get('/konfigurasi/user/checkSlug', [UsersDashboardController::class, 'checkSlug'])->middleware('auth');
 Route::resource('/konfigurasi/user', UsersDashboardController::class)->middleware('auth');
+Route::get('/pelayanan/konsultasi/display', [KonsultasiDashboardController::class, 'display'])->middleware('auth');
 Route::get('/pelayanan/konsultasi/checkSlug', [KonsultasiDashboardController::class, 'checkSlug'])->middleware('auth');
 Route::resource('/pelayanan/konsultasi', KonsultasiDashboardController::class)->middleware('auth');
 Route::resource('/pengawasan/sigumilang', SigumilangDashboardController::class)->middleware('auth');
