@@ -78,25 +78,35 @@
             <thead>
               <tr class="text-capitalize">
                 <th >no</th>
-                <th >Tanggal</th>
-                <th>nomor telepon</th>
-                <th>mail</th>
-                <th>nama</th>
-                <th>atas nama</th>
+                <th >Nama</th>
+                <th>nama perusahaan</th>
                 <th>Kendala</th>
                 <th class="text-center">*</th>
               </tr>
             </thead>
-            <tbody class="font-monospace">
+            <tbody>
               @foreach ($items as $index => $item)
               <tr>
                 <td>{{ $loop->iteration + $items->firstItem()-1 }}</td>
-                <td>{{ $item->tanggal }}</td>
-                <td>{{ $item->no_tlp }}</td>
-                <td>{{ $item->email }}</td>
-                <td>{{ $item->nama }}</td>
-                <td>{{ $item->atas_nama->nama_an }}</td>
-                <td class="text-warp">{{ $item->kendala }}</td>
+                <td>
+                  <div>{{ $item->nama }}</div>
+                  <div >No Telp <span class="text-muted">{{ $item->no_tlp }}</span></div>
+                  <div >Email <span class="text-muted">{{ $item->email }}</span></div>
+                  <div class="text-muted">{{ $item->tanggal }}</div>
+                </td>
+                <td >
+                  <div>{{ $item->nama_perusahaan }}</div>
+                  <div class="text-muted">{{ $item->atas_nama->nama_an }}</div>
+                  <div class="text-muted text-wrap">{{ $item->alamat }}</div>
+                </td>
+                <td>
+                  <div>{{ $item->kendala }}</div>
+                  <div >Layanan <span class="text-muted">{{ $item->jenis_layanan->nama_jenis_layanan }}</span></div> 
+                  <div >Sektor <span class="text-muted text-wrap"> {{ $item->sbu->nama_sbu }}</span> </div> 
+                  <div >NIB <span class="text-muted"> {{ $item->nib }}</span></div> 
+                  <div >Lokasi <span class="text-muted"> {{ $item->lokasi_layanan }}</span></div> 
+                </td>
+                
                 <td class="text-end">
                   <span class="dropdown">
                     <button class="btn dropdown-toggle align-text-top" data-bs-boundary="viewport" data-bs-toggle="dropdown">Actions</button>
