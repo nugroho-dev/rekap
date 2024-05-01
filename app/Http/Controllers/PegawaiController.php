@@ -35,11 +35,12 @@ class PegawaiController extends Controller
      */
     public function store(Request $request)
     {
-        $validatedData = $request->validate(['nama' => 'required|max:255', 'slug' => 'required|unique:pegawai', 'nip' => 'required', 'id_instansi' => 'required', 'no_hp' => 'required', 'foto' => 'image|file|max:1024']);
+        $validatedData = $request->validate(['pegawai_token' => 'required','nama' => 'required|max:255', 'slug' => 'required|unique:pegawai', 'nip' => 'required', 'id_instansi' => 'required', 'no_hp' => 'required', 'foto' => 'image|file|max:1024']);
         if ($request->file('foto')) {
             $validatedData['foto'] = $request->file('foto')->store('public/foto-images');
         }
         $validatedData['del'] = 0;
+        $validatedData['user_status'] = 0;
         Pegawai::create($validatedData);
         return redirect('/konfigurasi/pegawai')->with('success', 'Pegawai Baru Berhasil di Tambahkan !');
     }

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Proses extends Model
 {
     use HasFactory;
+    protected $connection = 'mysql';
     protected $guarded = ['id'];
     protected $fillable = [
         'id_proses_permohonan',

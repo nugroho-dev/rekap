@@ -6,23 +6,26 @@ use Cviebrock\EloquentSluggable\Sluggable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Pegawai extends Model
+class Konsultasi extends Model
 {
     use HasFactory, Sluggable;
-    protected $connection = 'mysql';
     protected $guarded = ['id'];
-    public $table = "pegawai";
-    public function instansi()
-    {
-        return $this->belongsTo(Instansi::class,'id_instansi');
-    }
-    public function user()
-    {
-        return $this->belongsTo(User::class,'id_pegawai');
-    }
+    public $table = "konsultasi";
     public function getRouteKeyName()
     {
         return 'slug';
+    }
+    public function sbu()
+    {
+        return $this->belongsTo(Sbu::class,'id_sbu');
+    }
+    public function jenis_layanan()
+    {
+        return $this->belongsTo(Jenislayanan::class,'id_jenis_layanan');
+    }
+    public function atas_nama()
+    {
+        return $this->belongsTo(Atasnama::class,'id_an');
     }
     public function sluggable(): array
     {

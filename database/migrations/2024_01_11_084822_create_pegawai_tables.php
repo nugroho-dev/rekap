@@ -23,17 +23,28 @@ return new class extends Migration
         
         Schema::create('pegawai', function (Blueprint $table) {
             $table->id();
+            $table->char('pegawai_token');
             $table->char('nama');
             $table->unsignedBigInteger('id_instansi');
-            $table->unsignedBigInteger('id_user')->nullable();
             $table->char('slug');
             $table->char('nip')->nullable();
             $table->text('no_hp')->nullable();
             $table->binary('foto')->nullable();
             $table->boolean('del');
+            $table->boolean('user_status');
             $table->timestamps();
             $table->foreign('id_instansi')->references('id')->on('instansi');
-            $table->foreign('id_user')->references('id')->on('users');
+           
+        });
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->string('email')->unique();
+            $table->unsignedBigInteger('id_pegawai');
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('password');
+            $table->rememberToken();
+            $table->timestamps();
+            $table->foreign('id_pegawai')->references('id')->on('pegawai');
         });
     }
 

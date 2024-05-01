@@ -19,7 +19,7 @@
                   <span class="d-none d-sm-inline">
                    
                   </span>
-                  <a href="{{ url('/konfigurasi/pegawai/create') }}" class="btn btn-primary d-none d-sm-inline-block">
+                  <a href="{{ url('/konfigurasi/user/create') }}" class="btn btn-primary d-none d-sm-inline-block">
                     <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg>
                     Tambah
@@ -51,11 +51,11 @@
                             </div>
                             <div class="col text-truncate">
                               <p  class="text-body d-block">
-                                {{ $item->pegawai->nama }}<br> NIP. {{ $item->pegawai->nip }}  <br>No HP. {{ $item->pegawai->no_hp }}  <br>E-mail. {{ $item->email }} <br> Role
+                                <span class="text-capitalize">{{ $item->pegawai->nama }}</span><br> NIP. {{ $item->pegawai->nip }}  <br>No HP. {{ $item->pegawai->no_hp }}  <br>E-mail. {{ $item->email }} <br> Role
                                 
                               </p>
                              
-                            <div class="text-muted text-truncate mt-n1">{{ $item->pegawai->instansi->nama_instansi }}</div>
+                            <div class="text-muted text-truncate mt-n1 text-capitalize">{{ $item->pegawai->instansi->nama_instansi }}</div>
                             </div>
                             <div class="col-auto">
                               <span class="dropdown">

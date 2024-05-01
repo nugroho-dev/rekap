@@ -18,10 +18,8 @@ class User extends Authenticatable
      *
      * @var array<int, string>
      */
-    protected $fillable = [
-        'email',
-        'password',
-    ];
+    protected $connection = 'mysql';
+    protected $guarded = ['id'];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -44,6 +42,6 @@ class User extends Authenticatable
     ];
     public function pegawai()
     {
-        return $this->hasOne(Pegawai::class,'id_user');
+        return $this->hasOne(Pegawai::class,'id');
     }
 }

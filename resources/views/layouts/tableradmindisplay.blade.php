@@ -29,11 +29,11 @@
       }
     </style>
   </head>
-  <body >
+  <body class="layout-fluid">
     <script src="{{ asset('tabler/dist/js/demo-theme.min.js?1684106062') }}"></script>
     <div class="page">
       <!-- Sidebar -->
-     @include('layouts.sidebar')
+     
       <!-- Navbar -->
       @include('layouts.navbaradmin')
       <div class="page-wrapper">

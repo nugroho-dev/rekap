@@ -35,76 +35,48 @@
         </div>
     </div>
              <div class="col-md-6 offset-md-3">
-              <form class="card" method="post" action="{{ url('/konfigurasi/pegawai') }}" enctype="multipart/form-data">
+              <form class="card" method="post" action="{{ url('/konfigurasi/user') }}" enctype="multipart/form-data">
                  @csrf
                 <div class="card-header">
                   <h3 class="card-title">Data Pegawai</h3>
                 </div>
                 <div class="card-body">
-                  <div class="mb-3">
-                    <label class="form-label required">Nama</label>
-                    <div>
-                      <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Nama" id="title" value="{{ old('nama') }}" name='nama'>
-                        @error ('nama')
-                      <small class="form-hint text-danger">{{ $message }}  </small>
-                       @enderror
-                    </div>
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label required">Slug</label>
-                    <div>
-                      <input type="text" class="form-control" placeholder="Slug" id="slug" name="slug" required value="{{ old('slug') }}" readonly>
-                      @error ('slug')
-                      <small class="form-hint text-danger">
-                        {{ $message }}  
-                      </small>
-                       @enderror
-                    </div>
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label required">_token</label>
-                    <div>
-                      <input type="text"  class="form-control" name="pegawai_token" value="{{ Str::uuid() }}" readonly/>
-                    
-                    </div>
-                  </div>
                   
                   <div class="mb-3">
-                    <label class="form-label required">NIP</label>
-                    <div>
-                      <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="NIP" name="nip" value="{{ old('nip') }}">
-                      @error ('nip')
-                      <small class="form-hint">{{ $message }} </small>
-                       @enderror
-                    </div>
-                  </div>
-                  <div class="mb-3">
-                            <label class="form-label">Instansi</label>
-                            <select type="text" class="form-select" id="select-optgroups" name="id_instansi">
+                            <label class="form-label">Nama Pegawai</label>
+                            <select type="text" class="form-select" id="select-optgroups" name="id_pegawai">
                              @foreach ($items as $item)
-                                <option value="{{ $item->id }}">{{ $item->nama_instansi }}</option>
+                                <option value="{{ $item->id }}">{{ $item->nama }} - {{ $item->instansi->nama_instansi }}</option>
                                 @endforeach
                             </select>
                           </div>
                
                   <div class="mb-3">
-                    <label class="form-label required">No Handphone</label>
+                    <label class="form-label required">E-Mail</label>
                     <div>
-                      <input type="number" class="form-control" aria-describedby="emailHelp" placeholder="No Handphone" name="no_hp" value="{{ old('no_hp') }}">
-                      @error ('no_hp')
+                      <input type="email" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Email" name="email" value="{{ old('email') }}">
+                      @error ('email')
                       <small class="form-hint">{{ $message }} </small>
                        @enderror
                     </div>
                   </div>
                   <div class="mb-3">
-                    <label for="image" class="form-label">Foto</label>
-                    <img class="img-preview img-fluid mb-3 col-5 rounded mx-auto d-block">
-                    <input class="form-control @error('foto') is-invalid @enderror" type="file" id="image" name="foto" onchange="priviewImage()">
-                     @error ('foto')
-                      <small class="form-hint text-danger">
-                        {{ $message }}  
-                      </small>
-                     @enderror
+                    <label class="form-label required">Password</label>
+                    <div>
+                      <input type="password" class="form-control" aria-describedby="emailHelp" placeholder="Password" name="password" value="{{ old('password') }}">
+                      @error ('password')
+                      <small class="form-hint">{{ $message }} </small>
+                       @enderror
+                    </div>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label required">Ulangi Password</label>
+                    <div>
+                      <input type="password" class="form-control" aria-describedby="emailHelp" placeholder="Ulangi Password" name="password_confirmation" value="{{ old('password') }}">
+                      @error ('password')
+                      <small class="form-hint">{{ $message }} </small>
+                       @enderror
+                    </div>
                   </div>
                 </div>
                 <div class="card-footer text-end">
