@@ -40,7 +40,7 @@
        
         <!-- Page body -->
          @include('layouts.page-body')
-        @include('layouts.footer')
+        
       </div>
     </div>
  

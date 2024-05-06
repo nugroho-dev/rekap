@@ -7,7 +7,7 @@
                 <div class="col">
                 <!-- Page pre-title -->
                     <div class="page-pretitle">
-                     Overview
+                    
                     </div>
                     <h2 class="page-title">
                         {{ $judul }}
@@ -19,6 +19,20 @@
             </div>
         </div>
     </div>
+    <style>
+      table, th, td {
+        border: 1px solid black;
+      }
+       th, td {
+        
+        padding-left: 5px;
+      }
+      th {
+        text-align: center;
+        font-size: 300px;
+
+      }
+      </style>
     <div class="col-12">
       <div class="card">
         <div class="card-header">
@@ -43,21 +57,25 @@
         </div>
         <div class="table-responsive ">
           <div class="mb-8">
-          <table class="table card-table table-vcenter text-nowrap datatable ">
+          <table class="table card-table table-vcenter text-nowrap datatabl table-bordered">
             <thead>
               <tr class="text-capitalize">
-                <th>no</th>
+                <th><div>no</div></th>
          
-                <th>Nama</th>
-                <th>nama perusahaan</th>
-                <th>Kendala</th>
+                <th><div>Nama</div></th>
+                <th><div>nama perusahaan</div></th>
+                <th><div>layanan</div></th>
+                <th><div>Kendala</div></th>
                 
               </tr>
             </thead>
-            <tbody class="font-monospace">
-              @foreach ($items as $index => $item)
+            <tbody>
+              @php
+                  $number = 1;
+              @endphp
+              @foreach ($items as  $item)
               <tr>
-                <td>{{ $loop->iteration + $items->firstItem()-1 }}</td>
+                <td>{{$number++}}</td>
                 <td>
                   <div>{{ $item->nama }}</div>
                   <div >No Telp <span class="text-muted">{{ $item->no_tlp }}</span></div>
@@ -70,13 +88,16 @@
                   <div class="text-muted text-wrap">{{ $item->alamat }}</div>
                 </td>
                 <td>
-                  <div>{{ $item->kendala }}</div>
                   <div >Layanan <span class="text-muted">{{ $item->jenis_layanan->nama_jenis_layanan }}</span></div> 
                   <div >Sektor <span class="text-muted text-wrap"> {{ $item->sbu->nama_sbu }}</span> </div> 
                   <div >NIB <span class="text-muted"> {{ $item->nib }}</span></div> 
+                </td>
+                <td>
+                  <div>{{ $item->kendala }}</div>
                   <div >Lokasi <span class="text-muted"> {{ $item->lokasi_layanan }}</span></div> 
                 </td>
               </tr>
+             
               @endforeach
             </tbody>
           </table>

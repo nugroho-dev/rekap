@@ -6,7 +6,7 @@ use App\Models\Atasnama;
 use App\Models\Jenislayanan;
 use App\Models\Konsultasi;
 use App\Models\Sbu;
-use Barryvdh\DomPDF\PDF;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use \Cviebrock\EloquentSluggable\Services\SlugService;
 use Laravel\Prompts\Key;
@@ -40,16 +40,32 @@ class KonsultasiDashboardController extends Controller
         $tgl_akhir=$request->tanggal_akhir;
         $nama=auth()->user()->pegawai->nama;
         $items = Konsultasi::where('del', 0)->where('id_pegawai', auth()->user()->pegawai->id)->where('tanggal','>=',$tgl_awal)->where('tanggal','<=',$tgl_akhir)->paginate(25);
-        return view('admin.pelayananpm.konsultasi.display', compact('judul','items', 'nama'));
+        if($tgl_awal>$tgl_akhir){
+            return view('admin.pelayananpm.konsultasi.index', compact('judul','items','nama'));
+        }if($tgl_awal<=$tgl_akhir){
+            return view('admin.pelayananpm.konsultasi.display', compact('judul','items', 'nama'));
+        }
+        
     }
     public function print(Request $request)
     {
         $judul = 'Daftar Konsultansi';
         $tgl_awal=$request->tanggal_awal;
         $tgl_akhir=$request->tanggal_akhir;
+        //dd($tgl_awal, $tgl_akhir);
         $nama=auth()->user()->pegawai->nama;
-        $items = Konsultasi::where('del', 0)->where('id_pegawai', auth()->user()->pegawai->id)->where('tanggal','>=',$tgl_awal)->where('tanggal','<=',$tgl_akhir)->get();
-        $pdf= PDF::loadView('admin.pelayananpm.konsultasi.print', compact('judul','items', 'nama'));
+        $item = Konsultasi::all()->where('del', 0)->where('id_pegawai', auth()->user()->pegawai->id)->where('tanggal','>=',$tgl_awal)->where('tanggal','<=',$tgl_akhir);
+        $data = [
+            'tgl_awal' => $tgl_awal,
+            'tgl_akhir' => $tgl_akhir,
+            'nama' => $nama,
+            'items' => $item,
+            'judul' => $judul
+        ];
+        
+        $pdf= PDF::loadView('admin.pelayananpm.konsultasi.print', $data);
+        $customPaper = array(0,0,1299,827);
+        $pdf->setPaper($customPaper);
         return $pdf->download('konsultasi.pdf');
         
     }
