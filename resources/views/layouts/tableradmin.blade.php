@@ -151,9 +151,37 @@
     <script src="{{ asset('tabler/dist/libs/jsvectormap/dist/maps/world.js?1684106062') }}" defer></script>
     <script src="{{ asset('tabler/dist/libs/jsvectormap/dist/maps/world-merc.js?1684106062') }}" defer></script>
 	<script src="{{ asset('tabler/dist/libs/litepicker/dist/litepicker.js?1684106062') }}" defer=""></script>
+	<script src="{{ asset('tabler/dist/libs/tinymce/tinymce.min.js?1684106062') }}" defer></script>
     <!-- Tabler Core -->
     <script src="{{ asset('tabler/dist/js/tabler.min.js?1684106062') }}" defer></script>
     <script src="{{ asset('tabler/dist/js/demo.min.js?1684106062') }}" defer></script>
+	<script>
+		// @formatter:off
+		document.addEventListener("DOMContentLoaded", function () {
+		  let options = {
+			selector: '#tinymce-mytextarea',
+			height: 300,
+			menubar: false,
+			statusbar: false,
+			plugins: [
+			  'advlist autolink lists link image charmap print preview anchor',
+			  'searchreplace visualblocks code fullscreen',
+			  'insertdatetime media table paste code help wordcount'
+			],
+			toolbar: 'undo redo | formatselect | ' +
+			  'bold italic backcolor | alignleft aligncenter ' +
+			  'alignright alignjustify | bullist numlist outdent indent | ' +
+			  'removeformat',
+			content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif; font-size: 14px; -webkit-font-smoothing: antialiased; }'
+		  }
+		  if (localStorage.getItem("tablerTheme") === 'dark') {
+			options.skin = 'oxide-dark';
+			options.content_css = 'dark';
+		  }
+		  tinyMCE.init(options);
+		})
+		// @formatter:on
+	  </script>
     <script>
       // @formatter:off
       document.addEventListener("DOMContentLoaded", function () {

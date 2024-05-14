@@ -98,7 +98,7 @@
                   <div>{{ $item->nama }}</div>
                   <div >No Telp <span class="text-muted">{{ $item->no_tlp }}</span></div>
                   <div >Email <span class="text-muted">{{ $item->email }}</span></div>
-                  <div class="text-muted">{{ $item->tanggal }}</div>
+                  <div class="text-muted">{{ \Carbon\Carbon::create($item->tanggal)->isoFormat('dddd, D MMMM Y ') }}</div>
                 </td>
                 <td >
                   <div>{{ $item->nama_perusahaan }}</div>

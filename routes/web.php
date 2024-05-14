@@ -12,6 +12,7 @@ use App\Http\Controllers\InstansiController;
 use App\Http\Controllers\KonsultasiDashboardController;
 use App\Http\Controllers\MaintenanceController;
 use App\Http\Controllers\PegawaiController;
+use App\Http\Controllers\PengaduanController;
 use App\Http\Controllers\PengawasanDashboardController;
 use App\Http\Controllers\SicantikApiController;
 use App\Http\Controllers\SicantikProsesController;
@@ -58,6 +59,12 @@ Route::post('/pelayanan/konsultasi/print', [KonsultasiDashboardController::class
 Route::post('/pelayanan/konsultasi/cari', [KonsultasiDashboardController::class, 'cari'])->middleware('auth');
 Route::get('/pelayanan/konsultasi/checkSlug', [KonsultasiDashboardController::class, 'checkSlug'])->middleware('auth');
 Route::resource('/pelayanan/konsultasi', KonsultasiDashboardController::class)->middleware('auth');
+Route::get('/pengaduan/pengaduan/display', [PengaduanController::class, 'display'])->middleware('auth');
+Route::post('/pengaduan/pengaduan/display', [PengaduanController::class, 'display'])->middleware('auth');
+Route::post('/pengaduan/pengaduan/print', [PengaduanController::class, 'print'])->middleware('auth');
+Route::post('/pengaduan/pengaduan/cari', [PengaduanController::class, 'cari'])->middleware('auth');
+Route::get('/pengaduan/pengaduan/checkSlug', [PengaduanController::class, 'checkSlug'])->middleware('auth');
+Route::resource('/pengaduan/pengaduan', PengaduanController::class)->middleware('auth');
 Route::resource('/pengawasan/sigumilang', SigumilangDashboardController::class)->middleware('auth');
 Route::get('/pengawasan/sigumilang/{id_proyek}/histori/{nib}', [SigumilangDashboardController::class,'histori'])->middleware('auth');
 
