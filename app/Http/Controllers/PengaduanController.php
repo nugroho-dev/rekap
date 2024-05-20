@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use \Cviebrock\EloquentSluggable\Services\SlugService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 class PengaduanController extends Controller
 {
@@ -91,15 +92,15 @@ class PengaduanController extends Controller
             'keluhan' => 'required', 
             'perbaikan' => 'required',
             'media' => 'required',
-            'file' => 'nullable|file|mimes:pdf|max:5000',
-            'file_identitas' => 'nullable|file|mimes:jpg,jpeg,png|max:2048'
+            'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5000',
+            'file_identitas' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048'
         ]);
         $validatedData['del'] = 0;
         if ($request->file('file')) {
-            $validatedData['file'] = $request->file('file')->store('pengaduan-files');
+            $validatedData['file'] = $request->file('file')->store('public/pengaduan-files');
         }
         if ($request->file('file_identitas')) {
-            $validatedData['file_identitas'] = $request->file('file_identitas')->store('pengaduan-files');
+            $validatedData['file_identitas'] = $request->file('file_identitas')->store('public/pengaduan-files');
         }
         
         Pengaduan::create($validatedData);
@@ -128,25 +129,37 @@ class PengaduanController extends Controller
      */
     public function update(Request $request, Pengaduan $pengaduan)
     {
-        $validatedData = $request->validate([
+        $rules = [
             'id_pegawai' => 'required',
-            'id_an' => 'required',
-            'id_sbu' => 'required',
-            'id_jenis_layanan' => 'required',
             'tanggal' => 'required|date',
             'nama' => 'required|max:255', 
-            'slug' => 'required|unique:konsultasi', 
-            'no_tlp' => 'required', 
-            'nama_perusahaan' => 'required', 
-            'email' => 'required', 
-            'nib' => 'nullable',
+            'no_hp' => 'required', 
             'alamat' => 'required',
-            'lokasi_layanan' => 'required',
-            'kendala' => 'required']);
-        $validatedData['del'] = 0;
+            'keluhan' => 'required', 
+            'perbaikan' => 'required',
+            'media' => 'required',
+            'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5000',
+            'file_identitas' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048'];
         
+        if ($request->slug != $pengaduan->slug) {
+            $rules['slug'] = 'required|unique:pengaduan';
+        }
+        $validatedData = $request->validate($rules);
+        $validatedData['del'] = 0;
+        if ($request->file('file')) {
+            if ($request->oldImageFile) {
+                Storage::delete($request->oldImageFile);
+            }
+            $validatedData['file'] = $request->file('file')->store('public/pengaduan-files');
+        }
+        if ($request->file('file_identitas')) {
+            if ($request->oldImageFileIdentitas) {
+                Storage::delete($request->oldImageFileIdentitas);
+            }
+            $validatedData['file_identitas'] = $request->file('file_identitas')->store('public/pengaduan-files');
+        }
         Pengaduan::where('id', $pengaduan->id)->update($validatedData);
-        return redirect('/pengaduan/konsultasi')->with('success', 'Data  Berhasil di Perbaharui !');
+        return redirect('/pengaduan/pengaduan')->with('success', 'Data  Berhasil di Perbaharui !');
     }
 
     /**

@@ -114,29 +114,29 @@
                       </div>
                     </div>
                     <div class="col-sm-12 col-md-12">
-                    <div class="mb-3">
-                      <label class="form-label">File Identitas Pemohon</label>
-                      <div>
-                        <embed class="img-preview mb-3 col-8 rounded mx-auto d-block" height="500"></embed>
-                        <input type="file" class="form-control" id="image" name="file_identitas" value="{{ old('file_identitas') }}" onchange="priviewImage()" >
-                        @error ('file_identitas')
-                        <small class="form-hint">{{ $message }} </small>
-                        @enderror
+                      <div class="mb-3">
+                        <label class="form-label">File Identitas Pemohon</label>
+                        <div>
+                          <embed class="img-preview mb-3 col-8 rounded mx-auto d-block" height="500" type="application/pdf"></embed>
+                          <input type="file" class="form-control" id="image" name="file_identitas" value="{{ old('file_identitas') }}" onchange="priviewImage()" >
+                          @error ('file_identitas')
+                          <small class="form-hint">{{ $message }} </small>
+                          @enderror
+                        </div>
                       </div>
-                    </div>
                     </div>
                     <div class="col-sm-12 col-md-12">
                       <div class="mb-3">
                         <label class="form-label">Berkas Aduan Pendukung</label>
                         <div>
-                          <embed class="docpdf-preview mb-3 col-12 rounded" height="700"></embed>
+                          <embed class="docpdf-preview mb-3 col-12 rounded" height="700" type="application/pdf"></embed>
                           <input type="file" class="form-control" id="docpdf" placeholder="Alamat" name="file" value="{{ old('file') }}" onchange="priviewDocPdf()">
                           @error ('file')
                           <small class="form-hint">{{ $message }} </small>
                           @enderror
                         </div>
                       </div>
-                      </div>
+                    </div>
                     <div class="col-sm-6 col-md-6">
                     <div class="mb-3">
                       <label class="form-label  required">Keluhan</label>

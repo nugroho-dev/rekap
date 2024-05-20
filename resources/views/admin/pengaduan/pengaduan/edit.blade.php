@@ -114,13 +114,30 @@
                         @enderror
                       </div>
                     </div>
-                    <div class="mb-3">
-                      <label class="form-label">Berkas</label>
-                      <div>
-                        <input type="file" class="form-control"  placeholder="Alamat" name="file" value="{{ old('file') }}">
-                        @error ('file')
-                        <small class="form-hint">{{ $message }} </small>
-                        @enderror
+                    <div class="col-sm-12 col-md-12">
+                      <div class="mb-3">
+                        <label class="form-label">File Identitas Pemohon</label>
+                        <div>
+                          <embed src="{{ url(Storage::url($pengaduan->file_identitas)) }}" class="img-preview mb-3 col-8 rounded mx-auto d-block" type="application/pdf" height="500" ></embed>
+                          <input type="file" class="form-control" id="image" name="file_identitas" value="{{ old('file_identitas') }}" onchange="priviewImage()" >
+                          <input type="hidden" name="oldImageFileIdentitas" value="{{ $pengaduan->file_identitas }}">
+                          @error ('file_identitas')
+                          <small class="form-hint">{{ $message }} </small>
+                          @enderror
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-sm-12 col-md-12">
+                      <div class="mb-3">
+                        <label class="form-label">Berkas Aduan Pendukung</label>
+                        <div>
+                          <embed class="docpdf-preview mb-3 col-12 rounded" type="application/pdf" src="{{ url(Storage::url($pengaduan->file)) }}" height="700"></embed>
+                          <input type="file" class="form-control" id="docpdf" placeholder="Alamat" name="file" value="{{ old('file') }}" onchange="priviewDocPdf()">
+                          <input type="hidden" name="oldImageFile" value="{{ $pengaduan->file }}">
+                          @error ('file')
+                          <small class="form-hint">{{ $message }} </small>
+                          @enderror
+                        </div>
                       </div>
                     </div>
                     <div class="col-sm-6 col-md-6">
@@ -139,7 +156,7 @@
                   
                   <div class="col-sm-6 col-md-6">
                     <div class="mb-3">
-                      <label class="form-label required">Kendala</label>
+                      <label class="form-label required">Perbaikan Yang Diinginkan</label>
                       <div>
                         <textarea class="form-control" id="tinymce-mytextarea" rows="3" name="perbaikan" >{{ old('perbaikan',$pengaduan->perbaikan) }}</textarea>
                         
