@@ -27,7 +27,9 @@
             </div>
           </div>
           <div class="col d-flex flex-column">
-            <form class="card">
+            <form class="card" method="post" action="{{ url('/pengawasan/sigumilang/'.$sigumilang->id_proyek) }}" enctype="multipart/form-data">
+              @method('put')
+              @csrf
               <div class="card-body">
                 <h3 class="card-title">Data Laporan</h3>
                 <div class="row row-cards">
@@ -276,20 +278,39 @@
                   </div>
                 </div>
               </div>
-              <div class="card-footer text-end">
+              <div class="card-footer">
+                
                 <!--<button type="submit" class="btn btn-primary">Update Profile</button>-->
+                <div class="col-md-12">
+                  <div class="mb-3 mb-0">
+                    <label class="form-label">Catatan Verifikasi</label>
+                    <textarea rows="5"  class="form-control" id="tinymce-mytextarea" placeholder="Deskiripsi Verifikasi" name="catatan">{{ old('catatan',$sigumilang->catatan) }}</textarea>
+                  </div>
+                  <div class="mb-3">
+                    <div class="form-label">Verifikasi Data</div>
+                    <div>
+                      <label class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="verifikasi" value="0" {{  old('verifikasi',$sigumilang->verifikasi)==0 ?'checked':'' }}>
+                        <span class="form-check-label">Diterima</span>
+                      </label>
+                      <label class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="verifikasi" value="1" {{  old('verifikasi',$sigumilang->verifikasi)==1 ?'checked':'' }}>
+                        <span class="form-check-label">Ditolak (Perbaikan)</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                
               </div>
-            </form>
+           
             <div class="card-footer bg-transparent mt-auto">
-              <!--<div class="btn-list justify-content-end">
-                <a href="#" class="btn">
-                  Cancel
-                </a>
-                <a href="#" class="btn btn-primary">
-                  Submit
-                </a>
-              </div>-->
+              <div class="btn-list justify-content-end">
+                <button type="submit" class="btn btn-primary">
+                  Simpan Verifikasi
+                </button>
+              </div>
             </div>
+          </form>
           </div>
         </div>
       </div>

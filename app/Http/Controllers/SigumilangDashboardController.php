@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Sigumilang;
+use App\Models\Ossrbaproyeklaps;
 use Illuminate\Http\Request;
+
 
 class SigumilangDashboardController extends Controller
 {
@@ -58,7 +60,15 @@ class SigumilangDashboardController extends Controller
      */
     public function update(Request $request, Sigumilang $sigumilang)
     {
-        //
+        $rules = [
+            'catatan' => 'required',
+            'verifikasi' => 'required',
+        ];
+        $validatedData = $request->validate($rules);
+
+        Ossrbaproyeklaps::where('id_proyek', $sigumilang->id_proyek)->update($validatedData);
+       
+        return redirect('/pengawasan/sigumilang/'.$sigumilang->id_proyek)->with('success', 'Data  Berhasil di Verifikasi !');
     }
 
     /**
