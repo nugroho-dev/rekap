@@ -93,7 +93,7 @@
     const slug = document.querySelector('#slug');
 
     title.addEventListener('change', function(){
-        fetch('/konfigurasi/instansi/checkSlug?title='+ title.value)
+        fetch('{{ url('/konfigurasi/instansi/checkSlug') }}?title='+ title.value)
         .then(response=>response.json())
         .then(data=>slug.value=data.slug)
     });

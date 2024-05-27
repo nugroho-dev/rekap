@@ -118,7 +118,7 @@
     const slug = document.querySelector('#slug');
 
     title.addEventListener('change', function(){
-        fetch('/konfigurasi/pegawai/checkSlug?title='+ title.value)
+        fetch('{{ url('/konfigurasi/pegawai/checkSlug') }}?title='+ title.value)
         .then(response=>response.json())
         .then(data=>slug.value=data.slug)
     });
