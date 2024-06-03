@@ -113,6 +113,15 @@
                       <a class="dropdown-item" href="{{ url('/pengaduan/pengaduan/'.$item->slug.'/edit') }}">
                         Edit
                       </a>
+                      <a class="dropdown-item" href="{{ url('/pengaduan/pengaduan/tandaterima') }}">
+                        Cetak Tanda Terima
+                      </a>
+                      <a class="dropdown-item" href="{{ url('/pengaduan/pengaduan/'.$item->slug.'/edit') }}">
+                        Telaah dan Klasifikasi Aduan
+                      </a>
+                      <a class="dropdown-item" href="{{ url('/pengaduan/pengaduan/'.$item->slug.'/edit') }}">
+                        Laporan Tidak Lanjut
+                      </a>
                       <form method="post" action="{{ url('/pengaduan/pengaduan/'.$item->slug) }}" enctype="multipart/form-data">
                         @method('delete')
                          @csrf

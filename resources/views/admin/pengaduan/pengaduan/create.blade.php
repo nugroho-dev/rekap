@@ -44,6 +44,31 @@
                   <div class="row row-cards">
                     <div class="col-sm-6 col-md-3">
                       <div class="mb-3">
+                        <label class="form-label required">Nomor</label>
+                        <div>
+                          
+                          <input type="number" class="form-control"  placeholder="Nomor" id="tanggal" value="{{ old('nomor',$number) }}" name='nomor'>
+    
+                            @error ('nomor')
+                          <small class="form-hint text-danger">{{ $message }}  </small>
+                          @enderror
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                      <div class="mb-3">
+                        <label class="form-label required">Tahun</label>
+                        <div>
+                    
+                          <input type="text" class="form-control" a placeholder="Tahun" id="tahun" value="{{ old('tahun',$year ) }}" name='tahun'>
+                          @error ('tahun')
+                          <small class="form-hint text-danger">{{ $message }}  </small>
+                          @enderror
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                      <div class="mb-3">
                         <label class="form-label required">Tanggal</label>
                         <div>
                     

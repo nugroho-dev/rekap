@@ -45,6 +45,17 @@ class PengaduanController extends Controller
         }
         
     }
+
+    public function printtandaterima(Request $request)
+    {
+        
+        
+        $pdf= PDF::loadView('admin.pengaduan.pengaduan.tandaterima');
+        
+        $pdf->setPaper(array(0,0,609.4488,935.433), 'portrait');
+        return $pdf->download('pengaduan.pdf');
+        
+    }
     public function print(Request $request)
     {
         $judul = 'Daftar Konsultansi';
@@ -74,7 +85,10 @@ class PengaduanController extends Controller
     {
         $judul = 'Buat Pengaduan';
         $current = Carbon::now();
-        return view('admin.pengaduan.pengaduan.create', compact('judul', 'current'));
+        $year = $current->year;
+        $nomor = Pengaduan::where('del', 0)->where('tahun', $year)->count();
+        $number=$nomor+1;
+        return view('admin.pengaduan.pengaduan.create', compact('judul', 'current', 'year', 'number'));
     }
 
     /**
@@ -87,6 +101,8 @@ class PengaduanController extends Controller
             'tanggal' => 'required|date',
             'nama' => 'required|max:255', 
             'slug' => 'required|unique:pengaduan', 
+            'nomor' => 'required',
+            'tahun' => 'required',
             'no_hp' => 'required', 
             'alamat' => 'required',
             'keluhan' => 'required', 
@@ -135,6 +151,8 @@ class PengaduanController extends Controller
             'nama' => 'required|max:255', 
             'no_hp' => 'required', 
             'alamat' => 'required',
+            'nomor' => 'required',
+            'tahun' => 'required',
             'keluhan' => 'required', 
             'perbaikan' => 'required',
             'media' => 'required',
