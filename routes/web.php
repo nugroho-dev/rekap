@@ -61,7 +61,7 @@ Route::get('/pelayanan/konsultasi/checkSlug', [KonsultasiDashboardController::cl
 Route::resource('/pelayanan/konsultasi', KonsultasiDashboardController::class)->middleware('auth');
 Route::get('/pengaduan/pengaduan/display', [PengaduanController::class, 'display'])->middleware('auth');
 Route::post('/pengaduan/pengaduan/display', [PengaduanController::class, 'display'])->middleware('auth');
-Route::get('/pengaduan/pengaduan/tandaterima', [PengaduanController::class, 'printtandaterima'])->middleware('auth');
+Route::get('/pengaduan/pengaduan/tandaterima/{slug}', [PengaduanController::class, 'printtandaterima'])->middleware('auth');
 Route::post('/pengaduan/pengaduan/print', [PengaduanController::class, 'print'])->middleware('auth');
 Route::post('/pengaduan/pengaduan/cari', [PengaduanController::class, 'cari'])->middleware('auth');
 Route::get('/pengaduan/pengaduan/checkSlug', [PengaduanController::class, 'checkSlug'])->middleware('auth');

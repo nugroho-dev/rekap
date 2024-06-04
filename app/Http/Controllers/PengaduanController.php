@@ -50,10 +50,18 @@ class PengaduanController extends Controller
     {
         
         
-        $pdf= PDF::loadView('admin.pengaduan.pengaduan.tandaterima');
+        $data = Pengaduan::where('del', 0)->where('slug', request('slug'))->first();
+        
+        $pick = [
+            
+            'items' => $data,
+            
+        ];
+        
+        $pdf= PDF::loadView('admin.pengaduan.pengaduan.tandaterima', $pick );
         
         $pdf->setPaper(array(0,0,609.4488,935.433), 'portrait');
-        return $pdf->download('pengaduan.pdf');
+        return $pdf->stream('pengaduan.pdf');
         
     }
     public function print(Request $request)

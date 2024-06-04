@@ -9,8 +9,9 @@
 <hr>
 <p style="line-height:1;margin-bottom:0px;margin-top:0px;">&nbsp;</p>
 <p style="line-height:1;margin-bottom:0px;margin-top:0px;text-align:center;"><span style="font-family:'Times New Roman', Times, serif;font-size:21.33px;"><strong>TANDA TERIMA PENGADUAN MASYARAKAT</strong></span></p>
-<figure class="table" style="width:64.73%;">
-    <table class="ck-table-resized" border="1" >
+<p style="line-height:1;margin-bottom:0px;margin-top:0px;text-align:center;"><span style="font-family:'Times New Roman', Times, serif;font-size:12pt;"><strong>Nomor. {{ $items->nomor }}/{{ $items->tahun }} </strong></span></p>
+<figure class="table" style="width:90%;">
+    <table class="ck-table-resized"  style="width:100%;" >
         <colgroup>
             <col style="width:20.95%;">
             <col style="width:5.02%;">
@@ -21,34 +22,34 @@
                 <td colspan="3"><span style="font-family:'Times New Roman', Times, serif;font-size:16px;">Telah diterima Berkas Pengaduan Masyarakat Atas Nama :</span></td>
             </tr>
             <tr>
-                <td><span style="font-family:'Times New Roman', Times, serif;font-size:16px;">Nama</span></td>
-                <td>:</td>
-                <td>&nbsp;</td>
+                <td style="width:25%;"><span style="font-family:'Times New Roman', Times, serif;font-size:16px;">Nama</span></td>
+                <td style="width:2%;">:</td>
+                <td>{{ $items->nama }}</td>
             </tr>
             <tr>
                 <td><span style="font-family:'Times New Roman', Times, serif;font-size:16px;">Media Pengaduan</span></td>
                 <td>:</td>
-                <td>&nbsp;</td>
+                <td>{{ $items->media }}</td>
             </tr>
             <tr>
                 <td><span style="font-family:'Times New Roman', Times, serif;font-size:16px;">Alamat &nbsp; &nbsp;</span></td>
                 <td>:</td>
-                <td>&nbsp;</td>
+                <td>{{ $items->alamat }}</td>
             </tr>
             <tr>
                 <td><span style="font-family:'Times New Roman', Times, serif;font-size:16px;">Perihal &nbsp; &nbsp;</span></td>
                 <td>:</td>
-                <td>&nbsp;</td>
+                <td>{!! $items->keluhan !!}</td>
             </tr>
             <tr>
                 <td><span style="font-family:'Times New Roman', Times, serif;font-size:16px;">No. HP</span></td>
                 <td>:</td>
-                <td>&nbsp;</td>
+                <td>{{ $items->no_hp }}</td>
             </tr>
             <tr>
                 <td><span style="font-family:'Times New Roman', Times, serif;font-size:16px;">Diterima tanggal</span></td>
                 <td>:</td>
-                <td>&nbsp;</td>
+                <td>{{ $items->tanggal }}</td>
             </tr>
             <tr>
                 <td><span style="font-family:'Times New Roman', Times, serif;font-size:16px;">Berkas yang diterima</span></td>
@@ -58,18 +59,21 @@
         </tbody>
     </table>
 </figure>
-<figure class="table" style="width:100%;">
-    <table class="ck-table-resized" border="1" style="width:100%;">
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<figure class="table" style="width:90%;">
+    <table class="ck-table-resized" style="width:100%;">
         <colgroup>
             <col style="width:50%;">
             <col style="width:50%;">
         </colgroup>
         <tbody>
             <tr>
-                <td>
-                    <p style="text-align:center;"><span style="font-family:'Times New Roman', Times, serif;font-size:16px;">Pelopor</span></p>
+                <td style="width:50%;">
+                    <p style="text-align:center;"><span style="font-family:'Times New Roman', Times, serif;font-size:16px;">Pelapor</span></p>
                 </td>
-                <td>
+                <td style="width:50%;">
                     <p style="text-align:center;"><span style="font-family:'Times New Roman', Times, serif;font-size:16px;">Petugas Yang Menerima</span></p>
                 </td>
             </tr>
@@ -77,16 +81,16 @@
                 <td>&nbsp;</td>
                 <td>
                     <p>&nbsp;</p>
-                    <p>&nbsp;</p>
-                    <p>&nbsp;</p>
+                    
+                    
                 </td>
             </tr>
             <tr>
                 <td>
-                    <p style="text-align:center;">()</p>
+                    <p style="text-align:center;">({{ $items->nama }})</p>
                 </td>
                 <td>
-                    <p style="text-align:center;">()</p>
+                    <p style="text-align:center;">({{ $items->pegawai->nama }})</p>
                 </td>
             </tr>
         </tbody>

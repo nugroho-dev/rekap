@@ -113,7 +113,7 @@
                       <a class="dropdown-item" href="{{ url('/pengaduan/pengaduan/'.$item->slug.'/edit') }}">
                         Edit
                       </a>
-                      <a class="dropdown-item" href="{{ url('/pengaduan/pengaduan/tandaterima') }}">
+                      <a class="dropdown-item" target="_blank" href="{{ url('/pengaduan/pengaduan/tandaterima/'.$item->slug.'') }}">
                         Cetak Tanda Terima
                       </a>
                       <a class="dropdown-item" href="{{ url('/pengaduan/pengaduan/'.$item->slug.'/edit') }}">
