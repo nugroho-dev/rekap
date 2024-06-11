@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Pengaduan;
+use App\Models\Klasifikasipengaduan;
+use App\Models\Mediapengaduan;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use \Cviebrock\EloquentSluggable\Services\SlugService;
@@ -46,24 +48,26 @@ class PengaduanController extends Controller
         
     }
 
-    public function printtandaterima(Request $request)
+    public function printtandaterima(Pengaduan $item)
     {
-        
-        
-        $data = Pengaduan::where('del', 0)->where('slug', request('slug'))->first();
-        
         $pick = [
-            
-            'items' => $data,
-            
+            'items' => $item,
         ];
         
         $pdf= PDF::loadView('admin.pengaduan.pengaduan.tandaterima', $pick );
         
         $pdf->setPaper(array(0,0,609.4488,935.433), 'portrait');
         return $pdf->stream('pengaduan.pdf');
-        
     }
+    
+    public function klasifikasi(Pengaduan $item)
+    {
+        $judul = 'Edit Pengaduan';
+        $klasifikasi = Klasifikasipengaduan::all();
+        $media = Mediapengaduan::all();
+        return view('admin.pengaduan.pengaduan.klasifikasi', compact('judul','media','klasifikasi','item'));
+    }
+
     public function print(Request $request)
     {
         $judul = 'Daftar Konsultansi';
@@ -95,8 +99,10 @@ class PengaduanController extends Controller
         $current = Carbon::now();
         $year = $current->year;
         $nomor = Pengaduan::where('del', 0)->where('tahun', $year)->count();
+        $klasifikasi = Klasifikasipengaduan::all();
+        $media = Mediapengaduan::all();
         $number=$nomor+1;
-        return view('admin.pengaduan.pengaduan.create', compact('judul', 'current', 'year', 'number'));
+        return view('admin.pengaduan.pengaduan.create', compact('judul', 'current', 'year', 'number','klasifikasi','media'));
     }
 
     /**
@@ -115,7 +121,7 @@ class PengaduanController extends Controller
             'alamat' => 'required',
             'keluhan' => 'required', 
             'perbaikan' => 'required',
-            'media' => 'required',
+            'id_media' => 'required',
             'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5000',
             'file_identitas' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048'
         ]);
@@ -145,7 +151,8 @@ class PengaduanController extends Controller
     public function edit(Pengaduan $pengaduan)
     {
         $judul = 'Edit Pengaduan';
-        return view('admin.pengaduan.pengaduan.edit', compact('judul', 'pengaduan'));
+        $media = Mediapengaduan::all();
+        return view('admin.pengaduan.pengaduan.edit', compact('judul', 'pengaduan','media'));
     }
 
     /**
@@ -163,7 +170,7 @@ class PengaduanController extends Controller
             'tahun' => 'required',
             'keluhan' => 'required', 
             'perbaikan' => 'required',
-            'media' => 'required',
+            'id_media' => 'required',
             'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5000',
             'file_identitas' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048'];
         

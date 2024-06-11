@@ -122,7 +122,13 @@
                       <div class="mb-3">
                         <label class="form-label required">Media Pengaduan</label>
                         <div>
-                          <input type="text" class="form-control"  placeholder="Nomor Telp" name="media" value="{{ old('media') }}">
+                          <select class="form-select" name="id_media" >
+                            @foreach ($media as $item)
+                            <option value="{{ $item->id }}">{{ $item->media }}</option>
+                            @endforeach
+                             
+                          </select>
+                          
                           @error ('media')
                           <small class="form-hint">{{ $message }} </small>
                           @enderror

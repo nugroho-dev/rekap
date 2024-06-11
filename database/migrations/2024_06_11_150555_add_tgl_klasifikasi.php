@@ -12,9 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('pengaduan', function (Blueprint $table) {
-            $table->char('file')->nullable();
-            $table->unsignedBigInteger('id_media')->nullable();
-            $table->foreign('id_media')->references('id')->on('mediapengaduan');
+            $table->timestamp('tanggal_klasifikasi', precision: 0)->nullable();
         });
     }
 

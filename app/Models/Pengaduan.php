@@ -12,6 +12,14 @@ class Pengaduan extends Model
     use HasFactory, Sluggable;
     protected $guarded = ['id'];
     public $table = "pengaduan";
+    public function pegawai()
+    {
+        return $this->belongsTo(Pegawai::class,'id_pegawai');
+    }
+    public function media()
+    {
+        return $this->belongsTo(Mediapengaduan::class,'id_media');
+    }
     public function getRouteKeyName()
     {
         return 'slug';

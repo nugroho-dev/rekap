@@ -80,7 +80,7 @@
         </div>
         <div class="table-responsive ">
           <div class="mb-8">
-          <table class="table card-table table-vcenter text-nowrap datatable ">
+          <table class="table card-table table-vcenter  datatable ">
             <thead>
               <tr class="text-capitalize">
                 <th >no</th>
@@ -94,16 +94,16 @@
               <tr>
                 <td>{{ $loop->iteration + $items->firstItem()-1 }}</td>
                 <td>
-                  <div>{{ $item->nama }}</div>
-                  <div >No Telp <span class="text-muted">{{ $item->no_hp }}</span></div>
+                  <div class="text-nowrap">{{ $item->nama }}</div>
+                  <div class="text-nowrap">No Telp <span class="text-muted">{{ $item->no_hp }}</span></div>
                   
-                  <div class="text-muted">{{ \Carbon\Carbon::create($item->tanggal)->isoFormat('dddd, D MMMM Y, h:mm:ss a')}}</div>
+                  <div class="text-muted text-nowrap">{{ \Carbon\Carbon::create($item->tanggal)->isoFormat('dddd, D MMMM Y, h:mm:ss a')}}</div>
                 </td>
                 
-                <td>
+                <td >
                  
-                  <div >Keluhan :<span class="text-muted"> {!! $item->keluhan !!}</span></div> 
-                  <div >Perbaikan yang diinginkan : <span class="text-muted"> {!! $item->perbaikan !!}</span></div> 
+                  <div class="text-wrap">Keluhan :<span class="text-muted "> {!! $item->keluhan !!}</span></div> 
+                  <div class="text-wrap">Perbaikan yang diinginkan : <span class="text-muted "> {!! $item->perbaikan !!}</span></div> 
                 </td>
                 
                 <td class="text-end">
@@ -116,7 +116,7 @@
                       <a class="dropdown-item" target="_blank" href="{{ url('/pengaduan/pengaduan/tandaterima/'.$item->slug.'') }}">
                         Cetak Tanda Terima
                       </a>
-                      <a class="dropdown-item" href="{{ url('/pengaduan/pengaduan/'.$item->slug.'/edit') }}">
+                      <a class="dropdown-item" href="{{ url('/pengaduan/pengaduan/klasifikasi/'.$item->slug.'') }}">
                         Telaah dan Klasifikasi Aduan
                       </a>
                       <a class="dropdown-item" href="{{ url('/pengaduan/pengaduan/'.$item->slug.'/edit') }}">

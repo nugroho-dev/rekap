@@ -16,6 +16,10 @@ class Pegawai extends Model
     {
         return $this->belongsTo(Instansi::class,'id_instansi');
     }
+    public function pengaduan()
+    {
+        return $this->hasMany(Pengaduan::class,'id');
+    }
     public function user()
     {
         return $this->belongsTo(User::class,'id_pegawai');

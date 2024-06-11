@@ -80,7 +80,7 @@
                         </div>
                       </div>
                     </div>
-                    <div class="col-sm-6 col-md-9">
+                    <div class="col-sm-6 col-md-12">
                       <div class="mb-3">
                         <label class="form-label required">Nama</label>
                         <div>
@@ -106,7 +106,7 @@
                         </div>
                       </div>
                     </div>
-                    <div class="col-sm-6 col-md-4">
+                    <div class="col-sm-6 col-md-6">
                       <div class="mb-3">
                         <label class="form-label required">Nomor Telp</label>
                         <div>
@@ -118,12 +118,23 @@
                       </div>
                     </div>
                     
-                    <div class="col-sm-6 col-md-12">
+                    <div class="col-sm-6 col-md-6">
                       <div class="mb-3">
                         <label class="form-label">Media Pengaduan</label>
                         <div>
-                          <input type="text" class="form-control"  placeholder="media" name="media" value="{{ old('media',$pengaduan->media) }}">
-                          @error ('media')
+                          <select class="form-select" name="id_media" >
+                                
+                            @foreach ($media as $item)
+                                  @if (old('id_media', $item->id)==$pengaduan->id_media)
+                                  <option value="{{ $item->id }}" selected>{{ $item->media }}</option>
+                                  @else
+                                  <option value="{{ $item->id }}">{{ $item->media }}</option>
+                                  @endif
+                             @endforeach
+                           
+                        </select>
+                       
+                          @error ('id_media')
                           <small class="form-hint">{{ $message }} </small>
                           @enderror
                         </div>

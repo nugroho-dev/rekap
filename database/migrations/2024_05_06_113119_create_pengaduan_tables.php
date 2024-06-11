@@ -11,6 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::create('mediapengaduan', function (Blueprint $table) {
+            $table->id();
+            $table->char('media')->nullable();
+            $table->timestamps();
+        });
         Schema::create('pengaduan', function (Blueprint $table) {
             $table->id();
             $table->timestamp('tanggal', precision: 0);

@@ -24,17 +24,17 @@
             <tr>
                 <td style="width:25%;"><span style="font-family:'Times New Roman', Times, serif;font-size:16px;">Nama</span></td>
                 <td style="width:2%;">:</td>
-                <td>{{ $items->nama }}</td>
+                <td><span style="font-family:'Times New Roman', Times, serif;font-size:16px; text-transform: capitalize;">{{ $items->nama }}</span></td>
             </tr>
             <tr>
                 <td><span style="font-family:'Times New Roman', Times, serif;font-size:16px;">Media Pengaduan</span></td>
                 <td>:</td>
-                <td>{{ $items->media }}</td>
+                <td><span style="font-family:'Times New Roman', Times, serif;font-size:16px; text-transform: capitalize;">{{ $items->media->media }}</span></td>
             </tr>
             <tr>
                 <td><span style="font-family:'Times New Roman', Times, serif;font-size:16px;">Alamat &nbsp; &nbsp;</span></td>
                 <td>:</td>
-                <td>{{ $items->alamat }}</td>
+                <td><span style="font-family:'Times New Roman', Times, serif;font-size:16px; text-transform: capitalize;">{{ $items->alamat }}</span></td>
             </tr>
             <tr>
                 <td><span style="font-family:'Times New Roman', Times, serif;font-size:16px;">Perihal &nbsp; &nbsp;</span></td>
@@ -44,17 +44,22 @@
             <tr>
                 <td><span style="font-family:'Times New Roman', Times, serif;font-size:16px;">No. HP</span></td>
                 <td>:</td>
-                <td>{{ $items->no_hp }}</td>
+                <td><span style="font-family:'Times New Roman', Times, serif;font-size:16px; text-transform: capitalize;">{{ $items->no_hp }}</span></td>
             </tr>
             <tr>
-                <td><span style="font-family:'Times New Roman', Times, serif;font-size:16px;">Diterima tanggal</span></td>
+                <td><span style="font-family:'Times New Roman', Times, serif;font-size:16px; text-transform: capitalize;">Diterima tanggal</span></td>
                 <td>:</td>
-                <td>{{ $items->tanggal }}</td>
+                <td><span style="font-family:'Times New Roman', Times, serif;font-size:16px; text-transform: capitalize;">{{ \Carbon\Carbon::create( $items->tanggal)->isoFormat('dddd, D MMMM Y, h:mm:ss a') }}</span></td>
             </tr>
             <tr>
                 <td><span style="font-family:'Times New Roman', Times, serif;font-size:16px;">Berkas yang diterima</span></td>
                 <td>:</td>
-                <td>&nbsp;</td>
+                <td>@if($items->file==null)
+                    -
+                    @else
+                    Terlampir
+                    @endif
+                </td>
             </tr>
         </tbody>
     </table>
@@ -87,10 +92,10 @@
             </tr>
             <tr>
                 <td>
-                    <p style="text-align:center;">({{ $items->nama }})</p>
+                    <p style="text-align:center; text-transform: capitalize;">( {{ $items->nama }} )</p>
                 </td>
                 <td>
-                    <p style="text-align:center;">({{ $items->pegawai->nama }})</p>
+                    <p style="text-align:center; text-transform: capitalize;">( {{ $items->pegawai->nama}} )</p>
                 </td>
             </tr>
         </tbody>
