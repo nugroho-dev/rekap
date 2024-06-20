@@ -156,16 +156,16 @@
                       </div>
                     </div>
                   </div>
-                  <form  method="post" action="{{ url('/pengaduan/pengaduan/'.$item->slug) }}" enctype="multipart/form-data">
-                    @method('put')
+                  <form  method="post" action="{{ url('/pengaduan/pengaduan/klasifikasi/'.$item->slug) }}" enctype="multipart/form-data">
+                    @method('post')
                      @csrf
                     <div class="col-sm-6 col-md-3">
                       <div class="mb-3">
                         <label class="form-label required">Tanggal</label>
                         <div>
-                          <input type="datetime-local" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal',$item->tanggal_klasifikasi) }}" name='tanggal_klasifikasi'>
+                          <input type="datetime-local" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal_klasifikas',$item->tanggal_klasifikasi) }}" name='tanggal_klasifikasi'>
                           <input type="hidden" name="id_pegawai" value="{{ auth()->user()->pegawai->id}}">
-                            @error ('tanggal')
+                            @error ('tanggal_klasifikasi')
                           <small class="form-hint text-danger">{{ $message }}  </small>
                           @enderror
                         </div>
@@ -175,13 +175,15 @@
                       <div class="mb-3">
                         <label class="form-label">Klasifikasi Pengaduan</label>
                         <div>
+                        
                           <select class="form-select" name="id_klasifikasi" >
                                 
-                            @foreach ($klasifikasi as $item)
-                                  @if (old('id_klasifikasi', $item->id)==$item->id_klasifikasi)
-                                  <option value="{{ $item->id }}" selected>{{ $item->klasifikasi }}</option>
+                            @foreach ($klasifikasi as $items)
+                            
+                                  @if (old('id_klasifikasi', $items->id)==$item->id_klasifikasi)
+                                  <option value="{{ $items->id }}" selected>{{ $items->klasifikasi }}</option>
                                   @else
-                                  <option value="{{ $item->id }}">{{ $item->klasifikasi }}</option>
+                                  <option value="{{ $items->id }}">{{ $items->klasifikasi }}</option>
                                   @endif
                              @endforeach
                            
@@ -197,7 +199,7 @@
                       <div class="mb-3">
                         <label class="form-label required">Diteruskan Kepada</label>
                         <div>
-                          <input type="text" class="form-control" placeholder="Nama" id="title" name="diteruskan" required value="{{ old('diteruskan',$item->diteruskan) }}" >
+                          <input type="text" class="form-control" placeholder="Diteruskan Kepada" id="title" name="diteruskan" required value="{{ old('diteruskan',$item->diteruskan) }}" >
                           @error ('diteruskan')
                           <small class="form-hint text-danger">
                             {{ $message }}  
@@ -210,7 +212,7 @@
                     <div class="mb-3">
                       <label class="form-label required">Catatan</label>
                       <div>
-                        <input type="text" class="form-control"  placeholder="Alamat" name="catatan" value="{{ old('catatan',$item->catatan) }}">
+                        <input type="text" class="form-control"  placeholder="Catatan" name="catatan" value="{{ old('catatan',$item->catatan) }}">
                         @error ('catatan')
                         <small class="form-hint">{{ $message }} </small>
                         @enderror

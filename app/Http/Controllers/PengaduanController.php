@@ -62,7 +62,7 @@ class PengaduanController extends Controller
     
     public function klasifikasi(Pengaduan $item)
     {
-        $judul = 'Edit Pengaduan';
+        $judul = 'Klasifikasi Pengaduan';
         $klasifikasi = Klasifikasipengaduan::all();
         $media = Mediapengaduan::all();
         return view('admin.pengaduan.pengaduan.klasifikasi', compact('judul','media','klasifikasi','item'));
@@ -193,6 +193,21 @@ class PengaduanController extends Controller
         }
         Pengaduan::where('id', $pengaduan->id)->update($validatedData);
         return redirect('/pengaduan/pengaduan')->with('success', 'Data  Berhasil di Perbaharui !');
+    }
+    public function updateklasifikasi(Request $request, Pengaduan $item)
+    {
+        
+        $rules = [
+            'tanggal_klasifikasi'=>'required|date',
+            'id_klasifikasi'=>'required',
+            'diteruskan'=>'required',
+            'telaah'=>'required',
+            'catatan'=>'required'];
+        $validatedData = $request->validate($rules);
+        
+       
+        Pengaduan::where('id', $item->id)->update($validatedData);
+        return redirect('/pengaduan/pengaduan/klasifikasi/'.$item->slug)->with('success', 'Data  Berhasil di Perbaharui !');
     }
 
     /**

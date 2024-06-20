@@ -10,6 +10,7 @@ class SicantikApiController extends Controller
 {
     public function index(Request $request)
     {
+        
         $cari=$request->cari;
         
         $page = request('page', 1);
@@ -30,9 +31,41 @@ class SicantikApiController extends Controller
         $data=$response->json();
         $items = $data['data']['data'];
         $count= $data['data']['count']['0']['data'];
+        $nohp = $data['data']['data']['0']['no_hp'];
         $totalpage = ceil($count / $per_page);
         $secondlast = $totalpage  - 1;
-        return view('home', compact('items','count','page','per_page','dispage', 'disfipage','totalpage', 'previous', 'next', 'secondlast'));
+        function format($nomorhp)
+        {
+            //Terlebih dahulu kita trim dl
+            $nomorhp = trim($nomorhp);
+            //bersihkan dari karakter yang tidak perlu
+            $nomorhp = strip_tags($nomorhp);
+            // Berishkan dari spasi
+            $nomorhp = str_replace(" ", "", $nomorhp);
+            // bersihkan dari bentuk seperti  (022) 66677788
+            $nomorhp = str_replace("(", "", $nomorhp);
+            // bersihkan dari format yang ada titik seperti 0811.222.333.4
+            $nomorhp = str_replace(".", "", $nomorhp);
+
+            //cek apakah mengandung karakter + dan 0-9
+            if (!preg_match('/[^+0-9]/', trim($nomorhp))) {
+                // cek apakah no hp karakter 1-3 adalah +62
+                if (substr(trim($nomorhp), 0, 3) == '+62') {
+                    $nomorhp = '0' . substr($nomorhp, 3);
+                }
+                // cek apakah no hp karakter 1 adalah 0
+                elseif (substr($nomorhp, 0, 1) == '0') {
+                    $nomorhp = '0' . substr($nomorhp, 1);
+                } elseif (substr($nomorhp, 0, 1) == '8') {
+                    $nomorhp = '0' . substr($nomorhp, 0);
+                } elseif (substr($nomorhp, 0, 2) == '62') {
+                    $nomorhp = '0' . substr($nomorhp, 2);
+                }
+            }
+            return $nomorhp;
+        }
+        $userphonegsm = format($nohp);
+        return view('home', compact('items','count','page','per_page','dispage', 'disfipage','totalpage', 'previous', 'next', 'secondlast' ,'userphonegsm'));
     }
     public function kirim()
     {

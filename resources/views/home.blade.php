@@ -65,6 +65,7 @@
                              {!! empty($item['b'])?"<span class='badge bg-danger me-1'></span> Not Found":"<span class='badge bg-success me-1'></span>Ready"!!}
                           </td>
                           <td class="text-end">
+                              <a class="btn  btn-pill align-text-top {{  empty($item['b'])?'disabled btn-danger':'btn-success' }} " href="{{ url('/kirim/'.$item['id'].'') }}">{{ $userphonegsm }}</a>
                               <a class="btn  btn-pill align-text-top {{  empty($item['b'])?'disabled btn-danger':'btn-success' }} " href="{{ url('/kirim/'.$item['id'].'') }}">Kirim</a>
                           </td>
                         </tr>
