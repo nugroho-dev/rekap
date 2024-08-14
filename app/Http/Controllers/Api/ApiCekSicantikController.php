@@ -20,7 +20,7 @@ class ApiCekSicantikController extends Controller
         //get all posts
         $no_permohonan= request('no_permohonan');
         $email= request('email');
-        $posts = Proses::where('no_permohonan','=', $no_permohonan)->where('email','=', $email)->select('jenis_izin','nama','nama_proses','no_permohonan','email')->get();
+        $posts = Proses::where('no_permohonan','=', $no_permohonan)->where('email','=', $email)->select('jenis_izin','nama','nama_proses','no_permohonan','email')->orderBy('id_proses_permohonan', 'asc')->get();
     
         //return collection of posts as a resource
         return new CekSicantikResource(true, 'List Data Posts', $posts);
