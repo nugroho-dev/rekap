@@ -31,7 +31,7 @@ class SicantikApiController extends Controller
         $data=$response->json();
         $items = $data['data']['data'];
         $count= $data['data']['count']['0']['data'];
-        $nohp = $data['data']['data']['0']['no_hp'];
+        //$nohp = $data['data']['data']['0']['no_hp'];
         $totalpage = ceil($count / $per_page);
         $secondlast = $totalpage  - 1;
         function format($nomorhp)
@@ -64,8 +64,8 @@ class SicantikApiController extends Controller
             }
             return $nomorhp;
         }
-        $userphonegsm = format($nohp);
-        return view('home', compact('items','count','page','per_page','dispage', 'disfipage','totalpage', 'previous', 'next', 'secondlast' ,'userphonegsm'));
+        //$userphonegsm = format($nohp);
+        return view('home', compact('items','count','page','per_page','dispage', 'disfipage','totalpage', 'previous', 'next', 'secondlast' ));
     }
     public function kirim()
     {
@@ -116,15 +116,15 @@ class SicantikApiController extends Controller
             if (!preg_match('/[^+0-9]/', trim($nomorhp))) {
                 // cek apakah no hp karakter 1-3 adalah +62
                 if (substr(trim($nomorhp), 0, 3) == '+62') {
-                    $nomorhp = '0' . substr($nomorhp, 3);
+                    $nomorhp = '' . substr($nomorhp, 3);
                 }
                 // cek apakah no hp karakter 1 adalah 0
                 elseif (substr($nomorhp, 0, 1) == '0') {
-                    $nomorhp = '0' . substr($nomorhp, 1);
+                    $nomorhp = '' . substr($nomorhp, 1);
                 } elseif (substr($nomorhp, 0, 1) == '8') {
-                    $nomorhp = '0' . substr($nomorhp, 0);
+                    $nomorhp = '' . substr($nomorhp, 0);
                 } elseif (substr($nomorhp, 0, 2) == '62') {
-                    $nomorhp = '0' . substr($nomorhp, 2);
+                    $nomorhp = '' . substr($nomorhp, 2);
                 }
             }
             return $nomorhp;

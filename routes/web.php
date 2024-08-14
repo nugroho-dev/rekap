@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\ApiCekSicantikController;
 use App\Models\User;
 use PhpParser\Node\Stmt\TryCatch;
 use Spatie\Permission\Models\Role;
@@ -14,6 +15,7 @@ use App\Http\Controllers\MaintenanceController;
 use App\Http\Controllers\PegawaiController;
 use App\Http\Controllers\PengaduanController;
 use App\Http\Controllers\PengawasanDashboardController;
+use App\Http\Controllers\ProdukHukumDashboardController;
 use App\Http\Controllers\SicantikApiController;
 use App\Http\Controllers\SicantikProsesController;
 use App\Http\Controllers\SigumilangDashboardController;
@@ -34,6 +36,7 @@ use App\Models\Instansi;
 //Route::get('/', function () {
     //return view('welcome');
 //});
+Route::get('/apicek/{no_permohonan}/{email}', [ApiCekSicantikController::class, 'index']);
 Route::get('/', [SicantikApiController::class, 'index']);
 Route::post('/', [SicantikApiController::class, 'index']);
 Route::get('/kirim/{id}', [SicantikApiController::class, 'kirim']);
@@ -70,6 +73,7 @@ Route::get('/pengaduan/pengaduan/checkSlug', [PengaduanController::class, 'check
 Route::resource('/pengaduan/pengaduan', PengaduanController::class)->middleware('auth');
 Route::resource('/pengawasan/sigumilang', SigumilangDashboardController::class)->middleware('auth');
 Route::get('/pengawasan/sigumilang/{id_proyek}/histori/{nib}', [SigumilangDashboardController::class,'histori'])->middleware('auth');
+Route::resource('/deregulasi/hukum', ProdukHukumDashboardController::class)->middleware('auth');
 
 
 

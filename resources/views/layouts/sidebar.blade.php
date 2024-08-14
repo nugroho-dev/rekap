@@ -317,7 +317,7 @@
                 </a>
                 <div class="dropdown-menu close">
                   <div class="dropdown-menu-columns">
-                      <a class="dropdown-item" href="{{ url('/maintenance') }}">
+                      <a class="dropdown-item" href="{{ url('/deregulasi/hukum') }}">
                         Produk Hukum
                       </a>
                       <a class="dropdown-item" href="{{ url('/maintenance') }}">
