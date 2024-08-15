@@ -74,9 +74,9 @@
               </tr>
             </thead>
             <tbody class="font-monospace">
-              @foreach ($items as $item)
+              @foreach ($items as $key => $item)
               <tr>
-                <td>{{ $loop->iteration }}</td>
+                <td>{{ $items->firstItem() + $key }}</td>
                 <td>{{ $item->nib }}</td>
                 <td>{{ $item->nama_perusahaan }}</td>
                 <td>{{ $item->nama_proyek }}</td>
