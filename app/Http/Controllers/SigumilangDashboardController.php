@@ -17,6 +17,7 @@ class SigumilangDashboardController extends Controller
         $judul = 'Daftar Pelaporan SiGumilang';
        
         $items = Sigumilang::paginate(15);
+        $items->withPath(url('/pengawasan/sigumilang'));
         return view('admin.pengawasanpm.sigumilang.index', compact('judul','items'));
     }
 
