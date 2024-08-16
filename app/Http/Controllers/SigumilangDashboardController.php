@@ -87,4 +87,10 @@ class SigumilangDashboardController extends Controller
         $items = Sigumilang::where('nib', $nib)->paginate(15);
         return view('admin.pengawasanpm.sigumilang.histori', compact('judul','items', 'id_proyek','nib'));
     }
+    public function laporan(){
+        $judul = 'Pelaporan SiGumilang';
+        $items = Sigumilang::paginate(15);
+        $items->withPath(url('/pengawasan/laporan/sigumilang'));
+        return view('admin.pengawasanpm.sigumilang.laporan', compact('judul','items'));
+    }
 }

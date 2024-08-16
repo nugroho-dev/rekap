@@ -73,9 +73,8 @@ Route::get('/pengaduan/pengaduan/checkSlug', [PengaduanController::class, 'check
 Route::resource('/pengaduan/pengaduan', PengaduanController::class)->middleware('auth');
 Route::resource('/pengawasan/sigumilang', SigumilangDashboardController::class)->middleware('auth');
 Route::get('/pengawasan/sigumilang/{id_proyek}/histori/{nib}', [SigumilangDashboardController::class,'histori'])->middleware('auth');
+Route::get('/pengawasan/laporan/sigumilang', [SigumilangDashboardController::class,'laporan'])->middleware('auth');
 Route::resource('/deregulasi/hukum', ProdukHukumDashboardController::class)->middleware('auth');
-
-
 
 Route::get('/createrolepermission', function(){
     try{
