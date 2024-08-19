@@ -21,7 +21,7 @@ class ApiCekSicantikController extends Controller
         //get all posts
         $no_permohonan= request('no_permohonan');
         $email= request('email');
-        $posts = Proses::where('no_permohonan','=', $no_permohonan)->where('no_hp','=', $email)->select(DB::raw('(@row_number:=@row_number + 1)AS no,COALESCE(end_date,start_date, "-") as date'),'jenis_izin','nama','nama_proses','no_permohonan','email','status')->orderBy('id_proses_permohonan', 'asc')->get();
+        $posts = Proses::where('no_permohonan','=', $no_permohonan)->where('no_hp','=', $email)->whereNotIn('status',['Drop'])->select(DB::raw('(@row_number:=@row_number + 1)AS no,COALESCE(DATE_FORMAT(end_date,"%d-%m-%Y %H:%i:%S"),DATE_FORMAT(start_date,"%d-%m-%Y %H:%i:%S"), "Menunggu Diproses") as date'),'jenis_izin','nama','nama_proses','no_permohonan','email','status')->orderBy('id_proses_permohonan', 'asc')->get();
     
         //return collection of posts as a resource
         return new CekSicantikResource(true, 'List Data Posts', $posts);
