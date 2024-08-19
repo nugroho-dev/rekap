@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\ApiCekSicantikController;
+use App\Http\Controllers\Api\TteController;
 use App\Models\User;
 use PhpParser\Node\Stmt\TryCatch;
 use Spatie\Permission\Models\Role;
@@ -37,6 +38,7 @@ use App\Models\Instansi;
     //return view('welcome');
 //});
 Route::get('/apicek/{no_permohonan}/{email}', [ApiCekSicantikController::class, 'index']);
+Route::get('/unduh/{no_permohonan}/{email}', [TteController::class, 'index']);
 Route::get('/', [SicantikApiController::class, 'index']);
 Route::post('/', [SicantikApiController::class, 'index']);
 Route::get('/kirim/{id}', [SicantikApiController::class, 'kirim']);
