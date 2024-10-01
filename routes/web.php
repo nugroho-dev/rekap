@@ -77,6 +77,7 @@ Route::resource('/pengawasan/sigumilang', SigumilangDashboardController::class)-
 Route::get('/pengawasan/sigumilang/{id_proyek}/histori/{nib}', [SigumilangDashboardController::class,'histori'])->middleware('auth');
 Route::get('/pengawasan/laporan/sigumilang', [SigumilangDashboardController::class,'laporan'])->middleware('auth');
 Route::resource('/deregulasi/hukum', ProdukHukumDashboardController::class)->middleware('auth');
+Route::get('/deregulasi/checkSlug', [ProdukHukumDashboardController::class, 'checkSlug'])->middleware('auth');
 
 Route::get('/createrolepermission', function(){
     try{

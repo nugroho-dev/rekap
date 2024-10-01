@@ -49,7 +49,7 @@ return new class extends Migration
             $table->text('bentuk');
             $table->text('bentuk_singkat');
             $table->text('tahun');
-            $table->date('tempat_penetapan');
+            $table->text('tempat_penetapan');
             $table->date('tanggal_penetapan');
             $table->date('tanggal_pengundangan');
             $table->date('tanggal_berlaku');
@@ -60,6 +60,7 @@ return new class extends Migration
             $table->text('lokasi')->nullable();
             $table->unsignedBigInteger('id_bidang');
             $table->char('file');
+            $table->boolean('del');
             $table->timestamps();
             $table->foreign('id_tipe_dokumen')->references('id')->on('tipe_dokumen');
             $table->foreign('id_subjek')->references('id')->on('subjek');
