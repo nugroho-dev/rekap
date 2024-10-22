@@ -103,7 +103,7 @@
                       <div class="card-body ps-0">
                         <div class="row">
                           <div class="col">
-                            <h3 class="mb-0 text-capitalize"><a href="#">{{ $item->judul }}</a></h3>
+                            <h3 class="mb-0 text-capitalize"><a href="{{ url('/deregulasi/hukum/'.$item->slug) }}">{{ $item->judul }}</a></h3>
                           </div>
                           <div class="col-auto fs-3 text-green text-capitalize">{{ $item->status->nama_status }}</div>
                         </div>

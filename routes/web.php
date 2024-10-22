@@ -21,6 +21,7 @@ use App\Http\Controllers\SicantikApiController;
 use App\Http\Controllers\SicantikProsesController;
 use App\Http\Controllers\SigumilangDashboardController;
 use App\Http\Controllers\UsersDashboardController;
+use App\Http\Controllers\VerifikasiRealisasiInvestasiController;
 use App\Models\Instansi;
 
 /*
@@ -46,6 +47,7 @@ Route::get('/kirim/dokumen/{id}', [SicantikApiController::class, 'dokumen']);
 Route::post('/kirim/dokumen/{id}', [SicantikApiController::class, 'dokumen']);
 Route::get('/send-mail', [MailController::class, 'index']);
 Route::get('/proses', [SicantikProsesController::class, 'index']);
+Route::post('/proses', [SicantikProsesController::class, 'index']);
 Route::post('/send-mail/{id}', [MailController::class, 'index']);
 Route::get('/login', [LoginController::class, 'index'])->name('login')->middleware('guest');
 Route::post('/login', [LoginController::class, 'authenticate']);
@@ -78,7 +80,7 @@ Route::get('/pengawasan/sigumilang/{id_proyek}/histori/{nib}', [SigumilangDashbo
 Route::get('/pengawasan/laporan/sigumilang', [SigumilangDashboardController::class,'laporan'])->middleware('auth');
 Route::resource('/deregulasi/hukum', ProdukHukumDashboardController::class)->middleware('auth');
 Route::get('/deregulasi/checkSlug', [ProdukHukumDashboardController::class, 'checkSlug'])->middleware('auth');
-
+Route::resource('/realiasi/investasi/verifikasi', VerifikasiRealisasiInvestasiController::class)->middleware('auth');
 Route::get('/createrolepermission', function(){
     try{
         Role::create(['name' => 'administrator']);

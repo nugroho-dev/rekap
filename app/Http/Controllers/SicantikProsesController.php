@@ -12,7 +12,7 @@ class SicantikProsesController extends Controller
     {
         $date1 = date("H:i");
         $date2 = date("H:i", strtotime('-400 minutes', strtotime($date1)));
-        $proses = DB::table('proses')->whereIn('jenis_proses_id', [2,18,30,40])->whereRaw('DATE(end_date) = DATE(NOW())')->whereRaw('TIME_FORMAT(end_date, "%H:%i") >= TIME_FORMAT("'.$date2.'", "%H:%i")')->whereRaw('TIME_FORMAT(end_date, "%H:%i") <= TIME_FORMAT("'.$date1.'","%H:%i")')->paginate(50);
+        $proses = Proses::orderBy('tgl_pengajuan','desc')->paginate(50);//DB::table('proses')->whereIn('jenis_proses_id', [2,18,30,40])->whereRaw('DATE(end_date) = DATE(NOW())')->whereRaw('TIME_FORMAT(end_date, "%H:%i") >= TIME_FORMAT("'.$date2.'", "%H:%i")')->whereRaw('TIME_FORMAT(end_date, "%H:%i") <= TIME_FORMAT("'.$date1.'","%H:%i")')->paginate(50);
         
         //$proses = DB::table('proses')->where('jenis_proses_id', '=','18')->whereDate('end_date', '=', 'DATE(NOW())')->whereRaw('TIME_FORMAT(end_date, "%H:%i") >= TIME_FORMAT(SUBTIME(NOW(), "100000"), "%H:%i")')->whereRaw('TIME_FORMAT(end_date, "%H:%i") <= TIME_FORMAT(NOW(), "%H:%i")')->paginate(50);
       
