@@ -66,6 +66,7 @@
                 <th>Nama Proyek</th>
                 <th>Alamat Usaha</th>
                 <th>Periode</th>
+                <th>Modal</th>
                 <th>Tahun</th>
                 <th>Permasalahan</th>
                 <th class="text-center">*</th>
@@ -80,6 +81,7 @@
                 <td>{{ $item->nama_proyek }}</td>
                 <td>{{ $item->alamat_usaha }}</td>
                 <td>{{ $item->periode }}</td>
+                <td>{{ $item->modal_kerja }}</td>
                 <td>{{ $item->tahun }}</td>
                 <td>{{ $item->permasalahan }}</td>
                 <td class="text-end">
