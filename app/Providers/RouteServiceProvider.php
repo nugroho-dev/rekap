@@ -41,6 +41,8 @@ class RouteServiceProvider extends ServiceProvider
         // Add following lines to force laravel to use APP_URL as root url for the app.
         $strBaseURL = $this->app['url'];
         $strBaseURL->forceRootUrl(config('app.url'));
-        \URL::forceScheme('https');
+        if($this->app->environment('production')) {
+            \URL::forceScheme('https');
+        }
     }
 }
