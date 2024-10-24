@@ -5,6 +5,7 @@
 /public/storage
 /storage/*.key
 /vendor
+/app/Providers/RouteServiceProvider.php
 .env
 .env.backup
 .env.production
