@@ -11,6 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::create('bentuk_insentif', function (Blueprint $table) {
+            $table->id();
+            $table->text('bentuk_pemberian');
+            $table->char('slug');
+            $table->boolean('del');
+            $table->timestamps();
+        });
         Schema::create('insentif', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('id_bentuk_pemberian')->nullable();
@@ -24,13 +31,7 @@ return new class extends Migration
             $table->integer('persentase_insentif');
             $table->foreign('id_bentuk_pemberian')->references('id')->on('bentuk_insentif');
         });
-        Schema::create('bentuk_insentif', function (Blueprint $table) {
-            $table->id();
-            $table->text('bentuk_pemberian');
-            $table->char('slug');
-            $table->boolean('del');
-            $table->timestamps();
-        });
+        
     }
 
     /**
