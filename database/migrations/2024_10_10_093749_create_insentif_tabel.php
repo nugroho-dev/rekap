@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('id_bentuk_pemberian')->nullable();
             $table->timestamps();
-            $table->varchar('tahun_pemberian');
+            $table->char('tahun_pemberian');
             $table->text('penerima');
             $table->text('jenis_perusahaan');
             $table->text('no_sk');
