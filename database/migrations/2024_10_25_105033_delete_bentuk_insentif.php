@@ -11,8 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        //
-        Schema::drop('bentuk_insentif');
+        //Schema::drop('bentuk_insentif');
     }
 
     /**
