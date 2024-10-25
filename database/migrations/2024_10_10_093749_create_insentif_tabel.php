@@ -19,7 +19,7 @@ return new class extends Migration
             $table->text('jenis_perusahaan');
             $table->text('no_sk');
             $table->text('no_rekomendasi');
-            $table->text('pemeberian_insentif');
+            $table->text('pemberian_insentif');
             $table->text('persentase_insentif');
             $table->text('id_bentuk_pemberian');
         });
