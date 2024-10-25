@@ -13,15 +13,16 @@ return new class extends Migration
     {
         Schema::create('insentif', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('id_bentuk_pemberian')->nullable();
             $table->timestamps();
-            $table->text('tahun_pemberian');
+            $table->varchar('tahun_pemberian');
             $table->text('penerima');
             $table->text('jenis_perusahaan');
             $table->text('no_sk');
             $table->text('no_rekomendasi');
             $table->text('pemberian_insentif');
-            $table->text('persentase_insentif');
-            $table->text('id_bentuk_pemberian');
+            $table->integer('persentase_insentif');
+            $table->foreign('id_bentuk_pemberian')->references('id')->on('bentuk_insentif');
         });
         Schema::create('bentuk_insentif', function (Blueprint $table) {
             $table->id();
