@@ -10,6 +10,7 @@ use App\Http\Controllers\MailController;
 use Spatie\Permission\Models\Permission;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\InsentifController;
 use App\Http\Controllers\InstansiController;
 use App\Http\Controllers\KonsultasiDashboardController;
 use App\Http\Controllers\MaintenanceController;
@@ -80,6 +81,8 @@ Route::get('/pengawasan/sigumilang/{id_proyek}/histori/{nib}', [SigumilangDashbo
 Route::get('/pengawasan/laporan/sigumilang', [SigumilangDashboardController::class,'laporan'])->middleware('auth');
 Route::resource('/deregulasi/hukum', ProdukHukumDashboardController::class)->middleware('auth');
 Route::get('/deregulasi/checkSlug', [ProdukHukumDashboardController::class, 'checkSlug'])->middleware('auth');
+Route::resource('/insentif/permohonan', InsentifController::class)->middleware('auth');
+Route::get('/insentif/checkSlug', [InsentifController::class, 'checkSlug'])->middleware('auth');
 Route::resource('/realiasi/investasi/verifikasi', VerifikasiRealisasiInvestasiController::class)->middleware('auth');
 Route::get('/createrolepermission', function(){
     try{

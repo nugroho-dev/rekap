@@ -1,6 +1,26 @@
 @extends('layouts.tableradmin')
 
 @section('content')
+<style>
+  /* Flexible iFrame */
+
+.Flexible-container {
+  position: relative;
+  padding-bottom: 56.25%;
+  padding-top: 30px;
+  height: 0;
+  overflow: hidden;
+}
+.Flexible-container iframe,
+.Flexible-container object,
+.Flexible-container embed {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+</style>
 <div class="page-wrapper">
     <!-- Page header -->
     <div class="page-header d-print-none">
@@ -8,7 +28,7 @@
         <div class="row g-2 align-items-center">
           <div class="col">
             <h2 class="page-title">
-              Tambah Produk Hukum
+              Tambah Data Insentif
             </h2>
           </div>
         </div>
@@ -25,144 +45,141 @@
                   <div class="col-lg-12">
                     <div class="row row-cards">
                       <div class="col-12">
-                        <form class="card" method="post" action="{{ url('/deregulasi/hukum') }}" enctype="multipart/form-data">
+                        <form class="card" method="post" action="{{ url('/insentif/permohonan') }}" enctype="multipart/form-data">
                           @csrf
                           <div class="card-body">
-                            <h3 class="card-title">Produk Hukum</h3>
+                            <h3 class="card-title">Insentif</h3>
                             <div class="row row-cards">
                               <div class="col-md-12">
                                 <div class="mb-3">
-                                  <label class="form-label">Judul</label>
-                                  <input type="text" class="form-control"  placeholder="Judul Produk Hukum" value="" name="judul" id="title">
+                                  <label class="form-label">Penerima</label>
+                                  <input type="text" class="form-control"  placeholder="Penerima" name="penerima" id="title" value="{{ old('penerima') }}">
+                                  @error ('penerima')
+                                  <small class="form-hint text-danger">{{ $message }} </small>
+                                  @enderror
                                 </div>
                               </div>
                               <div class="col-sm-6 col-md-12">
                                 <div class="mb-3">
                                   <label class="form-label">Slug</label>
                                   <input type="text" class="form-control" placeholder="slug" value="" name="slug" id="slug" readonly>
+                                  @error ('slug')
+                                  <small class="form-hint text-danger">{{ $message }} </small>
+                                  @enderror
                                 </div>
                               </div>
                               
                               <div class="col-sm-6 col-md-6">
-                                <div class="mb-3">
-                                  <label class="form-label">T.E.U</label>
-                                  <input type="text" class="form-control" placeholder="T.E.U" value="" name="teu">
+                                <div class="col-sm-12 col-md-5">
+                                  <div class="mb-3">
+                                    <label class="form-label">Tahun Pemberian</label>
+                                    <input type="number" class="form-control" placeholder="Tahun Pemberian" name="tahun_pemberian" value="{{ old('tahun_pemberian') }}">
+                                    @error ('tahun_pemberian')
+                                    <small class="form-hint text-danger">{{ $message }} </small>
+                                    @enderror
+                                  </div>
                                 </div>
                               </div>
-                              <div class="col-sm-6 col-md-6">
+                              <div class="col-sm-12 col-md-12">
                                 <div class="mb-3">
-                                  <label class="form-label">Nomor</label>
-                                  <input type="text" class="form-control" placeholder="Nomor Produk Hukum" value="" name="nomor">
+                                  <label class="form-label">Jenis Perusahaan</label>
+                                  <input type="text" class="form-control" placeholder="Jenis Perusahaan" value="{{ old('jenis_perusahaan') }}" name="jenis_perusahaan">
+                                  @error ('jenis_perusahaan')
+                                  <small class="form-hint text-danger">{{ $message }} </small>
+                                  @enderror
                                 </div>
                               </div>
-                              <div class="col-md-6">
+                              <div class="col-sm-12 col-md-6">
                                 <div class="mb-3">
-                                  <label class="form-label">Bentuk</label>
-                                  <input type="text" class="form-control" placeholder="Bentuk Produk Hukum" value="" name="bentuk">
+                                  <label class="form-label">Nomor Surat Keputusan</label>
+                                  <input type="text" class="form-control" placeholder="Nomor Surat Keputusan" value="{{ old('no_sk') }}" name="no_sk">
+                                  @error ('no_sk')
+                                  <small class="form-hint text-danger">{{ $message }} </small>
+                                  @enderror
                                 </div>
                               </div>
-                              <div class="col-sm-6 col-md-6">
+                              <div class="col-sm-12 col-md-6">
                                 <div class="mb-3">
-                                  <label class="form-label">Bentuk Singkat</label>
-                                  <input type="text" class="form-control" placeholder="Bentuk Singkat Produk Hukum" value="" name="bentuk_singkat">
+                                  <label class="form-label">Nomor Rekomendasi</label>
+                                  <input type="text" class="form-control" placeholder="Nomor Rekomendasi" value="{{ old('no_rekomendasi') }}" name="no_rekomendasi">
+                                  @error ('no_rekomendasi')
+                                  <small class="form-hint text-danger">{{ $message }} </small>
+                                  @enderror
                                 </div>
                               </div>
                               <div class="row">
-                                <div class="col-sm-6 col-md-3">
+                                
+                                <div class="col-sm-6 col-md-12">
                                   <div class="mb-3">
-                                    <label class="form-label">Tahun</label>
-                                    <input type="number" class="form-control" placeholder="Tahun Produk Hukum" name="tahun">
+                                    <label class="form-label">Pemberian Insentif</label>
+                                    <input type="text" class="form-control" placeholder="Pemberian Insentif" name="pemberian_insentif" value="{{ old('pemberian_insentif') }}">
+                                    @error ('pemberian_insentif')
+                                    <small class="form-hint text-danger">{{ $message }} </small>
+                                    @enderror
                                   </div>
                                 </div>
-                              
-                              
-                                <div class="col-sm-6 col-md-9">
+                                <div class="col-sm-6 col-md-12">
                                   <div class="mb-3">
-                                    <label class="form-label">Tempat Penetapan</label>
-                                    <input type="text" class="form-control" placeholder="Tempat Penetapan Produk Hukum" name="tempat_penetapan">
+                                    <label class="form-label">Persentase Insentif</label>
+                                    <input type="text" class="form-control" placeholder="Persentase Insentif" name="persentase_insentif" value="{{ old('persentase_insentif') }}">
+                                    @error ('persentase_insentif')
+                                    <small class="form-hint text-danger">{{ $message }} </small>
+                                    @enderror
                                   </div>
                                 </div>
-                             
-                              
-                                <div class="col-sm-6 col-md-4">
+                                <div class="col-sm-6 col-md-12">
                                   <div class="mb-3">
-                                    <label class="form-label">Tanggal Penetapan</label>
-                                    <input type="date" class="form-control" placeholder="Masukan Tanggal Penetapan" name="tanggal_penetapan">
-                                  </div>
-                               </div>
-                                <div class="col-sm-6 col-md-4">
-                                  <div class="mb-3">
-                                    <label class="form-label">Tanggal Pegundangan</label>
-                                    <input type="date" class="form-control" placeholder="Masukan Tanggal Pengundangan" name="tanggal_pengundangan">
+                                    <label class="form-label">Bentuk Pemberian</label>
+                                    <textarea class="form-control" id="tinymce-mytextarea" rows="3" name="bentuk_pemberian"> {{ old('bentuk_pemberian') }}</textarea>
+                                    @error ('bentuk_pemberian')
+                                    <small class="form-hint text-danger">{{ $message }} </small>
+                                    @enderror
                                   </div>
                                 </div>
-                                <div class="col-sm-6 col-md-4">
-                                  <div class="mb-3">
-                                    <label class="form-label">Tanggal Berlaku</label>
-                                    <input type="date" class="form-control" placeholder="Masukan Tanggal Berlaku" name="tanggal_berlaku">
-                                  </div>
-                                </div>
-                              
-                             
-                              <div class="col-md-6">
-                                <div class="mb-3">
-                                  <label class="form-label">Tipe Dokumen</label>
-                                  <select class="form-control form-select" name="id_tipe_dokumen">
-                                    @foreach ($tipedokumenitems as $item)
-                                    <option value="{{ $item->id }}">{{ $item->nama_tipe_dokumen }}</option>
-                                    @endforeach
-                                  </select>
-                                </div>
-                              </div>
-                              <div class="col-md-6">
-                                <div class="mb-3">
-                                  <label class="form-label">Subjek</label>
-                                  <select class="form-control form-select" name="id_subjek">
-                                    @foreach ($subjekitems as $item)
-                                    <option value="{{ $item->id }}">{{ $item->nama_subjek }}</option>
-                                    @endforeach
-                                  </select>
-                                </div>
-                              </div>
-                              <div class="col-md-6">
-                                <div class="mb-3">
-                                  <label class="form-label">Status</label>
-                                  <select class="form-control form-select" name="id_status">
-                                    @foreach ($statusitems as $item)
-                                    <option value="{{ $item->id }}">{{ $item->nama_status }}</option>
-                                    @endforeach
-                                  </select>
-                                </div>
-                              </div>
-                              <div class="col-md-6">
-                                <div class="mb-3">
-                                  <label class="form-label">Bidang</label>
-                                  <select class="form-control form-select" name="id_bidang">
-                                    @foreach ($bidangitems as $item)
-                                    <option value="{{ $item->id }}">{{ $item->nama_bidang }}</option>
-                                    @endforeach
-                                  </select>
-                                </div>
-                              </div>
-                              <div class="col-sm-6 col-md-6">
-                                <div class="mb-3">
-                                  <label class="form-label">Bahasa</label>
-                                  <input type="text" class="form-control" placeholder="Masukan Bahasa" name="bahasa">
-                                </div>
-                              </div>
-                              <div class="col-sm-6 col-md-6">
-                                <div class="mb-3">
-                                  <label class="form-label">Lokasi</label>
-                                  <input type="text" class="form-control" placeholder="Masukan Lokasi" name="lokasi">
-                                </div>
-                              </div>
-                              
                               <div class="col-sm-6 col-md-12">
                                 <div class="mb-3">
                                   <label class="form-label">File</label>
-                                  <embed class="docpdf-preview mb-3 col-12 rounded" height="700" type="application/pdf"></embed>
-                                  <input type="file" class="form-control" id="docpdf" placeholder="Masukan File" name="file" onchange="priviewDocPdf()">
+                                  <div class="input-group mb-2">
+                                    <span class="input-group-text">
+                                      <input type="file" class="form-control" id="docpdf" placeholder="Masukan File" name="file" onchange="priviewDocPdf()" value="{{ old('file') }}">
+                                    </span>
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                                      Pratinjau Dokumen
+                                    </button>
+                                  </div>
+                                  @error ('file')
+                                  <small class="form-hint text-danger">{{ $message }} </small>
+                                  @enderror
                                 </div>
+                              </div>
+                                  
+                                  <div class="modal" id="exampleModal" tabindex="-1">
+                                    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+                                      <div class="modal-content">
+                                        <div class="modal-header">
+                                          <h5 class="modal-title">Pratinjau Dokumen</h5>
+                                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                          <div class="flexible-container">
+                                            <embed class="docpdf-preview" id="my-object" width="100%" type="application/pdf" height="650"></embed>
+                                          </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                          
+                                          <a href="#" class="btn btn-primary ms-auto" data-bs-dismiss="modal">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-plus" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                              <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                              <path d="M12 5l0 14"></path>
+                                              <path d="M5 12l14 0"></path>
+                                            </svg>
+                                            Tutup
+                                          </a>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                              </div>
                               </div>
                              
                             </div>
@@ -268,8 +285,13 @@
     oFReader.readAsDataURL(docpdf.files[0]);
     oFReader.onload=function(oFREvent){
       docPdfPreview.src=oFREvent.target.result;
+      
     }
    }
-
+   var object = document.getElementById("my-object");
+    object.onload = function () {
+        var objectPre = object.contentDocument.body.childNodes[0];
+        object.style.height = (objectPre.offsetHeight+20) + "px";
+    };
 </script>
 @endsection
