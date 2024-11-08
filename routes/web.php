@@ -17,8 +17,10 @@ use App\Http\Controllers\MaintenanceController;
 use App\Http\Controllers\PegawaiController;
 use App\Http\Controllers\PengaduanController;
 use App\Http\Controllers\PengawasanDashboardController;
+use App\Http\Controllers\PetaPotensiController;
 use App\Http\Controllers\ProdukHukumDashboardController;
 use App\Http\Controllers\SicantikApiController;
+use App\Http\Controllers\SicantikDashboardController;
 use App\Http\Controllers\SicantikProsesController;
 use App\Http\Controllers\SigumilangDashboardController;
 use App\Http\Controllers\UsersDashboardController;
@@ -83,7 +85,10 @@ Route::resource('/deregulasi/hukum', ProdukHukumDashboardController::class)->mid
 Route::get('/deregulasi/checkSlug', [ProdukHukumDashboardController::class, 'checkSlug'])->middleware('auth');
 Route::resource('/insentif/permohonan', InsentifController::class)->middleware('auth');
 Route::get('/insentif/checkSlug', [InsentifController::class, 'checkSlug'])->middleware('auth');
+Route::resource('/peta/potensi', PetaPotensiController::class)->middleware('auth');
+Route::get('/peta/checkSlug', [PetaPotensiController::class, 'checkSlug'])->middleware('auth');
 Route::resource('/realiasi/investasi/verifikasi', VerifikasiRealisasiInvestasiController::class)->middleware('auth');
+Route::get('/sicantik', [SicantikDashboardController::class, 'index'])->middleware('auth');
 Route::get('/createrolepermission', function(){
     try{
         Role::create(['name' => 'administrator']);

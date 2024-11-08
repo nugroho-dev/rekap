@@ -11,25 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('bentuk_insentif', function (Blueprint $table) {
-            $table->id();
-            $table->text('bentuk_pemberian');
-            $table->char('slug');
-            $table->boolean('del');
-            $table->timestamps();
-        });
+        
         Schema::create('insentif', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('id_bentuk_pemberian')->nullable();
-            $table->timestamps();
             $table->char('tahun_pemberian');
             $table->text('penerima');
+            $table->char('slug');
             $table->text('jenis_perusahaan');
             $table->text('no_sk');
             $table->text('no_rekomendasi');
+            $table->text('bentuk_pemberian');
             $table->text('pemberian_insentif');
-            $table->integer('persentase_insentif');
-            $table->foreign('id_bentuk_pemberian')->references('id')->on('bentuk_insentif');
+            $table->text('persentase_insentif');
+            $table->char('file');
+            $table->boolean('del');
+            $table->timestamps();
         });
         
     }

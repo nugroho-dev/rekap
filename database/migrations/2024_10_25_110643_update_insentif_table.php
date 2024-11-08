@@ -12,8 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('insentif', function (Blueprint $table) {
-            $table->char('file');
-            $table->boolean('del');
+            
         });
     }
 

@@ -25,7 +25,7 @@ class InsentifController extends Controller
     {
         $judul = 'Data Insentif';
         $nama=auth()->user()->pegawai->nama;
-        ;
+        
         return view('admin.insentif.permohonan.create',compact('judul','nama'));
     }
 
@@ -41,11 +41,9 @@ class InsentifController extends Controller
             'jenis_perusahaan' => 'required', 
             'no_sk' => 'required',
             'no_rekomendasi' => 'required',
-            'bentuk_singkat' => 'required',
-            'tahun_pemberian' => 'required',
+            'bentuk_pemberian' => 'required',
             'pemberian_insentif' => 'required',
             'persentase_insentif' => 'required',
-            'bentuk_pemberian' => 'required',
             'file' => 'file|mimes:pdf|required'
         ]);
         $validatedData['del'] = 0;

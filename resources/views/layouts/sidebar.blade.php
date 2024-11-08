@@ -155,16 +155,19 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chart-histogram" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 3v18h18" /><path d="M20 18v3" /><path d="M16 16v5" /><path d="M12 13v8" /><path d="M8 16v5" /><path d="M3 11c6 0 5 -5 9 -5s3 5 9 5" /></svg>
                   </span>
                   <span class="nav-link-title">
-                    Realisasi Investasi
+                   Investasi
                   </span>
                 </a>
                 <div class="dropdown-menu close">
                   <div class="dropdown-menu-columns">
                       <a class="dropdown-item" href="{{ url('/realiasi/investasi/verifikasi') }}">
-                        Realisasi Investasi
+                        Data Proyek
                       </a>
                        <a class="dropdown-item" href="{{ url('/maintenance') }}">
-                        Laporan
+                        Realisasi Investasi (LKPM)
+                      </a>
+                      <a class="dropdown-item" href="{{ url('/pengawasan/sigumilang') }}">
+                        SiGumilang
                       </a>
                   </div>
                 </div>
@@ -181,13 +184,7 @@
                 <div class="dropdown-menu close">
                   <div class="dropdown-menu-columns">
                       <a class="dropdown-item" href="{{ url('/maintenance') }}">
-                        PMA & PMDN
-                      </a>
-                      <a class="dropdown-item" href="{{ url('/maintenance') }}">
                         Investor
-                      </a>
-                      <a class="dropdown-item" href="{{ url('/maintenance') }}">
-                        Laporan
                       </a>
                   </div>
                 </div>
@@ -206,9 +203,6 @@
                       <a class="dropdown-item" href="{{ url('/maintenance') }}">
                         Perizinan Berusaha
                       </a>
-                      <a class="dropdown-item" href="{{ url('/maintenance') }}">
-                        Laporan
-                      </a>
                   </div>
                 </div>
               </li>
@@ -218,16 +212,22 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-info" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M11 14h1v4h1" /><path d="M12 11h.01" /></svg>
                   </span>
                   <span class="nav-link-title">
-                    Non Perizinan
+                    Non Berusaha
                   </span>
                 </a>
                 <div class="dropdown-menu close">
                   <div class="dropdown-menu-columns">
-                      <a class="dropdown-item" href="{{ url('/maintenance') }}">
-                        Non Perzinan
+                      <a class="dropdown-item" href="{{ url('/sicantik') }}">
+                        SiCantik
                       </a>
                       <a class="dropdown-item" href="{{ url('/maintenance') }}">
-                        Laporan
+                        Simpel
+                      </a>
+                      <a class="dropdown-item" href="{{ url('/maintenance') }}">
+                        SimBG
+                      </a>
+                      <a class="dropdown-item" href="{{ url('/maintenance') }}">
+                        MPP Digital
                       </a>
                   </div>
                 </div>
@@ -249,9 +249,6 @@
                       <a class="dropdown-item" href="{{ url('/maintenance') }}">
                         Komitmen
                       </a>
-                      <a class="dropdown-item" href="{{ url('/maintenance') }}">
-                        Laporan
-                      </a>
                   </div>
                 </div>
               </li>
@@ -268,12 +265,6 @@
                   <div class="dropdown-menu-columns">
                       <a class="dropdown-item" href="{{ url('/pengaduan/pengaduan') }}">
                         pengaduan
-                      </a>
-                      <a class="dropdown-item" href="{{ url('/maintenance') }}">
-                        Laporan Tindak lanjut
-                      </a>
-                      <a class="dropdown-item" href="{{ url('/maintenance') }}">
-                        Laporan
                       </a>
                   </div>
                 </div>
@@ -295,14 +286,9 @@
                         Penetapan 
                       </a>
                       <a class="dropdown-item" href="{{ url('/maintenance') }}">
-                        SOP
-                      </a>
-                      <a class="dropdown-item" href="{{ url('/maintenance') }}">
                         Evaluasi
                       </a>
-                      <a class="dropdown-item" href="{{ url('/maintenance') }}">
-                        Laporan
-                      </a>
+                     
                   </div>
                 </div>
               </li>
@@ -320,9 +306,7 @@
                       <a class="dropdown-item" href="{{ url('/deregulasi/hukum') }}">
                         Produk Hukum
                       </a>
-                      <a class="dropdown-item" href="{{ url('/maintenance') }}">
-                        Laporan
-                      </a>
+                      
                   </div>
                 </div>
               </li>
@@ -337,12 +321,10 @@
                 </a>
                 <div class="dropdown-menu close">
                   <div class="dropdown-menu-columns">
-                      <a class="dropdown-item" href="{{ url('/maintenance') }}">
+                      <a class="dropdown-item" href="{{ url('/peta/potensi') }}">
                         Peta Potensi
                       </a>
-                       <a class="dropdown-item" href="{{ url('/maintenance') }}">
-                        Laporan
-                      </a>
+                       
                   </div>
                 </div>
               </li>
@@ -366,12 +348,7 @@
                       <a class="dropdown-item" href="{{ url('/maintenance') }}">
                         Business Meeting
                       </a>
-                      <a class="dropdown-item" href="{{ url('/maintenance') }}">
-                        1 on 1 Meeting
-                      </a>
-                      <a class="dropdown-item" href="{{ url('/maintenance') }}">
-                        Laporan
-                      </a>
+                     
                   </div>
                 </div>
               </li>
@@ -389,11 +366,9 @@
                       <a class="dropdown-item" href="{{ url('/maintenance') }}">
                         BAP Pengawasan
                       </a>
-                      <a class="dropdown-item" href="{{ url('/pengawasan/sigumilang') }}">
-                        SiGumilang
-                      </a>
+                     
                       <a class="dropdown-item" href="{{ url('/maintenance') }}">
-                        Laporan
+                        Laporan Pengawasan
                       </a>
                   </div>
                 </div>
@@ -410,10 +385,10 @@
                 <div class="dropdown-menu close">
                   <div class="dropdown-menu-columns">
                       <a class="dropdown-item" href="{{ url('/maintenance') }}">
-                       Pembinaan
+                       Bimbingan Teknis
                       </a>
                        <a class="dropdown-item" href="{{ url('/maintenance') }}">
-                       Laporan
+                       Fasilitasi Permasalahan
                       </a>
                   </div>
                 </div>
