@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\ApiCekSicantikController;
 use App\Http\Controllers\Api\TteController;
+use App\Http\Controllers\DashboardBerusahaController;
 use App\Models\User;
 use PhpParser\Node\Stmt\TryCatch;
 use Spatie\Permission\Models\Role;
@@ -89,6 +90,10 @@ Route::resource('/peta/potensi', PetaPotensiController::class)->middleware('auth
 Route::get('/peta/checkSlug', [PetaPotensiController::class, 'checkSlug'])->middleware('auth');
 Route::resource('/realiasi/investasi/verifikasi', VerifikasiRealisasiInvestasiController::class)->middleware('auth');
 Route::get('/sicantik', [SicantikDashboardController::class, 'index'])->middleware('auth');
+Route::get('/berusaha', [DashboardBerusahaController::class, 'index'])->middleware('auth');
+Route::post('/berusaha', [DashboardBerusahaController::class, 'index'])->middleware('auth');
+Route::post('/berusaha/import_excel', [DashboardBerusahaController::class, 'import_excel'])->middleware('auth');
+Route::get('/berusaha/statistik', [DashboardBerusahaController::class, 'statistik'])->middleware('auth');
 Route::get('/createrolepermission', function(){
     try{
         Role::create(['name' => 'administrator']);

@@ -21,6 +21,7 @@
     <link href="{{ asset('tabler/dist/css/tabler-payments.min.css?1684106062') }}" rel="stylesheet"/>
     <link href="{{ asset('tabler/dist/css/tabler-vendors.min.css?1684106062') }}" rel="stylesheet"/>
     <link href="{{ asset('tabler/dist/css/demo.min.css?1684106062') }}" rel="stylesheet"/>
+	<link rel="stylesheet" href="{{ asset('sweetalert2/css/sweetalert2.css') }}" />
     <style>
       @import url('https://rsms.me/inter/inter.css');
       :root {
@@ -31,7 +32,7 @@
       }
     </style>
   </head>
-  <body >
+  <body class="layout-fluid">
     <script src="{{ asset('tabler/dist/js/demo-theme.min.js?1684106062') }}"></script>
     <div class="page">
       <!-- Sidebar -->
@@ -156,10 +157,60 @@
 	<script src="{{ asset('tabler/dist/libs/litepicker/dist/litepicker.js?1684106062') }}" defer=""></script>
 	<script src="{{ asset('tabler/dist/libs/tom-select/dist/js/tom-select.base.min.js?1684106062') }}" defer></script>
 	<script src="{{ asset('tabler/dist/libs/tinymce/tinymce.min.js?1684106062') }}" defer></script>
-	
+	<script src="{{ asset('sweetalert2/js/sweetalert2.all.js') }}"></script>
     <!-- Tabler Core -->
     <script src="{{ asset('tabler/dist/js/tabler.min.js?1684106062') }}" defer></script>
     <script src="{{ asset('tabler/dist/js/demo.min.js?1684106062') }}" defer></script>
+	@if(session()->has('success'))
+    <script>
+        Swal.fire({
+                title: 'Berhasil',
+                text: '{{ session('success') }}',
+                icon: 'success',
+                confirmButtonText: 'Tutup',
+                showConfirmButton: true,
+                timer: 6500
+        })
+    </script> 
+	@endif
+	@if(session()->has('error'))
+    <script>
+        Swal.fire({
+                title: 'Kesalahan Input Tanggal',
+                text: '{{ session('error') }}',
+                icon: 'error',
+                confirmButtonText: 'Tutup',
+                showConfirmButton: true,
+                timer: 6500
+        })
+    </script>
+     @endif
+	 <script>
+		// @formatter:off
+		document.addEventListener("DOMContentLoaded", function () {
+			var el;
+			window.TomSelect && (new TomSelect(el = document.getElementById('select-tags'), {
+				copyClassesToDropdown: false,
+				dropdownParent: 'body',
+				controlInput: '<input>',
+				render:{
+					item: function(data,escape) {
+						if( data.customProperties ){
+							return '<div><span class="dropdown-item-indicator">' + data.customProperties + '</span>' + escape(data.text) + '</div>';
+						}
+						return '<div>' + escape(data.text) + '</div>';
+					},
+					option: function(data,escape){
+						if( data.customProperties ){
+							return '<div><span class="dropdown-item-indicator">' + data.customProperties + '</span>' + escape(data.text) + '</div>';
+						}
+						return '<div>' + escape(data.text) + '</div>';
+					},
+				},
+			}));
+		});
+		// @formatter:on
+	  </script>
 	<script>
 		// @formatter:off
 		document.addEventListener("DOMContentLoaded", function () {
@@ -878,6 +929,6 @@
 		});
 		// @formatter:on
 	  </script>
-	 @include('admin.berusaha.datachart') 
+	 
   </body>
 </html>
