@@ -62,6 +62,7 @@ class DashboardBerusahaController extends Controller
 		}
 		$perPage = $request->input('perPage', 50);
 		$items=$query->paginate($perPage);
+		$items->withPath(url('/berusaha'));
 		return view('admin.berusaha.index',compact('judul','items','perPage','search','date_start','date_end','month','year'));
 	}
  
