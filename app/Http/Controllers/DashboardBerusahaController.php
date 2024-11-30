@@ -82,9 +82,9 @@ class DashboardBerusahaController extends Controller
  
 		// membuat nama file unik
 		$nama_file = rand().$file->getClientOriginalName();
- 
+
 		// upload ke folder file_siswa di dalam folder public
-		$file->move('file_berusaha',$nama_file);
+		$file->move(public_path('file_berusaha', $nama_file));
  
 		// import data
 		Excel::import(new BerusahaImport, public_path('/file_berusaha/'.$nama_file));
