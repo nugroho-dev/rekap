@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use App\Models\Berusaha;
 use App\Imports\BerusahaImport;
@@ -85,8 +84,7 @@ class DashboardBerusahaController extends Controller
 		$nama_file = rand().$file->getClientOriginalName();
 
 		// upload ke folder file_siswa di dalam folder public
-		$path = Storage::disk('file_berusaha')->putFileAs('', $file, $nama_file);
-		
+		$file->move(base_path('public/file_berusaha'), $nama_file);
 
 		// import data
 		Excel::import(new BerusahaImport, public_path('/file_berusaha/' . $nama_file));
