@@ -87,7 +87,7 @@ class DashboardBerusahaController extends Controller
 		$file->move(base_path('storage/app/public/file_berusaha'), $nama_file);
 
 		// import data
-		Excel::import(new BerusahaImport, base_path('storage/app/public/file_berusaha' . $nama_file));
+		Excel::import(new BerusahaImport, base_path('storage/app/public/file_berusaha/' . $nama_file));
  
 		// notifikasi dengan session
 		//Session::flash('sukses','Data  Berhasil Diimport!');
