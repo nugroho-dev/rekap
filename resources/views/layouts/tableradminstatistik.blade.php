@@ -878,6 +878,6 @@
 		});
 		// @formatter:on
 	  </script>
-	
+	 @include('admin.berusaha.datachart') 
   </body>
 </html>

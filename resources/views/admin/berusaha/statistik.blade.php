@@ -1,4 +1,4 @@
-@extends('layouts.tableradmin')
+@extends('layouts.tableradminstatistik')
 @section('content')       
               
               <div class="col-sm-6 col-lg-3">
