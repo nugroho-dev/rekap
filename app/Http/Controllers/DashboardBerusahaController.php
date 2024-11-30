@@ -84,7 +84,7 @@ class DashboardBerusahaController extends Controller
 		$nama_file = rand().$file->getClientOriginalName();
 
 		// upload ke folder file_siswa di dalam folder public
-		$file->move(public_path('file_berusaha', $nama_file));
+		$file->move(base_path('file_berusaha', $nama_file));
  
 		// import data
 		Excel::import(new BerusahaImport, public_path('/file_berusaha/'.$nama_file));
