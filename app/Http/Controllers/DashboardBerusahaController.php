@@ -101,9 +101,13 @@ class DashboardBerusahaController extends Controller
 		$judul='Data Izin Berusaha';
 		$query = Berusaha::query();
 		$chartquery = "SELECT month(day_of_tgl_izin) as bulan,COUNT(*) AS jumlah_nib FROM (SELECT day_of_tgl_izin, count(nib) as s FROM berusaha GROUP BY nib) AS by_nib group by month(day_of_tgl_izin)";
+		$resikoquery = "SELECT month(day_of_tgl_izin) AS bulan, COUNT(CASE WHEN kd_resiko = 'R' THEN kd_resiko ELSE NULL END) AS R,COUNT(CASE WHEN kd_resiko = 'MR' THEN kd_resiko ELSE NULL END) AS MR,COUNT(CASE WHEN kd_resiko = 'MT' THEN kd_resiko ELSE NULL END) AS MT,COUNT(CASE WHEN kd_resiko = 'T' THEN kd_resiko ELSE NULL END) AS T,COUNT(CASE WHEN kd_resiko = '' THEN kd_resiko ELSE NULL END) AS UNCLAS FROM berusaha GROUP by month(day_of_tgl_izin)";
 		$itemsnib=$query->select(DB::raw('COUNT(*) as total'))->groupBy('nib')->get();
 		$totalPerBulan = DB::select($chartquery);
+		$resikoPerBulan = DB::select($resikoquery);
 		$totalAll = $itemsnib->count('total');
-		return view('admin.berusaha.statistik',compact('judul','totalAll','totalPerBulan'));
+		$itemsrisiko=Berusaha::select('kd_resiko',DB::raw('COUNT(*) as total'))->groupBy('kd_resiko')->orderBy('total', 'desc')->get();
+		$itemsjenisizin=Berusaha::select('uraian_jenis_perizinan',DB::raw('COUNT(*) as total'))->groupBy('uraian_jenis_perizinan')->orderBy('total', 'desc')->get();
+		return view('admin.berusaha.statistik',compact('judul','totalAll','totalPerBulan', 'itemsrisiko','itemsjenisizin','resikoPerBulan'));
 	}
 }
