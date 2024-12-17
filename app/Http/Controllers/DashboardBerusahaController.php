@@ -61,7 +61,7 @@ class DashboardBerusahaController extends Controller
 				   ->orderBy('day_of_tgl_izin', 'asc');
 		}
 		$perPage = $request->input('perPage', 50);
-		$items=$query->paginate($perPage);
+		$items=$query->orderBy('day_of_tgl_izin', 'asc')->paginate($perPage);
 		$items->withPath(url('/berusaha'));
 		return view('admin.berusaha.index',compact('judul','items','perPage','search','date_start','date_end','month','year'));
 	}

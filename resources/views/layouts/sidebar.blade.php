@@ -363,12 +363,8 @@
                 </a>
                 <div class="dropdown-menu close">
                   <div class="dropdown-menu-columns">
-                      <a class="dropdown-item" href="{{ url('/maintenance') }}">
-                        BAP Pengawasan
-                      </a>
-                     
-                      <a class="dropdown-item" href="{{ url('/maintenance') }}">
-                        Laporan Pengawasan
+                      <a class="dropdown-item" href="{{ url('/pengawasan') }}">
+                       Pengawasan
                       </a>
                   </div>
                 </div>

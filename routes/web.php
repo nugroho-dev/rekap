@@ -11,6 +11,7 @@ use App\Http\Controllers\MailController;
 use Spatie\Permission\Models\Permission;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DashboardPengawasanController;
 use App\Http\Controllers\InsentifController;
 use App\Http\Controllers\InstansiController;
 use App\Http\Controllers\KonsultasiDashboardController;
@@ -94,6 +95,12 @@ Route::get('/berusaha', [DashboardBerusahaController::class, 'index'])->middlewa
 Route::post('/berusaha', [DashboardBerusahaController::class, 'index'])->middleware('auth');
 Route::post('/berusaha/import_excel', [DashboardBerusahaController::class, 'import_excel'])->middleware('auth');
 Route::get('/berusaha/statistik', [DashboardBerusahaController::class, 'statistik'])->middleware('auth');
+Route::get('/pengawasan', [DashboardPengawasanController::class, 'index'])->middleware('auth');
+Route::post('/pengawasan', [DashboardPengawasanController::class, 'index'])->middleware('auth');
+Route::get('/pengawasan/{item:nomor_kode_proyek}', [DashboardPengawasanController::class, 'edit'])->middleware('auth');
+Route::post('/pengawasan/{item:nomor_kode_proyek}', [DashboardPengawasanController::class, 'update'])->middleware('auth');
+Route::post('/imporpengawasan/import_excel', [DashboardPengawasanController::class, 'import_excel'])->middleware('auth');
+Route::get('/pengawasan/statistik', [DashboardPengawasanController::class, 'statistik'])->middleware('auth');
 Route::get('/createrolepermission', function(){
     try{
         Role::create(['name' => 'administrator']);
