@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\ApiCekSicantikController;
 use App\Http\Controllers\Api\TteController;
 use App\Http\Controllers\DashboardBerusahaController;
+use App\Http\Controllers\DashboardBimtekController;
 use App\Models\User;
 use PhpParser\Node\Stmt\TryCatch;
 use Spatie\Permission\Models\Role;
@@ -11,6 +12,7 @@ use App\Http\Controllers\MailController;
 use Spatie\Permission\Models\Permission;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DashboardFasilitasiController;
 use App\Http\Controllers\DashboardPengawasanController;
 use App\Http\Controllers\InsentifController;
 use App\Http\Controllers\InstansiController;
@@ -101,6 +103,12 @@ Route::get('/pengawasan/{item:nomor_kode_proyek}', [DashboardPengawasanControlle
 Route::post('/pengawasan/{item:nomor_kode_proyek}', [DashboardPengawasanController::class, 'update'])->middleware('auth');
 Route::post('/imporpengawasan/import_excel', [DashboardPengawasanController::class, 'import_excel'])->middleware('auth');
 Route::get('/pengawasan/statistik', [DashboardPengawasanController::class, 'statistik'])->middleware('auth');
+Route::resource('/bimtek', DashboardBimtekController::class)->middleware('auth');
+Route::post('/bimtek/import_excel', [DashboardBimtekController::class, 'import_excel'])->middleware('auth');
+Route::post('/bimtek', [DashboardBimtekController::class, 'index'])->middleware('auth');
+Route::resource('/fasilitasi', DashboardFasilitasiController::class)->middleware('auth');
+Route::post('/fasilitasi/import_excel', [DashboardFasilitasiController::class, 'import_excel'])->middleware('auth');
+Route::post('/fasilitasi', [DashboardFasilitasiController::class, 'index'])->middleware('auth');
 Route::get('/createrolepermission', function(){
     try{
         Role::create(['name' => 'administrator']);
