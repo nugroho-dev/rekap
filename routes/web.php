@@ -13,6 +13,7 @@ use Spatie\Permission\Models\Permission;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DashboardFasilitasiController;
+use App\Http\Controllers\DashboardLoiController;
 use App\Http\Controllers\DashboardPengawasanController;
 use App\Http\Controllers\InsentifController;
 use App\Http\Controllers\InstansiController;
@@ -109,6 +110,9 @@ Route::post('/bimtek', [DashboardBimtekController::class, 'index'])->middleware(
 Route::resource('/fasilitasi', DashboardFasilitasiController::class)->middleware('auth');
 Route::post('/fasilitasi/import_excel', [DashboardFasilitasiController::class, 'import_excel'])->middleware('auth');
 Route::post('/fasilitasi', [DashboardFasilitasiController::class, 'index'])->middleware('auth');
+Route::resource('/loi', DashboardLoiController::class)->middleware('auth');
+Route::post('/loi/sort', [DashboardLoiController::class, 'index'])->middleware('auth');
+Route::get('/loi/check/checkSlug', [DashboardLoiController::class, 'checkSlug'])->middleware('auth');
 Route::get('/createrolepermission', function(){
     try{
         Role::create(['name' => 'administrator']);

@@ -339,7 +339,7 @@
                 </a>
                 <div class="dropdown-menu close">
                   <div class="dropdown-menu-columns">
-                      <a class="dropdown-item" href="{{ url('/maintenance') }}">
+                      <a class="dropdown-item" href="{{ url('/loi') }}">
                         LOI
                       </a>
                       <a class="dropdown-item" href="{{ url('/maintenance') }}">

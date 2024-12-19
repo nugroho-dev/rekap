@@ -91,8 +91,6 @@ class DashboardBimtekController extends Controller
      */
     public function show(Bimtek $bimtek)
     {
-        
-
         if ($bimtek) {
             return response()->json($bimtek);
         }
