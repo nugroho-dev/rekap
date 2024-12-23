@@ -65,7 +65,7 @@ class DashboardLoiController extends Controller
 				   ->orderBy('tanggal', 'asc');
 		}
 		$perPage = $request->input('perPage', 50);
-		$items=$query->orderBy('tanggal', 'asc')->paginate($perPage);
+		$items=$query->where('del', 0)->orderBy('tanggal', 'asc')->paginate($perPage);
 		$items->withPath(url('/loi'));
 		return view('admin.promosi.Loi.index',compact('judul','items','perPage','search','date_start','date_end','month','year'));
     }
@@ -176,7 +176,9 @@ class DashboardLoiController extends Controller
      */
     public function destroy(Loi $loi)
     {
-        //
+        $validatedData['del'] = 1;
+        Loi::where('id', $loi->id)->update($validatedData);
+        return redirect('/loi')->with('success', 'LOI Berhasil di hapus!');
     }
     public function checkSlug(Request $request)
     {

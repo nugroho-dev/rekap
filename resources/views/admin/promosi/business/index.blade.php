@@ -50,10 +50,10 @@
                           <span class="d-none d-sm-inline">
                           
                           </span>
-                          <a href="#" class="btn btn-primary d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#modal-team">
+                          <a href="{{ url('/bisnis/create') }}" class="btn btn-primary d-none d-sm-inline-block" >
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-table-import"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 21h-7a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v8" /><path d="M3 10h18" /><path d="M10 3v18" /><path d="M19 22v-6" /><path d="M22 19l-3 -3l-3 3" /></svg>
-                            Import Data
+                            Tambah Data
                           </a>
                           <a href="#" class="btn btn-primary d-sm-none btn-icon" data-bs-toggle="modal" data-bs-target="#modal-team">
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
@@ -68,7 +68,7 @@
               <div class="col-12">
                 <div class="card">
                   <div class="card-header">
-                    <h3 class="card-title">Data Bimtek OSS RBA & LKPM @if($date_start&&$date_end) : {{ Carbon\Carbon::parse($date_start)->translatedFormat('d F Y') }} Sampai Dengan {{ Carbon\Carbon::parse($date_end)->translatedFormat('d F Y') }}@endif @if($month) Bulan {{ Carbon\Carbon::createFromDate(null,$month,1)->translatedFormat('F') }}  @endif @if($year) Tahun {{ $year }}  @endif </h3>
+                    <h3 class="card-title">Data Business Meeting @if($date_start&&$date_end) : {{ Carbon\Carbon::parse($date_start)->translatedFormat('d F Y') }} Sampai Dengan {{ Carbon\Carbon::parse($date_end)->translatedFormat('d F Y') }}@endif @if($month) Bulan {{ Carbon\Carbon::createFromDate(null,$month,1)->translatedFormat('F') }}  @endif @if($year) Tahun {{ $year }}  @endif </h3>
                   </div>
                   <div class="card-body border-bottom py-3">
                     <div class="d-flex">
@@ -76,7 +76,7 @@
                         Menampilkan
                         <div class="mx-2 d-inline-block">
                           
-                          <form action="{{ url('/bimtek')}}" method="POST">
+                          <form action="{{ url('/bisnissort')}}" method="POST">
                             @csrf
                             <input type="hidden" name="page" value="{{ request()->get('page', 1) }}">
                             <select name="perPage" id="myselect" onchange="this.form.submit()" class="form-control form-control-sm">
@@ -93,7 +93,7 @@
                       <div class="ms-auto text-muted">
                         Cari:
                         <div class="ms-2 d-inline-block ">
-                          <form action="{{ url('/bimtek')}}" method="POST">
+                          <form action="{{ url('/bisnissort')}}" method="POST">
                             @csrf
                             <div class="input-group">
                               <input type="text" name="search" class="form-control form-control-sm" aria-label="cari" value="{{ old('search') }}">
@@ -111,13 +111,10 @@
                       <thead class="text-center">
                         <tr>
                           <th class="w-1" >No.</th>
-                          <th class="w-1" >Tanggal Pelaksanaan</th>
-                          <th >Jumlah Peserta</th>
-                          <th >Acara</th>
+                          <th class="w-1" >Business Meeting</th>
                           <th >Tempat</th>
-                          <th >Keterangan</th>
-                          <th >Laporan</th>
-                          
+                          <th >Tanggal Pelaksanaan</th>
+                          <th >*</th>
                         </tr>
                       </thead>
                       <tbody class="font-monospace fs-5" >
@@ -132,21 +129,23 @@
                         @endphp
                         <tr>
                           <td>{{ $loop->iteration + $items->firstItem()-1 }}</td>
-                          <td>{{ Carbon\Carbon::parse($item->tanggal_pelaksanaan)->translatedFormat('d F Y') }} </td>
-                          <td>{{ $item->jumlah_peserta }} {{ $item->satuan_peserta }}</td>
-                          <td class="text-wrap">{{ $item->acara }}</td>
-                          <td>{{ $item->tempat }}</td>
-                          <td>{{ $item->keterangan }}</td>
+                          <td>{{ $item->nama_bisnis }}</td>
+                          <td class="text-center">{{ $item->tempat }}</td>
+                          <td class="text-center">{{ Carbon\Carbon::parse($item->tanggal)->translatedFormat('d F Y') }}</td>
+                          
                           <td class="text-center">
                             <span class="dropdown">
                               
                               <button class="btn dropdown-toggle align-text-top" data-bs-boundary="viewport" data-bs-toggle="dropdown">Action</button>
                               <div class="dropdown-menu dropdown-menu-end">
-                                <a class="dropdown-item" href="{{ url('/bimtek/'.$item->id.'/edit')}}">
+                                <a class="dropdown-item" href="{{ url('/business/'.$item->slug.'/edit')}}" >
                                   Edit
                                 </a>
-                                <button class="dropdown-item openModal" data-id="{{ $item->id }}">
+                                <button class="dropdown-item openModal" data-id="{{ $item->slug }}">
                                   Buka Laporan
+                                </button>
+                                <button class="dropdown-item openModalDel" data-id="{{ $item->slug }}">
+                                  Hapus
                                 </button>
                               </div>
                             </span>
@@ -178,7 +177,7 @@
               $currentYear = date('Y'); // Tahun sekarang
               @endphp
               <div class="modal  fade" id="modal-team" tabindex="-1" role="dialog" aria-hidden="true">
-                <form method="post" action="{{ url('/bimtek/import_excel')}}" enctype="multipart/form-data">
+                <form method="post" action="{{ url('/bisnis/import_excel')}}" enctype="multipart/form-data">
                   {{ csrf_field() }}
                 <div class="modal-dialog modal-dialog-centered" role="document">
                   <div class="modal-content">
@@ -226,7 +225,7 @@
                             <div class="tab-content">
                               <div class="tab-pane fade active show" id="tabs-home-8" role="tabpanel">
                                 <h4>Pilih Tanggal :</h4>
-                                <form method="post" action="{{ url('/bimtek')}}" enctype="multipart/form-data">
+                                <form method="post" action="{{ url('/bisnissort')}}" enctype="multipart/form-data">
                                   @csrf
                                 <div class="input-group mb-2">
                                   <input type="date" class="form-control" name="date_start" autocomplete="off">
@@ -241,7 +240,7 @@
                               <div class="tab-pane fade" id="tabs-profile-8" role="tabpanel">
                                 <h4>Pilih Bulan :</h4>
                                 <div>
-                                  <form method="post" action="{{ url('/bimtek')}}" enctype="multipart/form-data">
+                                  <form method="post" action="{{ url('/bisnissort')}}" enctype="multipart/form-data">
                                     @csrf
                                   <div class="row g-2">
                                     <div class="col-4">
@@ -270,7 +269,7 @@
                               <div class="tab-pane fade" id="tabs-activity-8" role="tabpanel">
                                 <h4>Pilih Tahun :</h4>
                                 <div>
-                                  <form method="post" action="{{ url('/bimtek')}}" enctype="multipart/form-data">
+                                  <form method="post" action="{{ url('/bisnissort')}}" enctype="multipart/form-data">
                                     @csrf
                                   <div class="row g-2">
                                     <div class="col-4">
@@ -326,6 +325,42 @@
                 </div>
               </div>
 
+              <div class="modal fade" id="userModalDel" tabindex="-1" style="display: none;" aria-hidden="true">
+                <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+                  <div class="modal-content">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="modal-status bg-danger"></div>
+                    <div class="modal-body text-center py-4">
+                      <!-- Download SVG icon from http://tabler-icons.io/i/alert-triangle -->
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon mb-2 text-danger icon-lg"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M12 9v4"></path><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z"></path><path d="M12 16h.01"></path></svg>
+                      <h3>Anda yakin ?</h3>
+                      <div class="text-secondary">Hapus Data Business Meeting <span id="userName"></span> !</div>
+                    </div>
+                    <div class="modal-footer">
+                      <div class="w-100">
+                        <div class="row">
+                          <div class="col"><a href="#" class="btn w-100" data-bs-dismiss="modal">
+                              Batal
+                            </a>
+                          </div>
+                          <div class="col">
+                          <form method="post" id="delLoi" action="">
+                            @method('delete')
+                            @csrf
+                          
+                            <button type="submit" class="btn btn-danger w-100">
+                              Hapus
+                            </button>
+                          
+                          </form>
+                        </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div class="modal fade" id="userModalWar" tabindex="-1" style="display: none;" aria-hidden="true">
                 <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
                   <div class="modal-content">
@@ -336,7 +371,7 @@
                       <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-alert-circle icon mb-2 text-warning icon-lg"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>
                       <!--<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon mb-2 text-danger icon-lg"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M12 9v4"></path><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z"></path><path d="M12 16h.01"></path></svg>-->
                       <h3>Peringatan</h3>
-                      <div class="text-secondary">Dokumen Laporan <span id="userName"></span> tidak tersedia !</div>
+                      <div class="text-secondary">Dokumen Laporan Business Meeting <span id="userName"></span> tidak tersedia !</div>
                     </div>
                     <div class="modal-footer">
                       <div class="w-100">
@@ -359,21 +394,42 @@
     $(document).ready(function() {
         $('.openModal').on('click', function() {
             const userId = $(this).data('id');
+          
             $.ajax({
-                url: `{{ url('/bimtek/')}}/${userId}`, // Endpoint resource controller
+                url: `{{ url('/business')}}/${userId}`, // Endpoint resource controller
                 type: 'GET',
                 success: function(data) {
-                  const dataSlug = data.id;
+                  const dataSlug = data.slug;
                   if (data.file) {
                         const fullUrl = data.file;
                         const relativePath = fullUrl.split('public/')[1];
                         $('#pdfViewer').attr('src', `storage/${relativePath}`);
                         $('#userModal').modal('show');
                     } else {
-                      $('#editLoi').attr('href', `bimtek/${dataSlug}/edit`);
-                      $('#userName').text(data.acara);
+                      $('#editLoi').attr('href', `business/${dataSlug}/edit`);
+                      $('#userName').text(data.nama_expo);
                       $('#userModalWar').modal('show');
                     }
+                },
+                error: function() {
+                    alert('Unable to fetch user details.');
+                }
+            });
+        });
+    });
+    $(document).ready(function() {
+        $('.openModalDel').on('click', function() {
+            const userId = $(this).data('id');
+            $.ajax({
+                url: `{{ url('/business')}}/${userId}`, // Endpoint resource controller
+                type: 'GET',
+                success: function(data) {
+                  const dataSlug = data.slug;
+                  if (data.slug) {
+                        $('#delLoi').attr('action', `/business/${dataSlug}`);
+                        $('#userName').text(data.nama_expo);
+                        $('#userModalDel').modal('show');
+                    } 
                 },
                 error: function() {
                     alert('Unable to fetch user details.');

@@ -64,7 +64,7 @@ class DashboardFasilitasiController extends Controller
 				   ->orderBy('tanggal', 'asc');
 		}
 		$perPage = $request->input('perPage', 50);
-		$items=$query->orderBy('tanggal', 'asc')->paginate($perPage);
+		$items=$query->where('del', 0)->orderBy('tanggal', 'asc')->paginate($perPage);
 		$items->withPath(url('/fasilitasi'));
 		return view('admin.pembinaan.fasilitasi.index',compact('judul','items','perPage','search','date_start','date_end','month','year'));
     }

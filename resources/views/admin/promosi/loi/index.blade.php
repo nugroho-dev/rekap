@@ -76,7 +76,7 @@
                         Menampilkan
                         <div class="mx-2 d-inline-block">
                           
-                          <form action="{{ url('/loi/sort')}}" method="POST">
+                          <form action="{{ url('/loisort')}}" method="POST">
                             @csrf
                             <input type="hidden" name="page" value="{{ request()->get('page', 1) }}">
                             <select name="perPage" id="myselect" onchange="this.form.submit()" class="form-control form-control-sm">
@@ -93,7 +93,7 @@
                       <div class="ms-auto text-muted">
                         Cari:
                         <div class="ms-2 d-inline-block ">
-                          <form action="{{ url('/loi/sort')}}" method="POST">
+                          <form action="{{ url('/loisort')}}" method="POST">
                             @csrf
                             <div class="input-group">
                               <input type="text" name="search" class="form-control form-control-sm" aria-label="cari" value="{{ old('search') }}">
@@ -154,10 +154,10 @@
                           <td>US$. @currency($item->nilai_investasi_dolar)<br>Rp. @currency($item->nilai_investasi_rupiah)</td>
                           <td>Tenaga Kerja Indonesia: {{ $item->tki }}<br>Tenaga Kerja Asing: {{ $item->tka }}</td>
                           <td>{{ $item->deskripsi }}</td>
-                          <td>
-                            <div class="input-group">
+                          <td class="text-center">
+                            <span class="dropdown">
                               
-                              <button data-bs-toggle="dropdown" type="button" class="btn dropdown-toggle dropdown-toggle-split">Action_</button>
+                              <button class="btn dropdown-toggle align-text-top" data-bs-boundary="viewport" data-bs-toggle="dropdown">Action </button>
                               <div class="dropdown-menu dropdown-menu-end">
                                 <a class="dropdown-item" href="{{ url('/loi/'.$item->slug.'/edit')}}" >
                                   Edit
@@ -165,8 +165,11 @@
                                 <button class="dropdown-item openModal" data-id="{{ $item->slug }}">
                                   Buka LOI
                                 </button>
+                                <button class="dropdown-item openModalDel" data-id="{{ $item->slug }}">
+                                  Hapus
+                                </button>
                               </div>
-                            </div>
+                            </span>
                            
                         </tr>
                         @endforeach
@@ -243,7 +246,7 @@
                             <div class="tab-content">
                               <div class="tab-pane fade active show" id="tabs-home-8" role="tabpanel">
                                 <h4>Pilih Tanggal :</h4>
-                                <form method="post" action="{{ url('/loi/sort')}}" enctype="multipart/form-data">
+                                <form method="post" action="{{ url('/loisort')}}" enctype="multipart/form-data">
                                   @csrf
                                 <div class="input-group mb-2">
                                   <input type="date" class="form-control" name="date_start" autocomplete="off">
@@ -258,7 +261,7 @@
                               <div class="tab-pane fade" id="tabs-profile-8" role="tabpanel">
                                 <h4>Pilih Bulan :</h4>
                                 <div>
-                                  <form method="post" action="{{ url('/loi/sort')}}" enctype="multipart/form-data">
+                                  <form method="post" action="{{ url('/loisort')}}" enctype="multipart/form-data">
                                     @csrf
                                   <div class="row g-2">
                                     <div class="col-4">
@@ -287,7 +290,7 @@
                               <div class="tab-pane fade" id="tabs-activity-8" role="tabpanel">
                                 <h4>Pilih Tahun :</h4>
                                 <div>
-                                  <form method="post" action="{{ url('/loi/sort')}}" enctype="multipart/form-data">
+                                  <form method="post" action="{{ url('/loisort')}}" enctype="multipart/form-data">
                                     @csrf
                                   <div class="row g-2">
                                     <div class="col-4">
@@ -316,7 +319,7 @@
                 </div>
               </div>
 
-              <div class="modal" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+              <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
                   <div class="modal-content">
                     <div class="modal-header">
@@ -343,6 +346,70 @@
                 </div>
               </div>
 
+              <div class="modal fade" id="userModalDel" tabindex="-1" style="display: none;" aria-hidden="true">
+                <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+                  <div class="modal-content">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="modal-status bg-danger"></div>
+                    <div class="modal-body text-center py-4">
+                      <!-- Download SVG icon from http://tabler-icons.io/i/alert-triangle -->
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon mb-2 text-danger icon-lg"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M12 9v4"></path><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z"></path><path d="M12 16h.01"></path></svg>
+                      <h3>Anda yakin ?</h3>
+                      <div class="text-secondary">Hapus Data LOI <span id="userName"></span> !</div>
+                    </div>
+                    <div class="modal-footer">
+                      <div class="w-100">
+                        <div class="row">
+                          <div class="col"><a href="#" class="btn w-100" data-bs-dismiss="modal">
+                              Batal
+                            </a>
+                          </div>
+                          <div class="col">
+                          <form method="post" id="delLoi" action="">
+                            @method('delete')
+                            @csrf
+                          
+                            <button type="submit" class="btn btn-danger w-100">
+                              Hapus
+                            </button>
+                          
+                          </form>
+                        </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal fade" id="userModalWar" tabindex="-1" style="display: none;" aria-hidden="true">
+                <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+                  <div class="modal-content">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="modal-status bg-warning"></div>
+                    <div class="modal-body text-center py-4">
+                      <!-- Download SVG icon from http://tabler-icons.io/i/alert-triangle -->
+                      <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-alert-circle icon mb-2 text-warning icon-lg"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>
+                      <!--<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon mb-2 text-danger icon-lg"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M12 9v4"></path><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z"></path><path d="M12 16h.01"></path></svg>-->
+                      <h3>Peringatan</h3>
+                      <div class="text-secondary">Dokumen Loi <span id="userName"></span> tidak tersedia !</div>
+                    </div>
+                    <div class="modal-footer">
+                      <div class="w-100">
+                        <div class="row">
+                          <div class="col"><a href="#" class="btn w-100" data-bs-dismiss="modal">
+                              Cancel
+                            </a></div>
+                          <div class="col"><a id="editLoi" href="" class="btn btn-warning w-100">
+                              Upload Dokumen
+                            </a></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
@@ -352,14 +419,46 @@
                 url: `{{ url('/loi/')}}/${userId}`, // Endpoint resource controller
                 type: 'GET',
                 success: function(data) {
+                const dataSlug = data.slug;
                   if (data.file) {
                         const fullUrl = data.file;
                         const relativePath = fullUrl.split('public/')[1];
                         $('#pdfViewer').attr('src', `storage/${relativePath}`);
                         $('#userModal').modal('show');
                     } else {
-                        alert('No PDF available for this user.');
+                      $('#editLoi').attr('href', `loi/${dataSlug}/edit`);
+                      $('#userName').text(data.nama_perusahaan);
+                      $('#userModalWar').modal('show');
                     }
+                },
+                error: function() {
+                    alert('Unable to fetch user details.');
+                }
+            });
+        });
+    });
+    //const linkElement = document.getElementById("editLoi");
+    //const button = document.getElementById("editLoi");
+    //button.addEventListener("click", () => {
+            // Ambil URL dari atribut href elemen <a>
+            //const targetURL = linkElement.href;
+
+            // Mengarahkan pengguna ke URL
+            //window.location.href = targetURL;
+    //});
+    $(document).ready(function() {
+        $('.openModalDel').on('click', function() {
+            const userId = $(this).data('id');
+            $.ajax({
+                url: `{{ url('/loi/')}}/${userId}`, // Endpoint resource controller
+                type: 'GET',
+                success: function(data) {
+                  const dataSlug = data.slug;
+                  if (data.slug) {
+                        $('#delLoi').attr('action', `loi/${dataSlug}`);
+                        $('#userName').text(data.nama_perusahaan);
+                        $('#userModalDel').modal('show');
+                    } 
                 },
                 error: function() {
                     alert('Unable to fetch user details.');

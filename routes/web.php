@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\ApiCekSicantikController;
 use App\Http\Controllers\Api\TteController;
 use App\Http\Controllers\DashboardBerusahaController;
 use App\Http\Controllers\DashboardBimtekController;
+use App\Http\Controllers\DashboardBusinessController;
 use App\Models\User;
 use PhpParser\Node\Stmt\TryCatch;
 use Spatie\Permission\Models\Role;
@@ -12,6 +13,7 @@ use App\Http\Controllers\MailController;
 use Spatie\Permission\Models\Permission;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DashboardExpoController;
 use App\Http\Controllers\DashboardFasilitasiController;
 use App\Http\Controllers\DashboardLoiController;
 use App\Http\Controllers\DashboardPengawasanController;
@@ -111,8 +113,14 @@ Route::resource('/fasilitasi', DashboardFasilitasiController::class)->middleware
 Route::post('/fasilitasi/import_excel', [DashboardFasilitasiController::class, 'import_excel'])->middleware('auth');
 Route::post('/fasilitasi', [DashboardFasilitasiController::class, 'index'])->middleware('auth');
 Route::resource('/loi', DashboardLoiController::class)->middleware('auth');
-Route::post('/loi/sort', [DashboardLoiController::class, 'index'])->middleware('auth');
+Route::post('/loisort', [DashboardLoiController::class, 'index'])->middleware('auth');
 Route::get('/loi/check/checkSlug', [DashboardLoiController::class, 'checkSlug'])->middleware('auth');
+Route::resource('/expo', DashboardExpoController::class)->middleware('auth');
+Route::post('/exposort', [DashboardExpoController::class, 'index'])->middleware('auth');
+Route::get('/expo/check/checkSlug', [DashboardExpoController::class, 'checkSlug'])->middleware('auth');
+Route::resource('/business', DashboardBusinessController::class)->middleware('auth');
+Route::post('/bisnissort', [DashboardBusinessController::class, 'index'])->middleware('auth');
+Route::get('/bisnis/check/checkSlug', [DashboardBusinessController::class, 'checkSlug'])->middleware('auth');
 Route::get('/createrolepermission', function(){
     try{
         Role::create(['name' => 'administrator']);

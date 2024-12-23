@@ -342,10 +342,10 @@
                       <a class="dropdown-item" href="{{ url('/loi') }}">
                         LOI
                       </a>
-                      <a class="dropdown-item" href="{{ url('/maintenance') }}">
+                      <a class="dropdown-item" href="{{ url('/expo') }}">
                         Pameran
                       </a>
-                      <a class="dropdown-item" href="{{ url('/maintenance') }}">
+                      <a class="dropdown-item" href="{{ url('/business') }}">
                         Business Meeting
                       </a>
                      
