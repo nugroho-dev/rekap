@@ -246,7 +246,7 @@
                       <a class="dropdown-item" href="{{ url('/pelayanan/konsultasi') }}">
                         Konsultasi
                       </a>
-                      <a class="dropdown-item" href="{{ url('/maintenance') }}">
+                      <a class="dropdown-item" href="{{ url('/commitment') }}">
                         Komitmen
                       </a>
                   </div>

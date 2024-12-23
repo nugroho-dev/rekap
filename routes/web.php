@@ -15,6 +15,7 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DashboardExpoController;
 use App\Http\Controllers\DashboardFasilitasiController;
+use App\Http\Controllers\DashboardKomitmenController;
 use App\Http\Controllers\DashboardLoiController;
 use App\Http\Controllers\DashboardPengawasanController;
 use App\Http\Controllers\InsentifController;
@@ -121,6 +122,11 @@ Route::get('/expo/check/checkSlug', [DashboardExpoController::class, 'checkSlug'
 Route::resource('/business', DashboardBusinessController::class)->middleware('auth');
 Route::post('/bisnissort', [DashboardBusinessController::class, 'index'])->middleware('auth');
 Route::get('/bisnis/check/checkSlug', [DashboardBusinessController::class, 'checkSlug'])->middleware('auth');
+Route::resource('/commitment', DashboardKomitmenController::class)->middleware('auth');
+Route::post('/commitment/import_excel', [DashboardKomitmenController::class, 'import_excel'])->middleware('auth');
+Route::post('/komitmensort', [DashboardKomitmenController::class, 'index'])->middleware('auth');
+
+
 Route::get('/createrolepermission', function(){
     try{
         Role::create(['name' => 'administrator']);
