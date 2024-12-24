@@ -67,7 +67,7 @@ class DashboardLoiController extends Controller
 		$perPage = $request->input('perPage', 50);
 		$items=$query->where('del', 0)->orderBy('tanggal', 'asc')->paginate($perPage);
 		$items->withPath(url('/loi'));
-		return view('admin.promosi.Loi.index',compact('judul','items','perPage','search','date_start','date_end','month','year'));
+		return view('admin.promosi.loi.index',compact('judul','items','perPage','search','date_start','date_end','month','year'));
     }
 
     /**
