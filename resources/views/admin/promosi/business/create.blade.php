@@ -41,7 +41,7 @@
                   </div>
                   <div class="row justify-content-center m-3">
                     <div class="col-lg-9 col-md-12 col-sm-12">
-                      <form class="card" method="post" action="{{ url('/bisnis') }}" enctype="multipart/form-data">
+                      <form class="card" method="post" action="{{ url('/business') }}" enctype="multipart/form-data">
                         @csrf
                         <div class="card-body">
                           <h3 class="card-title">Edit Data Pameran</h3>
