@@ -21,8 +21,8 @@ WITH
       id_proses_permohonan,
       nama, 
       jenis_izin,
-      jenis_proses_id,
       status,
+      tgl_pengajuan,
       end_date AS start_date_awal,
       nama_proses AS nama_proses_awal
     FROM sicantik.proses
@@ -40,31 +40,34 @@ WITH
   proses AS (
     SELECT 
 	  no_permohonan,
-      nama_proses
+    nama_proses,
+    jenis_proses_id,
+    start_date as proses_mulai,
+    end_date as proses_akhir
     FROM sicantik.proses
     WHERE status = 'Proses'
   )
-SELECT proses_awal.no_permohonan,jenis_izin,nama,proses.nama_proses,jenis_proses_id,status,start_date_awal,end_date_akhir,
+SELECT proses_awal.no_permohonan,jenis_izin,nama,proses.nama_proses,jenis_proses_id,status,tgl_pengajuan,proses.proses_mulai,proses.proses_akhir,start_date_awal,end_date_akhir,
 CASE 
-	WHEN TIMESTAMPDIFF(HOUR, start_date_awal,  end_date_akhir) < 24 THEN 0
+	WHEN TIMESTAMPDIFF(HOUR, start_date_awal,  COALESCE(end_date_akhir,proses.proses_mulai)) < 24 THEN 0
 	ELSE GREATEST(0,
-    (DATEDIFF(end_date_akhir, start_date_awal) - 1) 
-    - (FLOOR((DATEDIFF(end_date_akhir, start_date_awal) - 1) / 7) * 2)
+    (DATEDIFF(COALESCE(end_date_akhir,proses.proses_mulai), start_date_awal) - 0) 
+    - (FLOOR((DATEDIFF(COALESCE(end_date_akhir,proses.proses_mulai), start_date_awal) - 0) / 7) * 2)
     - CASE 
         WHEN DAYOFWEEK(start_date_awal) = 2 THEN 1 
         WHEN DAYOFWEEK(start_date_awal) = 7 THEN 1 
         ELSE 0 
       END
     - CASE 
-        WHEN DAYOFWEEK(end_date_akhir) = 2 THEN 1 
-        WHEN DAYOFWEEK(end_date_akhir) = 7 THEN 1 
+        WHEN DAYOFWEEK(COALESCE(end_date_akhir,proses.proses_mulai)) = 2 THEN 1 
+        WHEN DAYOFWEEK(COALESCE(end_date_akhir,proses.proses_mulai)) = 7 THEN 1 
         ELSE 0
         END)
  END AS jumlah_hari_kerja,
   -- Menghitung jumlah jam antara tanggal_awal dan tanggal_akhir
 CONCAT(
-        MOD(TIMESTAMPDIFF(HOUR, start_date_awal, end_date_akhir), 24), ' jam ',
-        MOD(TIMESTAMPDIFF(MINUTE, start_date_awal, end_date_akhir), 60), ' menit '
+        MOD(TIMESTAMPDIFF(HOUR, start_date_awal,COALESCE(end_date_akhir,proses.proses_mulai)), 24), ' jam ',
+        MOD(TIMESTAMPDIFF(MINUTE, start_date_awal,COALESCE(end_date_akhir,proses.proses_mulai)), 60), ' menit '
     ) AS durasi
 FROM proses_awal 
 join proses_akhir on proses_akhir.no_permohonan=proses_awal.no_permohonan

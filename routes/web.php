@@ -18,6 +18,8 @@ use App\Http\Controllers\DashboardFasilitasiController;
 use App\Http\Controllers\DashboardKomitmenController;
 use App\Http\Controllers\DashboardLoiController;
 use App\Http\Controllers\DashboardPengawasanController;
+use App\Http\Controllers\DashboardVprosesSicantikController;
+use App\Http\Controllers\DayOffDashboardController;
 use App\Http\Controllers\InsentifController;
 use App\Http\Controllers\InstansiController;
 use App\Http\Controllers\KonsultasiDashboardController;
@@ -96,7 +98,7 @@ Route::get('/insentif/checkSlug', [InsentifController::class, 'checkSlug'])->mid
 Route::resource('/peta/potensi', PetaPotensiController::class)->middleware('auth');
 Route::get('/peta/checkSlug', [PetaPotensiController::class, 'checkSlug'])->middleware('auth');
 Route::resource('/realiasi/investasi/verifikasi', VerifikasiRealisasiInvestasiController::class)->middleware('auth');
-Route::get('/sicantik', [SicantikDashboardController::class, 'index'])->middleware('auth');
+Route::get('/np', [SicantikDashboardController::class, 'index'])->middleware('auth');
 Route::get('/berusaha', [DashboardBerusahaController::class, 'index'])->middleware('auth');
 Route::post('/berusaha', [DashboardBerusahaController::class, 'index'])->middleware('auth');
 Route::post('/berusaha/import_excel', [DashboardBerusahaController::class, 'import_excel'])->middleware('auth');
@@ -125,6 +127,8 @@ Route::get('/bisnis/check/checkSlug', [DashboardBusinessController::class, 'chec
 Route::resource('/commitment', DashboardKomitmenController::class)->middleware('auth');
 Route::post('/commitment/import_excel', [DashboardKomitmenController::class, 'import_excel'])->middleware('auth');
 Route::post('/komitmensort', [DashboardKomitmenController::class, 'index'])->middleware('auth');
+Route::get('/sicantik', [DashboardVprosesSicantikController::class, 'index']);
+Route::get('/dayoff/sync', [DayOffDashboardController::class, 'handle']);
 
 
 Route::get('/createrolepermission', function(){
