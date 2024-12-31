@@ -62,7 +62,12 @@ CASE
         WHEN DAYOFWEEK(COALESCE(end_date_akhir,proses.proses_mulai)) = 2 THEN 1 
         WHEN DAYOFWEEK(COALESCE(end_date_akhir,proses.proses_mulai)) = 7 THEN 1 
         ELSE 0
-        END)
+        END
+    - (SELECT COUNT(*) FROM dayoff
+        WHERE tanggal BETWEEN DATE_ADD(start_date_awal, INTERVAL 1 DAY) 
+        AND DATE_SUB(COALESCE(end_date_akhir,proses.proses_mulai), INTERVAL 1 DAY)
+        AND DAYOFWEEK(tanggal) NOT IN (1, 7)) 
+        )
  END AS jumlah_hari_kerja,
   -- Menghitung jumlah jam antara tanggal_awal dan tanggal_akhir
 CONCAT(
