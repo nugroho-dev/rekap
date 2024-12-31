@@ -51,8 +51,8 @@ SELECT proses_awal.no_permohonan,jenis_izin,nama,proses.nama_proses,jenis_proses
 CASE 
 	WHEN TIMESTAMPDIFF(HOUR, start_date_awal,  COALESCE(end_date_akhir,proses.proses_mulai)) < 24 THEN 0
 	ELSE GREATEST(0,
-    (DATEDIFF(COALESCE(end_date_akhir,proses.proses_mulai), start_date_awal) - 0) 
-    - (FLOOR((DATEDIFF(COALESCE(end_date_akhir,proses.proses_mulai), start_date_awal) - 0) / 7) * 2)
+    (DATEDIFF(COALESCE(end_date_akhir,proses.proses_mulai), start_date_awal) - 1) 
+    - (FLOOR((DATEDIFF(COALESCE(end_date_akhir,proses.proses_mulai), start_date_awal) - 1) / 7) * 2)
     - CASE 
         WHEN DAYOFWEEK(start_date_awal) = 1 THEN 1 
         WHEN DAYOFWEEK(start_date_awal) = 7 THEN 1 
