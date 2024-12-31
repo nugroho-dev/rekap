@@ -54,12 +54,12 @@ CASE
     (DATEDIFF(COALESCE(end_date_akhir,proses.proses_mulai), start_date_awal) - 0) 
     - (FLOOR((DATEDIFF(COALESCE(end_date_akhir,proses.proses_mulai), start_date_awal) - 0) / 7) * 2)
     - CASE 
-        WHEN DAYOFWEEK(start_date_awal) = 2 THEN 1 
+        WHEN DAYOFWEEK(start_date_awal) = 1 THEN 1 
         WHEN DAYOFWEEK(start_date_awal) = 7 THEN 1 
         ELSE 0 
       END
     - CASE 
-        WHEN DAYOFWEEK(COALESCE(end_date_akhir,proses.proses_mulai)) = 2 THEN 1 
+        WHEN DAYOFWEEK(COALESCE(end_date_akhir,proses.proses_mulai)) = 1 THEN 1 
         WHEN DAYOFWEEK(COALESCE(end_date_akhir,proses.proses_mulai)) = 7 THEN 1 
         ELSE 0
         END
