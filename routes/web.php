@@ -127,9 +127,11 @@ Route::get('/bisnis/check/checkSlug', [DashboardBusinessController::class, 'chec
 Route::resource('/commitment', DashboardKomitmenController::class)->middleware('auth');
 Route::post('/commitment/import_excel', [DashboardKomitmenController::class, 'import_excel'])->middleware('auth');
 Route::post('/komitmensort', [DashboardKomitmenController::class, 'index'])->middleware('auth');
-Route::get('/sicantik', [DashboardVprosesSicantikController::class, 'index']);
-Route::get('/dayoff/sync', [DayOffDashboardController::class, 'handle']);
-
+Route::get('/sicantik', [DashboardVprosesSicantikController::class, 'index'])->middleware('auth');
+Route::get('/dayoff/sync', [DayOffDashboardController::class, 'handle'])->middleware('auth');
+Route::post('/dayoff/sync', [DayOffDashboardController::class, 'handle'])->middleware('auth');
+Route::get('/dayoff', [DayOffDashboardController::class, 'index'])->middleware('auth');
+Route::post('/dayoff', [DayOffDashboardController::class, 'index'])->middleware('auth');
 
 Route::get('/createrolepermission', function(){
     try{

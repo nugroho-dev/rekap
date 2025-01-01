@@ -410,6 +410,9 @@
                       <a class="dropdown-item" href="{{ url('/konfigurasi/instansi') }}">
                         Instansi
                       </a>
+                      <a class="dropdown-item" href="{{ url('/dayoff') }}">
+                        Hari Libur
+                      </a>
                     
                     </div>
                     
