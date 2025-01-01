@@ -19,7 +19,7 @@ class DashboardVprosesSicantikController extends Controller
 		if ($request->has('search')) {
 			$search = $request->input('search');
 			$query ->where('no_permohonan', 'LIKE', "%{$search}%")
-				   ->where('nama', 'LIKE', "%{$search}%")
+				   ->orWhere('nama', 'LIKE', "%{$search}%")
 				   ->orWhere('jenis_izin', 'LIKE', "%{$search}%")
 				   ->orderBy('no_permohonan', 'desc');
 		}
@@ -29,8 +29,8 @@ class DashboardVprosesSicantikController extends Controller
 			if($date_start>$date_end ){
 				return redirect('/sicantik')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda ');
 			}else{
-			$query ->whereBetween('end_date_akhir', [$date_start,$date_end])
-				   ->orderBy('end_date_akhir', 'desc');
+			$query ->whereBetween('tgl_pengajuan', [$date_start,$date_end])
+				   ->orderBy('no_permohonan', 'desc');
 			}
 		}
 		if ($request->has('month')&&$request->has('year')) {
@@ -43,14 +43,14 @@ class DashboardVprosesSicantikController extends Controller
 			}if(empty($month)){
 				return redirect('/sicantik')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
 			}else{
-			$query ->whereMonth('end_date_akhir', [$month])
-				   ->whereYear('end_date_akhir', [$year])
-				   ->orderBy('end_date_akhir', 'desc');
+			$query ->whereMonth('tgl_pengajuan', [$month])
+				   ->whereYear('tgl_pengajuan', [$year])
+				   ->orderBy('no_permohonan', 'desc');
 				}
 		}
 		if ($request->has('year')) {
 			$year = $request->input('year');
-			$query ->whereYear('end_date_akhir', [$year])
+			$query ->whereYear('tgl_pengajuan', [$year])
 				   ->orderBy('no_permohonan', 'desc');
 		}
 		$perPage = $request->input('perPage', 50);

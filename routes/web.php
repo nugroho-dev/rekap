@@ -128,6 +128,7 @@ Route::resource('/commitment', DashboardKomitmenController::class)->middleware('
 Route::post('/commitment/import_excel', [DashboardKomitmenController::class, 'import_excel'])->middleware('auth');
 Route::post('/komitmensort', [DashboardKomitmenController::class, 'index'])->middleware('auth');
 Route::get('/sicantik', [DashboardVprosesSicantikController::class, 'index'])->middleware('auth');
+Route::post('/sicantik', [DashboardVprosesSicantikController::class, 'index'])->middleware('auth');
 Route::get('/dayoff/sync', [DayOffDashboardController::class, 'handle'])->middleware('auth');
 Route::post('/dayoff/sync', [DayOffDashboardController::class, 'handle'])->middleware('auth');
 Route::get('/dayoff', [DayOffDashboardController::class, 'index'])->middleware('auth');

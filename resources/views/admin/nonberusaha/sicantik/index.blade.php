@@ -50,12 +50,12 @@
                           <span class="d-none d-sm-inline">
                           
                           </span>
-                          <a href="{{ url('/business/create') }}" class="btn btn-primary d-none d-sm-inline-block" >
+                          <a href="{{ url('/sicantik/create') }}" class="btn btn-primary d-none d-sm-inline-block" >
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-table-import"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 21h-7a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v8" /><path d="M3 10h18" /><path d="M10 3v18" /><path d="M19 22v-6" /><path d="M22 19l-3 -3l-3 3" /></svg>
                             Tambah Data
                           </a>
-                          <a href="{{ url('/business/create') }}" class="btn btn-primary d-sm-none btn-icon" data-bs-toggle="modal" data-bs-target="#modal-team">
+                          <a href="{{ url('/sicantik/create') }}" class="btn btn-primary d-sm-none btn-icon" data-bs-toggle="modal" data-bs-target="#modal-team">
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-table-import"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 21h-7a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v8" /><path d="M3 10h18" /><path d="M10 3v18" /><path d="M19 22v-6" /><path d="M22 19l-3 -3l-3 3" /></svg>
                           </a>
@@ -76,7 +76,7 @@
                         Menampilkan
                         <div class="mx-2 d-inline-block">
                           
-                          <form action="{{ url('/bisnissort')}}" method="POST">
+                          <form action="{{ url('/sicantik')}}" method="POST">
                             @csrf
                             <input type="hidden" name="page" value="{{ request()->get('page', 1) }}">
                             <select name="perPage" id="myselect" onchange="this.form.submit()" class="form-control form-control-sm">
@@ -93,7 +93,7 @@
                       <div class="ms-auto text-muted">
                         Cari:
                         <div class="ms-2 d-inline-block ">
-                          <form action="{{ url('/bisnissort')}}" method="POST">
+                          <form action="{{ url('/sicantik')}}" method="POST">
                             @csrf
                             <div class="input-group">
                               <input type="text" name="search" class="form-control form-control-sm" aria-label="cari" value="{{ old('search') }}">
@@ -150,7 +150,7 @@
                               
                               <button class="btn dropdown-toggle align-text-top" data-bs-boundary="viewport" data-bs-toggle="dropdown">Action</button>
                               <div class="dropdown-menu dropdown-menu-end">
-                                <a class="dropdown-item" href="{{ url('/business/'.$item->slug.'/edit')}}" >
+                                <a class="dropdown-item" href="{{ url('/sicantik/'.$item->slug.'/edit')}}" >
                                   Edit
                                 </a>
                                 <button class="dropdown-item openModal" data-id="{{ $item->slug }}">
@@ -237,7 +237,7 @@
                             <div class="tab-content">
                               <div class="tab-pane fade active show" id="tabs-home-8" role="tabpanel">
                                 <h4>Pilih Tanggal :</h4>
-                                <form method="post" action="{{ url('/bisnissort')}}" enctype="multipart/form-data">
+                                <form method="post" action="{{ url('/sicantik')}}" enctype="multipart/form-data">
                                   @csrf
                                 <div class="input-group mb-2">
                                   <input type="date" class="form-control" name="date_start" autocomplete="off">
@@ -252,7 +252,7 @@
                               <div class="tab-pane fade" id="tabs-profile-8" role="tabpanel">
                                 <h4>Pilih Bulan :</h4>
                                 <div>
-                                  <form method="post" action="{{ url('/bisnissort')}}" enctype="multipart/form-data">
+                                  <form method="post" action="{{ url('/sicantik')}}" enctype="multipart/form-data">
                                     @csrf
                                   <div class="row g-2">
                                     <div class="col-4">
@@ -281,7 +281,7 @@
                               <div class="tab-pane fade" id="tabs-activity-8" role="tabpanel">
                                 <h4>Pilih Tahun :</h4>
                                 <div>
-                                  <form method="post" action="{{ url('/bisnissort')}}" enctype="multipart/form-data">
+                                  <form method="post" action="{{ url('/sicantik')}}" enctype="multipart/form-data">
                                     @csrf
                                   <div class="row g-2">
                                     <div class="col-4">
@@ -408,7 +408,7 @@
             const userId = $(this).data('id');
           
             $.ajax({
-                url: `{{ url('/business')}}/${userId}`, // Endpoint resource controller
+                url: `{{ url('/sicantik')}}/${userId}`, // Endpoint resource controller
                 type: 'GET',
                 success: function(data) {
                   const dataSlug = data.slug;
@@ -433,12 +433,12 @@
         $('.openModalDel').on('click', function() {
             const userId = $(this).data('id');
             $.ajax({
-                url: `{{ url('/business')}}/${userId}`, // Endpoint resource controller
+                url: `{{ url('/sicantik')}}/${userId}`, // Endpoint resource controller
                 type: 'GET',
                 success: function(data) {
                   const dataSlug = data.slug;
                   if (data.slug) {
-                        $('#delLoi').attr('action', `/business/${dataSlug}`);
+                        $('#delLoi').attr('action', `/sicantik/${dataSlug}`);
                         $('#userName').text(data.nama_expo);
                         $('#userModalDel').modal('show');
                     } 
