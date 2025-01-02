@@ -226,7 +226,7 @@
                       <a class="dropdown-item" href="{{ url('/maintenance') }}">
                         SimBG
                       </a>
-                      <a class="dropdown-item" href="{{ url('/maintenance') }}">
+                      <a class="dropdown-item" href="{{ url('/mppd') }}">
                         MPP Digital
                       </a>
                   </div>
