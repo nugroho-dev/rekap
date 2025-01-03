@@ -136,6 +136,7 @@ Route::get('/dayoff', [DayOffDashboardController::class, 'index'])->middleware('
 Route::post('/dayoff', [DayOffDashboardController::class, 'index'])->middleware('auth');
 Route::resource('/mppd', MppdController::class)->middleware('auth');
 Route::post('/mppdigital/import_excel', [MppdController::class, 'import_excel'])->middleware('auth');
+Route::post('/mppdsort', [MppdController::class, 'index'])->middleware('auth');
 
 Route::get('/createrolepermission', function(){
     try{

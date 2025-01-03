@@ -10,6 +10,7 @@ use App\Imports\MppdImport;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class MppdController extends Controller
 {
@@ -27,40 +28,44 @@ class MppdController extends Controller
 		$year = $request->input('year');
 		if ($request->has('search')) {
 			$search = $request->input('search');
-			$query ->where('no_permohonan', 'LIKE', "%{$search}%")
-				   ->orWhere('nama', 'LIKE', "%{$search}%")
-				   ->orWhere('jenis_izin', 'LIKE', "%{$search}%")
-				   ->orderBy('no_permohonan', 'desc');
+			$query ->where('nama', 'LIKE', "%{$search}%")
+				   ->orWhere('nik', 'LIKE', "%{$search}%")
+				   ->orWhere('nomor_register', 'LIKE', "%{$search}%")
+				   ->orWhere('profesi', 'LIKE', "%{$search}%")
+				   ->orWhere('tempat_praktik', 'LIKE', "%{$search}%")
+				   ->orWhere('nomor_sip', 'LIKE', "%{$search}%")
+				   ->orWhere('keterangan', 'LIKE', "%{$search}%")
+				   ->orderBy('nomor_register', 'desc');
 		}
 		if ($request->has('date_start')&&$request->has('date_end')) {
 			$date_start = $request->input('date_start');
 			$date_end = $request->input('date_end');
 			if($date_start>$date_end ){
-				return redirect('/sicantik')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda ');
+				return redirect('/mppdsort')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda ');
 			}else{
-			$query ->whereBetween('tgl_pengajuan', [$date_start,$date_end])
-				   ->orderBy('no_permohonan', 'desc');
+			$query ->whereBetween('tanggal_sip', [$date_start,$date_end])
+				   ->orderBy('nomor_register', 'desc');
 			}
 		}
 		if ($request->has('month')&&$request->has('year')) {
 			$month = $request->input('month');
 			$year = $request->input('year');
 			if(empty($month)&&empty($year)){
-				return redirect('/sicantik')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
+				return redirect('/mppdsort')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
 			}if(empty($year)){
-				return redirect('/sicantik')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
+				return redirect('/mppdsort')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
 			}if(empty($month)){
-				return redirect('/sicantik')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
+				return redirect('/mppdsort')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
 			}else{
-			$query ->whereMonth('tgl_pengajuan', [$month])
-				   ->whereYear('tgl_pengajuan', [$year])
-				   ->orderBy('no_permohonan', 'desc');
+			$query ->whereMonth('tanggal_sip', [$month])
+				   ->whereYear('tanggal_sip', [$year])
+				   ->orderBy('nomor_register', 'desc');
 				}
 		}
 		if ($request->has('year')) {
 			$year = $request->input('year');
-			$query ->whereYear('tgl_pengajuan', [$year])
-				   ->orderBy('no_permohonan', 'desc');
+			$query ->whereYear('tanggal_sip', [$year])
+				   ->orderBy('nomor_register', 'desc');
 		}
 		$perPage = $request->input('perPage', 50);
 		$items=$query->orderBy('nomor_register', 'desc')->paginate($perPage);

@@ -76,7 +76,7 @@
                         Menampilkan
                         <div class="mx-2 d-inline-block">
                           
-                          <form action="{{ url('/mppd')}}" method="POST">
+                          <form action="{{ url('/mppdsort')}}" method="POST">
                             @csrf
                             <input type="hidden" name="page" value="{{ request()->get('page', 1) }}">
                             <select name="perPage" id="myselect" onchange="this.form.submit()" class="form-control form-control-sm">
@@ -93,7 +93,7 @@
                       <div class="ms-auto text-muted">
                         Cari:
                         <div class="ms-2 d-inline-block ">
-                          <form action="{{ url('/mppd')}}" method="POST">
+                          <form action="{{ url('/mppdsort')}}" method="POST">
                             @csrf
                             <div class="input-group">
                               <input type="text" name="search" class="form-control form-control-sm" aria-label="cari" value="{{ old('search') }}">
@@ -131,33 +131,33 @@
                             $dates= Carbon\Carbon::now()->diff($item->start_date);
                             $pengajuan= Carbon\Carbon::now()->diff($item->tgl_pengajuan_time);
                         @endphp
-                        <tr>
+                        <tr class="{{ $item->keterangan=='Ditolak'||$item->keterangan=='Permohonan Ditolak'||$item->keterangan=='Dibatalkan'?'text-danger':'' }} ">
                           <td>{{ $loop->iteration + $items->firstItem()-1 }}</td>
                           <td>
                             <div>{{ $item->nama }}</div>
                             <div class="text-secondary">{{ $item->nik }}</div>
-                            <div class="text-secondary">{{ $item->alamat }}</div>
+                            <div class="text-secondary text-wrap">{{ $item->alamat }}</div>
                           </td>
                           <td>
-                            <div>{{ $item->nomor_telp }}</div>
-                            <div class="text-secondary">{{ $item->email }}</div>
+                            <div>{{ is_null($item->nomor_telp)?'-':$item->nomor_telp }}</div>
+                            <div class="text-secondary">{{ is_null($item->email)?'-':$item->email }}</div>
                           </td>
                           <td>
                             <div>{{ $item->nomor_register }}</div>
                           </td>
                           <td >
                             <div>{{ $item->nomor_str }}</div>
-                            <div class="text-secondary">{{ $item->masa_berlaku_str }}</div>
+                            <div class="text-secondary">{{ is_null($item->masa_berlaku_str)?'-': ($item->masa_berlaku_str=='SEUMUR HIDUP'?'SEUMUR HIDUP':Carbon\Carbon::instance(PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($item->masa_berlaku_str))->translatedFormat('d F Y')) }}</div>
                           </td>
                           <td>
                             <div>{{ $item->profesi }}</div>
-                            <div class="text-secondary">{{ $item->tempat_praktik }}</div>
-                            <div class="text-secondary">{{ $item->alamat_tempat_praktik }}</div>
+                            <div class="text-secondary text-wrap">{{is_null($item->tempat_praktik)?'-':$item->tempat_praktik }}</div>
+                            <div class="text-secondary text-wrap">{{ is_null($item->alamat_tempat_praktik)?'-':$item->alamat_tempat_praktik }}</div>
                           </td>
                           <td>
-                            <div>{{ $item->nomor_sip }}</div>
-                            <div class="text-secondary">{{ Carbon\Carbon::parse($item->tanggal_sip)->translatedFormat('d F Y') }}</div>
-                            <div class="text-secondary">{{ Carbon\Carbon::parse($item->tanggal_akhir_sip)->translatedFormat('d F Y') }}</div>
+                            <div>{{ is_null($item->nomor_sip)?'-':$item->nomor_sip }}</div>
+                            <div class="text-secondary">Tanggal Berlaku.{{ is_null($item->tanggal_sip) || $item->tanggal_sip=='1970-01-01'?'-':Carbon\Carbon::parse($item->tanggal_sip)->translatedFormat('d F Y') }}</div>
+                            <div class="text-secondary">Tanggal Berakhir.{{ is_null($item->tanggal_akhir_sip) ||$item->tanggal_akhir_sip=='1970-01-01'?'-':Carbon\Carbon::parse($item->tanggal_akhir_sip)->translatedFormat('d F Y') }}</div>
                           </td>
                           <td>
                             <div>{{ $item->keterangan }}</div>
@@ -238,7 +238,7 @@
                             <div class="tab-content">
                               <div class="tab-pane fade active show" id="tabs-home-8" role="tabpanel">
                                 <h4>Pilih Tanggal :</h4>
-                                <form method="post" action="{{ url('/mppd')}}" enctype="multipart/form-data">
+                                <form method="post" action="{{ url('/mppdsort')}}" enctype="multipart/form-data">
                                   @csrf
                                 <div class="input-group mb-2">
                                   <input type="date" class="form-control" name="date_start" autocomplete="off">
@@ -253,7 +253,7 @@
                               <div class="tab-pane fade" id="tabs-profile-8" role="tabpanel">
                                 <h4>Pilih Bulan :</h4>
                                 <div>
-                                  <form method="post" action="{{ url('/mppd')}}" enctype="multipart/form-data">
+                                  <form method="post" action="{{ url('/mppdsort')}}" enctype="multipart/form-data">
                                     @csrf
                                   <div class="row g-2">
                                     <div class="col-4">
@@ -282,7 +282,7 @@
                               <div class="tab-pane fade" id="tabs-activity-8" role="tabpanel">
                                 <h4>Pilih Tahun :</h4>
                                 <div>
-                                  <form method="post" action="{{ url('/mppd')}}" enctype="multipart/form-data">
+                                  <form method="post" action="{{ url('/mppdsort')}}" enctype="multipart/form-data">
                                     @csrf
                                   <div class="row g-2">
                                     <div class="col-4">

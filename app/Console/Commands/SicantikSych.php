@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use App\Models\Proses;
+use App\Models\Simpel;
+use Carbon\Carbon;
 
 class SicantikSych extends Command
 {
@@ -162,6 +164,42 @@ class SicantikSych extends Command
             'tgl_signed_report'=>$val['tgl_signed_report']
             ]);
         }
-        
+        $response3 = Http::retry(10, 1000)->get('https://dlh.magelangkota.go.id/simpel/get-json.php');
+        $data = $response3->json();
+        $items = $data;
+        foreach ($items as $val) {
+            Simpel::updateOrCreate(
+            ['token'=> $val['token']],
+            ['pemohon'=> $val['pemohon'],
+            'daftar'=> Carbon::parse($val['daftar'])->translatedFormat('Y-m-d'),
+            'konfirm'=> Carbon::parse( $val['konfirm'])->translatedFormat('Y-m-d'),
+            'validasi'=> Carbon::parse( $val['validasi'])->translatedFormat('Y-m-d'),
+            'rekomendasi'=> Carbon::parse( $val['rekomendasi'])->translatedFormat('Y-m-d'),
+            'review'=> Carbon::parse( $val['review'])->translatedFormat('Y-m-d'),
+            'otorisasi'=> Carbon::parse( $val['otorisasi'])->translatedFormat('Y-m-d'),
+            'tte' =>  Carbon::parse( $val['tte'])->translatedFormat('Y-m-d'),
+            'nama'=>$val['nama'],
+            'gender'=>$val['gender'],
+            'agama'=>$val['agama'],
+            'lahir'=> Carbon::parse( $val['lahir'])->translatedFormat('Y-m-d'),
+            'wafat'=> Carbon::parse( $val['wafat'])->translatedFormat('Y-m-d'),
+            'kubur'=> Carbon::parse( $val['kubur'])->translatedFormat('Y-m-d'),
+            'blok' => $val['blok'],
+            'waris'=>$val['waris'],
+            'telp'=>$val['telp'],
+            'alamat'=>$val['alamat'],
+            'rt'=>$val['rt'],
+            'rw'=>$val['rw'],
+            'desa'=>$val['desa'],
+            'kec'=>$val['kec'],
+            'kota'=>$val['kota'],
+            'asal'=>$val['asal'],
+            'jasa'=>$val['jasa'],
+            'retro'=>$val['retro'],
+            'biaya'=>$val['biaya'],
+            'status'=>$val['status'],
+            'ijin'=>$val['ijin'],
+            ]);
+        }
     }
 }

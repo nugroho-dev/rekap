@@ -19,6 +19,27 @@ class MppdImport implements ToModel, WithHeadingRow, WithValidation
     */
     public function model(array $row)
     {
+        $existingData = Mppd::where('nomor_register', $row['nomor_register'])->first();
+        if ($existingData) {
+            // Jika data ditemukan, perbarui
+            $existingData->update([
+            'nik'=>$row['nik'],
+            'nama'=>$row['nama'],
+            'alamat'=>$row['alamat'],
+            'email'=>$row['email'],
+            'nomor_telp'=>$row['nomor_telepon'],
+            'nomor_str'=>$row['nomor_str'],
+            'masa_berlaku_str'=>$row['masa_berlaku_str'],
+            'profesi'=>$row['profesi'],
+            'tempat_praktik'=>$row['tempat_praktik'],
+            'alamat_tempat_praktik'=>$row['alamat_tempat_praktik'],
+            'nomor_sip'=>$row['nomor_sip'],
+            'tanggal_sip'=>Carbon::instance(Date::excelToDateTimeObject($row['tanggal_terbit_sip']))->toDateString(),
+            'tanggal_akhir_sip'=>Carbon::instance(Date::excelToDateTimeObject($row['tanggal_akhir_sip']))->toDateString(),
+            'keterangan'=>$row['keterangan'],
+            ]);
+            return null;
+        }
         return new Mppd([
           
             'nik'=>$row['nik'],
@@ -43,7 +64,7 @@ class MppdImport implements ToModel, WithHeadingRow, WithValidation
         return [
             'nomor_register' => [
                 'required', 
-                Rule::unique('mppd', 'nomor_register'), // Validasi email harus unik di tabel `users`
+                 //Rule::unique('mppd', 'nomor_register'), // Validasi email harus unik di tabel `users`
             ]
         ];
     }
