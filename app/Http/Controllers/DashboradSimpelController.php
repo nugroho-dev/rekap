@@ -25,7 +25,7 @@ class DashboradSimpelController extends Controller
                 ->orWhere('asal', 'LIKE', "%{$search}%")
                 ->orWhere('desa', 'LIKE', "%{$search}%")
                 ->orWhere('kec', 'LIKE', "%{$search}%")
-                ->orderBy('tte', 'desc');
+            ->orderBy('daftar', 'desc');
         }
         if ($request->has('date_start') && $request->has('date_end')) {
             $date_start = $request->input('date_start');
@@ -34,7 +34,7 @@ class DashboradSimpelController extends Controller
                 return redirect('/simpel')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda ');
             } else {
                 $query->whereBetween('tte', [$date_start, $date_end])
-                    ->orderBy('tte', 'desc');
+                    ->orderBy('daftar', 'desc');
             }
         }
         if ($request->has('month') && $request->has('year')) {
@@ -51,16 +51,16 @@ class DashboradSimpelController extends Controller
             } else {
                 $query->whereMonth('tte', [$month])
                     ->whereYear('tte', [$year])
-                    ->orderBy('tte', 'desc');
+                    ->orderBy('daftar', 'desc');
             }
         }
         if ($request->has('year')) {
             $year = $request->input('year');
             $query->whereYear('tte', [$year])
-                ->orderBy('tte', 'desc');
+            ->orderBy('daftar', 'desc');
         }
         $perPage = $request->input('perPage', 50);
-        $items = $query->orderBy('tte', 'desc')->paginate($perPage);
+        $items = $query->orderBy('daftar', 'desc')->paginate($perPage);
         $items->withPath(url('/simpel'));
         return view('admin.nonberusaha.simpel.index', compact('judul', 'items', 'perPage', 'search', 'date_start', 'date_end', 'month', 'year'));
     }
