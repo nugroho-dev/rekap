@@ -139,10 +139,9 @@
                           <td>
                             <div>{{ $item->nama }}</div>
                             <div class="text-secondary">{{ $item->gender }}</div>
-                            <div class="text-secondary">{{ $item->gender }}</div>
                             <div class="text-secondary">{{ $item->agama }}</div>
                             <div class="text-secondary">Tanggal Lahir.{{ Carbon\Carbon::parse($item->lahir)->translatedFormat('d F Y') }}</div>
-                            <div class="text-secondary">Tanggl Wafat.{{ Carbon\Carbon::parse($item->wafa)->translatedFormat('d F Y') }}</div>
+                            <div class="text-secondary">Tanggl Wafat.{{ Carbon\Carbon::parse($item->wafat)->translatedFormat('d F Y') }}</div>
                             <div class="text-secondary">Tanggal Kubur.{{ Carbon\Carbon::parse($item->kubur)->translatedFormat('d F Y') }}</div>
                             <div class="text-secondary">Blok.{{ $item->blok }}</div>
                             <div class="text-secondary">Waris.{{ $item->waris }}</div>
@@ -150,17 +149,17 @@
                           <td>
                             <div>{{ $item->jasa }}</div>
                             <div class="text-secondary">{{ $item->retro }}</div>
-                            <div class="text-secondary">Retribusi. @currency( $item->biaya )</div>
+                            <div class="text-secondary">Retribusi. Rp.@currency( $item->biaya )</div>
                             <div class="text-secondary">{{ $item->status }}</div>
                           </td>
                           <td >
-                            <div>Pendaftaran. {{ $item->nomor_str }}</div>
-                            <div>Konfirmasi. {{ $item->nomor_str }}</div>
-                            <div>Validasi. {{ $item->nomor_str }}</div>
-                            <div>Rekomendasi. {{ $item->nomor_str }}</div>
-                            <div>Review. {{ $item->nomor_str }}</div>
-                            <div>Otorisasi. {{ $item->nomor_str }}</div>
-                            <div>Tanda Tangan Elektronik. {{ $item->nomor_str }}</div>
+                            <div>Pendaftaran. {{  Carbon\Carbon::parse($item->daftar)->translatedFormat('d F Y') }}</div>
+                            <div>Konfirmasi. {{  Carbon\Carbon::parse($item->konfirm)->translatedFormat('d F Y') }}</div>
+                            <div>Validasi. {{  Carbon\Carbon::parse($item->validasi)->translatedFormat('d F Y') }}</div>
+                            <div>Rekomendasi. {{  Carbon\Carbon::parse($item->rekomendasi)->translatedFormat('d F Y') }}</div>
+                            <div>Review. {{  Carbon\Carbon::parse($item->review)->translatedFormat('d F Y') }}</div>
+                            <div>Otorisasi. {{  Carbon\Carbon::parse($item->otorisasi)->translatedFormat('d F Y') }}</div>
+                            <div>Tanda Tangan Elektronik. {{  Carbon\Carbon::parse($item->tte)->translatedFormat('d F Y') }}</div>
                           </td>
                         </tr>
                         @endforeach
