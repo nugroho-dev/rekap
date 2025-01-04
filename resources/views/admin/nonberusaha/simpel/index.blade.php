@@ -140,9 +140,9 @@
                             <div>{{ $item->nama }}</div>
                             <div class="text-secondary">{{ $item->gender }}</div>
                             <div class="text-secondary">{{ $item->agama }}</div>
-                            <div class="text-secondary">Tanggal Lahir.{{ $item->lahir == "" ? '-': Carbon\Carbon::parse($item->lahir)->translatedFormat('d F Y') }}</div>
-                            <div class="text-secondary">Tanggl Wafat.{{ is_null($item->wafat) ? '-' : Carbon\Carbon::parse($item->wafat)->translatedFormat('d F Y') }}</div>
-                            <div class="text-secondary">Tanggal Kubur.{{ is_null($item->kubur) ? '-' : Carbon\Carbon::parse($item->kubur)->translatedFormat('d F Y') }}</div>
+                            <div class="text-secondary">Tanggal Lahir.{{ $item->lahir == "0000-00-00" ? '-': Carbon\Carbon::parse($item->lahir)->translatedFormat('d F Y') }}</div>
+                            <div class="text-secondary">Tanggl Wafat.{{ $item->wafat=="0000-00-00" ? '-' : Carbon\Carbon::parse($item->wafat)->translatedFormat('d F Y') }}</div>
+                            <div class="text-secondary">Tanggal Kubur.{{ $item->kubur=="0000-00-00" ? '-' : Carbon\Carbon::parse($item->kubur)->translatedFormat('d F Y') }}</div>
                             <div class="text-secondary">Blok.{{ $item->blok }}</div>
                             <div class="text-secondary">Waris.{{ $item->waris }}</div>
                           </td>
@@ -157,36 +157,36 @@
                               <tr>
                                 <td>Pendaftaran</td>
                                 <td>:</td>
-                                <td>{{ is_null($item->daftar)?'-':Carbon\Carbon::parse($item->daftar)->translatedFormat('d F Y') }}</td>
+                                <td>{{ $item->daftar=="0000-00-00"?'-':Carbon\Carbon::parse($item->daftar)->translatedFormat('d F Y') }}</td>
                               </tr>
                               <tr>
                                 <td>Konfirmasi</td>
                                 <td>:</td>
-                                <td>{{ is_null($item->konfirm)?'-':Carbon\Carbon::parse($item->konfirm)->translatedFormat('d F Y') }}</td>
+                                <td>{{ $item->konfirm=="0000-00-00"?'-':Carbon\Carbon::parse($item->konfirm)->translatedFormat('d F Y') }}</td>
                               </tr>
                               <tr>
                                 <td>Validasi</td>
                                 <td>:</td>
-                                <td>{{ is_null($item->validasi)?'-':Carbon\Carbon::parse($item->validasi)->translatedFormat('d F Y') }}</td>
+                                <td>{{ $item->validasi=="0000-00-00"?'-':Carbon\Carbon::parse($item->validasi)->translatedFormat('d F Y') }}</td>
                               </tr>
                               
                               <tr>
                                 <td>Rekomendasi</td>
                                 <td>:</td>
-                                <td>{{ is_null($item->rekomendasi)?'-':Carbon\Carbon::parse($item->rekomendasi)->translatedFormat('d F Y') }}</td>
+                                <td>{{ $item->rekomendasi=="0000-00-00"?'-':Carbon\Carbon::parse($item->rekomendasi)->translatedFormat('d F Y') }}</td>
                               </tr>
                               <tr>
                                 <td>Review</td>
                                 <td>:</td>
-                                <td>{{ is_null($item->review)?'-':Carbon\Carbon::parse($item->review)->translatedFormat('d F Y') }}</td>
+                                <td>{{ $item->review=="0000-00-00"?'-':Carbon\Carbon::parse($item->review)->translatedFormat('d F Y') }}</td>
                               </tr><tr>
                                 <td>Otorisasi</td>
                                 <td>:</td>
-                                <td>{{ is_null($item->otorisasi)?'-':Carbon\Carbon::parse($item->otorisasi)->translatedFormat('d F Y') }}</td>
+                                <td>{{ $item->otorisasi=="0000-00-00"?'-':Carbon\Carbon::parse($item->otorisasi)->translatedFormat('d F Y') }}</td>
                               </tr><tr>
                                 <td>Tanda Tangan Elektronik</td>
                                 <td>:</td>
-                                <td>{{is_null($item->tte)?'-':Carbon\Carbon::parse($item->tte)->translatedFormat('d F Y') }}</td>
+                                <td>{{$item->tte=="0000-00-00"?'-':Carbon\Carbon::parse($item->tte)->translatedFormat('d F Y') }}</td>
                               </tr>
                             </table>
                           </td>

@@ -14,6 +14,7 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command('sych:sicantik')->everyMinute();
         $schedule->command('wa:cron')->everyMinute();
+        $schedule->command('simpel:cron')->dailyAt('13:00');
     }
 
     /**
