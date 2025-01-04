@@ -140,7 +140,7 @@
                             <div>{{ $item->nama }}</div>
                             <div class="text-secondary">{{ $item->gender }}</div>
                             <div class="text-secondary">{{ $item->agama }}</div>
-                            <div class="text-secondary">Tanggal Lahir.{{ is_null($item->lahir) ? '-': Carbon\Carbon::parse($item->lahir)->translatedFormat('d F Y') }}</div>
+                            <div class="text-secondary">Tanggal Lahir.{{ $item->lahir == "" ? '-': Carbon\Carbon::parse($item->lahir)->translatedFormat('d F Y') }}</div>
                             <div class="text-secondary">Tanggl Wafat.{{ is_null($item->wafat) ? '-' : Carbon\Carbon::parse($item->wafat)->translatedFormat('d F Y') }}</div>
                             <div class="text-secondary">Tanggal Kubur.{{ is_null($item->kubur) ? '-' : Carbon\Carbon::parse($item->kubur)->translatedFormat('d F Y') }}</div>
                             <div class="text-secondary">Blok.{{ $item->blok }}</div>
