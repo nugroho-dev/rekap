@@ -220,7 +220,7 @@
                       <a class="dropdown-item" href="{{ url('/sicantik') }}">
                         SiCantik
                       </a>
-                      <a class="dropdown-item" href="{{ url('/maintenance') }}">
+                      <a class="dropdown-item" href="{{ url('/simpel') }}">
                         Simpel
                       </a>
                       <a class="dropdown-item" href="{{ url('/maintenance') }}">

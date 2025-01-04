@@ -19,6 +19,7 @@ use App\Http\Controllers\DashboardKomitmenController;
 use App\Http\Controllers\DashboardLoiController;
 use App\Http\Controllers\DashboardPengawasanController;
 use App\Http\Controllers\DashboardVprosesSicantikController;
+use App\Http\Controllers\DashboradSimpelController;
 use App\Http\Controllers\DayOffDashboardController;
 use App\Http\Controllers\InsentifController;
 use App\Http\Controllers\InstansiController;
@@ -137,6 +138,8 @@ Route::post('/dayoff', [DayOffDashboardController::class, 'index'])->middleware(
 Route::resource('/mppd', MppdController::class)->middleware('auth');
 Route::post('/mppdigital/import_excel', [MppdController::class, 'import_excel'])->middleware('auth');
 Route::post('/mppdsort', [MppdController::class, 'index'])->middleware('auth');
+Route::get('/simpel', [DashboradSimpelController::class, 'index'])->middleware('auth');
+Route::post('/simpel', [DashboradSimpelController::class, 'index'])->middleware('auth');
 
 Route::get('/createrolepermission', function(){
     try{
