@@ -21,7 +21,7 @@ class DashboardVprosesSicantikController extends Controller
 			$query ->where('no_permohonan', 'LIKE', "%{$search}%")
 				   ->orWhere('nama', 'LIKE', "%{$search}%")
 				   ->orWhere('jenis_izin', 'LIKE', "%{$search}%")
-				   ->orderBy('no_permohonan', 'desc');
+				   ->orderBy('tgl_pengajuan', 'desc');
 		}
 		if ($request->has('date_start')&&$request->has('date_end')) {
 			$date_start = $request->input('date_start');
@@ -30,7 +30,7 @@ class DashboardVprosesSicantikController extends Controller
 				return redirect('/sicantik')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda ');
 			}else{
 			$query ->whereBetween('tgl_pengajuan', [$date_start,$date_end])
-				   ->orderBy('no_permohonan', 'desc');
+				   ->orderBy('tgl_pengajuan', 'desc');
 			}
 		}
 		if ($request->has('month')&&$request->has('year')) {
@@ -45,16 +45,16 @@ class DashboardVprosesSicantikController extends Controller
 			}else{
 			$query ->whereMonth('tgl_pengajuan', [$month])
 				   ->whereYear('tgl_pengajuan', [$year])
-				   ->orderBy('no_permohonan', 'desc');
+				   ->orderBy('tgl_pengajuan', 'desc');
 				}
 		}
 		if ($request->has('year')) {
 			$year = $request->input('year');
 			$query ->whereYear('tgl_pengajuan', [$year])
-				   ->orderBy('no_permohonan', 'desc');
+				   ->orderBy('tgl_pengajuan', 'desc');
 		}
 		$perPage = $request->input('perPage', 50);
-		$items=$query->orderBy('no_permohonan', 'desc')->paginate($perPage);
+		$items=$query->orderBy('tgl_pengajuan', 'desc')->paginate($perPage);
 		$items->withPath(url('/sicantik'));
 		return view('admin.nonberusaha.sicantik.index',compact('judul','items','perPage','search','date_start','date_end','month','year'));
     }
