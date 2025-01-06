@@ -31,6 +31,7 @@ use App\Http\Controllers\PengaduanController;
 use App\Http\Controllers\PengawasanDashboardController;
 use App\Http\Controllers\PetaPotensiController;
 use App\Http\Controllers\ProdukHukumDashboardController;
+use App\Http\Controllers\ProyekController;
 use App\Http\Controllers\SicantikApiController;
 use App\Http\Controllers\SicantikDashboardController;
 use App\Http\Controllers\SicantikProsesController;
@@ -140,7 +141,10 @@ Route::post('/mppdigital/import_excel', [MppdController::class, 'import_excel'])
 Route::post('/mppdsort', [MppdController::class, 'index'])->middleware('auth');
 Route::get('/simpel', [DashboradSimpelController::class, 'index'])->middleware('auth');
 Route::post('/simpel', [DashboradSimpelController::class, 'index'])->middleware('auth');
-
+Route::get('/proyek', [ProyekController::class, 'index'])->middleware('auth');
+Route::post('/proyek', [ProyekController::class, 'index'])->middleware('auth');
+Route::post('/proyek/import_excel', [ProyekController::class, 'import_excel'])->middleware('auth');
+Route::get('/proyek/statistik', [ProyekController::class, 'statistik'])->middleware('auth');
 Route::get('/createrolepermission', function(){
     try{
         Role::create(['name' => 'administrator']);
