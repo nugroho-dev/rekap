@@ -133,7 +133,7 @@
                             <div>{{ $item->id_proyek }}</div>
                             <div class="text-secondary">{{ $item->uraian_jenis_proyek }}</div>
                             <div class="text-secondary">{{ $item->uraian_risiko_proyek }}</div>
-                            <div class="text-secondary">{{ $item->nama_proyek }}</div>
+                            <div class="text-secondary text-wrap">{{ $item->nama_proyek }}</div>
                             <div class="text-secondary">Tanggal Proyek {{ Carbon\Carbon::parse($item->day_of_tanggal_pengajuan_proyek)->translatedFormat('d F Y') }}</div>
                             <div class="text-secondary">KBLI. {{ $item->kbli }}</div>
                             <div class="text-secondary text-wrap">{{ $item->judul_kbli }}</div>
