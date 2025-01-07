@@ -24,8 +24,7 @@ class ProyekController extends Controller
 		$year = $request->input('year');
 		if ($request->has('search')) {
 			$search = $request->input('search');
-			$query ->where('del', 0)
-				   ->where('nama_perusahaan', 'LIKE', "%{$search}%")
+			$query ->where('nama_perusahaan', 'LIKE', "%{$search}%")
 				   ->orWhere('nib', 'LIKE', "%{$search}%")
 				   ->orWhere('kbli', 'LIKE', "%{$search}%")
 				   ->orderBy('day_of_tanggal_pengajuan_proyek', 'asc');
@@ -36,8 +35,7 @@ class ProyekController extends Controller
 			if($date_start>$date_end ){
 				return redirect('/proyek')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda ');
 			}else{
-			$query ->where('del', 0)
-				   ->whereBetween('day_of_tanggal_pengajuan_proyek', [$date_start,$date_end])
+			$query ->whereBetween('day_of_tanggal_pengajuan_proyek', [$date_start,$date_end])
 				   ->orderBy('day_of_tanggal_pengajuan_proyek', 'asc');
 			}
 		}
@@ -51,16 +49,14 @@ class ProyekController extends Controller
 			}if(empty($month)){
 				return redirect('/proyek')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
 			}else{
-			$query ->where('del', 0)
-				   ->whereMonth('day_of_tanggal_pengajuan_proyek', [$month])
+			$query ->whereMonth('day_of_tanggal_pengajuan_proyek', [$month])
 				   ->whereYear('day_of_tanggal_pengajuan_proyek', [$year])
 				   ->orderBy('day_of_tanggal_pengajuan_proyek', 'asc');
 				}
 		}
 		if ($request->has('year')) {
 			$year = $request->input('year');
-			$query ->where('del', 0)
-				   ->whereYear('day_of_tanggal_pengajuan_proyek', [$year])
+			$query ->whereYear('day_of_tanggal_pengajuan_proyek', [$year])
 				   ->orderBy('day_of_tanggal_pengajuan_proyek', 'asc');
 		}
 		$perPage = $request->input('perPage', 50);
