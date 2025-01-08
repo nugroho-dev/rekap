@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Imports\KonsultasiImport;
 use App\Models\Atasnama;
 use App\Models\Jenislayanan;
 use App\Models\Konsultasi;
@@ -10,19 +11,70 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use \Cviebrock\EloquentSluggable\Services\SlugService;
 use Laravel\Prompts\Key;
+use Maatwebsite\Excel\Facades\Excel;
 
 class KonsultasiDashboardController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $judul = 'Daftar Konsultansi';
-        
-        $nama=auth()->user()->pegawai->nama;
-        $items = Konsultasi::where('del', 0)->where('id_pegawai', auth()->user()->pegawai->id)->paginate(25);
-        return view('admin.pelayananpm.konsultasi.index', compact('judul','items','nama'));
+        $judul='Data Konsultasi';
+		$query = Konsultasi::query();
+		$search = $request->input('search');
+		$date_start = $request->input('date_start');
+		$date_end = $request->input('date_end');
+		$month = $request->input('month');
+		$year = $request->input('year');
+		if ($request->has('search')) {
+			$search = $request->input('search');
+			$query ->where('del', 0)
+				   ->where('nama_pelaku_usaha', 'LIKE', "%{$search}%")
+				   ->orWhere('alamat_pelaku_usaha', 'LIKE', "%{$search}%")
+				   ->orWhere('nama_proyek', 'LIKE', "%{$search}%")
+                   ->orWhere('jenis_izin', 'LIKE', "%{$search}%")
+                   ->orWhere('status', 'LIKE', "%{$search}%")
+                   ->orWhere('nib', 'LIKE', "%{$search}%")
+				   ->orderBy('tanggal', 'asc');
+		}
+		if ($request->has('date_start')&&$request->has('date_end')) {
+			$date_start = $request->input('date_start');
+			$date_end = $request->input('date_end');
+			if($date_start>$date_end ){
+				return redirect('/commitment')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda ');
+			}else{
+			$query ->where('del', 0)
+				   ->whereBetween('tanggal', [$date_start,$date_end])
+				   ->orderBy('tanggal', 'asc');
+			}
+		}
+		if ($request->has('month')&&$request->has('year')) {
+			$month = $request->input('month');
+			$year = $request->input('year');
+			if(empty($month)&&empty($year)){
+				return redirect('/commitment')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
+			}if(empty($year)){
+				return redirect('/commitment')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
+			}if(empty($month)){
+				return redirect('/commitment')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
+			}else{
+			$query ->where('del', 0)
+				   ->whereMonth('tanggal', [$month])
+				   ->whereYear('tanggal', [$year])
+				   ->orderBy('tanggal', 'asc');
+				}
+		}
+		if ($request->has('year')) {
+			$year = $request->input('year');
+			$query ->where('del', 0)
+				   ->whereYear('tanggal', [$year])
+				   ->orderBy('tanggal', 'asc');
+		}
+		$perPage = $request->input('perPage', 50);
+		$items=$query->where('del', 0)->orderBy('tanggal', 'asc')->paginate($perPage);
+		$items->withPath(url('/konsultasi'));
+		return view('admin.pelayananpm.konsultasi.index',compact('judul','items','perPage','search','date_start','date_end','month','year'));
     }
     public function cari(Request $request)
     {
@@ -171,5 +223,35 @@ class KonsultasiDashboardController extends Controller
         $slug = SlugService::createSlug(Konsultasi::class, 'slug', $request->title);
         return response()->json(['slug' => $slug]);
     }
+    public function export_excel()
+	{
+		//return Excel::download(new SiswaExport, 'siswa.xlsx');
+	}
+ 
+	public function import_excel(Request $request) 
+	{
+		// validasi
+		$this->validate($request, [
+			'file' => 'required|mimes:csv,xls,xlsx'
+		]);
+ 
+		// menangkap file excel
+		$file = $request->file('file');
+
+		// membuat nama file unik
+		$nama_file = rand().$file->getClientOriginalName();
+
+		// upload ke folder file_siswa di dalam folder public
+		$file->move(base_path('storage/app/public/file_konsultasi'), $nama_file);
+
+		// import data
+		Excel::import(new KonsultasiImport, base_path('storage/app/public/file_konsultasi/' . $nama_file));
+        
+		// notifikasi dengan session
+		//Session::flash('sukses','Data  Berhasil Diimport!');
+ 
+		// alihkan halaman kembali
+		return redirect('/konsultas')->with('success', 'Data Berhasil Diimport !');
+	}
     
 }

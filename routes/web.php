@@ -80,6 +80,7 @@ Route::get('/pelayanan/konsultasi/display', [KonsultasiDashboardController::clas
 Route::post('/pelayanan/konsultasi/display', [KonsultasiDashboardController::class, 'display'])->middleware('auth');
 Route::post('/pelayanan/konsultasi/print', [KonsultasiDashboardController::class, 'print'])->middleware('auth');
 Route::post('/pelayanan/konsultasi/cari', [KonsultasiDashboardController::class, 'cari'])->middleware('auth');
+
 Route::get('/pelayanan/konsultasi/checkSlug', [KonsultasiDashboardController::class, 'checkSlug'])->middleware('auth');
 Route::resource('/pelayanan/konsultasi', KonsultasiDashboardController::class)->middleware('auth');
 Route::get('/pengaduan/pengaduan/display', [PengaduanController::class, 'display'])->middleware('auth');
@@ -145,6 +146,7 @@ Route::get('/proyek', [ProyekController::class, 'index'])->middleware('auth');
 Route::post('/proyek', [ProyekController::class, 'index'])->middleware('auth');
 Route::post('/proyek/import_excel', [ProyekController::class, 'import_excel'])->middleware('auth');
 Route::get('/proyek/statistik', [ProyekController::class, 'statistik'])->middleware('auth');
+Route::post('/consult/import_excel', [KonsultasiDashboardController::class, 'import_excel'])->middleware('auth');
 Route::get('/createrolepermission', function(){
     try{
         Role::create(['name' => 'administrator']);
