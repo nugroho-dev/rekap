@@ -76,7 +76,7 @@
                         Menampilkan
                         <div class="mx-2 d-inline-block">
                           
-                          <form action="{{ url('/pengaduan/pengaduan/cari')}}" method="POST">
+                          <form action="{{ url('/pengaduancari')}}" method="POST">
                             @csrf
                             <input type="hidden" name="page" value="{{ request()->get('page', 1) }}">
                             <select name="perPage" id="myselect" onchange="this.form.submit()" class="form-control form-control-sm">
@@ -93,7 +93,7 @@
                       <div class="ms-auto text-muted">
                         Cari:
                         <div class="ms-2 d-inline-block ">
-                          <form action="{{ url('/pengaduan/pengaduan/cari')}}" method="POST">
+                          <form action="{{ url('/pengaduancari')}}" method="POST">
                             @csrf
                             <div class="input-group">
                               <input type="text" name="search" class="form-control form-control-sm" aria-label="cari" value="{{ old('search') }}">
@@ -128,21 +128,21 @@
                             $pengajuan= Carbon\Carbon::now()->diff($item->tgl_pengajuan_time);
                         @endphp
                         <tr>
-                          <td>{{ $loop->iteration + $items->firstItem()-1 }}</td>
-                          <td>
+                          <td class="align-top">{{ $loop->iteration + $items->firstItem()-1 }}</td>
+                          <td class="align-top">
                             <div>{{ $item->nama }}</div>
                             <div>{{ $item->nomor }}/{{ $item->tahun }}</div>
                             <div class="text-secondary">{{ $item->alamat }}</div>
                             <div class="text-secondary">{{ $item->no_hp }}</div>
                           </td>
-                          <td class="text-justify text-wrap">
+                          <td class="text-justify text-wrap align-top">
                             
                             <div>{{ $item->media->media }}</div>
                             <div class="text-secondary">{{ $item->klasifikasi->klasifikasi }}</div>
                             <div class="text-secondary">{!! $item->keluhan !!}</div>
                             <div class="text-secondary">{!! $item->perbaikan !!}</div>
                           </td>
-                          <td>
+                          <td class="align-top">
                             <div>Tanggal Terima. {{ \Carbon\Carbon::parse($item->tanggal_terima)->translatedFormat('D, d M Y, h:m:s a')}}</div>
                             <div>Tanggal Respon. {{ \Carbon\Carbon::parse($item->tanggal_respon)->translatedFormat('D, d M Y, h:m:s a')}}</div>
                             <div>Tanggal Selesai. {{ \Carbon\Carbon::parse($item->tanggal_selesai)->translatedFormat('D, d M Y, h:m:s a')}}</div>
@@ -242,7 +242,7 @@
                             <div class="tab-content">
                               <div class="tab-pane fade active show" id="tabs-home-8" role="tabpanel">
                                 <h4>Pilih Tanggal :</h4>
-                                <form method="post" action="{{ url('/pengaduan/pengaduan/cari')}}" enctype="multipart/form-data">
+                                <form method="post" action="{{ url('/pengaduancari')}}" enctype="multipart/form-data">
                                   @csrf
                                 <div class="input-group mb-2">
                                   <input type="date" class="form-control" name="date_start" autocomplete="off">
@@ -257,7 +257,7 @@
                               <div class="tab-pane fade" id="tabs-profile-8" role="tabpanel">
                                 <h4>Pilih Bulan :</h4>
                                 <div>
-                                  <form method="post" action="{{ url('/pengaduan/pengaduan/cari')}}" enctype="multipart/form-data">
+                                  <form method="post" action="{{ url('/pengaduancari')}}" enctype="multipart/form-data">
                                     @csrf
                                   <div class="row g-2">
                                     <div class="col-4">
@@ -286,7 +286,7 @@
                               <div class="tab-pane fade" id="tabs-activity-8" role="tabpanel">
                                 <h4>Pilih Tahun :</h4>
                                 <div>
-                                  <form method="post" action="{{ url('/pengaduan/pengaduan/cari')}}" enctype="multipart/form-data">
+                                  <form method="post" action="{{ url('/pengaduancari')}}" enctype="multipart/form-data">
                                     @csrf
                                   <div class="row g-2">
                                     <div class="col-4">

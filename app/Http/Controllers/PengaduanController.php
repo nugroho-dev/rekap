@@ -217,7 +217,6 @@ class PengaduanController extends Controller
     public function update(Request $request, Pengaduan $pengaduan)
     {
         $rules = [
-
             'tanggal_terima' => 'required|date',
             'nama' => 'required|max:255',  
             'alamat' => 'required',

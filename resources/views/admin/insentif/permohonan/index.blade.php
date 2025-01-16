@@ -76,7 +76,7 @@
                         Menampilkan
                         <div class="mx-2 d-inline-block">
                           
-                          <form action="{{ url('/insentif/cari')}}" method="POST">
+                          <form action="{{ url('/insentifcari')}}" method="POST">
                             @csrf
                             <input type="hidden" name="page" value="{{ request()->get('page', 1) }}">
                             <select name="perPage" id="myselect" onchange="this.form.submit()" class="form-control form-control-sm">
@@ -93,7 +93,7 @@
                       <div class="ms-auto text-muted">
                         Cari:
                         <div class="ms-2 d-inline-block ">
-                          <form action="{{ url('/insentif/cari')}}" method="POST">
+                          <form action="{{ url('/insentifcari')}}" method="POST">
                             @csrf
                             <div class="input-group">
                               <input type="text" name="search" class="form-control form-control-sm" aria-label="cari" value="{{ old('search') }}">
@@ -245,7 +245,7 @@
                             <div class="tab-content">
                               <div class="tab-pane fade active show" id="tabs-home-8" role="tabpanel">
                                 <h4>Pilih Tanggal :</h4>
-                                <form method="post" action="{{ url('/insentif/cari')}}" enctype="multipart/form-data">
+                                <form method="post" action="{{ url('/insentifcari')}}" enctype="multipart/form-data">
                                   @csrf
                                 <div class="input-group mb-2">
                                   <input type="date" class="form-control" name="date_start" autocomplete="off">
@@ -260,7 +260,7 @@
                               <div class="tab-pane fade" id="tabs-profile-8" role="tabpanel">
                                 <h4>Pilih Bulan :</h4>
                                 <div>
-                                  <form method="post" action="{{ url('/insentif/cari')}}" enctype="multipart/form-data">
+                                  <form method="post" action="{{ url('/insentifcari')}}" enctype="multipart/form-data">
                                     @csrf
                                   <div class="row g-2">
                                     <div class="col-4">
@@ -289,7 +289,7 @@
                               <div class="tab-pane fade" id="tabs-activity-8" role="tabpanel">
                                 <h4>Pilih Tahun :</h4>
                                 <div>
-                                  <form method="post" action="{{ url('/insentif/cari')}}" enctype="multipart/form-data">
+                                  <form method="post" action="{{ url('/insentifcari')}}" enctype="multipart/form-data">
                                     @csrf
                                   <div class="row g-2">
                                     <div class="col-4">

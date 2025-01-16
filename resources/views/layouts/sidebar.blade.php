@@ -181,7 +181,7 @@
                     Investor
                   </span>
                 </a>
-                <div class="dropdown-menu close">
+                <div class="dropdown-menu {{ Request::is('proyek*')?'show':'close' }}">
                   <div class="dropdown-menu-columns">
                       <a class="dropdown-item" href="{{ url('/proyek') }}">
                         Investor
@@ -232,7 +232,7 @@
                   </div>
                 </div>
               </li>
-              <li class="nav-item {{ Request::is('maintenance*')?'active':'' }} dropdown">
+              <li class="nav-item {{ Request::is('commitment*')?'active':'' }}{{ Request::is('pelayanan*')?'active':'' }} dropdown">
                 <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="true" >
                   <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-device-desktop-heart" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 16h-6a1 1 0 0 1 -1 -1v-10a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v6" /><path d="M7 20h3.5" /><path d="M9 16v4" /><path d="M18 22l3.35 -3.284a2.143 2.143 0 0 0 .005 -3.071a2.242 2.242 0 0 0 -3.129 -.006l-.224 .22l-.223 -.22a2.242 2.242 0 0 0 -3.128 -.006a2.143 2.143 0 0 0 -.006 3.071l3.355 3.296z" /></svg>
@@ -241,7 +241,7 @@
                     Pelayanan PM
                   </span>
                 </a>
-                <div class="dropdown-menu close">
+                <div class="dropdown-menu {{ Request::is('commitment*')?'show':'close' }}{{ Request::is('pelayanan*')?'show':'close' }}">
                   <div class="dropdown-menu-columns">
                       <a class="dropdown-item" href="{{ url('/pelayanan/konsultasi') }}">
                         Konsultasi
@@ -252,7 +252,7 @@
                   </div>
                 </div>
               </li>
-              <li class="nav-item {{ Request::is('maintenance*')?'active':'' }} dropdown">
+              <li class="nav-item {{ Request::is('pengaduan*')?'active':'' }} dropdown">
                 <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="true" >
                   <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-alert-octagon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12.802 2.165l5.575 2.389c.48 .206 .863 .589 1.07 1.07l2.388 5.574c.22 .512 .22 1.092 0 1.604l-2.389 5.575c-.206 .48 -.589 .863 -1.07 1.07l-5.574 2.388c-.512 .22 -1.092 .22 -1.604 0l-5.575 -2.389a2.036 2.036 0 0 1 -1.07 -1.07l-2.388 -5.574a2.036 2.036 0 0 1 0 -1.604l2.389 -5.575c.206 -.48 .589 -.863 1.07 -1.07l5.574 -2.388a2.036 2.036 0 0 1 1.604 0z" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>
@@ -261,7 +261,7 @@
                     Pengaduan
                   </span>
                 </a>
-                <div class="dropdown-menu close">
+                <div class="dropdown-menu {{ Request::is('pengaduan*')?'show':'close' }}">
                   <div class="dropdown-menu-columns">
                       <a class="dropdown-item" href="{{ url('/pengaduan') }}">
                         pengaduan
@@ -269,7 +269,7 @@
                   </div>
                 </div>
               </li>
-              <li class="nav-item {{ Request::is('maintenance*')?'active':'' }} dropdown">
+              <li class="nav-item {{ Request::is('insentif*')?'active':'' }} dropdown">
                 <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="true" >
                   <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moneybag" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9.5 3h5a1.5 1.5 0 0 1 1.5 1.5a3.5 3.5 0 0 1 -3.5 3.5h-1a3.5 3.5 0 0 1 -3.5 -3.5a1.5 1.5 0 0 1 1.5 -1.5z" /><path d="M4 17v-1a8 8 0 1 1 16 0v1a4 4 0 0 1 -4 4h-8a4 4 0 0 1 -4 -4z" /></svg>
@@ -278,7 +278,7 @@
                     Fasilitas/Insentif
                   </span>
                 </a>
-                <div class="dropdown-menu close">
+                <div class="dropdown-menu {{ Request::is('insentif*')?'show':'close' }}">
                   <div class="dropdown-menu-columns">
                       <a class="dropdown-item" href="{{ url('/insentif') }}">
                         Permohonan
@@ -292,7 +292,7 @@
                   </div>
                 </div>
               </li>
-              <li class="nav-item {{ Request::is('maintenance*')?'active':'' }} dropdown">
+              <li class="nav-item {{ Request::is('deregulasi*')?'active':'' }} dropdown">
                 <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="true" >
                   <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-umbrella" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 12a8 8 0 0 1 16 0z" /><path d="M12 12v6a2 2 0 0 0 4 0" /></svg>
@@ -301,7 +301,7 @@
                     Deregulasi PM
                   </span>
                 </a>
-                <div class="dropdown-menu close">
+                <div class="dropdown-menu {{ Request::is('deregulasi*')?'show':'close' }}">
                   <div class="dropdown-menu-columns">
                       <a class="dropdown-item" href="{{ url('/deregulasi') }}">
                         Produk Hukum
@@ -310,7 +310,7 @@
                   </div>
                 </div>
               </li>
-              <li class="nav-item {{ Request::is('maintenance*')?'active':'' }} dropdown">
+              <li class="nav-item {{ Request::is('potensi*')?'active':'' }} dropdown">
                 <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="true" >
                   <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-mountain" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 20h18l-6.921 -14.612a2.3 2.3 0 0 0 -4.158 0l-6.921 14.612z" /><path d="M7.5 11l2 2.5l2.5 -2.5l2 3l2.5 -2" /></svg>
@@ -319,16 +319,16 @@
                     Pemetaan Potensi
                   </span>
                 </a>
-                <div class="dropdown-menu close">
+                <div class="dropdown-menu {{ Request::is('potensi*')?'show':'close' }}">
                   <div class="dropdown-menu-columns">
-                      <a class="dropdown-item" href="{{ url('/peta/potensi') }}">
+                      <a class="dropdown-item" href="{{ url('/potensi') }}">
                         Peta Potensi
                       </a>
                        
                   </div>
                 </div>
               </li>
-              <li class="nav-item {{ Request::is('maintenance*')?'active':'' }} dropdown">
+              <li class="nav-item {{ Request::is('loi*')?'active':'' }}{{ Request::is('expo*')?'active':'' }}{{ Request::is('business*')?'active':'' }} dropdown">
                 <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="true" >
                   <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-ad-circle" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-10 0a10 10 0 1 0 20 0a10 10 0 1 0 -20 0" /><path d="M7 15v-4.5a1.5 1.5 0 0 1 3 0v4.5" /><path d="M7 13h3" /><path d="M14 9v6h1a2 2 0 0 0 2 -2v-2a2 2 0 0 0 -2 -2h-1z" /></svg>
@@ -337,7 +337,7 @@
                     Promosi PM
                   </span>
                 </a>
-                <div class="dropdown-menu close">
+                <div class="dropdown-menu {{ Request::is('loi*')?'show':'close' }} {{ Request::is('expo*')?'show':'close' }} {{ Request::is('business*')?'show':'close' }}">
                   <div class="dropdown-menu-columns">
                       <a class="dropdown-item" href="{{ url('/loi') }}">
                         LOI
@@ -352,7 +352,7 @@
                   </div>
                 </div>
               </li>
-              <li class="nav-item {{ Request::is('maintenance*')?'active':'' }} dropdown">
+              <li class="nav-item {{ Request::is('pengawasan*')?'active':'' }} dropdown">
                 <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="true" >
                   <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M12 21h-5a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v4.5" /><path d="M16.5 17.5m-2.5 0a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0" /><path d="M18.5 19.5l2.5 2.5" /></svg>
@@ -361,7 +361,7 @@
                     Pengawasan PM
                   </span>
                 </a>
-                <div class="dropdown-menu close">
+                <div class="dropdown-menu {{ Request::is('pengawasan*')?'show':'close' }}">
                   <div class="dropdown-menu-columns">
                       <a class="dropdown-item" href="{{ url('/pengawasan') }}">
                        Pengawasan
@@ -369,7 +369,7 @@
                   </div>
                 </div>
               </li>
-              <li class="nav-item {{ Request::is('maintenance*')?'active':'' }} dropdown">
+              <li class="nav-item {{ Request::is('bimtek*')?'active':'' }} {{ Request::is('fasilitasi*')?'active':'' }} dropdown">
                 <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="true" >
                   <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-users" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /><path d="M21 21v-2a4 4 0 0 0 -3 -3.85" /></svg>
@@ -378,7 +378,7 @@
                     Pembinaan PM
                   </span>
                 </a>
-                <div class="dropdown-menu close">
+                <div class="dropdown-menu {{ Request::is('bimtek*')?'show':'close' }} {{ Request::is('fasilitasi*')?'show':'close' }}">
                   <div class="dropdown-menu-columns">
                       <a class="dropdown-item" href="{{ url('/bimtek') }}">
                        Bimbingan Teknis
@@ -389,7 +389,7 @@
                   </div>
                 </div>
               </li>
-              <li class="nav-item {{ Request::is('maintenance*')?'active':'' }} dropdown">
+              <li class="nav-item {{ Request::is('konfigurasi*')?'active':'' }}{{ Request::is('dayoff*')?'active':'' }} dropdown">
                 <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="true" >
                   <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-settings" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" /><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /></svg>
@@ -398,7 +398,7 @@
                     Konfigurasi
                   </span>
                 </a>
-                <div class="dropdown-menu close">
+                <div class="dropdown-menu {{ Request::is('konfigurasi*')?'show':'close' }}{{ Request::is('dayoff*')?'show':'close' }}">
                   <div class="dropdown-menu-columns">
                     <div class="dropdown-menu-column">
                       <a class="dropdown-item" href="{{ url('/konfigurasi/user') }}">

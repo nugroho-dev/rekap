@@ -45,7 +45,8 @@
                   <div class="col-lg-12">
                     <div class="row row-cards">
                       <div class="col-12">
-                        <form class="card" method="post" action="{{ url('/potensi') }}" enctype="multipart/form-data">
+                        <form class="card" method="post" action="{{ url('/potensi/'.$potensi->slug) }}" enctype="multipart/form-data">
+                          @method('put')
                           @csrf
                           <div class="card-body">
                             <h3 class="card-title">Kajian Peta Potensi</h3>
@@ -53,7 +54,7 @@
                               <div class="col-md-12">
                                 <div class="mb-3">
                                   <label class="form-label">Judul</label>
-                                  <input type="text" class="form-control"  placeholder="Judul Kajian" name="judul" id="title" value="{{ old('judul') }}">
+                                  <input type="text" class="form-control"  placeholder="Judul Kajian" name="judul" id="title" value="{{ old('judul',$potensi->judul) }}">
                                   @error ('judul')
                                   <small class="form-hint text-danger">{{ $message }} </small>
                                   @enderror
@@ -62,7 +63,7 @@
                               <div class="col-sm-6 col-md-12">
                                 <div class="mb-3">
                                   <label class="form-label">Slug</label>
-                                  <input type="text" class="form-control" placeholder="slug" value="{{ old('slug') }}" name="slug" id="slug" readonly>
+                                  <input type="text" class="form-control" placeholder="slug" value="{{ old('slug',$potensi->slug) }}" name="slug" id="slug" readonly>
                                   @error ('slug')
                                   <small class="form-hint text-danger">{{ $message }} </small>
                                   @enderror
@@ -73,7 +74,7 @@
                                 <div class="col-sm-12 col-md-5">
                                   <div class="mb-3">
                                     <label class="form-label">Tahun</label>
-                                    <input type="number" class="form-control" placeholder="Tahun Kajian" name="tahun" value="{{ old('tahun') }}">
+                                    <input type="number" class="form-control" placeholder="Tahun Kajian" name="tahun" value="{{ old('tahun',$potensi->tahun) }}">
                                     @error ('tahun')
                                     <small class="form-hint text-danger">{{ $message }} </small>
                                     @enderror
@@ -85,7 +86,7 @@
                                 <div class="col-sm-6 col-md-12">
                                   <div class="mb-3">
                                     <label class="form-label">Deskripsi</label>
-                                    <textarea class="form-control" id="tinymce-mytextarea" rows="3" name="desc"> {{ old('desc') }}</textarea>
+                                    <textarea class="form-control" id="tinymce-mytextarea" rows="3" name="desc"> {{ old('desc',$potensi->desc) }}</textarea>
                                     @error ('desc')
                                     <small class="form-hint text-danger">{{ $message }} </small>
                                     @enderror
@@ -97,6 +98,7 @@
                                     <div class="input-group mb-2">
                                       <span class="input-group-text">
                                         <input type="file" class="form-control" id="docpdf" placeholder="Masukan File" name="file" onchange="priviewDocPdf()" value="{{ old('file') }}">
+                                        <input type="hidden" name="oldFile" value="{{ $potensi->file }}">
                                       </span>
                                       <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
                                         Pratinjau Dokumen
@@ -117,7 +119,7 @@
                                         </div>
                                         <div class="modal-body">
                                           <div class="flexible-container">
-                                            <embed class="docpdf-preview" id="my-object" width="100%" type="application/pdf" height="650"></embed>
+                                            <embed src="{{ url(Storage::url($potensi->file)) }}" class="docpdf-preview" id="my-object" width="100%" type="application/pdf" height="650"></embed>
                                           </div>
                                         </div>
                                         <div class="modal-footer">
