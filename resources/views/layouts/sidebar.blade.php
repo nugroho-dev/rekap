@@ -263,7 +263,7 @@
                 </a>
                 <div class="dropdown-menu close">
                   <div class="dropdown-menu-columns">
-                      <a class="dropdown-item" href="{{ url('/pengaduan/pengaduan') }}">
+                      <a class="dropdown-item" href="{{ url('/pengaduan') }}">
                         pengaduan
                       </a>
                   </div>
@@ -280,7 +280,7 @@
                 </a>
                 <div class="dropdown-menu close">
                   <div class="dropdown-menu-columns">
-                      <a class="dropdown-item" href="{{ url('/insentif/permohonan') }}">
+                      <a class="dropdown-item" href="{{ url('/insentif') }}">
                         Permohonan
                       <a class="dropdown-item" href="{{ url('/maintenance') }}">
                         Penetapan 
@@ -303,7 +303,7 @@
                 </a>
                 <div class="dropdown-menu close">
                   <div class="dropdown-menu-columns">
-                      <a class="dropdown-item" href="{{ url('/deregulasi/hukum') }}">
+                      <a class="dropdown-item" href="{{ url('/deregulasi') }}">
                         Produk Hukum
                       </a>
                       

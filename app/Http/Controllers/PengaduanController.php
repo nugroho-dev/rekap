@@ -16,13 +16,60 @@ class PengaduanController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $judul = 'Daftar Pengaduan';
-        
-        $nama=auth()->user()->pegawai->nama;
-        $items = Pengaduan::where('del', 0)->where('id_pegawai', auth()->user()->pegawai->id)->paginate(25);
-        return view('admin.pengaduan.pengaduan.index', compact('judul','items','nama'));
+        $judul='Data Pengaduan';
+		$query = Pengaduan::query()->where('del', 0);
+		$search = $request->input('search');
+		$date_start = $request->input('date_start');
+		$date_end = $request->input('date_end');
+		$month = $request->input('month');
+		$year = $request->input('year');
+		if ($request->has('search')) {
+			$search = $request->input('search');
+			$query ->where('nama', 'LIKE', "%{$search}%")
+				   ->orWhere('alamat', 'LIKE', "%{$search}%")
+				   ->orWhere('keluhan', 'LIKE', "%{$search}%")
+				   ->orWhere('perbaikan', 'LIKE', "%{$search}%")
+				   ->orWhere('nomor', 'LIKE', "%{$search}%")
+				   ->orWhere('tahun', 'LIKE', "%{$search}%")
+				   ->orWhere('catatan', 'LIKE', "%{$search}%")
+				   ->orderBy('tanggal_terima', 'desc');
+		}
+		if ($request->has('date_start')&&$request->has('date_end')) {
+			$date_start = $request->input('date_start');
+			$date_end = $request->input('date_end');
+			if($date_start>$date_end ){
+				return redirect('/pengaduan')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda ');
+			}else{
+			$query ->whereBetween('tanggal_terima', [$date_start,$date_end])
+				   ->orderBy('tanggal_terima', 'desc');
+			}
+		}
+		if ($request->has('month')&&$request->has('year')) {
+			$month = $request->input('month');
+			$year = $request->input('year');
+			if(empty($month)&&empty($year)){
+				return redirect('/pengaduan')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
+			}if(empty($year)){
+				return redirect('/pengaduan')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
+			}if(empty($month)){
+				return redirect('/pengaduan')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
+			}else{
+			$query ->whereMonth('tanggal_terima', [$month])
+				   ->whereYear('tanggal_terima', [$year])
+				   ->orderBy('tanggal_terima', 'desc');
+				}
+		}
+		if ($request->has('year')) {
+			$year = $request->input('year');
+			$query ->whereYear('tanggal_terima', [$year])
+				   ->orderBy('tanggal_terima', 'desc');
+		}
+		$perPage = $request->input('perPage', 50);
+		$items=$query->orderBy('tanggal_terima', 'desc')->paginate($perPage);
+		$items->withPath(url('/pengaduan'));
+        return view('admin.pengaduan.pengaduan.index', compact('judul','items','perPage','search','date_start','date_end','month','year'));
     }
     public function cari(Request $request)
     {
@@ -111,19 +158,23 @@ class PengaduanController extends Controller
     public function store(Request $request)
     {
         $validatedData = $request->validate([
-            'id_pegawai' => 'required',
-            'tanggal' => 'required|date',
+         
+            'tanggal_terima' => 'required|date',
             'nama' => 'required|max:255', 
             'slug' => 'required|unique:pengaduan', 
+            'alamat' => 'required',
+            'no_hp' => 'required',
+            'keluhan' => 'required',
+            'perbaikan' => 'required',
+            'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5000',
+            'id_media' => 'required',
+            'file_identitas' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
             'nomor' => 'required',
             'tahun' => 'required',
-            'no_hp' => 'required', 
-            'alamat' => 'required',
-            'keluhan' => 'required', 
-            'perbaikan' => 'required',
-            'id_media' => 'required',
-            'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5000',
-            'file_identitas' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048'
+            'id_klasifikasi' => 'required',
+            'catatan' => 'required',
+            'tanggal_respon' => 'required', 
+            'tanggal_selesai' => 'required',  
         ]);
         $validatedData['del'] = 0;
         if ($request->file('file')) {
@@ -132,9 +183,9 @@ class PengaduanController extends Controller
         if ($request->file('file_identitas')) {
             $validatedData['file_identitas'] = $request->file('file_identitas')->store('public/pengaduan-files');
         }
-        
+       
         Pengaduan::create($validatedData);
-        return redirect('/pengaduan/pengaduan')->with('success', 'Data Baru Berhasil di Tambahkan !');
+        return redirect('/pengaduan')->with('success', 'Data Baru Berhasil di Tambahkan !');
     }
 
     /**
@@ -142,7 +193,11 @@ class PengaduanController extends Controller
      */
     public function show(Pengaduan $pengaduan)
     {
-        //
+        if ($pengaduan) {
+            return response()->json($pengaduan);
+        }
+
+        return response()->json(['message' => 'Data not found'], 404);
     }
 
     /**
@@ -152,7 +207,8 @@ class PengaduanController extends Controller
     {
         $judul = 'Edit Pengaduan';
         $media = Mediapengaduan::all();
-        return view('admin.pengaduan.pengaduan.edit', compact('judul', 'pengaduan','media'));
+        $klasifikasi = Klasifikasipengaduan::all();
+        return view('admin.pengaduan.pengaduan.edit', compact('judul', 'pengaduan','media','klasifikasi'));
     }
 
     /**
@@ -161,18 +217,23 @@ class PengaduanController extends Controller
     public function update(Request $request, Pengaduan $pengaduan)
     {
         $rules = [
-            'id_pegawai' => 'required',
-            'tanggal' => 'required|date',
-            'nama' => 'required|max:255', 
-            'no_hp' => 'required', 
+
+            'tanggal_terima' => 'required|date',
+            'nama' => 'required|max:255',  
             'alamat' => 'required',
+            'no_hp' => 'required',
+            'keluhan' => 'required',
+            'perbaikan' => 'required',
+            'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5000',
+            'id_media' => 'required',
+            'file_identitas' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
             'nomor' => 'required',
             'tahun' => 'required',
-            'keluhan' => 'required', 
-            'perbaikan' => 'required',
-            'id_media' => 'required',
-            'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5000',
-            'file_identitas' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048'];
+            'id_klasifikasi' => 'required',
+            'catatan' => 'required',
+            'tanggal_respon' => 'required', 
+            'tanggal_selesai' => 'required', 
+        ];
         
         if ($request->slug != $pengaduan->slug) {
             $rules['slug'] = 'required|unique:pengaduan';
@@ -192,7 +253,7 @@ class PengaduanController extends Controller
             $validatedData['file_identitas'] = $request->file('file_identitas')->store('public/pengaduan-files');
         }
         Pengaduan::where('id', $pengaduan->id)->update($validatedData);
-        return redirect('/pengaduan/pengaduan')->with('success', 'Data  Berhasil di Perbaharui !');
+        return redirect('/pengaduan')->with('success', 'Data  Berhasil di Perbaharui !');
     }
     public function updateklasifikasi(Request $request, Pengaduan $item)
     {
@@ -218,7 +279,7 @@ class PengaduanController extends Controller
         $validatedData['del'] = 1;
         
         Pengaduan::where('id', $pengaduan->id)->update($validatedData);
-         return redirect('/pengaduan/pengaduan')->with('success', 'Data  Berhasil di Hapus !');
+         return redirect('/pengaduan')->with('success', 'Data  Berhasil di Hapus !');
     }
     public function checkSlug(Request $request)
     {

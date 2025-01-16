@@ -35,7 +35,7 @@
         </div>
     </div>
              <div class="col-md-12 ">
-              <form class="card" method="post" action="{{ url('/pengaduan/pengaduan') }}" enctype="multipart/form-data">
+              <form class="card" method="post" action="{{ url('/pengaduan') }}" enctype="multipart/form-data">
                  @csrf
                 <div class="card-header">
                   <h3 class="card-title">Data Pengaduan</h3>
@@ -68,16 +68,36 @@
                       </div>
                     </div>
                     <div class="col-sm-6 col-md-3">
-                      <div class="mb-3">
-                        <label class="form-label required">Tanggal</label>
+                    <div class="mb-3">
+                        <label class="form-label required">Tanggal Terima</label>
                         <div>
                     
-                          <input type="datetime-local" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal',$current ) }}" name='tanggal'>
-                         
-                          <input type="hidden" name="id_pegawai" value="{{ auth()->user()->pegawai->id}}">
-                            @error ('tanggal')
+                          <input type="datetime-local" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal_terima',$current ) }}" name='tanggal_terima'>
+                            @error ('tanggal_terima')
                           <small class="form-hint text-danger">{{ $message }}  </small>
                           @enderror
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                      <div class="mb-3">
+                        <label class="form-label required">Tanggal Respon</label>
+                        <div>
+                          <input type="datetime-local" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal_respon',$current ) }}" name='tanggal_respon'>
+                            @error ('tanggal_respon')
+                            <small class="form-hint text-danger">{{ $message }}  </small>
+                            @enderror
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                      <div class="mb-3">
+                        <label class="form-label required">Tanggal Penyelesaian</label>
+                        <div>
+                          <input type="datetime-local" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal_selesai',$current ) }}" name='tanggal_selesai'>
+                            @error ('tanggal_selesai')
+                              <small class="form-hint text-danger">{{ $message }}  </small>
+                            @enderror
                         </div>
                       </div>
                     </div>
@@ -129,7 +149,41 @@
                              
                           </select>
                           
-                          @error ('media')
+                          @error ('id_media')
+                          <small class="form-hint">{{ $message }} </small>
+                          @enderror
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-sm-6 col-md-6">
+                      <div class="mb-3">
+                        <label class="form-label required">Klasifikasi Pengaduan</label>
+                        <div>
+                          <select class="form-select" name="id_klasifikasi" >
+                            @foreach ($klasifikasi as $item)
+                            <option value="{{ $item->id }}">{{ $item->kode }}-{{ $item->klasifikasi }}</option>
+                            @endforeach
+                             
+                          </select>
+                          
+                          @error ('id_klasifikasi')
+                          <small class="form-hint">{{ $message }} </small>
+                          @enderror
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-sm-6 col-md-6">
+                      <div class="mb-3">
+                        <label class="form-label required">Status Pengaduan</label>
+                        <div>
+                          <select class="form-select" name="catatan" >
+                            
+                            <option value="Proses Verifikasi">Proses Verifikasi</option>
+                            <option value="Proses Tindak Lanjut">Proses Tindak Lanjut</option>
+                            <option value="Selesai">Selesai</option>
+                          </select>
+                          
+                          @error ('catatan')
                           <small class="form-hint">{{ $message }} </small>
                           @enderror
                         </div>
@@ -144,30 +198,41 @@
                         @enderror
                       </div>
                     </div>
-                    <div class="col-sm-12 col-md-12">
+                    <div class="col-sm-12 col-md-12 col-lg-12">
                       <div class="mb-3">
                         <label class="form-label">File Identitas Pemohon</label>
-                        <div>
-                          <embed class="img-preview mb-3 col-8 rounded mx-auto d-block" height="500" type="application/pdf"></embed>
-                          <input type="file" class="form-control" id="image" name="file_identitas" value="{{ old('file_identitas') }}" onchange="priviewImage()" >
-                          @error ('file_identitas')
-                          <small class="form-hint">{{ $message }} </small>
-                          @enderror
-                        </div>
+                        <div class="input-group">
+                          <span class="input-group-text">
+                            <input type="hidden" name="oldFile" value="">
+                            <input type="file" class="form-control" placeholder="" name="file_identitas" id="docpdf"  onchange="priviewDocPdf()">
+                            </span>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                              Pratinjau Dokumen
+                            </button>
+                         </div>
+                        @error ('file_identitas')
+                        <small class="form-hint text-danger">{{ $message }}  </small>
+                        @enderror
                       </div>
                     </div>
-                    <div class="col-sm-12 col-md-12">
+                    <div class="col-sm-12 col-md-12 col-lg-12">
                       <div class="mb-3">
                         <label class="form-label">Berkas Aduan Pendukung</label>
-                        <div>
-                          <embed class="docpdf-preview mb-3 col-12 rounded" height="700" type="application/pdf"></embed>
-                          <input type="file" class="form-control" id="docpdf" placeholder="Alamat" name="file" value="{{ old('file') }}" onchange="priviewDocPdf()">
-                          @error ('file')
-                          <small class="form-hint">{{ $message }} </small>
-                          @enderror
-                        </div>
+                        <div class="input-group">
+                          <span class="input-group-text">
+                            <input type="hidden" name="oldFile" value="">
+                            <input type="file" class="form-control" placeholder="" name="file" id="docpdf1"  onchange="priviewDocPdf1()">
+                            </span>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal1">
+                              Pratinjau Dokumen
+                            </button>
+                         </div>
+                        @error ('file')
+                        <small class="form-hint text-danger">{{ $message }}  </small>
+                        @enderror
                       </div>
                     </div>
+                   
                     <div class="col-sm-6 col-md-6">
                     <div class="mb-3">
                       <label class="form-label  required">Keluhan</label>
@@ -183,7 +248,7 @@
                   
                   <div class="col-sm-6 col-md-6">
                     <div class="mb-3">
-                      <label class="form-label required">Perbaikan yang di inginkan</label>
+                      <label class="form-label required">Perbaikan Tindak Lanjut</label>
                       <div>
                         <textarea class="form-control" id="tinymce-mytextarea" rows="3" name="perbaikan" >{{ old('perbaikan') }}</textarea>
                         
@@ -202,7 +267,58 @@
                 </div>
               </form>
             </div>
-
+            <div class="modal" id="exampleModal" tabindex="-1">
+              <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Pratinjau Dokumen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    <div class="flexible-container">
+                      <embed src="" class="docpdf-preview" id="my-object" width="100%" type="application/pdf" height="650"></embed>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    
+                    <a href="#" class="btn btn-primary ms-auto" data-bs-dismiss="modal">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-plus" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                        <path d="M12 5l0 14"></path>
+                        <path d="M5 12l14 0"></path>
+                      </svg>
+                      Tutup
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="modal" id="exampleModal1" tabindex="-1">
+              <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Pratinjau Dokumen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    <div class="flexible-container">
+                      <embed src="" class="docpdf-preview1" id="my-object" width="100%" type="application/pdf" height="650"></embed>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    
+                    <a href="#" class="btn btn-primary ms-auto" data-bs-dismiss="modal">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-plus" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                        <path d="M12 5l0 14"></path>
+                        <path d="M5 12l14 0"></path>
+                      </svg>
+                      Tutup
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
   <script>
     const title = document.querySelector('#title');
     const slug = document.querySelector('#slug');
@@ -213,20 +329,20 @@
         .then(data=>slug.value=data.slug)
     });
 
-   function priviewImage() {
-    const image = document.querySelector('#image');
-    const imgPreview= document.querySelector('.img-preview');
-    imgPreview.style.display ='block';
+    function priviewDocPdf() {
+    const docpdf = document.querySelector('#docpdf');
+    const docPdfPreview= document.querySelector('.docpdf-preview');
+    docPdfPreview.style.display ='block';
     const oFReader = new FileReader();
-    oFReader.readAsDataURL(image.files[0]);
+    oFReader.readAsDataURL(docpdf.files[0]);
     oFReader.onload=function(oFREvent){
-        imgPreview.src=oFREvent.target.result;
+      docPdfPreview.src=oFREvent.target.result;
     }
    }
 
-   function priviewDocPdf() {
-    const docpdf = document.querySelector('#docpdf');
-    const docPdfPreview= document.querySelector('.docpdf-preview');
+   function priviewDocPdf1() {
+    const docpdf = document.querySelector('#docpdf1');
+    const docPdfPreview= document.querySelector('.docpdf-preview1');
     docPdfPreview.style.display ='block';
     const oFReader = new FileReader();
     oFReader.readAsDataURL(docpdf.files[0]);

@@ -28,7 +28,7 @@
         <div class="row g-2 align-items-center">
           <div class="col">
             <h2 class="page-title">
-              Tambah Data {{ $judul }}
+               {{ $judul }}
             </h2>
           </div>
         </div>
@@ -45,7 +45,8 @@
                   <div class="col-lg-12">
                     <div class="row row-cards">
                       <div class="col-12">
-                        <form class="card" method="post" action="{{ url('/deregulasi') }}" enctype="multipart/form-data">
+                        <form class="card" method="post" action="{{ url('/deregulasi/'.$deregulasi->slug) }}" enctype="multipart/form-data">
+                          @method('put')
                           @csrf
                           <div class="card-body">
                             <h3 class="card-title">{{ $judul }}</h3>
@@ -53,7 +54,7 @@
                               <div class="col-sm-12 col-md-12">
                                 <div class="mb-3">
                                   <label class="form-label">Judul</label>
-                                  <input type="text" class="form-control"  placeholder="Judul" name="judul" id="title" value="{{ old('judul') }}">
+                                  <input type="text" class="form-control"  placeholder="Judul" name="judul" id="title" value="{{ old('judul',$deregulasi->judul) }}">
                                   @error ('judul')
                                   <small class="form-hint text-danger">{{ $message }} </small>
                                   @enderror
@@ -62,7 +63,7 @@
                               <div class="col-sm-12 col-md-12">
                                 <div class="mb-3">
                                   <label class="form-label">Slug</label>
-                                  <input type="text" class="form-control" placeholder="slug" value="" name="slug" id="slug" readonly>
+                                  <input type="text" class="form-control" placeholder="slug" value="{{ old('slug',$deregulasi->slug) }}" name="slug" id="slug" readonly>
                                   @error ('slug')
                                   <small class="form-hint text-danger">{{ $message }} </small>
                                   @enderror
@@ -73,7 +74,7 @@
                                 
                                   <div class="mb-3">
                                     <label class="form-label">Nomor</label>
-                                    <input type="text" class="form-control" placeholder="Nomor Produk Hukum" name="nomor" value="{{ old('nomor') }}">
+                                    <input type="text" class="form-control" placeholder="Nomor Produk Hukum" name="nomor" value="{{ old('nomor',$deregulasi->nomor) }}">
                                     @error ('nomor')
                                     <small class="form-hint text-danger">{{ $message }} </small>
                                     @enderror
@@ -83,7 +84,7 @@
                               <div class="col-sm-12 col-md-6">
                                 <div class="mb-3">
                                   <label class="form-label">Bentuk</label>
-                                  <input type="text" class="form-control" placeholder="Bentuk Produk Hukum" value="{{ old('bentuk') }}" name="bentuk">
+                                  <input type="text" class="form-control" placeholder="Bentuk Produk Hukum" value="{{ old('bentuk',$deregulasi->bentuk) }}" name="bentuk">
                                   @error ('bentuk')
                                   <small class="form-hint text-danger">{{ $message }} </small>
                                   @enderror
@@ -92,7 +93,7 @@
                               <div class="col-sm-12 col-md-6">
                                 <div class="mb-3">
                                   <label class="form-label">Bentuk Singkat</label>
-                                  <input type="text" class="form-control" placeholder="Bentuk Singkat Produk Hukum" value="{{ old('bentuk_singkat') }}" name="bentuk_singkat">
+                                  <input type="text" class="form-control" placeholder="Bentuk Singkat Produk Hukum" value="{{ old('bentuk_singkat',$deregulasi->bentuk_singkat) }}" name="bentuk_singkat">
                                   @error ('bentuk_singkat')
                                   <small class="form-hint text-danger">{{ $message }} </small>
                                   @enderror
@@ -101,7 +102,7 @@
                               <div class="col-sm-12 col-md-6">
                                 <div class="mb-3">
                                   <label class="form-label">T.E.U</label>
-                                  <input type="text" class="form-control" placeholder="T.E.U Produk Hukum" value="{{ old('teu') }}" name="teu">
+                                  <input type="text" class="form-control" placeholder="T.E.U Produk Hukum" value="{{ old('teu',$deregulasi->teu) }}" name="teu">
                                   @error ('teu')
                                   <small class="form-hint text-danger">{{ $message }} </small>
                                   @enderror
@@ -110,7 +111,7 @@
                               <div class="col-sm-12 col-md-6">
                                 <div class="mb-3">
                                   <label class="form-label">Sumber</label>
-                                  <input type="text" class="form-control" placeholder="Sumber Produk Hukum" value="{{ old('sumber') }}" name="sumber">
+                                  <input type="text" class="form-control" placeholder="Sumber Produk Hukum" value="{{ old('sumber',$deregulasi->sumber) }}" name="sumber">
                                   @error ('sumber')
                                   <small class="form-hint text-danger">{{ $message }} </small>
                                   @enderror
@@ -119,7 +120,7 @@
                               <div class="col-sm-12 col-md-6">
                                 <div class="mb-3">
                                   <label class="form-label">Tahun</label>
-                                  <input type="number" class="form-control" placeholder="Tahun Produk Hukum" value="{{ old('tahun') }}" name="tahun">
+                                  <input type="number" class="form-control" placeholder="Tahun Produk Hukum" value="{{ old('tahun',$deregulasi->tahun) }}" name="tahun">
                                   @error ('tahun')
                                   <small class="form-hint text-danger">{{ $message }} </small>
                                   @enderror
@@ -130,7 +131,7 @@
                                 <div class="col-sm-6 col-md-3">
                                   <div class="mb-3">
                                     <label class="form-label">Tempat Penetapan</label>
-                                    <input type="text" class="form-control" placeholder="Tempat Penetapan Produk hukum" name="tempat_penetapan" value="{{ old('tempat_penetapan') }}">
+                                    <input type="text" class="form-control" placeholder="Tempat Penetapan Produk hukum" name="tempat_penetapan" value="{{ old('tempat_penetapan',$deregulasi->tempat_penetapan) }}">
                                     @error ('tempat_penetapan')
                                     <small class="form-hint text-danger">{{ $message }} </small>
                                     @enderror
@@ -139,7 +140,7 @@
                                 <div class="col-sm-6 col-md-3">
                                   <div class="mb-3">
                                     <label class="form-label">Tanggal Penetapan</label>
-                                    <input type="date" class="form-control" placeholder="Tanggal Penetapan" name="tanggal_penetapan" value="{{ old('tanggal_penetapan') }}">
+                                    <input type="date" class="form-control" placeholder="Tanggal Penetapan" name="tanggal_penetapan" value="{{ old('tanggal_penetapan',$deregulasi->tanggal_penetapan) }}">
                                     @error ('tanggal_penetapan')
                                     <small class="form-hint text-danger">{{ $message }} </small>
                                     @enderror
@@ -148,7 +149,7 @@
                                 <div class="col-sm-6 col-md-3">
                                   <div class="mb-3">
                                     <label class="form-label">Tanggal Pengundangan</label>
-                                    <input type="date" class="form-control" placeholder="Tanggal Pengundangan" name="tanggal_pengundangan" value="{{ old('tanggal_pengundangan') }}">
+                                    <input type="date" class="form-control" placeholder="Tanggal Pengundangan" name="tanggal_pengundangan" value="{{ old('tanggal_pengundangan',$deregulasi->tanggal_pengundangan) }}">
                                     @error ('tanggal_pengundangan')
                                     <small class="form-hint text-danger">{{ $message }} </small>
                                     @enderror
@@ -157,7 +158,7 @@
                                 <div class="col-sm-6 col-md-3">
                                   <div class="mb-3">
                                     <label class="form-label">Tanggal Berlaku</label>
-                                    <input type="date" class="form-control" placeholder="Tanggal Berlaku" name="tanggal_berlaku" value="{{ old('tanggal_berlaku') }}">
+                                    <input type="date" class="form-control" placeholder="Tanggal Berlaku" name="tanggal_berlaku" value="{{ old('tanggal_berlaku',$deregulasi->tanggal_berlaku) }}">
                                     @error ('tanggal_berlaku')
                                     <small class="form-hint text-danger">{{ $message }} </small>
                                     @enderror
@@ -169,7 +170,11 @@
                                     <div>
                                       <select class="form-select" name="id_tipe_dokumen" >
                                         @foreach ($tipedokumenitems  as $item)
+                                        @if (old('id_tipe_dokumen', $item->id)==$deregulasi->id_tipe_dokumen)
+                                        <option value="{{ $item->id }}" selected>{{ $item->nama_tipe_dokumen }}</option>
+                                        @else
                                         <option value="{{ $item->id }}">{{ $item->nama_tipe_dokumen }}</option>
+                                        @endif
                                         @endforeach
                                          
                                       </select>
@@ -186,7 +191,11 @@
                                     <div>
                                       <select class="form-select" name="id_subjek" >
                                         @foreach ($subjekitems  as $item)
+                                        @if (old('id_subjek', $item->id)==$deregulasi->id_subjek)
+                                        <option value="{{ $item->id }}" selected>{{ $item->nama_subjek }}</option>
+                                        @else
                                         <option value="{{ $item->id }}">{{ $item->nama_subjek }}</option>
+                                        @endif
                                         @endforeach
                                          
                                       </select>
@@ -203,7 +212,11 @@
                                     <div>
                                       <select class="form-select" name="id_status" >
                                         @foreach ($statusitems  as $item)
+                                        @if (old('id_status', $item->id)==$deregulasi->id_status)
+                                        <option value="{{ $item->id }}" selected>{{ $item->nama_status }}</option>
+                                        @else
                                         <option value="{{ $item->id }}">{{ $item->nama_status }}</option>
+                                        @endif
                                         @endforeach
                                          
                                       </select>
@@ -220,7 +233,11 @@
                                     <div>
                                       <select class="form-select" name="id_bidang" >
                                         @foreach ($bidangitems  as $item)
+                                        @if (old('id_bidang', $item->id)==$deregulasi->id_bidang)
+                                        <option value="{{ $item->id }}" selected>{{ $item->nama_bidang }}</option>
+                                        @else
                                         <option value="{{ $item->id }}">{{ $item->nama_bidang }}</option>
+                                        @endif
                                         @endforeach
                                          
                                       </select>
@@ -234,7 +251,7 @@
                                 <div class="col-sm-6 col-md-12">
                                   <div class="mb-3">
                                     <label class="form-label">Bahasa</label>
-                                    <input type="text" class="form-control" placeholder="Bahas Produk Hukum" name="bahasa" value="{{ old('bahasa') }}">
+                                    <input type="text" class="form-control" placeholder="Bahas Produk Hukum" name="bahasa" value="{{ old('bahasa',$deregulasi->bahasa) }}">
                                     @error ('bahasa')
                                     <small class="form-hint text-danger">{{ $message }} </small>
                                     @enderror
@@ -243,7 +260,7 @@
                                 <div class="col-sm-6 col-md-12">
                                   <div class="mb-3">
                                     <label class="form-label">Lokasi</label>
-                                    <input type="text" class="form-control" placeholder="Lakasi Produk Hukum" name="lokasi" value="{{ old('lokasi') }}">
+                                    <input type="text" class="form-control" placeholder="Lakasi Produk Hukum" name="lokasi" value="{{ old('lokasi',$deregulasi->lokasi) }}">
                                     @error ('lokasi')
                                     <small class="form-hint text-danger">{{ $message }} </small>
                                     @enderror
@@ -255,6 +272,7 @@
                                   <div class="input-group mb-2">
                                     <span class="input-group-text">
                                       <input type="file" class="form-control" id="docpdf" placeholder="Masukan File" name="file" onchange="priviewDocPdf()" value="{{ old('file') }}">
+                                      <input type="hidden" name="oldFile" value="{{$deregulasi->file }}">
                                     </span>
                                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
                                       Pratinjau Dokumen
@@ -275,7 +293,7 @@
                                         </div>
                                         <div class="modal-body">
                                           <div class="flexible-container">
-                                            <embed class="docpdf-preview" id="my-object" width="100%" type="application/pdf" height="650"></embed>
+                                            <embed src="{{ url(Storage::url($deregulasi->file)) }}"  class="docpdf-preview" id="my-object" width="100%" type="application/pdf" height="650"></embed>
                                           </div>
                                         </div>
                                         <div class="modal-footer">

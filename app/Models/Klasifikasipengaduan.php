@@ -9,4 +9,8 @@ class Klasifikasipengaduan extends Model
 {
     use HasFactory;
     public $table = "klasifikasipengaduan";
+    public function pengaduan()
+    {
+        return $this->hasMany(Pengaduan::class,'id');
+    }
 }

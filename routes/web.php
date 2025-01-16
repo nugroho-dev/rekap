@@ -80,25 +80,28 @@ Route::get('/pelayanan/konsultasi/display', [KonsultasiDashboardController::clas
 Route::post('/pelayanan/konsultasi/display', [KonsultasiDashboardController::class, 'display'])->middleware('auth');
 Route::post('/pelayanan/konsultasi/print', [KonsultasiDashboardController::class, 'print'])->middleware('auth');
 Route::post('/pelayanan/konsultasi/cari', [KonsultasiDashboardController::class, 'cari'])->middleware('auth');
-
 Route::get('/pelayanan/konsultasi/checkSlug', [KonsultasiDashboardController::class, 'checkSlug'])->middleware('auth');
 Route::resource('/pelayanan/konsultasi', KonsultasiDashboardController::class)->middleware('auth');
+Route::resource('/pengaduan', PengaduanController::class)->middleware('auth');
 Route::get('/pengaduan/pengaduan/display', [PengaduanController::class, 'display'])->middleware('auth');
 Route::post('/pengaduan/pengaduan/display', [PengaduanController::class, 'display'])->middleware('auth');
 Route::get('/pengaduan/pengaduan/tandaterima/{item:slug}', [PengaduanController::class, 'printtandaterima'])->middleware('auth');
 Route::get('/pengaduan/pengaduan/klasifikasi/{item:slug}', [PengaduanController::class, 'klasifikasi'])->middleware('auth');
 Route::post('/pengaduan/pengaduan/klasifikasi/{item:slug}', [PengaduanController::class, 'updateklasifikasi'])->middleware('auth');
 Route::post('/pengaduan/pengaduan/print', [PengaduanController::class, 'print'])->middleware('auth');
-Route::post('/pengaduan/pengaduan/cari', [PengaduanController::class, 'cari'])->middleware('auth');
+Route::post('/pengaduan/pengaduan/cari', [PengaduanController::class, 'index'])->middleware('auth');
 Route::get('/pengaduan/pengaduan/checkSlug', [PengaduanController::class, 'checkSlug'])->middleware('auth');
-Route::resource('/pengaduan/pengaduan', PengaduanController::class)->middleware('auth');
+
 Route::resource('/pengawasan/sigumilang', SigumilangDashboardController::class)->middleware('auth');
 Route::get('/pengawasan/sigumilang/{id_proyek}/histori/{nib}', [SigumilangDashboardController::class,'histori'])->middleware('auth');
 Route::get('/pengawasan/laporan/sigumilang', [SigumilangDashboardController::class,'laporan'])->middleware('auth');
-Route::resource('/deregulasi/hukum', ProdukHukumDashboardController::class)->middleware('auth');
-Route::get('/deregulasi/checkSlug', [ProdukHukumDashboardController::class, 'checkSlug'])->middleware('auth');
-Route::resource('/insentif/permohonan', InsentifController::class)->middleware('auth');
-Route::get('/insentif/checkSlug', [InsentifController::class, 'checkSlug'])->middleware('auth');
+
+Route::resource('/deregulasi', ProdukHukumDashboardController::class)->middleware('auth');
+Route::post('/deregulasi/cari', [ProdukHukumDashboardController::class, 'index'])->middleware('auth');
+Route::get('/deregulasi/deregulasi/checkSlug', [ProdukHukumDashboardController::class, 'checkSlug'])->middleware('auth');
+Route::post('/insentif/cari', [InsentifController::class, 'index'])->middleware('auth');
+Route::resource('/insentif', InsentifController::class)->middleware('auth');
+Route::get('/insentif/insentif/checkSlug', [InsentifController::class, 'checkSlug'])->middleware('auth');
 Route::resource('/peta/potensi', PetaPotensiController::class)->middleware('auth');
 Route::get('/peta/checkSlug', [PetaPotensiController::class, 'checkSlug'])->middleware('auth');
 Route::resource('/realiasi/investasi/verifikasi', VerifikasiRealisasiInvestasiController::class)->middleware('auth');

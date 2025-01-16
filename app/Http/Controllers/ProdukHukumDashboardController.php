@@ -9,18 +9,67 @@ use App\Models\Subjek;
 use App\Models\Tipedokumen;
 use Illuminate\Http\Request;
 use \Cviebrock\EloquentSluggable\Services\SlugService;
+use Illuminate\Support\Facades\Storage;
+
 
 class ProdukHukumDashboardController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $judul = 'Deregulasi Produk Hukum';
-        $nama=auth()->user()->pegawai->nama;
-        $items = Hukum::where('del', 0)->paginate(15);
-        return view('admin.deregulasipm.produkhukum.index',compact('judul','nama', 'items'));
+        $query = Hukum::query()->where('del', 0);
+		$search = $request->input('search');
+		$date_start = $request->input('date_start');
+		$date_end = $request->input('date_end');
+		$month = $request->input('month');
+		$year = $request->input('year');
+		if ($request->has('search')) {
+			$search = $request->input('search');
+			$query ->where('id_tipe_dokumen', 'LIKE', "%{$search}%")
+				   ->orWhere('judul', 'LIKE', "%{$search}%")
+				   ->orWhere('nomor', 'LIKE', "%{$search}%")
+				   ->orWhere('bentuk', 'LIKE', "%{$search}%")
+				   ->orWhere('bentuk_singkat', 'LIKE', "%{$search}%")
+				   ->orWhere('tahun', 'LIKE', "%{$search}%")
+				   ->orderBy('tanggal_pengundangan', 'desc');
+		}
+		if ($request->has('date_start')&&$request->has('date_end')) {
+			$date_start = $request->input('date_start');
+			$date_end = $request->input('date_end');
+			if($date_start>$date_end ){
+				return redirect('/deregulasi/cari')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda ');
+			}else{
+			$query ->whereBetween('tanggal_pengundangan', [$date_start,$date_end])
+				   ->orderBy('tanggal_pengundangan', 'desc');
+			}
+		}
+		if ($request->has('month')&&$request->has('year')) {
+			$month = $request->input('month');
+			$year = $request->input('year');
+			if(empty($month)&&empty($year)){
+				return redirect('/deregulasi/cari')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
+			}if(empty($year)){
+				return redirect('/deregulasi/cari')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
+			}if(empty($month)){
+				return redirect('/deregulasi/cari')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
+			}else{
+			$query ->whereMonth('tanggal_pengundangan', [$month])
+				   ->whereYear('tanggal_pengundangan', [$year])
+				   ->orderBy('tanggal_pengundangan', 'desc');
+				}
+		}
+		if ($request->has('year')) {
+			$year = $request->input('year');
+			$query ->whereYear('tanggal_pengundangan', [$year])
+				   ->orderBy('tanggal_pengundangan', 'desc');
+		}
+		$perPage = $request->input('perPage', 50);
+		$items=$query->orderBy('tanggal_pengundangan', 'desc')->paginate($perPage);
+		$items->withPath(url('/deregulasi/'));
+        return view('admin.deregulasipm.produkhukum.index',compact('judul', 'items','perPage','search','date_start','date_end','month','year'));
     }
 
     /**
@@ -29,12 +78,11 @@ class ProdukHukumDashboardController extends Controller
     public function create()
     {
         $judul = 'Deregulasi Produk Hukum';
-        $nama=auth()->user()->pegawai->nama;
         $bidangitems = Bidang::where('del', 0)->get();
         $statusitems = Statusberlaku::where('del', 0)->get();
         $subjekitems = Subjek::where('del', 0)->get();
         $tipedokumenitems = Tipedokumen::where('del', 0)->get();
-        return view('admin.deregulasipm.produkhukum.create',compact('judul','nama','bidangitems','statusitems','subjekitems','tipedokumenitems'));
+        return view('admin.deregulasipm.produkhukum.create',compact('judul','bidangitems','statusitems','subjekitems','tipedokumenitems'));
     }
 
     /**
@@ -42,6 +90,7 @@ class ProdukHukumDashboardController extends Controller
      */
     public function store(Request $request)
     {
+      
         $validatedData = $request->validate([
             'id_tipe_dokumen' => 'required',
             'judul' => 'required',
@@ -61,50 +110,94 @@ class ProdukHukumDashboardController extends Controller
             'bahasa' => 'nullable',
             'lokasi' => 'nullable',
             'id_bidang' => 'required',
-            'file' => 'file|mimes:pdf,jpg,jpeg,png'
+            'file' => 'required|file|mimes:pdf,jpg,jpeg,png'
         ]);
         $validatedData['del'] = 0;
+        
         if ($request->file('file')) {
             $validatedData['file'] = $request->file('file')->store('public/hukum-files');
         }
         
-        
+      
         Hukum::create($validatedData);
-        return redirect('/deregulasi/hukum')->with('success', 'Data Baru Berhasil di Tambahkan !');
+        return redirect('/deregulasi')->with('success', 'Data Baru Berhasil di Tambahkan !');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Hukum $deregulasi)
     {
-        $judul = 'Deregulasi Produk Hukum';
-        $nama=auth()->user()->pegawai->nama;
-        return view('admin.deregulasipm.produkhukum.show',compact('judul','nama'));
+        if ($deregulasi) {
+            return response()->json($deregulasi);
+        }
+        return response()->json(['message' => 'Data not found'], 404);
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Hukum $deregulasi)
     {
-        //
+        $judul = 'Edit Produk Hukum';
+        $bidangitems = Bidang::where('del', 0)->get();
+        $statusitems = Statusberlaku::where('del', 0)->get();
+        $subjekitems = Subjek::where('del', 0)->get();
+        $tipedokumenitems = Tipedokumen::where('del', 0)->get();
+        return view('admin.deregulasipm.produkhukum.edit', compact('judul','bidangitems','statusitems','subjekitems','tipedokumenitems','deregulasi'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Hukum $deregulasi)
     {
-        //
+        $rules = [
+            'id_tipe_dokumen' => 'required',
+            'judul' => 'required', 
+            'teu' => 'nullable', 
+            'nomor' => 'required',
+            'bentuk' => 'required',
+            'bentuk_singkat' => 'required',
+            'tahun' => 'required',
+            'tempat_penetapan' => 'required',
+            'tanggal_penetapan' => 'required|date',
+            'tanggal_pengundangan' => 'required|date',
+            'tanggal_berlaku' => 'required|date',
+            'sumber' => 'nullable', 
+            'id_subjek' => 'required',
+            'id_status' => 'required', 
+            'bahasa' => 'nullable',
+            'lokasi' => 'nullable',
+            'id_bidang' => 'required',
+            'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png'
+        ];
+        
+        if ($request->slug != $deregulasi->slug) {
+            $rules['slug'] = 'required|unique:hukum';
+        }
+        $validatedData = $request->validate($rules);
+        $validatedData['del'] = 0;
+        if ($request->file('file')) {
+            if ($request->oldFile) {
+                Storage::delete($request->oldFile);
+            }
+            $validatedData['file'] = $request->file('file')->store('public/hukum-files');
+        }
+      
+        Hukum::where('id', $deregulasi->id)->update($validatedData);
+        return redirect('/deregulasi')->with('success', 'Data  Berhasil di Perbaharui !');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Hukum $deregulasi)
     {
-        //
+        $validatedData['del'] = 1;
+        
+        Hukum::where('id', $deregulasi->id)->update($validatedData);
+         return redirect('/deregulasi')->with('success', 'Data  Berhasil di Hapus !');
     }
 
     public function checkSlug(Request $request)

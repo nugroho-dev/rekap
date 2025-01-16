@@ -45,7 +45,8 @@
                   <div class="col-lg-12">
                     <div class="row row-cards">
                       <div class="col-12">
-                        <form class="card" method="post" action="{{ url('/insentif') }}" enctype="multipart/form-data">
+                        <form class="card" method="post" action="{{ url('/insentif/'.$insentif->slug) }}" enctype="multipart/form-data">
+                          @method('put')
                           @csrf
                           <div class="card-body">
                             <h3 class="card-title">Insentif</h3>
@@ -53,7 +54,7 @@
                               <div class="col-md-12">
                                 <div class="mb-3">
                                   <label class="form-label">Penerima</label>
-                                  <input type="text" class="form-control"  placeholder="Penerima" name="penerima" id="title" value="{{ old('penerima') }}">
+                                  <input type="text" class="form-control"  placeholder="Penerima" name="penerima" id="title" value="{{ old('penerima',$insentif->penerima) }}">
                                   @error ('penerima')
                                   <small class="form-hint text-danger">{{ $message }} </small>
                                   @enderror
@@ -62,7 +63,7 @@
                               <div class="col-sm-6 col-md-12">
                                 <div class="mb-3">
                                   <label class="form-label">Slug</label>
-                                  <input type="text" class="form-control" placeholder="slug" value="" name="slug" id="slug" readonly>
+                                  <input type="text" class="form-control" placeholder="slug" value="{{ old('slug',$insentif->slug) }}" name="slug" id="slug" readonly>
                                   @error ('slug')
                                   <small class="form-hint text-danger">{{ $message }} </small>
                                   @enderror
@@ -71,7 +72,7 @@
                               <div class="col-md-12">
                                 <div class="mb-3">
                                   <label class="form-label">Alamat Penerima</label>
-                                  <input type="text" class="form-control"  placeholder="Alamat Penerima" name="alamat_penerima" id="title" value="{{ old('alamat_penerima') }}">
+                                  <input type="text" class="form-control"  placeholder="Alamat Penerima" name="alamat_penerima" id="title" value="{{ old('alamat_penerima',$insentif->alamat_penerima) }}">
                                   @error ('alamat_penerima')
                                   <small class="form-hint text-danger">{{ $message }} </small>
                                   @enderror
@@ -80,7 +81,7 @@
                               <div class="col-md-12">
                                 <div class="mb-3">
                                   <label class="form-label">Nama Perusahaan</label>
-                                  <input type="text" class="form-control"  placeholder="Nama Perusahaan" name="nama_perusahaan" id="title" value="{{ old('nama_perusahaan') }}">
+                                  <input type="text" class="form-control"  placeholder="Nama Perusahaan" name="nama_perusahaan" id="title" value="{{ old('nama_perusahaan',$insentif->nama_perusahaan) }}">
                                   @error ('nama_perusahaan')
                                   <small class="form-hint text-danger">{{ $message }} </small>
                                   @enderror
@@ -89,7 +90,7 @@
                               <div class="col-md-12">
                                 <div class="mb-3">
                                   <label class="form-label">Alamat Perusahaan</label>
-                                  <input type="text" class="form-control"  placeholder="Alamat Perusahaan" name="alamat_perusahaan" id="title" value="{{ old('alamat_perusahaan') }}">
+                                  <input type="text" class="form-control"  placeholder="Alamat Perusahaan" name="alamat_perusahaan" id="title" value="{{ old('alamat_perusahaan',$insentif->alamat_perusahaan) }}">
                                   @error ('alamat_perusahaan')
                                   <small class="form-hint text-danger">{{ $message }} </small>
                                   @enderror
@@ -99,7 +100,7 @@
                                 <div class="col-sm-12 col-md-4">
                                   <div class="mb-3">
                                     <label class="form-label">Tahun Pemberian</label>
-                                    <input type="number" class="form-control" placeholder="Tahun Pemberian" name="tahun_pemberian" value="{{ old('tahun_pemberian') }}">
+                                    <input type="number" class="form-control" placeholder="Tahun Pemberian" name="tahun_pemberian" value="{{ old('tahun_pemberian',$insentif->tahun_pemberian) }}">
                                     @error ('tahun_pemberian')
                                     <small class="form-hint text-danger">{{ $message }} </small>
                                     @enderror
@@ -110,7 +111,7 @@
                                 <div class="col-sm-12 col-md-4">
                                   <div class="mb-3">
                                     <label class="form-label">Tanggal Permohonan</label>
-                                    <input type="date" class="form-control" placeholder="Tanggal Permohonan" name="tanggal_permohonan" value="{{ old('tanggal_permohonan') }}">
+                                    <input type="date" class="form-control" placeholder="Tanggal Permohonan" name="tanggal_permohonan" value="{{ old('tanggal_permohonan',$insentif->tanggal_permohonan) }}">
                                     @error ('tanggal_permohonan')
                                     <small class="form-hint text-danger">{{ $message }} </small>
                                     @enderror
@@ -120,7 +121,7 @@
                                 <div class="col-sm-12 col-md-4">
                                   <div class="mb-3">
                                     <label class="form-label">Tanggal Surat Keputusan</label>
-                                    <input type="date" class="form-control" placeholder="Tanggal Surat Keputusan" name="tanggal_sk" value="{{ old('tanggal_sk') }}">
+                                    <input type="date" class="form-control" placeholder="Tanggal Surat Keputusan" name="tanggal_sk" value="{{ old('tanggal_sk',$insentif->tanggal_sk) }}">
                                     @error ('tanggal_sk')
                                     <small class="form-hint text-danger">{{ $message }} </small>
                                     @enderror
@@ -130,7 +131,7 @@
                               <div class="col-sm-12 col-md-12">
                                 <div class="mb-3">
                                   <label class="form-label">Jenis Perusahaan</label>
-                                  <input type="text" class="form-control" placeholder="Jenis Perusahaan" value="{{ old('jenis_perusahaan') }}" name="jenis_perusahaan">
+                                  <input type="text" class="form-control" placeholder="Jenis Perusahaan" value="{{ old('jenis_perusahaan',$insentif->jenis_perusahaan) }}" name="jenis_perusahaan">
                                   @error ('jenis_perusahaan')
                                   <small class="form-hint text-danger">{{ $message }} </small>
                                   @enderror
@@ -139,7 +140,7 @@
                               <div class="col-sm-12 col-md-6">
                                 <div class="mb-3">
                                   <label class="form-label">Nomor Surat Keputusan</label>
-                                  <input type="text" class="form-control" placeholder="Nomor Surat Keputusan" value="{{ old('no_sk') }}" name="no_sk">
+                                  <input type="text" class="form-control" placeholder="Nomor Surat Keputusan" value="{{ old('no_sk',$insentif->no_sk) }}" name="no_sk">
                                   @error ('no_sk')
                                   <small class="form-hint text-danger">{{ $message }} </small>
                                   @enderror
@@ -148,7 +149,7 @@
                               <div class="col-sm-12 col-md-6">
                                 <div class="mb-3">
                                   <label class="form-label">Nomor Rekomendasi</label>
-                                  <input type="text" class="form-control" placeholder="Nomor Rekomendasi" value="{{ old('no_rekomendasi') }}" name="no_rekomendasi">
+                                  <input type="text" class="form-control" placeholder="Nomor Rekomendasi" value="{{ old('no_rekomendasi',$insentif->no_rekomendasi) }}" name="no_rekomendasi">
                                   @error ('no_rekomendasi')
                                   <small class="form-hint text-danger">{{ $message }} </small>
                                   @enderror
@@ -159,7 +160,7 @@
                                 <div class="col-sm-6 col-md-12">
                                   <div class="mb-3">
                                     <label class="form-label">Pemberian Insentif</label>
-                                    <input type="text" class="form-control" placeholder="Pemberian Insentif" name="pemberian_insentif" value="{{ old('pemberian_insentif') }}">
+                                    <input type="text" class="form-control" placeholder="Pemberian Insentif" name="pemberian_insentif" value="{{ old('pemberian_insentif',$insentif->pemberian_insentif) }}">
                                     @error ('pemberian_insentif')
                                     <small class="form-hint text-danger">{{ $message }} </small>
                                     @enderror
@@ -168,7 +169,7 @@
                                 <div class="col-sm-6 col-md-12">
                                   <div class="mb-3">
                                     <label class="form-label">Persentase Insentif</label>
-                                    <input type="text" class="form-control" placeholder="Persentase Insentif" name="persentase_insentif" value="{{ old('persentase_insentif') }}">
+                                    <input type="text" class="form-control" placeholder="Persentase Insentif" name="persentase_insentif" value="{{ old('persentase_insentif',$insentif->persentase_insentif) }}">
                                     @error ('persentase_insentif')
                                     <small class="form-hint text-danger">{{ $message }} </small>
                                     @enderror
@@ -177,7 +178,7 @@
                                 <div class="col-sm-6 col-md-12">
                                   <div class="mb-3">
                                     <label class="form-label">Bentuk Pemberian</label>
-                                    <textarea class="form-control" id="tinymce-mytextarea" rows="3" name="bentuk_pemberian"> {{ old('bentuk_pemberian') }}</textarea>
+                                    <textarea class="form-control" id="tinymce-mytextarea" rows="3" name="bentuk_pemberian"> {{ old('bentuk_pemberian',$insentif->bentuk_pemberian) }}</textarea>
                                     @error ('bentuk_pemberian')
                                     <small class="form-hint text-danger">{{ $message }} </small>
                                     @enderror
@@ -189,6 +190,7 @@
                                   <div class="input-group mb-2">
                                     <span class="input-group-text">
                                       <input type="file" class="form-control" id="docpdf" placeholder="Masukan File" name="file" onchange="priviewDocPdf()" value="{{ old('file') }}">
+                                      <input type="hidden" name="oldFilePermohonan" value="{{ $insentif->file }}">
                                     </span>
                                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
                                       Pratinjau Dokumen
@@ -204,7 +206,8 @@
                                   <label class="form-label">File Surat Keputusan</label>
                                   <div class="input-group mb-2">
                                     <span class="input-group-text">
-                                      <input type="file" class="form-control" id="docpdf1" placeholder="Masukan File" name="file_sk" onchange="priviewDocPdf1()" value="{{ old('file') }}">
+                                      <input type="file" class="form-control" id="docpdf1" placeholder="Masukan File" name="file_sk" onchange="priviewDocPdf1()" value="{{ old('file_sk') }}">
+                                      <input type="hidden" name="oldFileSk" value="{{ $insentif->file_sk }}">
                                     </span>
                                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal1">
                                       Pratinjau Dokumen
@@ -224,7 +227,7 @@
                                     </div>
                                     <div class="modal-body">
                                       <div class="flexible-container">
-                                        <embed class="docpdf-preview" id="my-object" width="100%" type="application/pdf" height="650"></embed>
+                                        <embed src="{{ url(Storage::url($insentif->file)) }}" class="docpdf-preview" id="my-object" width="100%" type="application/pdf" height="650"></embed>
                                       </div>
                                     </div>
                                     <div class="modal-footer">
@@ -250,7 +253,7 @@
                                     </div>
                                     <div class="modal-body">
                                       <div class="flexible-container">
-                                        <embed class="docpdf-preview1" id="my-object1" width="100%" type="application/pdf" height="650"></embed>
+                                        <embed src="{{ url(Storage::url($insentif->file_sk)) }}" class="docpdf-preview1" id="my-object1" width="100%" type="application/pdf" height="650"></embed>
                                       </div>
                                     </div>
                                     <div class="modal-footer">

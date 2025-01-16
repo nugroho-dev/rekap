@@ -19,12 +19,12 @@
                   <span class="d-none d-sm-inline">
                    
                   </span>
-                  <a href="{{ url('/pengaduan/pengaduan') }}" class="btn btn-primary d-none d-sm-inline-block" >
+                  <a href="{{ url('/pengaduan') }}" class="btn btn-primary d-none d-sm-inline-block" >
                     <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-back-up" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 14l-4 -4l4 -4" /><path d="M5 10h11a4 4 0 1 1 0 8h-1" /></svg>
                     Kembali
                   </a>
-                  <a href="/pengaduan/pengaduan" class="btn btn-primary d-sm-none btn-icon" data-bs-toggle="modal" data-bs-target="#modal-report" aria-label="Create new report">
+                  <a href="/pengaduan" class="btn btn-primary d-sm-none btn-icon" data-bs-toggle="modal" data-bs-target="#modal-report" aria-label="Create new report">
                     <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-back-up" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 14l-4 -4l4 -4" /><path d="M5 10h11a4 4 0 1 1 0 8h-1" /></svg>
                   </a>
@@ -35,7 +35,7 @@
         </div>
     </div>
              <div class="col-md-12 ">
-              <form class="card" method="post" action="{{ url('/pengaduan/pengaduan/'.$pengaduan->slug) }}" enctype="multipart/form-data">
+              <form class="card" method="post" action="{{ url('/pengaduan/'.$pengaduan->slug) }}" enctype="multipart/form-data">
                 @method('put')
                  @csrf
                 <div class="card-header">
@@ -70,13 +70,34 @@
                     </div>
                     <div class="col-sm-6 col-md-3">
                       <div class="mb-3">
-                        <label class="form-label required">Tanggal</label>
+                        <label class="form-label required">Tanggal Terima</label>
                         <div>
-                          <input type="datetime-local" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal',$pengaduan->tanggal) }}" name='tanggal'>
-                          <input type="hidden" name="id_pegawai" value="{{ auth()->user()->pegawai->id}}">
+                          <input type="datetime-local" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal_terima',$pengaduan->tanggal_terima) }}" name='tanggal_terima'>
                             @error ('tanggal')
                           <small class="form-hint text-danger">{{ $message }}  </small>
                           @enderror
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                      <div class="mb-3">
+                        <label class="form-label required">Tanggal Respon</label>
+                        <div>
+                          <input type="datetime-local" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal_respon',$pengaduan->tanggal_respon ) }}" name='tanggal_respon'>
+                            @error ('tanggal_respon')
+                            <small class="form-hint text-danger">{{ $message }}  </small>
+                            @enderror
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                      <div class="mb-3">
+                        <label class="form-label required">Tanggal Penyelesaian</label>
+                        <div>
+                          <input type="datetime-local" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal_selesai',$pengaduan->tanggal_selesai ) }}" name='tanggal_selesai'>
+                            @error ('tanggal_selesai')
+                              <small class="form-hint text-danger">{{ $message }}  </small>
+                            @enderror
                         </div>
                       </div>
                     </div>
@@ -140,7 +161,44 @@
                         </div>
                       </div>
                     </div>
-                    
+                    <div class="col-sm-6 col-md-6">
+                      <div class="mb-3">
+                        <label class="form-label required">Klasifikasi Pengaduan</label>
+                        <div>
+                          <select class="form-select" name="id_klasifikasi" >
+                            @foreach ($klasifikasi as $item)
+                            @if (old('id_klasifikasi', $item->id)==$pengaduan->id_klasifikasi)
+                            <option value="{{ $item->id }}" selected>{{ $item->kode }}-{{ $item->klasifikasi }}</option>
+                            @else
+                            <option value="{{ $item->id }}">{{ $item->kode }}-{{ $item->klasifikasi }}</option>
+                            @endif
+                            @endforeach
+                             
+                          </select>
+                          
+                          @error ('id_klasifikasi')
+                          <small class="form-hint">{{ $message }} </small>
+                          @enderror
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-sm-6 col-md-6">
+                      <div class="mb-3">
+                        <label class="form-label required">Status Pengaduan</label>
+                        <div>
+                          <select class="form-select" name="catatan" >
+                            
+                            <option value="Proses Verifikasi"{{ $pengaduan->catatan == 'Proses Verifikasi' ? 'selected':'' }}>Proses Verifikasi</option>
+                            <option value="Proses Tindak Lanjut" {{ $pengaduan->catatan == 'Proses Tindak Lanjut' ? 'selected':'' }}>Proses Tindak Lanjut</option>
+                            <option value="Selesai" {{ $pengaduan->catatan == 'Selesai' ? 'selected':'' }}>Selesai</option>
+                          </select>
+                          
+                          @error ('catatan')
+                          <small class="form-hint">{{ $message }} </small>
+                          @enderror
+                        </div>
+                      </div>
+                    </div>
                     <div class="mb-3">
                       <label class="form-label required">Alamat</label>
                       <div>
@@ -153,10 +211,15 @@
                     <div class="col-sm-12 col-md-12">
                       <div class="mb-3">
                         <label class="form-label">File Identitas Pemohon</label>
-                        <div>
-                          <embed src="{{ url(Storage::url($pengaduan->file_identitas)) }}" class="img-preview mb-3 col-8 rounded mx-auto d-block" type="application/pdf" height="500" ></embed>
+                        <div class="input-group">
+                          
+                          <span class="input-group-text">
                           <input type="file" class="form-control" id="image" name="file_identitas" value="{{ old('file_identitas') }}" onchange="priviewImage()" >
                           <input type="hidden" name="oldImageFileIdentitas" value="{{ $pengaduan->file_identitas }}">
+                        </span>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                          Pratinjau Dokumen
+                        </button>
                           @error ('file_identitas')
                           <small class="form-hint">{{ $message }} </small>
                           @enderror
@@ -166,10 +229,15 @@
                     <div class="col-sm-12 col-md-12">
                       <div class="mb-3">
                         <label class="form-label">Berkas Aduan Pendukung</label>
-                        <div>
-                          <embed class="docpdf-preview mb-3 col-12 rounded" type="application/pdf" src="{{ url(Storage::url($pengaduan->file)) }}" height="700"></embed>
+                        <div class="input-group">
+                         
+                          <span class="input-group-text">
                           <input type="file" class="form-control" id="docpdf" placeholder="Alamat" name="file" value="{{ old('file') }}" onchange="priviewDocPdf()">
                           <input type="hidden" name="oldImageFile" value="{{ $pengaduan->file }}">
+                        </span>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal1">
+                          Pratinjau Dokumen
+                        </button>
                           @error ('file')
                           <small class="form-hint">{{ $message }} </small>
                           @enderror
@@ -209,6 +277,60 @@
               </form>
             </div>
 
+            <div class="modal" id="exampleModal" tabindex="-1">
+              <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Pratinjau Dokumen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    <div class="flexible-container">
+                      <embed src="{{ url(Storage::url($pengaduan->file_identitas)) }}" class="docpdf-preview" id="my-object" width="100%" type="application/pdf" height="650"></embed>
+                      
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    
+                    <a href="#" class="btn btn-primary ms-auto" data-bs-dismiss="modal">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-plus" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                        <path d="M12 5l0 14"></path>
+                        <path d="M5 12l14 0"></path>
+                      </svg>
+                      Tutup
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="modal" id="exampleModal1" tabindex="-1">
+              <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Pratinjau Dokumen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    <div class="flexible-container">
+                      <embed src="{{ url(Storage::url($pengaduan->file)) }}" class="docpdf-preview1" id="my-object" width="100%" type="application/pdf" height="650"></embed>
+                      
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    
+                    <a href="#" class="btn btn-primary ms-auto" data-bs-dismiss="modal">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-plus" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                        <path d="M12 5l0 14"></path>
+                        <path d="M5 12l14 0"></path>
+                      </svg>
+                      Tutup
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>          
   <script>
     const title = document.querySelector('#title');
     const slug = document.querySelector('#slug');
