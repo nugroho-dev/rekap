@@ -20,7 +20,7 @@ class LoginController extends Controller
         ]);
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
-            return redirect()->intended(url('/dashboard'));
+            return redirect()->intended(url('/'));
         }
         return back()->with('loginError', 'Login Gagal!');
     }

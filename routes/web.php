@@ -32,6 +32,7 @@ use App\Http\Controllers\PengawasanDashboardController;
 use App\Http\Controllers\PetaPotensiController;
 use App\Http\Controllers\ProdukHukumDashboardController;
 use App\Http\Controllers\ProyekController;
+use App\Http\Controllers\PublicViewHomeController;
 use App\Http\Controllers\SicantikApiController;
 use App\Http\Controllers\SicantikDashboardController;
 use App\Http\Controllers\SicantikProsesController;
@@ -56,7 +57,7 @@ use App\Models\Instansi;
 //});
 Route::get('/apicek/{no_permohonan}/{email}', [ApiCekSicantikController::class, 'index']);
 Route::get('/unduh/{no_permohonan}/{email}', [TteController::class, 'index']);
-Route::get('/', [SicantikApiController::class, 'index']);
+Route::get('/', [PublicViewHomeController::class, 'index']);
 Route::post('/', [SicantikApiController::class, 'index']);
 Route::get('/kirim/{id}', [SicantikApiController::class, 'kirim']);
 Route::get('/kirim/dokumen/{id}', [SicantikApiController::class, 'dokumen']);
@@ -76,12 +77,18 @@ Route::get('/konfigurasi/instansi/checkSlug', [InstansiController::class, 'check
 Route::resource('/konfigurasi/instansi', InstansiController::class)->middleware('auth');
 Route::get('/konfigurasi/user/checkSlug', [UsersDashboardController::class, 'checkSlug'])->middleware('auth');
 Route::resource('/konfigurasi/user', UsersDashboardController::class)->middleware('auth');
-Route::get('/pelayanan/konsultasi/display', [KonsultasiDashboardController::class, 'display'])->middleware('auth');
-Route::post('/pelayanan/konsultasi/display', [KonsultasiDashboardController::class, 'display'])->middleware('auth');
-Route::post('/pelayanan/konsultasi/print', [KonsultasiDashboardController::class, 'print'])->middleware('auth');
-Route::post('/pelayanan/konsultasi/cari', [KonsultasiDashboardController::class, 'cari'])->middleware('auth');
-Route::get('/pelayanan/konsultasi/checkSlug', [KonsultasiDashboardController::class, 'checkSlug'])->middleware('auth');
-Route::resource('/pelayanan/konsultasi', KonsultasiDashboardController::class)->middleware('auth');
+
+Route::resource('/konsultasi', KonsultasiDashboardController::class)->middleware('auth');
+Route::post('/consult/import_excel', [KonsultasiDashboardController::class, 'import_excel'])->middleware('auth');
+//Route::get('/pelayanan/konsultasi/display', [KonsultasiDashboardController::class, 'display'])->middleware('auth');
+//Route::post('/pelayanan/konsultasi/display', [KonsultasiDashboardController::class, 'display'])->middleware('auth');
+//Route::post('/pelayanan/konsultasi/print', [KonsultasiDashboardController::class, 'print'])->middleware('auth');
+Route::post('/konsultasicari', [KonsultasiDashboardController::class, 'index'])->middleware('auth');
+//Route::get('/pelayanan/konsultasi/checkSlug', [KonsultasiDashboardController::class, 'checkSlug'])->middleware('auth');
+
+Route::resource('/commitment', DashboardKomitmenController::class)->middleware('auth');
+Route::post('/commitment/import_excel', [DashboardKomitmenController::class, 'import_excel'])->middleware('auth');
+Route::post('/komitmensort', [DashboardKomitmenController::class, 'index'])->middleware('auth');
 
 Route::resource('/pengaduan', PengaduanController::class)->middleware('auth');
 //Route::get('/pengaduan/pengaduan/display', [PengaduanController::class, 'display'])->middleware('auth');
@@ -136,9 +143,9 @@ Route::get('/expo/check/checkSlug', [DashboardExpoController::class, 'checkSlug'
 Route::resource('/business', DashboardBusinessController::class)->middleware('auth');
 Route::post('/bisnissort', [DashboardBusinessController::class, 'index'])->middleware('auth');
 Route::get('/bisnis/check/checkSlug', [DashboardBusinessController::class, 'checkSlug'])->middleware('auth');
-Route::resource('/commitment', DashboardKomitmenController::class)->middleware('auth');
-Route::post('/commitment/import_excel', [DashboardKomitmenController::class, 'import_excel'])->middleware('auth');
-Route::post('/komitmensort', [DashboardKomitmenController::class, 'index'])->middleware('auth');
+
+
+
 Route::get('/sicantik', [DashboardVprosesSicantikController::class, 'index'])->middleware('auth');
 Route::post('/sicantik', [DashboardVprosesSicantikController::class, 'index'])->middleware('auth');
 Route::get('/dayoff/sync', [DayOffDashboardController::class, 'handle'])->middleware('auth');
@@ -154,7 +161,7 @@ Route::get('/proyek', [ProyekController::class, 'index'])->middleware('auth');
 Route::post('/proyek', [ProyekController::class, 'index'])->middleware('auth');
 Route::post('/proyek/import_excel', [ProyekController::class, 'import_excel'])->middleware('auth');
 Route::get('/proyek/statistik', [ProyekController::class, 'statistik'])->middleware('auth');
-Route::post('/consult/import_excel', [KonsultasiDashboardController::class, 'import_excel'])->middleware('auth');
+
 Route::get('/createrolepermission', function(){
     try{
         Role::create(['name' => 'administrator']);

@@ -105,15 +105,12 @@
                 <span class="avatar avatar-sm" style="background-image: url(./static/avatars/000m.jpg)"></span>
                 <div class="d-none d-xl-block ps-2 text-capitalize">
                   <div>{{ auth()->user()->pegawai->nama}}</div>
-                  <div class="mt-1 small text-muted">{{ auth()->user()->pegawai->nip }}</div>
+                  <div class="mt-1 small text-muted">{{ auth()->user()->pegawai->instansi->alias }}</div>
                 </div>
               </a>
               <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                <a href="#" class="dropdown-item">Status</a>
-                <a href="./profile.html" class="dropdown-item">Profile</a>
-                <a href="#" class="dropdown-item">Feedback</a>
-                <div class="dropdown-divider"></div>
-                <a href="./settings.html" class="dropdown-item">Settings</a>
+                <a href="{{ url('/') }}" class="dropdown-item">Home</a>
+                <a href="#" class="dropdown-item">Profile</a>
                 <a href="{{ url('/logout') }}" class="dropdown-item">Logout</a>
               </div>
             </div>

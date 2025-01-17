@@ -168,6 +168,6 @@ class DashboardKomitmenController extends Controller
 		//Session::flash('sukses','Data  Berhasil Diimport!');
  
 		// alihkan halaman kembali
-		return redirect('/komitmen')->with('success', 'Data Berhasil Diimport !');
+		return redirect('/commitment')->with('success', 'Data Berhasil Diimport !');
 	}
 }

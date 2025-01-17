@@ -243,7 +243,7 @@
                 </a>
                 <div class="dropdown-menu {{ Request::is('commitment*')?'show':'close' }}{{ Request::is('pelayanan*')?'show':'close' }}">
                   <div class="dropdown-menu-columns">
-                      <a class="dropdown-item" href="{{ url('/pelayanan/konsultasi') }}">
+                      <a class="dropdown-item" href="{{ url('/konsultasi') }}">
                         Konsultasi
                       </a>
                       <a class="dropdown-item" href="{{ url('/commitment') }}">
