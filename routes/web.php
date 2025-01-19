@@ -32,6 +32,7 @@ use App\Http\Controllers\PengawasanDashboardController;
 use App\Http\Controllers\PetaPotensiController;
 use App\Http\Controllers\ProdukHukumDashboardController;
 use App\Http\Controllers\ProyekController;
+use App\Http\Controllers\PublicProfileController;
 use App\Http\Controllers\PublicViewHomeController;
 use App\Http\Controllers\SicantikApiController;
 use App\Http\Controllers\SicantikDashboardController;
@@ -57,7 +58,12 @@ use App\Models\Instansi;
 //});
 Route::get('/apicek/{no_permohonan}/{email}', [ApiCekSicantikController::class, 'index']);
 Route::get('/unduh/{no_permohonan}/{email}', [TteController::class, 'index']);
+
 Route::get('/', [PublicViewHomeController::class, 'index']);
+
+Route::get('/setting', [PublicProfileController::class, 'index'])->middleware('auth');
+Route::get('/token', [PublicProfileController::class, 'token'])->middleware('auth');
+
 Route::post('/', [SicantikApiController::class, 'index']);
 Route::get('/kirim/{id}', [SicantikApiController::class, 'kirim']);
 Route::get('/kirim/dokumen/{id}', [SicantikApiController::class, 'dokumen']);

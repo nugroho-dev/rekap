@@ -8,7 +8,7 @@ class PublicViewHomeController extends Controller
 {
     public function index()
     {
-        $judul = 'Maintenance';
+        $judul = 'Data Hub DPMPTSP';
         return view('publicviews.home.index', compact('judul'));
     }
 }
