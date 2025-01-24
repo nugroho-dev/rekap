@@ -19,7 +19,7 @@
                   <span class="d-none d-sm-inline">
                    
                   </span>
-                  <a href="{{ url('/konfigurasi/instansi') }}" class="btn btn-primary d-none d-sm-inline-block" >
+                  <a href="{{ url('/konfigurasi/pegawai') }}" class="btn btn-primary d-none d-sm-inline-block" >
                     <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-back-up" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 14l-4 -4l4 -4" /><path d="M5 10h11a4 4 0 1 1 0 8h-1" /></svg>
                     Kembali
@@ -35,18 +35,18 @@
         </div>
     </div>
              <div class="col-md-6 offset-md-3">
-              <form class="card" method="post" action="{{ url('/konfigurasi/instansi/'.$instansi->slug.'') }}" enctype="multipart/form-data">
-                 @method('put')
+              <form class="card" method="post" action="{{ url('/konfigurasi/pegawai/'.$pegawai->slug.'') }}" enctype="multipart/form-data">
+                @method('put')
                  @csrf
                 <div class="card-header">
-                  <h3 class="card-title">Data Instansi</h3>
+                  <h3 class="card-title">Data Pegawai</h3>
                 </div>
                 <div class="card-body">
                   <div class="mb-3">
-                    <label class="form-label required">Nama Instansi</label>
+                    <label class="form-label required">Nama</label>
                     <div>
-                      <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Nama Instansi" id="title" value="{{ old('nama_instansi',$instansi->nama_instansi) }}" name='nama_instansi'>
-                        @error ('nama_instansi')
+                      <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Nama" id="title" value="{{ old('nama',$pegawai->nama) }}" name='nama'>
+                        @error ('nama')
                       <small class="form-hint text-danger">{{ $message }}  </small>
                        @enderror
                     </div>
@@ -54,7 +54,7 @@
                   <div class="mb-3">
                     <label class="form-label required">Slug</label>
                     <div>
-                      <input type="text" class="form-control" placeholder="Slug" id="slug" name="slug" required value="{{ old('slug', $instansi->slug) }}" readonly>
+                      <input type="text" class="form-control" placeholder="Slug" id="slug" name="slug" required value="{{ old('slug',$pegawai->slug) }}" readonly>
                       @error ('slug')
                       <small class="form-hint text-danger">
                         {{ $message }}  
@@ -63,20 +63,50 @@
                     </div>
                   </div>
                   <div class="mb-3">
-                    <label class="form-label required">Alamat Instansi</label>
+                    <label class="form-label required">_token</label>
                     <div>
-                      <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Instansi" name="alamat" value="{{ old('alamat',$instansi->alamat) }}">
-                      @error ('alamat')
+                      <input type="text"  class="form-control" name="pegawai_token" value="{{ $pegawai->pegawai_token }}" readonly/>
+                    
+                    </div>
+                  </div>
+                  
+                  <div class="mb-3">
+                    <label class="form-label required">NIP</label>
+                    <div>
+                      <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="NIP" name="nip" value="{{ old('nip',$pegawai->nip) }}">
+                      @error ('nip')
                       <small class="form-hint">{{ $message }} </small>
                        @enderror
                     </div>
                   </div>
-                 
                   <div class="mb-3">
-                    <label for="image" class="form-label">Logo</label>
-                    <img src="{{ url(Storage::url($instansi->logo)) }}" class="img-preview img-fluid mb-3 col-5 rounded mx-auto d-block">
-                    <input class="form-control @error('logo') is-invalid @enderror" type="file" id="image" name="logo" onchange="priviewImage()">
-                     @error ('logo')
+                            <label class="form-label">Instansi</label>
+                            <select type="text" class="form-select" id="select-optgroups" name="id_instansi">
+                             @foreach ($items as $item)
+                                @if (old('id_instansi', $item->id)==$pegawai->id_instansi)
+                                <option value="{{ $item->id }}" selected>{{ $item->nama_instansi }}</option>
+                                @else
+                                <option value="{{ $item->id }}">{{ $item->nama_instansi }}</option>
+                                @endif
+                                @endforeach
+                            </select>
+                          </div>
+               
+                  <div class="mb-3">
+                    <label class="form-label required">No Handphone</label>
+                    <div>
+                      <input type="number" class="form-control" aria-describedby="emailHelp" placeholder="No Handphone" name="no_hp" value="{{ old('no_hp',$pegawai->no_hp) }}">
+                      @error ('no_hp')
+                      <small class="form-hint">{{ $message }} </small>
+                       @enderror
+                    </div>
+                  </div>
+                  <div class="mb-3">
+                    <label for="image" class="form-label">Foto</label>
+                    <img class="img-preview img-fluid mb-3 col-5 rounded mx-auto d-block">
+                    <input class="form-control @error('foto') is-invalid @enderror" type="file" id="image" name="foto" onchange="priviewImage()">
+                    <input type="hidden" name="oldImageFile" value="{{ $pegawai->foto }}">
+                     @error ('foto')
                       <small class="form-hint text-danger">
                         {{ $message }}  
                       </small>
@@ -84,7 +114,7 @@
                   </div>
                 </div>
                 <div class="card-footer text-end">
-                  <button type="submit" class="btn btn-primary">Simpan</button>
+                  <button type="submit" class="btn btn-primary">Submit</button>
                 </div>
               </form>
             </div>
@@ -94,7 +124,7 @@
     const slug = document.querySelector('#slug');
 
     title.addEventListener('change', function(){
-        fetch('/konfigurasi/instansi/checkSlug?title='+ title.value)
+        fetch('{{ url('/konfigurasi/pegawai/checkSlug') }}?title='+ title.value)
         .then(response=>response.json())
         .then(data=>slug.value=data.slug)
     });

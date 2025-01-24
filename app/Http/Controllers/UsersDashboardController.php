@@ -57,7 +57,8 @@ class UsersDashboardController extends Controller
      */
     public function edit(User $user)
     {
-        //
+        $judul = 'Edit Data User';
+        return view('admin.konfigurasi.users.edit', compact('judul','user'));
     }
 
     /**
@@ -65,7 +66,13 @@ class UsersDashboardController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        //
+        dd($request->email);
+        $validatedData = $request->validate(['email' => 'required|max:255', 'password' => 'required|confirmed|min:8', 'id_pegawai' => 'required' ]);
+        $validatedData['password'] = Hash::make($validatedData['password']);
+        User::where('id', $user->id)->update($validatedData);
+        $updateData['user_status'] = 0;
+        Pegawai::where('id', $user->pegawai->id)->update($updateData);
+        return redirect('/konfigurasi/user')->with('success', 'Update Pass User  Berhasil !');
     }
 
     /**
@@ -73,6 +80,7 @@ class UsersDashboardController extends Controller
      */
     public function destroy(User $user)
     {
-        //
+        User::destroy($user->id);
+        return redirect('/konfigurasi/user')->with('success', 'Hapus Pass User  Berhasil !');
     }
 }

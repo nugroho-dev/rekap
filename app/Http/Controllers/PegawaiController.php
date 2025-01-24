@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use \Cviebrock\EloquentSluggable\Services\SlugService;
 use App\Models\Instansi;
 use App\Models\Pegawai;
+use Illuminate\Support\Facades\Storage;
 
 class PegawaiController extends Controller
 {
@@ -58,15 +59,33 @@ class PegawaiController extends Controller
      */
     public function edit(pegawai $pegawai)
     {
-        //
+        $judul = 'Edit Data Pegawai';
+        $items = Instansi::where('del', 0)->get();
+        return view('admin.konfigurasi.pegawai.edit', compact('judul','items', 'pegawai'));
     }
+    
 
     /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, pegawai $pegawai)
     {
-        //
+        $validatedData = $request->validate(['pegawai_token' => 'required','nama' => 'required|max:255', 'nip' => 'required', 'id_instansi' => 'required', 'no_hp' => 'required', 'foto' => 'image|file|max:1024']);
+        if ($request->file('foto')) {
+            $validatedData['foto'] = $request->file('foto')->store('public/foto-images');
+        }
+        $validatedData['del'] = 0;
+        if ($request->slug != $pegawai->slug) {
+            $rules['slug'] = 'required|unique:pegawai';
+        }
+        if ($request->file('foto')) {
+            if ($request->oldImageFile) {
+                Storage::delete($request->oldImageFile);
+            }
+            $validatedData['foto'] = $request->file('foto')->store('public/foto-images');
+        }
+        Pegawai::where('id',$pegawai->id)->update($validatedData);;
+        return redirect('/konfigurasi/pegawai')->with('success', 'Pegawai Baru Berhasil di Tambahkan !');
     }
 
     /**

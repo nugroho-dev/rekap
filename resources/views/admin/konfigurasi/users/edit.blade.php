@@ -35,7 +35,8 @@
         </div>
     </div>
              <div class="col-md-6 offset-md-3">
-              <form class="card" method="post" action="{{ url('/konfigurasi/user') }}" enctype="multipart/form-data">
+              <form class="card" method="post" action="{{ url('/konfigurasi/user/'.$user->id.'') }}" enctype="multipart/form-data">
+                @method('put')
                  @csrf
                 <div class="card-header">
                   <h3 class="card-title">Data Pegawai</h3>
@@ -44,17 +45,14 @@
                   
                   <div class="mb-3">
                             <label class="form-label">Nama Pegawai</label>
-                            <select type="text" class="form-select" id="select-optgroups" name="id_pegawai">
-                             @foreach ($items as $item)
-                                <option value="{{ $item->id }}">{{ $item->nama }} - {{ $item->instansi->nama_instansi }}</option>
-                                @endforeach
-                            </select>
+                            <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Email"  value="{{ $user->pegawai->nama }} - {{ $user->pegawai->instansi->nama_instansi }}" readonly>
+                            <input type="hidden" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Email" name="id_pegawai" value="{{ $user->pegawai->id }} >
                           </div>
                
                   <div class="mb-3">
                     <label class="form-label required">E-Mail</label>
                     <div>
-                      <input type="email" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Email" name="email" value="{{ old('email') }}">
+                      <input type="email" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Email" name="email" value="{{ old('email',$user->email) }}">
                       @error ('email')
                       <small class="form-hint">{{ $message }} </small>
                        @enderror

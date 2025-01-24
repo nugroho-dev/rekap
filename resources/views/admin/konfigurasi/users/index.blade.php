@@ -61,10 +61,10 @@
                               <span class="dropdown">
                                 <button class="btn dropdown-toggle align-text-top" data-bs-boundary="viewport" data-bs-toggle="dropdown">Actions</button>
                                   <div class="dropdown-menu dropdown-menu-end">
-                                  <a class="dropdown-item" href="">
+                                  <a class="dropdown-item" href="{{ url('/konfigurasi/user/'.$item->id.'/edit') }}">
                                     Edit
                                   </a>
-                                  <form method="post" action="">
+                                  <form method="post" action="{{ url('/konfigurasi/user/'.$item->id.'') }}">
                                     @method('delete')
                                     @csrf
                                     <button class="dropdown-item">

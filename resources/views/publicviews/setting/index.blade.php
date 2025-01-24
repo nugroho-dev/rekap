@@ -20,7 +20,7 @@
                     <h2 class="mb-4">My Account</h2>
                     <h3 class="card-title">Detil Profil</h3>
                     <div class="row align-items-center">
-                      <div class="col-auto"><span class="avatar avatar-xl" style="background-image: url({{ asset('tabler/static/avatars/000m.jpg')}})"></span>
+                      <div class="col-auto"><span class="avatar avatar-xl" style="background-image: url({{ url(Storage::url(auth()->user()->pegawai->foto)) }})"></span>
                       </div>
                       <div class="col-auto"><a href="#" class="btn">
                           Ubah avatar
