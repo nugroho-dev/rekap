@@ -473,7 +473,7 @@
                   if (data.file) {
                         const fullUrl = data.file;
                         const relativePath = fullUrl.split('public/')[1];
-                        $('#pdfViewera').attr('src', relativePath);
+                        $('#pdfViewera').attr('src', `storage/${relativePath}`);
                         $('#userNamea').text(`Dokumen ${nama}`);
                         $('#userModala').modal('show');
                     } else {
