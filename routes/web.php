@@ -17,6 +17,7 @@ use App\Http\Controllers\DashboardExpoController;
 use App\Http\Controllers\DashboardFasilitasiController;
 use App\Http\Controllers\DashboardKomitmenController;
 use App\Http\Controllers\DashboardLoiController;
+use App\Http\Controllers\DashboardPbgController;
 use App\Http\Controllers\DashboardPengawasanController;
 use App\Http\Controllers\DashboardVprosesSicantikController;
 use App\Http\Controllers\DashboradSimpelController;
@@ -167,6 +168,10 @@ Route::get('/proyek', [ProyekController::class, 'index'])->middleware('auth');
 Route::post('/proyek', [ProyekController::class, 'index'])->middleware('auth');
 Route::post('/proyek/import_excel', [ProyekController::class, 'import_excel'])->middleware('auth');
 Route::get('/proyek/statistik', [ProyekController::class, 'statistik'])->middleware('auth');
+
+Route::get('/pbg', [DashboardPbgController::class, 'index'])->middleware('auth');
+Route::post('/pbgsort', [DashboardPbgController::class, 'index'])->middleware('auth');
+Route::post('/pbg/import_excel', [DashboardPbgController::class, 'import_excel'])->middleware('auth');
 
 Route::get('/createrolepermission', function(){
     try{

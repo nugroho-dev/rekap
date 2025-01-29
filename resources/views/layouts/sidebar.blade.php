@@ -223,7 +223,7 @@
                       <a class="dropdown-item" href="{{ url('/simpel') }}">
                         Simpel
                       </a>
-                      <a class="dropdown-item" href="{{ url('/maintenance') }}">
+                      <a class="dropdown-item" href="{{ url('/pbg') }}">
                         SimBG
                       </a>
                       <a class="dropdown-item" href="{{ url('/mppd') }}">
