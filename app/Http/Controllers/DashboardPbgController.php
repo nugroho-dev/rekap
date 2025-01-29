@@ -34,7 +34,7 @@ class DashboardPbgController extends Controller
                    ->orWhere('status_slf', 'LIKE', "%{$search}%")
                    ->orWhere('fungsi', 'LIKE', "%{$search}%")
                    ->orWhere('tipe_konsultasi', 'LIKE', "%{$search}%")
-				   ->orderBy('tanggal', 'asc');
+				   ->orderBy('tanggal', 'desc');
 		}
 		if ($request->has('date_start')&&$request->has('date_end')) {
 			$date_start = $request->input('date_start');
@@ -43,7 +43,7 @@ class DashboardPbgController extends Controller
 				return redirect('/pbg')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda ');
 			}else{
 			$query ->whereBetween('tanggal', [$date_start,$date_end])
-				   ->orderBy('tanggal', 'asc');
+				   ->orderBy('tanggal', 'desc');
 			}
 		}
 		if ($request->has('month')&&$request->has('year')) {
@@ -58,16 +58,16 @@ class DashboardPbgController extends Controller
 			}else{
 			$query ->whereMonth('tanggal', [$month])
 				   ->whereYear('tanggal', [$year])
-				   ->orderBy('tanggal', 'asc');
+				   ->orderBy('tanggal', 'desc');
 				}
 		}
 		if ($request->has('year')) {
 			$year = $request->input('year');
 			$query ->whereYear('tanggal', [$year])
-				   ->orderBy('tanggal', 'asc');
+				   ->orderBy('tanggal', 'desc');
 		}
 		$perPage = $request->input('perPage', 50);
-		$items=$query->orderBy('tanggal', 'asc')->paginate($perPage);
+		$items=$query->orderBy('tanggal', 'desc')->paginate($perPage);
 		$items->withPath(url('/pbg'));
 		return view('admin.nonberusaha.simbg.index',compact('judul','items','perPage','search','date_start','date_end','month','year'));
     }
