@@ -29,7 +29,7 @@ class DashboardVprosesSicantikController extends Controller
 			if($date_start>$date_end ){
 				return redirect('/sicantik')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda ');
 			}else{
-			$query ->whereBetween('tgl_pengajuan', [$date_start,$date_end])
+			$query ->whereBetween('tgl_penetapan', [$date_start,$date_end])
 				   ->orderBy('tgl_pengajuan', 'desc');
 			}
 		}
@@ -43,14 +43,14 @@ class DashboardVprosesSicantikController extends Controller
 			}if(empty($month)){
 				return redirect('/sicantik')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
 			}else{
-			$query ->whereMonth('tgl_pengajuan', [$month])
-				   ->whereYear('tgl_pengajuan', [$year])
+			$query ->whereMonth('tgl_penetapan', [$month])
+				   ->whereYear('tgl_penetapan', [$year])
 				   ->orderBy('tgl_pengajuan', 'desc');
 				}
 		}
 		if ($request->has('year')) {
 			$year = $request->input('year');
-			$query ->whereYear('tgl_pengajuan', [$year])
+			$query ->whereYear('tgl_penetapan', [$year])
 				   ->orderBy('tgl_pengajuan', 'desc');
 		}
 		$perPage = $request->input('perPage', 50);
