@@ -152,15 +152,9 @@
                               
                               <button class="btn dropdown-toggle align-text-top" data-bs-boundary="viewport" data-bs-toggle="dropdown">Action</button>
                               <div class="dropdown-menu dropdown-menu-end">
-                                <a class="dropdown-item" href="{{ url('/sicantik/'.$item->slug.'/edit')}}" >
-                                  Edit
+                                <a class="dropdown-item" href="{{ url('/sicantik/'.$item->slug.'')}}" >
+                                  Lihat Proses
                                 </a>
-                                <button class="dropdown-item openModal" data-id="{{ $item->slug }}">
-                                  Buka Laporan
-                                </button>
-                                <button class="dropdown-item openModalDel" data-id="{{ $item->slug }}">
-                                  Hapus
-                                </button>
                               </div>
                             </span>
                            
