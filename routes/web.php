@@ -155,6 +155,9 @@ Route::get('/bisnis/check/checkSlug', [DashboardBusinessController::class, 'chec
 
 Route::get('/sicantik', [DashboardVprosesSicantikController::class, 'index'])->middleware('auth');
 Route::post('/sicantik', [DashboardVprosesSicantikController::class, 'index'])->middleware('auth');
+Route::get('/sicantik/statistik', [DashboardVprosesSicantikController::class, 'statistik'])->middleware('auth');
+Route::post('/sicantik/statistik', [DashboardVprosesSicantikController::class, 'statistik'])->middleware('auth');
+
 Route::get('/dayoff/sync', [DayOffDashboardController::class, 'handle'])->middleware('auth');
 Route::post('/dayoff/sync', [DayOffDashboardController::class, 'handle'])->middleware('auth');
 Route::get('/dayoff', [DayOffDashboardController::class, 'index'])->middleware('auth');
