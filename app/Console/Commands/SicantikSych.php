@@ -150,6 +150,7 @@ class SicantikSych extends Command
             'no_permohonan'=>$val['no_permohonan'],
             'no_rekomendasi'=>$val['no_rekomendasi'],
             'no_tlp'=>$val['no_tlp'],
+            'permohonan_izin_id'=>$val['permohonan_izin_id'],
             'start_date'=>$val['start_date'],
             'status'=>$val['status'],
             'tgl_dibuat'=>$val['tgl_dibuat'],

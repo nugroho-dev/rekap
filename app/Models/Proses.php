@@ -36,6 +36,7 @@ class Proses extends Model
             'no_permohonan',
             'no_rekomendasi',
             'no_tlp',
+            'permohonan_izin_id',
             'start_date',
             'status',
             'tgl_dibuat',
