@@ -59,7 +59,7 @@ class DashboardVprosesSicantikController extends Controller
 				   ->orderBy('no_permohonan', 'desc');
 		}
 		$perPage = $request->input('perPage', 50);
-		$items=$query->orderBy('tgl_pengajuan', 'desc')->paginate($perPage);
+		$items=$query->orderBy('tgl_pengajuan', 'desc')->orderBy('no_permohonan', 'desc')->paginate($perPage);
 		$items->withPath(url('/sicantik'));
 		return view('admin.nonberusaha.sicantik.index',compact('judul','items','perPage','search','date_start','date_end','month','year'));
     }
@@ -92,6 +92,17 @@ class DashboardVprosesSicantikController extends Controller
 		};
 		return view('admin.nonberusaha.sicantik.statistik',compact('judul','jumlah_permohonan','date_start','date_end','month','year','izin_terbit','terbit','rincianterbit'));
 	}
+    public function rincian(Request $request)
+    {
+        $judul='Statistik Izin SiCantik';
+        if ($request->has('year') && $request->has('month')) {
+			$year = $request->input('year');
+            $month = $request->input('month');
+			$queryterbitrincian = "SELECT month(tgl_penetapan) AS bulan, year(tgl_penetapan) AS tahun, jenis_izin, count(jenis_izin) as jumlah_izin, sum(jumlah_hari_kerja) - IFNULL(sum(jumlah_rekom),0) - IFNULL(sum(jumlah_cetak_rekom),0) - IFNULL(sum(jumlah_tte_rekom),0) - IFNULL(sum(jumlah_verif_rekom),0) - IFNULL(sum(jumlah_proses_bayar),0) as jumlah_hari FROM sicantik.sicantik_proses_statistik where tgl_penetapan is not null and end_date_akhir is not null and year(tgl_penetapan) = $year and month(tgl_penetapan) = $month group by jenis_izin  order by jumlah_izin desc";
+			$rincianterbit = DB::select($queryterbitrincian);
+	    }
+		return view('admin.nonberusaha.sicantik.rincian',compact('judul','month','year','rincianterbit'));
+    }
 	public function sync(Request $request)
 	{
 		$date1=$request->input('date_start');

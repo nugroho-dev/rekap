@@ -228,13 +228,13 @@
                   </div>
                 </div>
               </div>
-              <div class="modal  fade" id="modal-team-stat" tabindex="-1" role="dialog" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered" role="document">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h5 class="modal-title">Sortir Berdasarkan :</h5>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
+                <div class="modal fade" id="modal-team-stat" tabindex="-1" role="dialog" aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title">Sortir Berdasarkan :</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
                       <div class="modal-body">
                         <div class="card">
                           <div class="card-header">
@@ -254,29 +254,26 @@
                             <div class="tab-content">
                               <div class="tab-pane fade active show" id="tabs-home-8" role="tabpanel">
                                 <h4>Pilih Tanggal :</h4>
-                                <form method="post" action="{{ url('/sicantik')}}" enctype="multipart/form-data">
+                                <form method="post" action="{{ url('/sicantik') }}" enctype="multipart/form-data">
                                   @csrf
-                                <div class="input-group mb-2">
-                                  <input type="date" class="form-control" name="date_start" autocomplete="off">
-                                  <span class="input-group-text">
-                                    s/d
-                                  </span>
-                                  <input type="date" class="form-control" name="date_end" autocomplete="off">
-                                  <button type="submit" class="btn btn-primary">Tampilkan</button>
-                                </div>
+                                  <div class="input-group mb-2">
+                                    <input type="date" class="form-control" name="date_start" autocomplete="off">
+                                    <span class="input-group-text">s/d</span>
+                                    <input type="date" class="form-control" name="date_end" autocomplete="off">
+                                    <button type="submit" class="btn btn-primary">Tampilkan</button>
+                                  </div>
                                 </form>
                               </div>
                               <div class="tab-pane fade" id="tabs-profile-8" role="tabpanel">
                                 <h4>Pilih Bulan :</h4>
-                                <div>
-                                  <form method="post" action="{{ url('/sicantik')}}" enctype="multipart/form-data">
-                                    @csrf
+                                <form method="post" action="{{ url('/sicantik') }}" enctype="multipart/form-data">
+                                  @csrf
                                   <div class="row g-2">
                                     <div class="col-4">
                                       <select name="month" class="form-select">
                                         <option value="">Bulan</option>
                                         @foreach ($namaBulan as $index => $bulan)
-                                        <option value="{{ $index + 1 }}"> {{ $bulan }}</option>
+                                          <option value="{{ $index + 1 }}">{{ $bulan }}</option>
                                         @endforeach
                                       </select>
                                     </div>
@@ -284,7 +281,7 @@
                                       <select name="year" class="form-select">
                                         <option value="">Tahun</option>
                                         @for ($year = $startYear; $year <= $currentYear; $year++)
-                                        <option value="{{ $year }}">{{ $year }}</option>
+                                          <option value="{{ $year }}">{{ $year }}</option>
                                         @endfor
                                       </select>
                                     </div>
@@ -292,20 +289,18 @@
                                       <button type="submit" class="btn btn-primary">Tampilkan</button>
                                     </div>
                                   </div>
-                                 </form>
-                                </div>
+                                </form>
                               </div>
                               <div class="tab-pane fade" id="tabs-activity-8" role="tabpanel">
                                 <h4>Pilih Tahun :</h4>
-                                <div>
-                                  <form method="post" action="{{ url('/sicantik')}}" enctype="multipart/form-data">
-                                    @csrf
+                                <form method="post" action="{{ url('/sicantik') }}" enctype="multipart/form-data">
+                                  @csrf
                                   <div class="row g-2">
                                     <div class="col-4">
                                       <select name="year" class="form-select">
                                         <option value="">Tahun</option>
                                         @for ($year = $startYear; $year <= $currentYear; $year++)
-                                        <option value="{{ $year }}">{{ $year }}</option>
+                                          <option value="{{ $year }}">{{ $year }}</option>
                                         @endfor
                                       </select>
                                     </div>
@@ -313,19 +308,18 @@
                                       <button type="submit" class="btn btn-primary">Tampilkan</button>
                                     </div>
                                   </div>
-                                  </form>
-                                </div>
-                              </div> 
+                                </form>
+                              </div>
                             </div>
                           </div>
                         </div>
-                     </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn me-auto" data-bs-dismiss="modal">Tutup</button>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn me-auto" data-bs-dismiss="modal">Tutup</button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
               <div class="modal" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">

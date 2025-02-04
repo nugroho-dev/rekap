@@ -161,17 +161,38 @@
                             {{  $data->jumlah_data }}
                           </td>
                           <td class="text-center">
-                            {{  number_format($data->jumlah_hari/$data->jumlah_data,2) }}
+                            {{ $data->jumlah_data > 0 ? number_format($data->jumlah_hari/$data->jumlah_data, 2) : 'N/A' }}
                           </td>
-                          <td></td>
+                          <td>
+                            <span class="dropdown">
+                              
+                              <button class="btn dropdown-toggle align-text-top" data-bs-boundary="viewport" data-bs-toggle="dropdown">Action</button>
+                              <div class="dropdown-menu dropdown-menu-end">
+                                <form method="post" action="{{ url('/sicantik/rincian')}}" enctype="multipart/form-data">
+                                  @csrf
+                                <input type="hidden" name="month" value="{{ $data->bulan }}">
+                                <input type="hidden" name="year" value="{{ $year }}">
+                                <button type="submit" class="dropdown-item">
+                                  Lihat Rincian
+                                </button>
+                                </form>
+                              </div>
+                            </span>
+                          </td>
                         </tr>
                         @endforeach
+                        <tr>
+                          <td><strong>Total</strong></td>
+                          <td class="text-center"><strong>{{ collect($terbit)->sum('jumlah_data') }}</strong></td>
+                          <td class="text-center"><strong>{{ collect($terbit)->sum('jumlah_data') > 0 ? number_format(collect($terbit)->sum('jumlah_hari') / collect($terbit)->sum('jumlah_data'), 2) : 'N/A' }}</strong></td>
+                          <td></td>
+                        </tr>
                       </tbody>
                     </table>
                   </div>
                 </div>
               </div>
-              <div class="col-lg-12 col-sm-12">
+              <!--<div class="col-lg-12 col-sm-12">
                 <div class="card">
                   <div class="card-body">
                     <h3 class="card-title">Rincian Izin Terbit Bulan {{ Carbon\Carbon::createFromDate(null, $month, 1)->translatedFormat('F')}} Tahun {{ $year }}</h3>
@@ -203,7 +224,7 @@
                     </table>
                   </div>
                 </div>
-              </div>
+              </div>-->
              
               @php
               use Carbon\Carbon;
