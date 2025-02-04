@@ -35,7 +35,7 @@ class DashboardVprosesSicantikController extends Controller
 				return redirect('/sicantik')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda ');
 			}else{
 			$query ->whereBetween('tgl_penetapan', [$date_start,$date_end])
-				   ->orderBy('no_permohonan', 'desc');
+				   ->orderBy('no_permohonan', 'asc');
 			}
 		}
 		if ($request->has('month')&&$request->has('year')) {
@@ -50,16 +50,16 @@ class DashboardVprosesSicantikController extends Controller
 			}else{
 			$query ->whereMonth('tgl_penetapan', [$month])
 				   ->whereYear('tgl_penetapan', [$year])
-				   ->orderBy('no_permohonan', 'desc');
+				   ->orderBy('no_permohonan', 'asc');
 				}
 		}
 		if ($request->has('year')) {
 			$year = $request->input('year');
 			$query ->whereYear('tgl_penetapan', [$year])
-				   ->orderBy('no_permohonan', 'desc');
+				   ->orderBy('no_permohonan', 'ASC');
 		}
 		$perPage = $request->input('perPage', 50);
-		$items=$query->orderBy('no_permohonan', 'desc')->paginate($perPage);
+		$items=$query->orderBy('no_permohonan', 'asc')->paginate($perPage);
 		$items->withPath(url('/sicantik'));
 		return view('admin.nonberusaha.sicantik.index',compact('judul','items','perPage','search','date_start','date_end','month','year'));
     }
