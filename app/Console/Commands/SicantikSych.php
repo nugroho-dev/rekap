@@ -30,8 +30,9 @@ class SicantikSych extends Command
      */
     public function handle()
     {
-        $date1 = date("Y-m-01");
+        //$date1 = date("Y-m-01");
         $date2 = date("Y-m-d");
+        $date1 = Carbon::parse($date2)->subMonth()->format('Y-m-d');
         $urls = [
             'https://sicantik.go.id/api/TemplateData/keluaran/42611.json',
             'https://sicantik.go.id/api/TemplateData/keluaran/44216.json',
