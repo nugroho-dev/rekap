@@ -50,15 +50,15 @@
                           <span class="d-none d-sm-inline">
                           
                           </span>
-                          <a href="#" class="btn btn-primary d-none d-sm-inline-block" >
+                            <a href="#" class="btn btn-primary d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#modal-team">
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
-                            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-table-import"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 21h-7a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v8" /><path d="M3 10h18" /><path d="M10 3v18" /><path d="M19 22v-6" /><path d="M22 19l-3 -3l-3 3" /></svg>
+                            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icon-tabler-table-import"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 21h-7a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v8" /><path d="M3 10h18" /><path d="M10 3v18" /><path d="M19 22v-6" /><path d="M22 19l-3 -3l-3 3" /></svg>
                             Tambah Data
-                          </a>
-                          <a href="#" class="btn btn-primary d-sm-none btn-icon" data-bs-toggle="modal" data-bs-target="#modal-team">
+                            </a>
+                            <a href="#" class="btn btn-primary d-sm-none btn-icon" data-bs-toggle="modal" data-bs-target="#modal-team">
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
-                            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-table-import"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 21h-7a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v8" /><path d="M3 10h18" /><path d="M10 3v18" /><path d="M19 22v-6" /><path d="M22 19l-3 -3l-3 3" /></svg>
-                          </a>
+                            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icon-tabler-table-import"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 21h-7a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v8" /><path d="M3 10h18" /><path d="M10 3v18" /><path d="M19 22v-6" /><path d="M22 19l-3 -3l-3 3" /></svg>
+                            </a>
                         </div>
                       </div>
                     </div>
@@ -112,7 +112,7 @@
                       </div>
                     </div>
                     <div class="d-flex align-items-baseline">
-                      <div class="h1 mb-0 me-2">{{ $izin_terbit }}</div>
+                      <div class="h1 mb-0 me-2">{{ $totalJumlahData }}</div>
                       <div class="me-auto">
                         <span class="text-green d-inline-flex align-items-center lh-1">
                           8% <!-- Download SVG icon from http://tabler-icons.io/i/trending-up -->
@@ -147,21 +147,25 @@
                         <tr>
                           <th>Bulan</th>
                           <th class="text-center">Jumlah Izin Terbit</th>
+                          <th class="text-center">Jumlah Waktu Proses</th>
                           <th class="text-center">Rata Rata Waktu Proses Penerbitan</th>
                           <th>*</th>
                         </tr>
                       </thead>
                       <tbody>
-                        @foreach ($terbit as $data) 
+                        @foreach ($rataRataJumlahHariPerBulan as $data) 
                         <tr>
                           <td >
                             {{ Carbon\Carbon::createFromDate(null, $data->bulan, 1)->translatedFormat('F')}}
                           </td>
                           <td class= "text-center">
-                            {{  $data->jumlah_data }}
+                            {{  $data->jumlah_data }} Izin
+                          </td>
+                          <td class= "text-center">
+                            {{ $data->jumlah_hari }} Hari
                           </td>
                           <td class="text-center">
-                            {{ $data->jumlah_data > 0 ? number_format($data->jumlah_hari/$data->jumlah_data, 2) : 'N/A' }}
+                            {{ number_format($data->rata_rata_jumlah_hari, 2) }} Hari
                           </td>
                           <td>
                             <span class="dropdown">
@@ -183,8 +187,9 @@
                         @endforeach
                         <tr>
                           <td><strong>Total</strong></td>
-                          <td class="text-center"><strong>{{ collect($terbit)->sum('jumlah_data') }}</strong></td>
-                          <td class="text-center"><strong>{{ collect($terbit)->sum('jumlah_data') > 0 ? number_format(collect($terbit)->sum('jumlah_hari') / collect($terbit)->sum('jumlah_data'), 2) : 'N/A' }}</strong></td>
+                          <td class="text-center"><strong>{{ $totalJumlahData }} Izin</strong></td>
+                          <td class="text-center"><strong>{{  $totalJumlahHari }} Hari</strong></td>
+                          <td class="text-center"><strong>{{ number_format($rataRataJumlahHari, 2) }} Hari</strong></td>
                           <td></td>
                         </tr>
                       </tbody>
@@ -192,39 +197,7 @@
                   </div>
                 </div>
               </div>
-              <!--<div class="col-lg-12 col-sm-12">
-                <div class="card">
-                  <div class="card-body">
-                    <h3 class="card-title">Rincian Izin Terbit Bulan {{ Carbon\Carbon::createFromDate(null, $month, 1)->translatedFormat('F')}} Tahun {{ $year }}</h3>
-                    <table class="table ">
-                      <thead>
-                        <tr>
-                          <th>Jenis Izin</th>
-                          <th>Jumlah Izin Terbit</th>
-                          <th>Rata Rata Waktu Proses Penerbitan</th>
-                          <th>*</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @foreach ($rincianterbit as $data) 
-                        <tr>
-                          <td >
-                            {{ $data->jenis_izin }}
-                          </td>
-                          <td class=" text-center">
-                            {{  $data->jumlah_izin }}
-                          </td>
-                          <td class=" text-center">
-                            {{  number_format($data->jumlah_hari/$data->jumlah_izin,2) }}
-                          </td>
-                          <td></td>
-                        </tr>
-                        @endforeach
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>-->
+              
              
               @php
               use Carbon\Carbon;
@@ -237,6 +210,53 @@
               $startYear = 2018;
               $currentYear = date('Y'); // Tahun sekarang
               @endphp
+                <div class="modal fade" id="modal-team" tabindex="-1" role="dialog" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" role="document">
+                  <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Sortir Berdasarkan :</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    <div class="card">
+                    <div class="card-header">
+                      <ul class="nav nav-tabs card-header-tabs nav-fill" data-bs-toggle="tabs" role="tablist">
+                      <li class="nav-item" role="presentation">
+                        <a href="#tabs-home-8" class="nav-link active" data-bs-toggle="tab" aria-selected="true" role="tab">Tanggal</a>
+                      </li>
+                      </ul>
+                    </div>
+                    <div class="card-body">
+                      <div class="tab-content">
+                      <div class="tab-pane fade active show" id="tabs-home-8" role="tabpanel">
+                        <h4>Pilih Tanggal :</h4>
+                        <form method="post" action="{{ url('/sicantik/sych')}}" enctype="multipart/form-data">
+                        @csrf
+                        <div class="input-group mb-2">
+                          <input type="date" class="form-control" name="date_start" autocomplete="off">
+                          <span class="input-group-text">s/d</span>
+                          <input type="date" class="form-control" name="date_end" autocomplete="off">
+                          <input type="hidden" name="type" value="statistik">
+                          <button type="submit" class="btn btn-primary">Tampilkan</button>
+                        </div>
+                        </form>
+                      </div>
+                      </div>
+                    </div>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn me-auto" data-bs-dismiss="modal">Tutup</button>
+                  </div>
+                  </div>
+                </div>
+                </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn me-auto" data-bs-dismiss="modal">Tutup</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
               <div class="modal  fade" id="modal-team-stat" tabindex="-1" role="dialog" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered" role="document">
                   <div class="modal-content">

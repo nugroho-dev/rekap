@@ -96,24 +96,29 @@
         <thead>
           <tr>
             <th>Jenis Izin</th>
-            <th>Jumlah Izin Terbit</th>
-            <th>Rata Rata Waktu Proses Penerbitan</th>
-            <th>*</th>
+            <th class="text-center">Jumlah Izin Terbit</th>
+            <th class="text-center">Jumlah Waktu Proses</th>
+            <th class="text-center">Rata Rata Waktu Proses Penerbitan</th>
+            <th class="text-center">*</th>
           </tr>
         </thead>
         <tbody>
-          @foreach ($rincianterbit as $data)
+          @foreach ($rataRataJumlahHariPerJenisIzin as $data)
           <tr>
             <td>{{ $data->jenis_izin }}</td>
-            <td class="text-center">{{ $data->jumlah_izin }}</td>
-            <td class="text-center">{{ $data->jumlah_izin ? number_format($data->jumlah_hari / $data->jumlah_izin, 2) : 'N/A' }}</td>
+            <td class="text-center">{{ $data->jumlah_izin }} Izin</td>
+            <td class="text-center">{{ $data->jumlah_hari }} Hari</td>
+            <td class="text-center">{{ number_format($data->rata_rata_jumlah_hari, 2) }} Hari</td>
             <td></td>
           </tr>
           @endforeach
-          <tr>
-            <td>total</td>
-            <td class="text-center">{{ array_sum(array_column($rincianterbit, 'jumlah_izin')) }}</td>
-            <td class="text-center">{{ array_sum(array_column($rincianterbit, 'jumlah_hari')) ? number_format(array_sum(array_column($rincianterbit, 'jumlah_hari')) / array_sum(array_column($rincianterbit, 'jumlah_izin')), 2) : 'N/A' }}</td>
+            <tr>
+            <td><strong>Total</strong></td>
+            <td class="text-center"><strong>{{ $total_izin }}</strong></td>
+            <td class="text-center"><strong>{{ $totalJumlahHari }}</strong></td>
+            <td class="text-center"><strong>{{ number_format($rataRataJumlahHari, 2)  }}</strong></td>
+            <td></td>
+            </tr>
           </tr>
         </tbody>
       </table>

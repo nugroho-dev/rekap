@@ -73,88 +73,123 @@ class DashboardVprosesSicantikController extends Controller
 		$now = Carbon::now();
 		$year = $request->input('year');
 		if ($request->has('year') && $request->has('month')) {
-			$year = $request->input('year');
-		    $jumlah_permohonan = Proses::where('jenis_proses_id', 18)->whereYear('start_date', [$year])->count();
-			$izin_terbit = Proses::where('jenis_proses_id', 40)->whereYear('tgl_penetapan', [$year])->whereNotNull('end_date')->count();
-			$queryterbit = "SELECT month(tgl_penetapan) AS bulan,  year(tgl_penetapan) AS tahun, count(tgl_penetapan) as jumlah_data,sum(jumlah_hari_kerja) - IFNULL(sum(jumlah_rekom),0) - IFNULL(sum(jumlah_cetak_rekom),0) - IFNULL(sum(jumlah_tte_rekom),0) - IFNULL(sum(jumlah_verif_rekom),0) - IFNULL(sum(jumlah_proses_bayar),0) as jumlah_hari FROM sicantik.sicantik_proses_statistik where tgl_penetapan is not null and end_date_akhir is not null and year(tgl_penetapan)= $year group by month(tgl_penetapan) order by bulan asc";
-			$terbit = DB::select($queryterbit);
-			$queryterbitrincian = "SELECT month(tgl_penetapan) AS bulan, year(tgl_penetapan) AS tahun, jenis_izin, count(jenis_izin) as jumlah_izin, sum(jumlah_hari_kerja) - IFNULL(sum(jumlah_rekom),0) - IFNULL(sum(jumlah_cetak_rekom),0) - IFNULL(sum(jumlah_tte_rekom),0) - IFNULL(sum(jumlah_verif_rekom),0) - IFNULL(sum(jumlah_proses_bayar),0) as jumlah_hari FROM sicantik.sicantik_proses_statistik where tgl_penetapan is not null and end_date_akhir is not null and year(tgl_penetapan) = $year and month(tgl_penetapan) = $month group by jenis_izin ";
-			$rincianterbit = DB::select($queryterbitrincian);
-	    }else{
+            $year = $request->input('year');
+            $month = $request->input('month');
+            $jumlah_permohonan = Proses::where('jenis_proses_id', 18)
+                ->whereYear('start_date', $year)
+                ->whereMonth('start_date', $month)
+                ->count();
+            
+            $terbit = DB::table('sicantik.sicantik_proses_statistik')
+                ->selectRaw('month(tgl_penetapan) AS bulan, year(tgl_penetapan) AS tahun, count(tgl_penetapan) as jumlah_data, sum(jumlah_hari_kerja) - IFNULL(sum(jumlah_rekom),0) - IFNULL(sum(jumlah_cetak_rekom),0) - IFNULL(sum(jumlah_tte_rekom),0) - IFNULL(sum(jumlah_verif_rekom),0) - IFNULL(sum(jumlah_proses_bayar),0) as jumlah_hari')
+                ->whereNotNull('tgl_penetapan')
+                ->whereNotNull('end_date_akhir')
+                ->whereYear('tgl_penetapan', $year)
+                ->groupByRaw('month(tgl_penetapan)')
+                ->orderBy('bulan', 'asc')
+                ->get();
+
+            $totalJumlahData = $terbit->sum('jumlah_data');
+            $totalJumlahHari = $terbit->sum('jumlah_hari');
+            $rataRataJumlahHari = $totalJumlahData ? $totalJumlahHari / $totalJumlahData : 0;
+
+            $totalJumlahData = $terbit->sum('jumlah_data');
+                $rataRataJumlahHariPerBulan = $terbit->map(function ($item) {
+                    $item->rata_rata_jumlah_hari = $item->jumlah_hari / $item->jumlah_data;
+					return $item;
+				});
+		} else {
 			$year = $now->year;
 			$month = $now->month;
 			$jumlah_permohonan = Proses::where('jenis_proses_id', 18)->whereYear('start_date', [$year])->count();
-			$izin_terbit =Proses::where('jenis_proses_id', 40)->whereYear('tgl_penetapan', [$year])->whereNotNull('end_date')->count();
-			$queryterbit = "SELECT month(tgl_penetapan) AS bulan,  year(tgl_penetapan) AS tahun, count(tgl_penetapan) as jumlah_data,sum(jumlah_hari_kerja) - IFNULL(sum(jumlah_rekom),0) - IFNULL(sum(jumlah_cetak_rekom),0) - IFNULL(sum(jumlah_tte_rekom),0) - IFNULL(sum(jumlah_verif_rekom),0) - IFNULL(sum(jumlah_proses_bayar),0) as jumlah_hari FROM sicantik.sicantik_proses_statistik where tgl_penetapan is not null and end_date_akhir is not null and year(tgl_penetapan)= $year group by month(tgl_penetapan) order by bulan asc";
-			$terbit = DB::select($queryterbit);
-			$queryterbitrincian = "SELECT month(tgl_penetapan) AS bulan, year(tgl_penetapan) AS tahun, jenis_izin, count(jenis_izin) as jumlah_izin, sum(jumlah_hari_kerja) - IFNULL(sum(jumlah_rekom),0) - IFNULL(sum(jumlah_cetak_rekom),0) - IFNULL(sum(jumlah_tte_rekom),0) - IFNULL(sum(jumlah_verif_rekom),0) - IFNULL(sum(jumlah_proses_bayar),0) as jumlah_hari FROM sicantik.sicantik_proses_statistik where tgl_penetapan is not null and end_date_akhir is not null and year(tgl_penetapan) = $year and month(tgl_penetapan) = $month group by jenis_izin";
-			$rincianterbit = DB::select($queryterbitrincian);
+			
+            $terbit = DB::table('sicantik.sicantik_proses_statistik')
+                ->selectRaw('month(tgl_penetapan) AS bulan, year(tgl_penetapan) AS tahun, count(tgl_penetapan) as jumlah_data, sum(jumlah_hari_kerja - COALESCE(jumlah_rekom,0) - COALESCE(jumlah_cetak_rekom,0) - COALESCE(jumlah_tte_rekom,0) - COALESCE(jumlah_verif_rekom,0) - COALESCE(jumlah_proses_bayar,0)) as jumlah_hari')
+                ->whereNotNull('tgl_penetapan')
+                ->whereNotNull('end_date_akhir')
+                ->whereYear('tgl_penetapan', $year)
+                ->groupByRaw('month(tgl_penetapan)')
+                ->orderBy('bulan', 'asc')
+                ->get();
+                $totalJumlahData = $terbit->sum('jumlah_data');
+                $totalJumlahHari = $terbit->sum('jumlah_hari');
+                $rataRataJumlahHari = $totalJumlahData ? $totalJumlahHari / $totalJumlahData : 0;
+
+            $rataRataJumlahHariPerBulan = $terbit->map(function ($item) {
+                $item->rata_rata_jumlah_hari = $item->jumlah_hari / $item->jumlah_data;
+                return $item;
+            });
+
+      
+            
+			
 		};
-		return view('admin.nonberusaha.sicantik.statistik',compact('judul','jumlah_permohonan','date_start','date_end','month','year','izin_terbit','terbit','rincianterbit'));
+		return view('admin.nonberusaha.sicantik.statistik',compact('judul','jumlah_permohonan','date_start','date_end','month','year','rataRataJumlahHariPerBulan', 'rataRataJumlahHari','totalJumlahData','totalJumlahHari'));
 	}
     public function rincian(Request $request)
     {
         $judul='Statistik Izin SiCantik';
         if ($request->has('year') && $request->has('month')) {
-			$year = $request->input('year');
+            $year = $request->input('year');
             $month = $request->input('month');
-			$queryterbitrincian = "SELECT month(tgl_penetapan) AS bulan, year(tgl_penetapan) AS tahun, jenis_izin, count(jenis_izin) as jumlah_izin, sum(jumlah_hari_kerja) - IFNULL(sum(jumlah_rekom),0) - IFNULL(sum(jumlah_cetak_rekom),0) - IFNULL(sum(jumlah_tte_rekom),0) - IFNULL(sum(jumlah_verif_rekom),0) - IFNULL(sum(jumlah_proses_bayar),0) as jumlah_hari FROM sicantik.sicantik_proses_statistik where tgl_penetapan is not null and end_date_akhir is not null and year(tgl_penetapan) = $year and month(tgl_penetapan) = $month group by jenis_izin  order by jumlah_izin desc";
-			$rincianterbit = DB::select($queryterbitrincian);
-	    }
-		return view('admin.nonberusaha.sicantik.rincian',compact('judul','month','year','rincianterbit'));
+            $rincianterbit = DB::table('sicantik.sicantik_proses_statistik')
+            ->selectRaw('month(tgl_penetapan) AS bulan, year(tgl_penetapan) AS tahun, jenis_izin, count(jenis_izin) as jumlah_izin, sum(jumlah_hari_kerja) - COALESCE(sum(jumlah_rekom),0) - COALESCE(sum(jumlah_cetak_rekom),0) - COALESCE(sum(jumlah_tte_rekom),0) - COALESCE(sum(jumlah_verif_rekom),0) - COALESCE(sum(jumlah_proses_bayar),0) as jumlah_hari')
+            ->whereNotNull('tgl_penetapan')
+            ->whereNotNull('end_date_akhir')
+            ->whereYear('tgl_penetapan', $year)
+            ->whereMonth('tgl_penetapan', $month)
+            ->groupBy('jenis_izin')
+            ->orderBy('jumlah_izin', 'desc')
+            ->get();
+
+            $totalJumlahHari = $rincianterbit->sum('jumlah_hari');
+            $total_izin = $rincianterbit->sum('jumlah_izin');
+            $rataRataJumlahHari = $total_izin ? $totalJumlahHari / $total_izin : 0;
+
+            $rataRataJumlahHariPerJenisIzin = $rincianterbit->map(function ($item) {
+                $item->rata_rata_jumlah_hari = $item->jumlah_hari / $item->jumlah_izin;
+                return $item;
+            });
+        }
+		return view('admin.nonberusaha.sicantik.rincian',compact('judul','month','year','rataRataJumlahHariPerJenisIzin', 'rataRataJumlahHari','total_izin','totalJumlahHari'));
     }
 	public function sync(Request $request)
 	{
 		$date1=$request->input('date_start');
         $date2=$request->input('date_end');
-        $response = Http::retry(10, 1000)->get('https://sicantik.go.id/api/TemplateData/keluaran/42611.json?date1='.$date1.'&date2='. $date2.'');
-        $data = $response->json();
-        $items = $data['data']['data'];
-        //dd($items);
-        foreach ($items as $val) {
-            Proses::updateOrCreate(
-            ['id_proses_permohonan'=> $val['id']],
-            ['alamat'=> $val['alamat'],
-            'data_status'=>$val['data_status'],
-            'default_active'=>$val['default_active'],
-            'del'=>$val['del'],
-            'dibuat_oleh'=>$val['dibuat_oleh'],
-            'diproses_oleh'=>$val['diproses_oleh'],
-            'diubah_oleh'=>$val['diubah_oleh'],
-            'email' => $val['email'],
-            'end_date'=>$val['end_date'],
-            'file_signed_report'=>$val['file_signed_report'],
-            'instansi_id'=>$val['instansi_id'],
-            'jenis_izin'=>$val['jenis_izin'],
-            'jenis_izin_id'=>$val['jenis_izin_id'],
-            'jenis_kelamin'=>$val['jenis_kelamin'],
-            'jenis_permohonan' => $val['jenis_permohonan'],
-            'jenis_proses_id'=>$val['jenis_proses_id'],
-            'lokasi_izin'=>$val['lokasi_izin'],
-            'nama'=>$val['nama'],
-            'nama_proses'=>$val['nama_proses'],
-            'no_hp'=>$val['no_hp'],
-            'no_izin'=>$val['no_izin'],
-            'no_permohonan'=>$val['no_permohonan'],
-            'no_rekomendasi'=>$val['no_rekomendasi'],
-            'no_tlp'=>$val['no_tlp'],
-            'permohonan_izin_id'=>$val['permohonan_izin_id'],
-            'start_date'=>$val['start_date'],
-            'status'=>$val['status'],
-            'tgl_dibuat'=>$val['tgl_dibuat'],
-            'tgl_diubah'=>$val['tgl_diubah'],
-            'tgl_lahir'=>$val['tgl_lahir'],
-            'tgl_penetapan'=>$val['tgl_penetapan'],
-            'tgl_pengajuan'=>$val['tgl_pengajuan'],
-            'tgl_pengajuan_time'=>$val['tgl_pengajuan_time'],
-            'tgl_rekomendasi'=>$val['tgl_rekomendasi'],
-            'tgl_selesai'=>$val['tgl_selesai'],
-            'tgl_selesai_time'=>$val['tgl_selesai_time'],
-            'tgl_signed_report'=>$val['tgl_signed_report']
-            ]);
+		try {
+			$response = Http::retry(10, 1000)->get('https://sicantik.go.id/api/TemplateData/keluaran/42611.json?date1='.$date1.'&date2='. $date2.'');
+			$data = $response->json();
+			$items = $data['data']['data'];
+        } catch (\Exception $e) {
+            return redirect('/sicantik')->with('error', 'Server timeout. Please try again later. Error: ' . $e->getMessage());
         }
+        //dd($items);
+        if ($response->status() == 504) {
+            return redirect('/sicantik')->with('error', '504 Gateway Time-out. Please try again later.');
+        }
+
+		$dataToInsert = [];
+		foreach ($items as $val) {
+			$dataToInsert[] = array_intersect_key($val, array_flip([
+			'alamat', 'data_status', 'default_active', 'del', 'dibuat_oleh', 'diproses_oleh', 'diubah_oleh', 
+			'email', 'end_date', 'file_signed_report', 'instansi_id', 'jenis_izin', 'jenis_izin_id', 
+			'jenis_kelamin', 'jenis_permohonan', 'jenis_proses_id', 'lokasi_izin', 'nama', 'nama_proses', 
+			'no_hp', 'no_izin', 'no_permohonan', 'no_rekomendasi', 'no_tlp', 'permohonan_izin_id', 
+			'start_date', 'status', 'tgl_dibuat', 'tgl_diubah', 'tgl_lahir', 'tgl_penetapan', 'tgl_pengajuan', 
+			'tgl_pengajuan_time', 'tgl_rekomendasi', 'tgl_selesai', 'tgl_selesai_time', 'tgl_signed_report'
+			]));
+		}
+		$chunks = array_chunk($dataToInsert, 1000);
+		foreach ($chunks as $chunk) {
+			Proses::upsert($chunk, ['id_proses_permohonan']);
+		}
         
-       
-		return redirect('/sicantik')->with('success', 'Data Baru Berhasil di Tambahkan !');
+    if ($request->input('statistik')) {
+        return redirect('/statistik')->with('success', 'Data Baru Berhasil di Tambahkan!');
+    } else {
+        return redirect('/sicantik')->with('success', 'Data Baru Berhasil di Tambahkan!');
+    }
 	}
+
 }
