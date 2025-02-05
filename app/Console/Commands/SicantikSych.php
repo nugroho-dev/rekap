@@ -35,8 +35,6 @@ class SicantikSych extends Command
         $date1 = Carbon::parse($date2)->subMonth()->format('Y-m-d');
         $urls = [
             'https://sicantik.go.id/api/TemplateData/keluaran/42611.json',
-            'https://sicantik.go.id/api/TemplateData/keluaran/44216.json',
-            'https://sicantik.go.id/api/TemplateData/keluaran/44217.json'
         ];
 
         foreach (array_chunk($urls, 1) as $chunk) {
