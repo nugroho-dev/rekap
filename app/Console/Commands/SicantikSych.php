@@ -31,7 +31,7 @@ class SicantikSych extends Command
     public function handle()
     {
         $date2 = Carbon::now()->format('Y-m-d');
-        $date1 = Carbon::now()->subDays(3)->format('Y-m-d');
+        $date1 = Carbon::now()->subMonth()->format('Y-m-d');
         $url = 'https://sicantik.go.id/api/TemplateData/keluaran/42611.json';
 
         $response = Http::retry(10, 1000)->get($url, [

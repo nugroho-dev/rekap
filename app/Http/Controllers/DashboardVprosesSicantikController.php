@@ -180,9 +180,11 @@ class DashboardVprosesSicantikController extends Controller
 			'tgl_pengajuan_time', 'tgl_rekomendasi', 'tgl_selesai', 'tgl_selesai_time', 'tgl_signed_report'
 			]));
 		}
-		$chunks = array_chunk($dataToInsert, 1000);
-		foreach ($chunks as $chunk) {
-			Proses::upsert($chunk, ['id_proses_permohonan']);
+		foreach ($dataToInsert as $data) {
+			Proses::updateOrCreate(
+				['id_proses_permohonan' => $data['id_proses_permohonan']],
+				$data
+			);
 		}
         
     if ($request->input('statistik')) {
