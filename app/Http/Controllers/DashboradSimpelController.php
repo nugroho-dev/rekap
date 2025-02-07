@@ -121,4 +121,30 @@ class DashboradSimpelController extends Controller
 		};
 		return view('admin.nonberusaha.simpel.statistik',compact('judul','jumlah_permohonan','date_start','date_end','month','year','rataRataJumlahHariPerBulan', 'rataRataJumlahHari','totalJumlahData','totalJumlahHari','coverse'));
 	}
+    public function rincian(Request $request)
+    {
+        $judul='Statistik Izin SiCantik';
+        if ($request->has('year') && $request->has('month')) {
+            $year = $request->input('year');
+            $month = $request->input('month');
+            $rincianterbit = DB::table('simpel')
+            ->selectRaw('month(rekomendasi) AS bulan, year(rekomendasi) AS tahun, jasa as jenis_izin, jasa as jenis_izin_id, count(rekomendasi) as jumlah_izin, pemohon, daftar AS tanggal_mulai_a, tte AS tanggal_selesai_e, DATEDIFF(tte,daftar) - (FLOOR(DATEDIFF(tte, daftar) / 7) * 2) - (SELECT COUNT(*)  FROM dayoff ln WHERE ln.tanggal BETWEEN daftar AND tte ) AS jumlah_hari ')
+            ->whereYear('rekomendasi', $year)
+            ->whereMonth('rekomendasi', $month)
+            ->whereIn('status', ['Selesai'])
+            ->groupBy('jasa')
+            ->orderBy('jumlah_izin', 'desc')
+            ->get();
+
+            $totalJumlahHari = $rincianterbit->sum('jumlah_hari');
+            $total_izin = $rincianterbit->sum('jumlah_izin');
+            $rataRataJumlahHari = $total_izin ? $totalJumlahHari / $total_izin : 0;
+
+            $rataRataJumlahHariPerJenisIzin = $rincianterbit->map(function ($item) {
+                $item->rata_rata_jumlah_hari = $item->jumlah_hari / $item->jumlah_izin;
+                return $item;
+            });
+        }
+		return view('admin.nonberusaha.simpel.rincian',compact('judul','month','year','rataRataJumlahHariPerJenisIzin', 'rataRataJumlahHari','total_izin','totalJumlahHari'));
+    }
 }
