@@ -97,7 +97,6 @@ class DashboardVprosesSicantikController extends Controller
            
             $jumlah_permohonan = Proses::where('jenis_proses_id', 18)
                 ->whereYear('start_date', $year)
-                ->whereMonth('start_date', $month)
                 ->count();
             
             $terbit = DB::table('sicantik.sicantik_proses_statistik')
@@ -117,6 +116,7 @@ class DashboardVprosesSicantikController extends Controller
                     $item->rata_rata_jumlah_hari = $item->jumlah_hari / $item->jumlah_data;
 					return $item;
 				});
+				$coverse = $jumlah_permohonan ? number_format($totalJumlahData / $jumlah_permohonan * 100, 2) : 0;
 		} else {
 			$year = $now->year;
 			$jumlah_permohonan = Proses::where('jenis_proses_id', 18)->whereYear('start_date', [$year])->count();
@@ -135,12 +135,12 @@ class DashboardVprosesSicantikController extends Controller
                 $item->rata_rata_jumlah_hari = $item->jumlah_hari / $item->jumlah_data;
                 return $item;
             });
-
       
-            
+			$coverse = $jumlah_permohonan ? number_format($totalJumlahData / $jumlah_permohonan * 100, 2) : 0;
 			
 		};
-		return view('admin.nonberusaha.sicantik.statistik',compact('judul','jumlah_permohonan','date_start','date_end','month','year','rataRataJumlahHariPerBulan', 'rataRataJumlahHari','totalJumlahData','totalJumlahHari'));
+		
+		return view('admin.nonberusaha.sicantik.statistik',compact('judul','jumlah_permohonan','date_start','date_end','month','year','rataRataJumlahHariPerBulan', 'rataRataJumlahHari','totalJumlahData','totalJumlahHari','coverse'));
 	}
     public function rincian(Request $request)
     {

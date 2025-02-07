@@ -167,8 +167,12 @@ Route::post('/dayoff', [DayOffDashboardController::class, 'index'])->middleware(
 Route::resource('/mppd', MppdController::class)->middleware('auth');
 Route::post('/mppdigital/import_excel', [MppdController::class, 'import_excel'])->middleware('auth');
 Route::post('/mppdsort', [MppdController::class, 'index'])->middleware('auth');
+
 Route::get('/simpel', [DashboradSimpelController::class, 'index'])->middleware('auth');
 Route::post('/simpel', [DashboradSimpelController::class, 'index'])->middleware('auth');
+Route::get('/simpel/statistik', [DashboradSimpelController::class, 'statistik'])->middleware('auth');
+Route::post('/simpel/statistik', [DashboradSimpelController::class, 'statistik'])->middleware('auth');
+
 Route::get('/proyek', [ProyekController::class, 'index'])->middleware('auth');
 Route::post('/proyek', [ProyekController::class, 'index'])->middleware('auth');
 Route::post('/proyek/import_excel', [ProyekController::class, 'import_excel'])->middleware('auth');

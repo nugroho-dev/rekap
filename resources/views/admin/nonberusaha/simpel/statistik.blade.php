@@ -18,12 +18,12 @@
                           <span class="d-none d-sm-inline">
                           
                           </span>
-                          <a href="{{ url('/sicantik/statistik')}}" class="btn btn-info d-none d-sm-inline-block">
+                          <a href="{{ url('/simpel/statistik')}}" class="btn btn-info d-none d-sm-inline-block">
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-chart-infographic"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M7 3v4h4" /><path d="M9 17l0 4" /><path d="M17 14l0 7" /><path d="M13 13l0 8" /><path d="M21 12l0 9" /></svg>
                             Statistik
                           </a>
-                          <a href="{{ url('/berusaha/statistik')}}" class="btn btn-info d-sm-none btn-icon">
+                          <a href="{{ url('/simpel/statistik')}}" class="btn btn-info d-sm-none btn-icon">
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-chart-infographic"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M7 3v4h4" /><path d="M9 17l0 4" /><path d="M17 14l0 7" /><path d="M13 13l0 8" /><path d="M21 12l0 9" /></svg>
                           </a>
@@ -83,14 +83,14 @@
                       <div>Conversion rate</div>
                       <div class="ms-auto">
                         <span class="text-green d-inline-flex align-items-center lh-1">
-                            {{ $coverse }}% <!-- Download SVG icon from http://tabler-icons.io/i/trending-up -->
+                          {{ $coverse }}% <!-- Download SVG icon from http://tabler-icons.io/i/trending-up -->
                           <svg xmlns="http://www.w3.org/2000/svg" class="icon ms-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 17l6 -6l4 4l8 -8" /><path d="M14 7l7 0l0 7" /></svg>
                         </span>
                       </div>
                     </div>
                     <div class="progress progress-sm">
                       <div class="progress-bar bg-primary" style="width: {{ $coverse }}%" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" aria-label="75% Complete">
-                        <span class="visually-hidden">75% Complete</span>
+                        <span class="visually-hidden">{{ $coverse }}% Complete</span>
                       </div>
                     </div>
                   </div>
@@ -172,7 +172,7 @@
                               
                               <button class="btn dropdown-toggle align-text-top" data-bs-boundary="viewport" data-bs-toggle="dropdown">Action</button>
                               <div class="dropdown-menu dropdown-menu-end">
-                                <form method="post" action="{{ url('/sicantik/rincian')}}" enctype="multipart/form-data">
+                                <form method="post" action="{{ url('/simpel/rincian')}}" enctype="multipart/form-data">
                                   @csrf
                                 <input type="hidden" name="month" value="{{ $data->bulan }}">
                                 <input type="hidden" name="year" value="{{ $year }}">
@@ -180,7 +180,7 @@
                                   Lihat Rincian Perjenis Izin
                                 </button>
                                 </form>
-                                <form method="post" action="{{ url('/sicantik')}}" enctype="multipart/form-data">
+                                <form method="post" action="{{ url('/simpel')}}" enctype="multipart/form-data">
                                   @csrf
                                 <input type="hidden" name="month" value="{{ $data->bulan }}">
                                 <input type="hidden" name="year" value="{{ $year }}">
@@ -283,7 +283,7 @@
                       <div class="tab-content">
                       <div class="tab-pane fade active show" id="tabs-profile-8" role="tabpanel">
                         <h4>Pilih Bulan :</h4>
-                        <form method="post" action="{{ url('/sicantik/statistik') }}" enctype="multipart/form-data">
+                        <form method="post" action="{{ url('/simpel/statistik') }}" enctype="multipart/form-data">
                         @csrf
                         <div class="row g-2">
                         
