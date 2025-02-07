@@ -38,7 +38,26 @@ class DashboardVprosesSicantikController extends Controller
 				   ->orderBy('tgl_pengajuan', 'desc');
 			}
 		}
-		if ($request->has('month')&&$request->has('year')) {
+		if($request->has('jenis_izin_id')){
+			if ($request->has('month')&&$request->has('year')&&$request->has('jenis_izin_id')) {
+				$month = $request->input('month');
+				$year = $request->input('year');
+				$jenis_izin_id = $request->input('jenis_izin_id');
+				if(empty($month)&&empty($year)){
+					return redirect('/sicantik')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
+				}if(empty($year)){
+					return redirect('/sicantik')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
+				}if(empty($month)){
+					return redirect('/sicantik')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
+				}else{
+				$query ->where('jenis_izin_id', [$jenis_izin_id])
+					   ->whereMonth('tgl_penetapan', [$month])
+					   ->whereYear('tgl_penetapan', [$year])
+					   ->orderBy('tgl_pengajuan', 'desc');
+					}
+			}
+		}
+		elseif ($request->has('month')&&$request->has('year')) {
 			$month = $request->input('month');
 			$year = $request->input('year');
 			if(empty($month)&&empty($year)){
@@ -53,6 +72,7 @@ class DashboardVprosesSicantikController extends Controller
 				   ->orderBy('tgl_pengajuan', 'desc');
 				}
 		}
+		
 		if ($request->has('year')) {
 			$year = $request->input('year');
 			$query ->whereYear('tgl_penetapan', [$year])
@@ -72,9 +92,9 @@ class DashboardVprosesSicantikController extends Controller
 		$month = $request->input('month');
 		$now = Carbon::now();
 		$year = $request->input('year');
-		if ($request->has('year') && $request->has('month')) {
+		if ($request->has('year')) {
             $year = $request->input('year');
-            $month = $request->input('month');
+           
             $jumlah_permohonan = Proses::where('jenis_proses_id', 18)
                 ->whereYear('start_date', $year)
                 ->whereMonth('start_date', $month)
@@ -83,7 +103,6 @@ class DashboardVprosesSicantikController extends Controller
             $terbit = DB::table('sicantik.sicantik_proses_statistik')
                 ->selectRaw('month(tgl_penetapan) AS bulan, year(tgl_penetapan) AS tahun, count(tgl_penetapan) as jumlah_data, sum(jumlah_hari_kerja) - IFNULL(sum(jumlah_rekom),0) - IFNULL(sum(jumlah_cetak_rekom),0) - IFNULL(sum(jumlah_tte_rekom),0) - IFNULL(sum(jumlah_verif_rekom),0) - IFNULL(sum(jumlah_proses_bayar),0) as jumlah_hari')
                 ->whereNotNull('tgl_penetapan')
-                ->whereNotNull('end_date_akhir')
                 ->whereYear('tgl_penetapan', $year)
                 ->groupByRaw('month(tgl_penetapan)')
                 ->orderBy('bulan', 'asc')
@@ -100,13 +119,10 @@ class DashboardVprosesSicantikController extends Controller
 				});
 		} else {
 			$year = $now->year;
-			$month = $now->month;
 			$jumlah_permohonan = Proses::where('jenis_proses_id', 18)->whereYear('start_date', [$year])->count();
-			
             $terbit = DB::table('sicantik.sicantik_proses_statistik')
                 ->selectRaw('month(tgl_penetapan) AS bulan, year(tgl_penetapan) AS tahun, count(tgl_penetapan) as jumlah_data, sum(jumlah_hari_kerja - COALESCE(jumlah_rekom,0) - COALESCE(jumlah_cetak_rekom,0) - COALESCE(jumlah_tte_rekom,0) - COALESCE(jumlah_verif_rekom,0) - COALESCE(jumlah_proses_bayar,0)) as jumlah_hari')
                 ->whereNotNull('tgl_penetapan')
-                ->whereNotNull('end_date_akhir')
                 ->whereYear('tgl_penetapan', $year)
                 ->groupByRaw('month(tgl_penetapan)')
                 ->orderBy('bulan', 'asc')
@@ -133,9 +149,8 @@ class DashboardVprosesSicantikController extends Controller
             $year = $request->input('year');
             $month = $request->input('month');
             $rincianterbit = DB::table('sicantik.sicantik_proses_statistik')
-            ->selectRaw('month(tgl_penetapan) AS bulan, year(tgl_penetapan) AS tahun, jenis_izin, count(jenis_izin) as jumlah_izin, sum(jumlah_hari_kerja) - COALESCE(sum(jumlah_rekom),0) - COALESCE(sum(jumlah_cetak_rekom),0) - COALESCE(sum(jumlah_tte_rekom),0) - COALESCE(sum(jumlah_verif_rekom),0) - COALESCE(sum(jumlah_proses_bayar),0) as jumlah_hari')
+            ->selectRaw('month(tgl_penetapan) AS bulan, year(tgl_penetapan) AS tahun, jenis_izin, jenis_izin_id, count(jenis_izin) as jumlah_izin, sum(jumlah_hari_kerja) - COALESCE(sum(jumlah_rekom),0) - COALESCE(sum(jumlah_cetak_rekom),0) - COALESCE(sum(jumlah_tte_rekom),0) - COALESCE(sum(jumlah_verif_rekom),0) - COALESCE(sum(jumlah_proses_bayar),0) as jumlah_hari')
             ->whereNotNull('tgl_penetapan')
-            ->whereNotNull('end_date_akhir')
             ->whereYear('tgl_penetapan', $year)
             ->whereMonth('tgl_penetapan', $month)
             ->groupBy('jenis_izin')

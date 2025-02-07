@@ -109,7 +109,21 @@
             <td class="text-center">{{ $data->jumlah_izin }} Izin</td>
             <td class="text-center">{{ $data->jumlah_hari }} Hari</td>
             <td class="text-center">{{ number_format($data->rata_rata_jumlah_hari, 2) }} Hari</td>
-            <td></td>
+            <td><span class="dropdown">
+                
+              <button class="btn dropdown-toggle align-text-top" data-bs-boundary="viewport" data-bs-toggle="dropdown">Action</button>
+              <div class="dropdown-menu dropdown-menu-end">
+                <form method="post" action="{{ url('/sicantik')}}" enctype="multipart/form-data">
+                  @csrf
+                <input type="hidden" name="month" value="{{ $data->bulan }}">
+                <input type="hidden" name="year" value="{{ $year }}">
+                <input type="hidden" name="jenis_izin_id" value="{{ $data->jenis_izin_id }}">
+                <button type="submit" class="dropdown-item">
+                  Lihat Rincian Izin Terbit
+                </button>
+                </form>
+              </div>
+            </span></td>
           </tr>
           @endforeach
             <tr>
@@ -117,7 +131,9 @@
             <td class="text-center"><strong>{{ $total_izin }}</strong></td>
             <td class="text-center"><strong>{{ $totalJumlahHari }}</strong></td>
             <td class="text-center"><strong>{{ number_format($rataRataJumlahHari, 2)  }}</strong></td>
-            <td></td>
+            <td>
+              
+            </td>
             </tr>
           </tr>
         </tbody>

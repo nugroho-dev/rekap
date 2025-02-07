@@ -177,10 +177,22 @@
                                 <input type="hidden" name="month" value="{{ $data->bulan }}">
                                 <input type="hidden" name="year" value="{{ $year }}">
                                 <button type="submit" class="dropdown-item">
-                                  Lihat Rincian
+                                  Lihat Rincian Perjenis Izin
                                 </button>
                                 </form>
+                                <form method="post" action="{{ url('/sicantik')}}" enctype="multipart/form-data">
+                                  @csrf
+                                <input type="hidden" name="month" value="{{ $data->bulan }}">
+                                <input type="hidden" name="year" value="{{ $year }}">
+                                <button type="submit" class="dropdown-item">
+                                  Lihat Rincian Izin Terbit
+                                </button>
+                                </form>
+
+
+                              
                               </div>
+                             
                             </span>
                           </td>
                         </tr>
@@ -210,7 +222,48 @@
               $startYear = 2018;
               $currentYear = date('Y'); // Tahun sekarang
               @endphp
-                <div class="modal fade" id="modal-team" tabindex="-1" role="dialog" aria-hidden="true">
+                  <div class="modal fade" id="modal-team" tabindex="-1" role="dialog" aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Sortir Berdasarkan :</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="card">
+                      <div class="card-header">
+                        <ul class="nav nav-tabs card-header-tabs nav-fill" data-bs-toggle="tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                          <a href="#tabs-home-8" class="nav-link active" data-bs-toggle="tab" aria-selected="true" role="tab">Tanggal</a>
+                        </li>
+                        </ul>
+                      </div>
+                      <div class="card-body">
+                        <div class="tab-content">
+                        <div class="tab-pane fade active show" id="tabs-home-8" role="tabpanel">
+                          <h4>Pilih Tanggal :</h4>
+                          <form method="post" action="{{ url('/sicantik/sych')}}" enctype="multipart/form-data">
+                          @csrf
+                          <div class="input-group mb-2">
+                            <input type="date" class="form-control" name="date_start" autocomplete="off">
+                            <span class="input-group-text">s/d</span>
+                            <input type="date" class="form-control" name="date_end" autocomplete="off">
+                            <input type="hidden" name="type" value="statistik">
+                            <button type="submit" class="btn btn-primary">Tampilkan</button>
+                          </div>
+                          </form>
+                        </div>
+                        </div>
+                      </div>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn me-auto" data-bs-dismiss="modal">Tutup</button>
+                    </div>
+                    </div>
+                  </div>
+                  </div>
+                <div class="modal fade" id="modal-team-stat" tabindex="-1" role="dialog" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered" role="document">
                   <div class="modal-content">
                   <div class="modal-header">
@@ -222,22 +275,29 @@
                     <div class="card-header">
                       <ul class="nav nav-tabs card-header-tabs nav-fill" data-bs-toggle="tabs" role="tablist">
                       <li class="nav-item" role="presentation">
-                        <a href="#tabs-home-8" class="nav-link active" data-bs-toggle="tab" aria-selected="true" role="tab">Tanggal</a>
+                        <a href="#tabs-profile-8" class="nav-link active" data-bs-toggle="tab" aria-selected="true" role="tab">Tahun</a>
                       </li>
                       </ul>
                     </div>
                     <div class="card-body">
                       <div class="tab-content">
-                      <div class="tab-pane fade active show" id="tabs-home-8" role="tabpanel">
-                        <h4>Pilih Tanggal :</h4>
-                        <form method="post" action="{{ url('/sicantik/sych')}}" enctype="multipart/form-data">
+                      <div class="tab-pane fade active show" id="tabs-profile-8" role="tabpanel">
+                        <h4>Pilih Bulan :</h4>
+                        <form method="post" action="{{ url('/sicantik/statistik') }}" enctype="multipart/form-data">
                         @csrf
-                        <div class="input-group mb-2">
-                          <input type="date" class="form-control" name="date_start" autocomplete="off">
-                          <span class="input-group-text">s/d</span>
-                          <input type="date" class="form-control" name="date_end" autocomplete="off">
-                          <input type="hidden" name="type" value="statistik">
+                        <div class="row g-2">
+                        
+                          <div class="col-4">
+                          <select name="year" class="form-select">
+                            <option value="{{ $year }}">Tahun</option>
+                            @for ($year = $startYear; $year <= $currentYear; $year++)
+                            <option value="{{ $year }}">{{ $year }}</option>
+                            @endfor
+                          </select>
+                          </div>
+                          <div class="col-2">
                           <button type="submit" class="btn btn-primary">Tampilkan</button>
+                          </div>
                         </div>
                         </form>
                       </div>
@@ -251,73 +311,6 @@
                   </div>
                 </div>
                 </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn me-auto" data-bs-dismiss="modal">Tutup</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="modal  fade" id="modal-team-stat" tabindex="-1" role="dialog" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered" role="document">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h5 class="modal-title">Sortir Berdasarkan :</h5>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="card">
-                          <div class="card-header">
-                            <ul class="nav nav-tabs card-header-tabs nav-fill" data-bs-toggle="tabs" role="tablist">
-                              
-                              <li class="nav-item" role="presentation">
-                                <a href="#tabs-profile-8" class="nav-link" data-bs-toggle="tab" aria-selected="false" role="tab" tabindex="-1">Bulan</a>
-                              </li>
-                              
-                            </ul>
-                          </div>
-                          <div class="card-body">
-                            <div class="tab-content">
-                            
-                              <div class="tab-pane fade active show" id="tabs-profile-8" role="tabpanel">
-                                <h4>Pilih Bulan :</h4>
-                                <div>
-                                  <form method="post" action="{{ url('/sicantik/statistik')}}" enctype="multipart/form-data">
-                                    @csrf
-                                  <div class="row g-2">
-                                    <div class="col-4">
-                                      <select name="month" class="form-select">
-                                        <option value="{{ $month }}">Bulan</option>
-                                        @foreach ($namaBulan as $index => $bulan)
-                                        <option value="{{ $index + 1 }}"> {{ $bulan }}</option>
-                                        @endforeach
-                                      </select>
-                                    </div>
-                                    <div class="col-4">
-                                      <select name="year" class="form-select">
-                                        <option value="{{ $year }}">Tahun</option>
-                                        @for ($year = $startYear; $year <= $currentYear; $year++)
-                                        <option value="{{ $year }}">{{ $year }}</option>
-                                        @endfor
-                                      </select>
-                                    </div>
-                                    <div class="col-2">
-                                      <button type="submit" class="btn btn-primary">Tampilkan</button>
-                                    </div>
-                                  </div>
-                                 </form>
-                                </div>
-                              </div>
-                              
-                            </div>
-                          </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn me-auto" data-bs-dismiss="modal">Tutup</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
             
  @endsection             
             
