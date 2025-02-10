@@ -9,7 +9,7 @@
       </div>
       <div class="col-auto ms-auto d-print-none">
         <div class="btn-list">
-          <a href="{{ url('/simpel/statistik') }}" class="btn btn-info d-none d-sm-inline-block">
+          <a href="{{ url('/sicantik/statistik') }}" class="btn btn-info d-none d-sm-inline-block">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-chart-infographic">
               <path stroke="none" d="M0 0h24v24H0z" fill="none" />
               <path d="M7 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
@@ -21,7 +21,7 @@
             </svg>
             Statistik
           </a>
-          <a href="{{ url('/simpel/statistik') }}" class="btn btn-info d-sm-none btn-icon">
+          <a href="{{ url('/sicantik/statistik') }}" class="btn btn-info d-sm-none btn-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-chart-infographic">
               <path stroke="none" d="M0 0h24v24H0z" fill="none" />
               <path d="M7 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
@@ -113,11 +113,11 @@
                 
               <button class="btn dropdown-toggle align-text-top" data-bs-boundary="viewport" data-bs-toggle="dropdown">Action</button>
               <div class="dropdown-menu dropdown-menu-end">
-                <form method="post" action="{{ url('/simpel')}}" enctype="multipart/form-data">
-                  @csrf
+                <form method="get" action="{{ url('/sicantik')}}" enctype="multipart/form-data">
+                  
                 <input type="hidden" name="month" value="{{ $data->bulan }}">
                 <input type="hidden" name="year" value="{{ $year }}">
-                <input type="hidden" name="jenis_izin_id" value="{{ $data->jenis_izin_id }}">
+                <input type="hidden" name="search" value="{{ $data->jenis_izin }}">
                 <button type="submit" class="dropdown-item">
                   Lihat Rincian Izin Terbit
                 </button>
@@ -175,7 +175,7 @@ $currentYear = date('Y');
               <div class="tab-pane fade active show" id="tabs-profile-8" role="tabpanel">
                 <h4>Pilih Bulan :</h4>
                 <div>
-                  <form method="post" action="{{ url('/sicantik/statistik') }}" enctype="multipart/form-data">
+                  <form method="post" action="{{ url('/sicantik/rincian') }}" enctype="multipart/form-data">
                     @csrf
                     <div class="row g-2">
                       <div class="col-4">

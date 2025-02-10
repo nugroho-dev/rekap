@@ -14,74 +14,48 @@ class DashboardVprosesSicantikController extends Controller
 {
     public function index(Request $request)
     {
-        $judul='Data Izin SiCantik';
+		$judul = 'Data Izin SiCantik';
 		$query = Vproses::query();
 		$search = $request->input('search');
 		$date_start = $request->input('date_start');
 		$date_end = $request->input('date_end');
 		$month = $request->input('month');
 		$year = $request->input('year');
-		if ($request->has('search')) {
-			$search = $request->input('search');
-			$query ->where('no_permohonan', 'LIKE', "%{$search}%")
-				   ->orWhere('nama', 'LIKE', "%{$search}%")
-				   ->orWhere('jenis_izin', 'LIKE', "%{$search}%")
-				   ->orderBy('tgl_pengajuan', 'desc');
+		$jenis_izin = $request->input('jenis_izin');
+
+		if ($search) {
+			$query->where(function ($q) use ($search) {
+			$q->where('no_permohonan', 'LIKE', "%{$search}%")
+			  ->orWhere('nama', 'LIKE', "%{$search}%")
+			  ->orWhere('jenis_izin', 'LIKE', "%{$search}%");
+			});
 		}
-		if ($request->has('date_start')&&$request->has('date_end')) {
-			$date_start = $request->input('date_start');
-			$date_end = $request->input('date_end');
-			if($date_start>$date_end ){
-				return redirect('/sicantik')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda ');
-			}else{
-			$query ->whereBetween('tgl_penetapan', [$date_start,$date_end])
-				   ->orderBy('tgl_pengajuan', 'desc');
+
+		if ($date_start && $date_end) {
+			if ($date_start > $date_end) {
+			return redirect('/sicantik')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda');
 			}
+			$query->whereBetween('tgl_penetapan', [$date_start, $date_end]);
 		}
-		if($request->has('jenis_izin_id')){
-			if ($request->has('month')&&$request->has('year')&&$request->has('jenis_izin_id')) {
-				$month = $request->input('month');
-				$year = $request->input('year');
-				$jenis_izin_id = $request->input('jenis_izin_id');
-				if(empty($month)&&empty($year)){
-					return redirect('/sicantik')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
-				}if(empty($year)){
-					return redirect('/sicantik')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
-				}if(empty($month)){
-					return redirect('/sicantik')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
-				}else{
-				$query ->where('jenis_izin_id', [$jenis_izin_id])
-					   ->whereMonth('tgl_penetapan', [$month])
-					   ->whereYear('tgl_penetapan', [$year])
-					   ->orderBy('tgl_pengajuan', 'desc');
-					}
-			}
+
+		if ($jenis_izin && $month && $year) {
+			$query->where('jenis_izin', $jenis_izin)
+			  ->whereMonth('tgl_penetapan', $month)
+			  ->whereYear('tgl_penetapan', $year);
+		} elseif ($month && $year) {
+			$query->whereMonth('tgl_penetapan', $month)
+			  ->whereYear('tgl_penetapan', $year);
+		} elseif ($year) {
+			$query->whereYear('tgl_penetapan', $year);
 		}
-		elseif ($request->has('month')&&$request->has('year')) {
-			$month = $request->input('month');
-			$year = $request->input('year');
-			if(empty($month)&&empty($year)){
-				return redirect('/sicantik')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
-			}if(empty($year)){
-				return redirect('/sicantik')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
-			}if(empty($month)){
-				return redirect('/sicantik')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
-			}else{
-			$query ->whereMonth('tgl_penetapan', [$month])
-				   ->whereYear('tgl_penetapan', [$year])
-				   ->orderBy('tgl_pengajuan', 'desc');
-				}
-		}
-		
-		if ($request->has('year')) {
-			$year = $request->input('year');
-			$query ->whereYear('tgl_penetapan', [$year])
-				   ->orderBy('no_permohonan', 'desc');
-		}
+
 		$perPage = $request->input('perPage', 50);
-		$items=$query->orderBy('tgl_pengajuan', 'desc')->orderBy('no_permohonan', 'desc')->paginate($perPage);
+		$items = $query->orderBy('tgl_pengajuan', 'desc')
+				   ->orderBy('no_permohonan', 'desc')
+				   ->paginate($perPage);
 		$items->withPath(url('/sicantik'));
-		return view('admin.nonberusaha.sicantik.index',compact('judul','items','perPage','search','date_start','date_end','month','year'));
+
+		return view('admin.nonberusaha.sicantik.index', compact('judul', 'items', 'perPage', 'search', 'date_start', 'date_end', 'month', 'year'));
     }
 	public function statistik(Request $request)
     {

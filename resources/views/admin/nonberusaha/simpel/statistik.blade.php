@@ -128,7 +128,7 @@
               <div class="col-lg-12 col-sm-12">
                 <div class="card">
                   <div class="card-header border-0">
-                    <div class="card-title">Jumlah Izin Terbit SiCantik Tahun {{ $year }}</div>
+                    <div class="card-title">Jumlah Izin Terbit SiMPEL Tahun {{ $year }}</div>
                   </div>
                   <div class="position-relative">
                     <div class="position-absolute top-0 left-0 px-3 mt-1 w-75">
@@ -180,8 +180,7 @@
                                   Lihat Rincian Perjenis Izin
                                 </button>
                                 </form>
-                                <form method="post" action="{{ url('/simpel')}}" enctype="multipart/form-data">
-                                  @csrf
+                                <form method="get" action="{{ url('/simpel')}}" enctype="multipart/form-data">
                                 <input type="hidden" name="month" value="{{ $data->bulan }}">
                                 <input type="hidden" name="year" value="{{ $year }}">
                                 <button type="submit" class="dropdown-item">
