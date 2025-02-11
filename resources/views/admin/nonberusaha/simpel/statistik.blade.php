@@ -162,7 +162,7 @@
                             {{  $data->jumlah_data }} Izin
                           </td>
                           <td class= "text-center">
-                            {{ $data->jumlah_hari }} Hari
+                            {{ $data->j_hari }} Hari
                           </td>
                           <td class="text-center">
                             {{ number_format($data->rata_rata_jumlah_hari, 2) }} Hari

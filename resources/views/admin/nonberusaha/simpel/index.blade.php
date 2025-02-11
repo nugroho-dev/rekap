@@ -188,6 +188,11 @@
                                 <td>:</td>
                                 <td>{{$item->tte=="0000-00-00"?'-':Carbon\Carbon::parse($item->tte)->translatedFormat('d F Y') }}</td>
                               </tr>
+                            </tr><tr>
+                              <td>Lama Waktu Proses</td>
+                              <td>:</td>
+                                <td>{{ $item->jumlah_hari ?: '0' }} hari</td>
+                            </tr>
                             </table>
                           </td>
                         </tr>

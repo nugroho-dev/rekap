@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Simpel;
+use App\Models\Vsimpel;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -13,7 +13,7 @@ class DashboradSimpelController extends Controller
     public function index(Request $request)
     {
         $judul = 'Data Izin Pemakaman';
-        $query = Simpel::query();
+        $query = Vsimpel::query();
         $search = $request->input('search');
         $date_start = $request->input('date_start');
         $date_end = $request->input('date_end');
@@ -68,7 +68,7 @@ class DashboradSimpelController extends Controller
     public function statistik(Request $request)
     {
 		$judul='Statistik Izin SiMPEL';
-		$query = Simpel::query();
+		$query = Vsimpel::query();
 		$date_start = $request->input('date_start');
 		$date_end = $request->input('date_end');
 		$month = $request->input('month');
@@ -77,43 +77,41 @@ class DashboradSimpelController extends Controller
 		if ($request->has('year')) {
             $year = $request->input('year');
            
-            $jumlah_permohonan = Simpel::whereYear('daftar', [$year])->count();
+            $jumlah_permohonan = Vsimpel::whereYear('daftar', [$year])->count();
          
             
-            $terbit = DB::table('simpel')
-                ->selectRaw('month(rekomendasi) AS bulan, year(rekomendasi) AS tahun, count(rekomendasi) as jumlah_data, pemohon, daftar AS tanggal_mulai_a, tte AS tanggal_selesai_e, DATEDIFF(tte,daftar) - (FLOOR(DATEDIFF(tte, daftar) / 7) * 2) - (SELECT COUNT(*)  FROM dayoff ln WHERE ln.tanggal BETWEEN daftar AND tte ) AS jumlah_hari ')
+            $terbit = DB::table('view_simpel')
+                ->selectRaw('month(rekomendasi) AS bulan, year(rekomendasi) AS tahun, count(rekomendasi) as jumlah_data, sum(jumlah_hari)as j_hari ')
                 ->whereYear('rekomendasi', $year)
-                ->whereIn('status', ['Selesai'])
                 ->groupByRaw('month(rekomendasi)')
                 ->orderBy('bulan', 'asc')
                 ->get();
 
             $totalJumlahData = $terbit->sum('jumlah_data');
-            $totalJumlahHari = $terbit->sum('jumlah_hari');
+            $totalJumlahHari = $terbit->sum('j_hari');
             $rataRataJumlahHari = $totalJumlahData ? $totalJumlahHari / $totalJumlahData : 0;
 
             $totalJumlahData = $terbit->sum('jumlah_data');
                 $rataRataJumlahHariPerBulan = $terbit->map(function ($item) {
-                    $item->rata_rata_jumlah_hari = $item->jumlah_hari / $item->jumlah_data;
+                    $item->rata_rata_jumlah_hari = $item->j_hari / $item->jumlah_data;
 					return $item;
 				});
                 $coverse = $jumlah_permohonan ? number_format($totalJumlahData / $jumlah_permohonan * 100, 2) : 0;
 		} else {
 			$year = $now->year;
-			$jumlah_permohonan = Simpel::whereYear('daftar', [$year])->count();
-            $terbit = DB::table('simpel')
-            ->selectRaw('month(rekomendasi) AS bulan, year(rekomendasi) AS tahun, count(rekomendasi) as jumlah_data, pemohon, daftar AS tanggal_mulai_a, tte AS tanggal_selesai_e, DATEDIFF(tte,daftar) - (FLOOR(DATEDIFF(tte, daftar) / 7) * 2) - (SELECT COUNT(*)  FROM dayoff ln WHERE ln.tanggal BETWEEN daftar AND tte ) AS jumlah_hari ')
+			$jumlah_permohonan = Vsimpel::whereYear('daftar', [$year])->count();
+            $terbit = DB::table('view_simpel')
+            ->selectRaw('month(rekomendasi) AS bulan, year(rekomendasi) AS tahun, count(rekomendasi) as jumlah_data,  sum(jumlah_hari)as j_hari')
             ->whereYear('rekomendasi', $year)
-            ->whereIn('status', ['Selesai'])
             ->groupByRaw('month(rekomendasi)')
             ->orderBy('bulan', 'asc')
             ->get();
                 $totalJumlahData = $terbit->sum('jumlah_data');
-                $totalJumlahHari = $terbit->sum('jumlah_hari');
+                $totalJumlahHari = $terbit->sum('j_hari');
                 $rataRataJumlahHari = $totalJumlahData ? $totalJumlahHari / $totalJumlahData : 0;
 
             $rataRataJumlahHariPerBulan = $terbit->map(function ($item) {
-                $item->rata_rata_jumlah_hari = $item->jumlah_hari / $item->jumlah_data;
+                $item->rata_rata_jumlah_hari = $item->j_hari / $item->jumlah_data;
                 return $item;
             });
             $coverse = $jumlah_permohonan ? number_format($totalJumlahData / $jumlah_permohonan * 100, 2) : 0;
@@ -126,11 +124,10 @@ class DashboradSimpelController extends Controller
         if ($request->has('year') && $request->has('month')) {
             $year = $request->input('year');
             $month = $request->input('month');
-            $rincianterbit = DB::table('simpel')
-            ->selectRaw('month(rekomendasi) AS bulan, year(rekomendasi) AS tahun, jasa as jenis_izin, jasa as jenis_izin_id, count(rekomendasi) as jumlah_izin, pemohon, daftar AS tanggal_mulai_a, tte AS tanggal_selesai_e, DATEDIFF(tte,daftar) - (FLOOR(DATEDIFF(tte, daftar) / 7) * 2) - (SELECT COUNT(*)  FROM dayoff ln WHERE ln.tanggal BETWEEN daftar AND tte ) AS jumlah_hari ')
+            $rincianterbit = DB::table('view_simpel')
+            ->selectRaw('month(rekomendasi) AS bulan, year(rekomendasi) AS tahun, jasa as jenis_izin, jasa as jenis_izin_id, count(rekomendasi) as jumlah_izin, pemohon, sum(jumlah_hari) as jumlah_hari')
             ->whereYear('rekomendasi', $year)
             ->whereMonth('rekomendasi', $month)
-            ->whereIn('status', ['Selesai'])
             ->groupBy('jasa')
             ->orderBy('jumlah_izin', 'desc')
             ->get();
