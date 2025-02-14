@@ -128,7 +128,7 @@
               <div class="col-lg-12 col-sm-12">
                 <div class="card">
                   <div class="card-header border-0">
-                    <div class="card-title">Jumlah Izin Terbit SiMPEL Tahun {{ $year }}</div>
+                    <div class="card-title">Jumlah Izin Terbit MPP Digital Tahun {{ $year }}</div>
                   </div>
                   <div class="position-relative">
                     <div class="position-absolute top-0 left-0 px-3 mt-1 w-75">
