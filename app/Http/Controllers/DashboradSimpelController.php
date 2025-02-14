@@ -67,7 +67,7 @@ class DashboradSimpelController extends Controller
     }
     public function statistik(Request $request)
     {
-		$judul='Statistik Izin SiMPEL';
+		$judul='Statistik Izin Pemakaman';
 		$query = Vsimpel::query();
 		$date_start = $request->input('date_start');
 		$date_end = $request->input('date_end');
@@ -120,7 +120,7 @@ class DashboradSimpelController extends Controller
 	}
     public function rincian(Request $request)
     {
-        $judul='Statistik Izin SiCantik';
+        $judul='Statistik Izin Pemakaman';
         if ($request->has('year') && $request->has('month')) {
             $year = $request->input('year');
             $month = $request->input('month');
