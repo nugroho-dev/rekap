@@ -90,9 +90,9 @@
 
 <div class="col-lg-12 col-sm-12">
   <div class="card">
-    <div class="card-body">
+    <div class="card-body table-responsive">
       <h3 class="card-title">Rincian Izin Terbit Bulan {{ Carbon\Carbon::createFromDate(null, $month, 1)->translatedFormat('F') }} Tahun {{ $year }}</h3>
-      <table class="table">
+      <table class="table ">
         <thead>
           <tr>
             <th>Jenis Izin</th>
