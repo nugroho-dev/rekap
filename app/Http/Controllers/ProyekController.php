@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Imports\ProyekImport;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
+use Carbon\Carbon;
+use App\Models\Proses;
 
 class ProyekController extends Controller
 {
@@ -15,54 +17,41 @@ class ProyekController extends Controller
      */
     public function index(Request $request)
     {
-        $judul='Data Proyek Berusaha';
+		$judul = 'Data Proyek Berusaha';
 		$query = Proyek::query();
 		$search = $request->input('search');
 		$date_start = $request->input('date_start');
 		$date_end = $request->input('date_end');
 		$month = $request->input('month');
 		$year = $request->input('year');
-		if ($request->has('search')) {
-			$search = $request->input('search');
-			$query ->where('nama_perusahaan', 'LIKE', "%{$search}%")
-				   ->orWhere('nib', 'LIKE', "%{$search}%")
-				   ->orWhere('kbli', 'LIKE', "%{$search}%")
-				   ->orderBy('day_of_tanggal_pengajuan_proyek', 'asc');
+
+		if ($search) {
+			$query->where(function($q) use ($search) {
+			$q->where('nama_perusahaan', 'LIKE', "%{$search}%")
+			  ->orWhere('nib', 'LIKE', "%{$search}%")
+			  ->orWhere('kbli', 'LIKE', "%{$search}%");
+			});
 		}
-		if ($request->has('date_start')&&$request->has('date_end')) {
-			$date_start = $request->input('date_start');
-			$date_end = $request->input('date_end');
-			if($date_start>$date_end ){
-				return redirect('/proyek')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda ');
-			}else{
-			$query ->whereBetween('day_of_tanggal_pengajuan_proyek', [$date_start,$date_end])
-				   ->orderBy('day_of_tanggal_pengajuan_proyek', 'asc');
+
+		if ($date_start && $date_end) {
+			if ($date_start > $date_end) {
+			return redirect('/proyek')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda');
 			}
+			$query->whereBetween('day_of_tanggal_pengajuan_proyek', [$date_start, $date_end]);
 		}
-		if ($request->has('month')&&$request->has('year')) {
-			$month = $request->input('month');
-			$year = $request->input('year');
-			if(empty($month)&&empty($year)){
-				return redirect('/proyek')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
-			}if(empty($year)){
-				return redirect('/proyek')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
-			}if(empty($month)){
-				return redirect('/proyek')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
-			}else{
-			$query ->whereMonth('day_of_tanggal_pengajuan_proyek', [$month])
-				   ->whereYear('day_of_tanggal_pengajuan_proyek', [$year])
-				   ->orderBy('day_of_tanggal_pengajuan_proyek', 'asc');
-				}
+
+		if ($month && $year) {
+			$query->whereMonth('day_of_tanggal_pengajuan_proyek', $month)
+			  ->whereYear('day_of_tanggal_pengajuan_proyek', $year);
+		} elseif ($year) {
+			$query->whereYear('day_of_tanggal_pengajuan_proyek', $year);
 		}
-		if ($request->has('year')) {
-			$year = $request->input('year');
-			$query ->whereYear('day_of_tanggal_pengajuan_proyek', [$year])
-				   ->orderBy('day_of_tanggal_pengajuan_proyek', 'asc');
-		}
+
 		$perPage = $request->input('perPage', 50);
-		$items=$query->orderBy('day_of_tanggal_pengajuan_proyek', 'asc')->paginate($perPage);
+		 $items = $query->orderBy('day_of_tanggal_pengajuan_proyek', 'asc')->paginate($perPage);
 		$items->withPath(url('/proyek'));
-		return view('admin.investor.index',compact('judul','items','perPage','search','date_start','date_end','month','year'));
+
+		return view('admin.investor.index', compact('judul', 'items', 'perPage', 'search', 'date_start', 'date_end', 'month', 'year'));
     }
 
     /**
@@ -142,4 +131,87 @@ class ProyekController extends Controller
 		// alihkan halaman kembali
 		return redirect('/proyek')->with('success', 'Data Berhasil Diimport !');
 	}
+	public function statistik(Request $request)
+    {
+		$judul='Statistik Proyek OSS';
+		$date_start = $request->input('date_start');
+		$date_end = $request->input('date_end');
+		$month = $request->input('month');
+		$now = Carbon::now();
+		$year = $request->input('year');
+		if ($request->has('year')) {
+            $year = $request->input('year');
+            $proyek = DB::table('sicantik.proyek')
+                ->selectRaw('month(day_of_tanggal_pengajuan_proyek) as bulan, COUNT(DISTINCT nib) AS jumlah_nib, SUM(jumlah_investasi) AS total_investasi, SUM(tki) AS total_tenaga_kerja')
+                ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
+                ->groupByRaw('month(day_of_tanggal_pengajuan_proyek)')
+                ->orderBy('bulan', 'asc')
+                ->get();
+
+            $totalJumlahData = $proyek->sum('jumlah_nib');
+            $totalJumlahInvestasi = $proyek->sum('total_investasi');
+            $totalJumlahTki = $proyek->sum('total_tenaga_kerja');
+            
+		} else {
+			$year = $now->year;
+            $proyek = DB::table('sicantik.proyek')
+                ->selectRaw('month(day_of_tanggal_pengajuan_proyek) as bulan, COUNT(DISTINCT nib) AS jumlah_nib, SUM(jumlah_investasi) AS total_investasi, SUM(tki) AS total_tenaga_kerja')
+                ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
+                ->groupByRaw('month(day_of_tanggal_pengajuan_proyek)')
+                ->orderBy('bulan', 'asc')
+                ->get();
+
+            $totalJumlahData = $proyek->sum('jumlah_nib');
+            $totalJumlahInvestasi = $proyek->sum('total_investasi');
+            $totalJumlahTki = $proyek->sum('total_tenaga_kerja');
+			
+		};
+		
+		return view('admin.investor.statistik',compact('judul','date_start','date_end','month','year','proyek','totalJumlahData','totalJumlahInvestasi','totalJumlahTki'));
+	}
+    public function detail(Request $request)
+    {
+        $judul='Statistik Proyek OSS';
+        $month = $request->input('month');
+        $year = $request->input('year');
+        $skala_usaha = Proyek::selectRaw("
+            uraian_skala_usaha, 
+            COUNT(DISTINCT nib) AS jumlah_investor,
+            SUM(jumlah_investasi) AS total_investasi, 
+            SUM(tki) AS total_tenaga_kerja
+        ")
+        ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
+        ->wheremonth('day_of_tanggal_pengajuan_proyek', $month)
+        ->groupBy('uraian_skala_usaha')
+        ->unionAll(
+            Proyek::selectRaw("
+            'Total' AS Keterangan,
+            COUNT(DISTINCT nib) AS total_investor,
+            SUM(jumlah_investasi) AS total_investasi, 
+            SUM(tki) AS total_tenaga_kerja
+            ")
+            ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
+            ->wheremonth('day_of_tanggal_pengajuan_proyek', $month)
+        )
+        ->get();
+        $search = $request->input('search');
+        $perPage = $request->input('perPage', 150);
+        $query= Proyek::selectRaw('nib,nama_perusahaan,tanggal_terbit_oss,uraian_jenis_perusahaan ,uraian_skala_usaha, COUNT(DISTINCT kbli) AS jumlah_kbli, SUM(jumlah_investasi) AS total_investasi,SUM(tki) AS total_tki')
+                ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
+                ->wheremonth('day_of_tanggal_pengajuan_proyek', $month)
+                ->groupByRaw('nib') ;
+                
+                if ($search) {
+                    $query->where(function($q) use ($search) {
+                    $q->where('uraian_skala_usaha', 'LIKE', "%{$search}%");
+                    });
+                }
+                $items = $query->orderBy('day_of_tanggal_pengajuan_proyek', 'asc')->paginate($perPage);
+                $items->withPath(url('proyek/detail'));
+        
+        
+        return view('admin.investor.proyek',compact('judul','month','year','skala_usaha','perPage','items','search'));
+        
+    }
 }
+

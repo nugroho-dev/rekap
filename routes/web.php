@@ -183,6 +183,9 @@ Route::get('/proyek', [ProyekController::class, 'index'])->middleware('auth');
 Route::post('/proyek', [ProyekController::class, 'index'])->middleware('auth');
 Route::post('/proyek/import_excel', [ProyekController::class, 'import_excel'])->middleware('auth');
 Route::get('/proyek/statistik', [ProyekController::class, 'statistik'])->middleware('auth');
+Route::post('/proyek/statistik', [ProyekController::class, 'statistik'])->middleware('auth');
+Route::get('/proyek/detail', [ProyekController::class, 'detail'])->middleware('auth');
+Route::post('/proyek/detail', [ProyekController::class, 'detail'])->middleware('auth');
 
 Route::get('/pbg', [DashboardPbgController::class, 'index'])->middleware('auth');
 Route::post('/pbgsort', [DashboardPbgController::class, 'index'])->middleware('auth');
