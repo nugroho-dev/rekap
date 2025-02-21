@@ -135,9 +135,11 @@ Route::get('/pengawasan/{item:nomor_kode_proyek}', [DashboardPengawasanControlle
 Route::post('/pengawasan/{item:nomor_kode_proyek}', [DashboardPengawasanController::class, 'update'])->middleware('auth');
 Route::post('/imporpengawasan/import_excel', [DashboardPengawasanController::class, 'import_excel'])->middleware('auth');
 Route::get('/pengawasan/statistik', [DashboardPengawasanController::class, 'statistik'])->middleware('auth');
+
 Route::resource('/bimtek', DashboardBimtekController::class)->middleware('auth');
 Route::post('/bimtek/import_excel', [DashboardBimtekController::class, 'import_excel'])->middleware('auth');
 Route::post('/bimtek', [DashboardBimtekController::class, 'index'])->middleware('auth');
+
 Route::resource('/fasilitasi', DashboardFasilitasiController::class)->middleware('auth');
 Route::post('/fasilitasi/import_excel', [DashboardFasilitasiController::class, 'import_excel'])->middleware('auth');
 Route::post('/fasilitasi', [DashboardFasilitasiController::class, 'index'])->middleware('auth');
@@ -186,6 +188,9 @@ Route::get('/proyek/statistik', [ProyekController::class, 'statistik'])->middlew
 Route::post('/proyek/statistik', [ProyekController::class, 'statistik'])->middleware('auth');
 Route::get('/proyek/detail', [ProyekController::class, 'detail'])->middleware('auth');
 Route::post('/proyek/detail', [ProyekController::class, 'detail'])->middleware('auth');
+Route::get('/proyek/verifikasi', [ProyekController::class, 'verifikasi'])->middleware('auth');
+Route::post('/proyek/verifikasi', [ProyekController::class, 'verifikasi'])->middleware('auth');
+Route::get('/proyek/show', [ProyekController::class, 'show'])->middleware('auth');
 
 Route::get('/pbg', [DashboardPbgController::class, 'index'])->middleware('auth');
 Route::post('/pbgsort', [DashboardPbgController::class, 'index'])->middleware('auth');

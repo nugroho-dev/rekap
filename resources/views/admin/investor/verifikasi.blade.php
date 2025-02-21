@@ -18,24 +18,15 @@
                           <span class="d-none d-sm-inline">
                           
                           </span>
-                          <form method="post" action="{{ url('/proyek/statistik') }}" enctype="multipart/form-data">
-                            @csrf
-                          <input type="hidden" name="year" value="{{ $year }}">
-                          <button type="submit" class="btn btn-info d-none d-sm-inline-block">
+                          <a href="{{ url('/proyek/detail?month='.$month.'&year='.$year.'')}}" class="btn btn-info d-none d-sm-inline-block">
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-back-up"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 14l-4 -4l4 -4" /><path d="M5 10h11a4 4 0 1 1 0 8h-1" /></svg>
                             Kembali
-                          </button>
-
-                          </form>
-                          <form method="post" action="{{ url('/proyek/statistik') }}" enctype="multipart/form-data">
-                            @csrf
-                          <input type="hidden" name="year" value="{{ $year }}">
-                          <button type="submit" class="btn btn-info d-sm-none btn-icon">
+                          </a>
+                          <a href="{{ url('/proyek/detail?month=5&year=2023')}}" class="btn btn-info d-sm-none btn-icon">
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-back-up"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 14l-4 -4l4 -4" /><path d="M5 10h11a4 4 0 1 1 0 8h-1" /></svg>
-                          </button>
-                        </form>
+                          </a>
                         </div>
                       </div>
                       <div class="col-auto ms-auto d-print-none">
@@ -77,40 +68,48 @@
               <div class="col-md-5 col-sm-12">
                 <div class="card">
                   <div class="card-header">
-                  <h3 class="card-title">Jumlah Investasi Berdasarkan Skala Usaha</h3>
+                  <h3 class="card-title">Profil Perusahaan</h3>
                   </div>
                   <div class="card-body">
                     <div class="table-responsive">
                       <table class="table table-vcenter">
-                        <thead>
-                          <tr class="text-center">
-                            <th>Skala Usaha</th>
-                            <th>Jumlah Investor</th>
-                            <th>Jumlah Investasi</th>
-                            <th>Jumlah Tenaga Kerja</th>
-                            <th>*</th>
-                          </tr>
-                        </thead>
                         <tbody class="font-monospace fs-5">
-                          @foreach ($skala_usaha as $index => $item)
+                          
                           <tr>
-                            <td>{{ $item->uraian_skala_usaha }}</td>
-                            <td class="text-secondary text-center">
-                              {{ $item->jumlah_investor }} Investor
-                            </td>
-                            <td class="text-secondary text-end">
-                              
-                                <a href="#" class="text-reset">Rp.@currency($item->total_investasi)</a>
-                           
-                            </td>
-                            <td class="text-secondary  text-center">
-                              @currency($item->total_tenaga_kerja ) Orang
-                            </td>
-                            <td>
-                              <a href="{{ url('proyek/detail?page=1&month='.$month.'&year='.$year.'&search='.($item->uraian_skala_usaha == 'Total' ? '' : $item->uraian_skala_usaha).'&perPage=1000') }}">Lihat</a>
-                            </td>
+                            <td>NIB</td>
+                            <td class="text-secondary text-center">:</td>
+                            <td class="text-secondary text-end">{{ $profil->nib }}</td>
                           </tr>
-                          @endforeach
+                          <tr>
+                            <td>Tanggal Terbit OSS</td>
+                            <td class="text-secondary text-center">:</td>
+                            <td class="text-secondary text-end">{{ Carbon\Carbon::parse($profil->tanggal_terbit_oss)->translatedFormat('d F Y') }}</td>
+                          </tr>
+                          <tr>
+                            <td>Nama Perusahaan</td>
+                            <td class="text-secondary text-center">:</td>
+                            <td class="text-secondary text-end">{{ $profil->nama_perusahaan }}</td>
+                          </tr>
+                          <tr>
+                            <td>Jenis Perusahaan</td>
+                            <td class="text-secondary text-center">:</td>
+                            <td class="text-secondary text-end">{{ $profil->uraian_jenis_perusahaan }}</td>
+                          </tr>
+                          <tr>
+                            <td>Nama</td>
+                            <td class="text-secondary text-center">:</td>
+                            <td class="text-secondary text-end">{{ $profil->nama_user }}</td>
+                          </tr>
+                          <tr>
+                            <td>Email</td>
+                            <td class="text-secondary text-center">:</td>
+                            <td class="text-secondary text-end">{{ $profil->email }}</td>
+                          </tr>
+                          <tr>
+                            <td>No Telp</td>
+                            <td class="text-secondary text-center">:</td>
+                            <td class="text-secondary text-end">{{ $profil->nomor_telp }}</td>
+                          </tr>
                         </tbody>
                       </table>
                     </div>
@@ -137,27 +136,25 @@
                           </tr>
                         </thead>
                         <tbody class="font-monospace fs-5">
-                          @foreach ($skala_usaha as $index => $item)
+                          
                           <tr>
-                            <td>{{ $item->uraian_skala_usaha }}</td>
+                            <td></td>
                             <td class="text-secondary text-center">
-                              {{ $item->jumlah_investor }} Investor
+                              
                             </td>
                             <td class="text-secondary text-end"></td>
                             <td class="text-secondary text-end"></td>
                             <td class="text-secondary text-end">
-                              
-                                <a href="#" class="text-reset">Rp.@currency($item->total_investasi)</a>
-                           
+                                <a href="#" class="text-reset"></a>
                             </td>
                             <td class="text-secondary  text-center">
-                              @currency($item->total_tenaga_kerja ) Orang
+                              
                             </td>
                             <td>
-                              <a href="{{ url('proyek/detail?page=1&month='.$month.'&year='.$year.'&search='.($item->uraian_skala_usaha == 'Total' ? '' : $item->uraian_skala_usaha).'&perPage=1000') }}">Lihat</a>
+                              <a href="{{ url('proyek/detail?page=1&month='.$month.'&year='.$year.'&search=&perPage=1000') }}">Lihat</a>
                             </td>
                           </tr>
-                          @endforeach
+                     
                         </tbody>
                       </table>
                     </div>
@@ -175,7 +172,7 @@
                         Menampilkan
                         <div class="mx-2 d-inline-block">
                           
-                          <form action="{{ url('/proyek/detail')}}" method="GET">
+                          <form action="{{ url('/proyek/verifikasi')}}" method="GET">
                             <input type="hidden" name="page" value="{{ request()->get('page', 1) }}">
                             <input type="hidden" name="month" value="{{ $month }}">
                             <input type="hidden" name="year" value="{{ $year }}">
@@ -194,7 +191,7 @@
                       <div class="ms-auto text-muted">
                         Cari:
                         <div class="ms-2 d-inline-block ">
-                          <form action="{{ url('/proyek/detail')}}" method="POST">
+                          <form action="{{ url('/proyek/verifikasi')}}" method="POST">
                             @csrf
                             <div class="input-group">
                               <input type="text" name="search" class="form-control form-control-sm" aria-label="cari" value="{{ old('search') }}">
@@ -208,16 +205,17 @@
                     </div>
                   </div>
                   <div class="table-responsive">
-                    <table class="table card-table table-vcenter text-nowrap  table-striped ">
+                    <table class="table card-table table-vcenter text-nowrap  table-striped table-hover">
                       <thead>
                         <tr>
                           <th class="w-1">No.</th>
-                          <th>NIB </th>
-                          <th>Tanggal Terbit</th>
-                          <th>Nama Perusahaan</th>
-                          <th>Jenis Perusahaan</th>
+                          <th>ID Proyek </th>
+                          <th>Jenis Proyek</th>
+                          <th>Status Penanman Modal</th>
+                          <th>Jenis Resiko</th>
+                          <th>Nama Proyek</th>
                           <th>Skala Usaha</th>
-                          <th>Jumlah KBLI</th>
+                          <th>KBLI</th>
                           <th>Jumlah Investasi</th>
                           <th>Jumlah Tenaga Kerja</th>
                           <th>*</th>
@@ -231,29 +229,34 @@
                         @foreach ($items as $index => $item)
                         
                         <tr>
-                          <td class="text-wrap">{{ $loop->iteration + $items->firstItem()-1 }}</td>
-                          <td class="text-wrap">{{ $item->nib }}</td>
-                          <td class="text-wrap">{{ Carbon\Carbon::parse($item->tanggal_terbit_oss)->translatedFormat('d F Y') }}</td>
-                          <td class="text-wrap">{{ $item->nama_perusahaan }}</td>
-                          <td class="text-wrap">{{ $item->uraian_jenis_perusahaan }}</td>
+                          <td class="text-wrap">
+                            {{ $loop->iteration + $items->firstItem()-1 }}
+                            
+                          </td>
+                          <td class="text-wrap">{{ $item->id_proyek }}
+                            <div class="text-muted text-wrap">
+                              {{ $item->alamat_usaha }},  Kel.{{ $item->kelurahan_usaha }},Kec.{{ $item->kecamatan_usaha }}, {{ $item->kab_kota_usaha }}
+                            </div>
+                          </td>
+                          <td class="text-wrap">{{ $item->uraian_jenis_proyek }}</td>
+                          <td class="text-wrap">{{ $item->uraian_status_penanaman_modal }}</td>
+                          <td class="text-wrap">{{ $item->uraian_risiko_proyek }}</td>
+                          <td class="text-wrap">{{ $item->nama_proyek }}</td>
                           <td class="text-wrap">{{ $item->uraian_skala_usaha }}</td>
-                          <td class="text-wrap"><div >{{ $item->jumlah_kbli }} KBLI</td>
-                          <td class="text-wrap">Rp.@currency( $item->total_investasi )</td>
-                          <td class="text-wrap">{{ $item->total_tki }} Orang</td>
+                          <td class="text-wrap"><div >{{ $item->kbli }} {{ $item->judul_kbli }}</td>
+                          <td class="text-wrap">Rp.@currency( $item->jumlah_investasi )</td>
+                          <td class="text-wrap">{{ $item->tki }} Orang</td>
                           <td>
                             <span class="dropdown">
                               
                               <button class="btn dropdown-toggle align-text-top" data-bs-boundary="viewport" data-bs-toggle="dropdown">Action</button>
                               <div class="dropdown-menu dropdown-menu-end">
                                 
-                                <form method="get" action="{{ url('/proyek/verifikasi')}}" enctype="multipart/form-data">
-                                <input type="hidden" name="month" value="{{ $month }}">
-                                <input type="hidden" name="year" value="{{ $year }}">
-                                <input type="hidden" name="nib" value="{{ $item->nib }}">
-                                <button type="submit" class="dropdown-item">
+                               
+                                <button  class="dropdown-item openModal" data-id="{{ $item->id_proyek }}" data-nib="{{ $item->nib }}" data-month="{{ $month }}" data-year="{{ $year }}" data-kbli="{{ $item->kbli }}">
                                   Verifikasi Data Proyek
                                 </button>
-                                </form>
+                                
                               </div>
                             </span>
                           </td>
@@ -404,4 +407,255 @@
                   </div>
                 </div>
               </div>
+              
+              <div class="modal modal-blur fade" id="exampleModal" tabindex="-1">
+                <div class="modal-dialog modal-xl" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Verifikasi Proyek <span id="namaProyek"></span></h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="row">
+                        <div class="table-responsive col-md-6 col-sm-12">
+                          <table class="table table-vcenter table-nowrap table-sm">
+                            
+                            <tbody class="font-monospace fs-5">
+                              <tr>
+                                <td>ID Proyek</td>
+                                <td class="text-secondary">:</td>
+                                <td class="text-secondary">
+                                  <a href="#" class="text-reset"><span id="idProyek"></span></a>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>Alamat Usaha</td>
+                                <td class="text-secondary">:</td>
+                                <td class="text-secondary">
+                                  <a href="#" class="text-reset text-wrap"><span id="alamatUsaha"></span>, Kel.<span id="kelurahanUsaha"></span>, Kec.<span id="kecamatanUsaha"></span>, <span id="kabKotaUsaha"></span></a>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>Jenis Proyek</td>
+                                <td class="text-secondary">:</td>
+                                <td class="text-secondary">
+                                  <a href="#" class="text-reset"><span id="uraianJenisProyek"></span></a>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>Tanggal Proyek</td>
+                                <td class="text-secondary">:</td>
+                                <td class="text-secondary">
+                                  <a href="#" class="text-reset"><span id="dayOfTanggalPengajuanProyek"></span></a>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>Status Penanaman Modal</td>
+                                <td class="text-secondary">:</td>
+                                <td class="text-secondary">
+                                  <a href="#" class="text-reset"><span id="uraianStatusPenanamanModal"></span></a>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>Risiko</td>
+                                <td class="text-secondary">:</td>
+                                <td class="text-secondary">
+                                  <a href="#" class="text-reset"><span id="uraianResikoProyek"></span></a>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>Skala Usaha</td>
+                                <td class="text-secondary">:</td>
+                                <td class="text-secondary">
+                                  <a href="#" class="text-reset"><span id="uraianSkalaUsaha"></span></a>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>KBLI</td>
+                                <td class="text-secondary">:</td>
+                                <td class="text-secondary">
+                                  <a href="#" class="text-reset text-wrap"><span id="kbli"></span> <span id="judulKbli"></span></a>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>Jumlah Investasi</td>
+                                <td class="text-secondary">:</td>
+                                <td class="text-secondary">
+                                  <a href="#" class="text-reset"><span id="jumlahInvestasi"></span></a>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>Jumlah Tenaga Kerja</td>
+                                <td class="text-secondary">:</td>
+                                <td class="text-secondary">
+                                  <a href="#" class="text-reset"><span id="tki"></span> Orang</a>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <div class="col-md-6 col-sm-12">
+                          <div class="alert alert-success" role="alert">
+                            <div class="d-flex">
+                              <div>
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  class="icon alert-icon"
+                                  width="24"
+                                  height="24"
+                                  viewBox="0 0 24 24"
+                                  stroke-width="2"
+                                  stroke="currentColor"
+                                  fill="none"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                >
+                                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                  <path d="M5 12l5 5l10 -10" />
+                                </svg>
+                              </div>
+                              <div>
+                                <h4 class="alert-title">Wow! Everything worked!</h4>
+                                <div class="text-secondary">Your account has been saved!</div>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="alert alert-info" role="alert">
+                            <div class="d-flex">
+                              <div>
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  class="icon alert-icon"
+                                  width="24"
+                                  height="24"
+                                  viewBox="0 0 24 24"
+                                  stroke-width="2"
+                                  stroke="currentColor"
+                                  fill="none"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                >
+                                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                  <circle cx="12" cy="12" r="9" />
+                                  <line x1="12" y1="8" x2="12.01" y2="8" />
+                                  <polyline points="11 12 12 12 12 16 13 16" />
+                                </svg>
+                              </div>
+                              <div>
+                                <h4 class="alert-title">Did you know?</h4>
+                                <div class="text-secondary">Here is something that you might like to know.</div>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="alert alert-warning" role="alert">
+                            <div class="d-flex">
+                              <div>
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  class="icon alert-icon"
+                                  width="24"
+                                  height="24"
+                                  viewBox="0 0 24 24"
+                                  stroke-width="2"
+                                  stroke="currentColor"
+                                  fill="none"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                >
+                                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                  <path d="M12 9v2m0 4v.01" />
+                                  <path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75" />
+                                </svg>
+                              </div>
+                              <div>
+                                <h4 class="alert-title">Uh oh, something went wrong</h4>
+                                <div class="text-secondary">Sorry! There was a problem with your request.</div>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="alert alert-danger" role="alert">
+                            <div class="d-flex">
+                              <div>
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  class="icon alert-icon"
+                                  width="24"
+                                  height="24"
+                                  viewBox="0 0 24 24"
+                                  stroke-width="2"
+                                  stroke="currentColor"
+                                  fill="none"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                >
+                                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                  <circle cx="12" cy="12" r="9" />
+                                  <line x1="12" y1="8" x2="12" y2="12" />
+                                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                                </svg>
+                              </div>
+                              <div>
+                                <h4 class="alert-title">I'm so sorry&hellip;</h4>
+                                <div class="text-secondary">Your account has been deleted and can't be restored.</div>
+                              </div>
+                            </div>
+                          </div>
+                              
+                        </div>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <a href="#" class="btn btn-link link-secondary" data-bs-dismiss="modal">
+                        Cancel
+                      </a>
+                      <a href="#" class="btn btn-primary ms-auto" data-bs-dismiss="modal">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-plus" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                          <path d="M12 5l0 14"></path>
+                          <path d="M5 12l14 0"></path>
+                        </svg>
+                        Create new report
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('.openModal').on('click', function() {
+            const userId = $(this).data('id');
+            const nib = $(this).data('nib');
+            const month = $(this).data('month');
+            const year = $(this).data('year');
+            const kbli = $(this).data('kbli');
+            $.ajax({
+                url: `{{ url('/proyek/show?id_proyek=')}}${userId}&nib=${nib}&month=${month}&year=${year}`, // Endpoint resource controller
+                type: 'GET',
+                success: function(data) {
+                      $('#exampleModal').modal('show');
+                      $('#namaProyek').text(data.nama_proyek);
+                      $('#idProyek').text(data.id_proyek);
+                      $('#alamatUsaha').text(data.alamat_usaha);
+                      $('#kelurahanUsaha').text(data.kelurahan_usaha);
+                      $('#kecamatanUsaha').text(data.kecamatan_usaha);
+                      $('#kabKotaUsaha').text(data.kab_kota_usaha);
+                      $('#uraianJenisProyek').text(data.uraian_jenis_proyek);
+                      $('#uraianStatusPenanamanModal').text(data.uraian_status_penanaman_modal);
+                      $('#uraianResikoProyek').text(data.uraian_risiko_proyek);
+                      $('#uraianSkalaUsaha').text(data.uraian_skala_usaha);
+                      $('#jumlahInvestasi').text(new Intl.NumberFormat("id-ID", {style: "currency", currency: "IDR"}).format(data.jumlah_investasi));
+                      $('#kbli').text(data.kbli);
+                      $('#judulKbli').text(data.judul_kbli);
+                      $('#dayOfTanggalPengajuanProyek').text(new Intl.DateTimeFormat("id-ID", { dateStyle: "full"}).format(new Date(data.day_of_tanggal_pengajuan_proyek)));
+                      $('#tki').text(data.tki);
+                },
+                error: function() {
+                    alert('Unable to fetch user details.');
+                }
+            });
+        });
+    });
+</script>
 @endsection

@@ -154,7 +154,7 @@
                                 </form>
                                 <form method="get" action="{{ url('/proyek/detail')}}" enctype="multipart/form-data">
                                   
-                                <input type="hidden" name="month" value="">
+                         
                                 <input type="hidden" name="year" value="{{ $year }}">
                                 <button type="submit" class="dropdown-item">
                                   Lihat Rincian Izin Terbit 

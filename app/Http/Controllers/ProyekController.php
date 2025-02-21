@@ -10,6 +10,8 @@ use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use App\Models\Proses;
 
+use function PHPUnit\Framework\isNull;
+
 class ProyekController extends Controller
 {
     /**
@@ -73,9 +75,20 @@ class ProyekController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Proyek $proyek)
+    public function show(Request $request)
     {
-        //
+        $month = $request->input('month');
+        $year = $request->input('year');
+        $nib = $request->input('nib');
+        $id_proyek = $request->input('id_proyek');
+        $data_kbli = Proyek::whereYear('day_of_tanggal_pengajuan_proyek', $year)->whereMonth('day_of_tanggal_pengajuan_proyek', $month)->where('nib', $nib)->where('id_proyek', $id_proyek)->first();
+        
+                             
+        if ($data_kbli) {
+            return response()->json($data_kbli);
+        }
+
+        return response()->json(['message' => 'User not found'], 404);
     }
 
     /**
@@ -171,7 +184,7 @@ class ProyekController extends Controller
 	}
     public function detail(Request $request)
     {
-        $judul='Statistik Proyek OSS';
+        $judul='Proyek OSS';
         $month = $request->input('month');
         $year = $request->input('year');
         $skala_usaha = Proyek::selectRaw("
@@ -180,8 +193,12 @@ class ProyekController extends Controller
             SUM(jumlah_investasi) AS total_investasi, 
             SUM(tki) AS total_tenaga_kerja
         ")
-        ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
-        ->wheremonth('day_of_tanggal_pengajuan_proyek', $month)
+        ->when($year, function ($query) use ($year) {
+            $query->whereYear('day_of_tanggal_pengajuan_proyek', $year);
+        })
+        ->when($month, function ($query) use ($month) {
+            $query->whereMonth('day_of_tanggal_pengajuan_proyek', $month);
+        })
         ->groupBy('uraian_skala_usaha')
         ->unionAll(
             Proyek::selectRaw("
@@ -190,28 +207,50 @@ class ProyekController extends Controller
             SUM(jumlah_investasi) AS total_investasi, 
             SUM(tki) AS total_tenaga_kerja
             ")
-            ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
-            ->wheremonth('day_of_tanggal_pengajuan_proyek', $month)
+            ->when($year, function ($query) use ($year) {
+            $query->whereYear('day_of_tanggal_pengajuan_proyek', $year);
+            })
+            ->when($month, function ($query) use ($month) {
+            $query->whereMonth('day_of_tanggal_pengajuan_proyek', $month);
+            })
         )
         ->get();
         $search = $request->input('search');
         $perPage = $request->input('perPage', 150);
-        $query= Proyek::selectRaw('nib,nama_perusahaan,tanggal_terbit_oss,uraian_jenis_perusahaan ,uraian_skala_usaha, COUNT(DISTINCT kbli) AS jumlah_kbli, SUM(jumlah_investasi) AS total_investasi,SUM(tki) AS total_tki')
-                ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
-                ->wheremonth('day_of_tanggal_pengajuan_proyek', $month)
-                ->groupByRaw('nib') ;
-                
-                if ($search) {
-                    $query->where(function($q) use ($search) {
-                    $q->where('uraian_skala_usaha', 'LIKE', "%{$search}%");
-                    });
-                }
-                $items = $query->orderBy('day_of_tanggal_pengajuan_proyek', 'asc')->paginate($perPage);
-                $items->withPath(url('proyek/detail'));
-        
-        
+
+        $query = Proyek::selectRaw('
+            nib, nama_perusahaan, tanggal_terbit_oss, uraian_jenis_perusahaan, uraian_skala_usaha, 
+            COUNT(DISTINCT kbli) AS jumlah_kbli, SUM(jumlah_investasi) AS total_investasi, SUM(tki) AS total_tki
+        ')
+        ->when($year, function ($query) use ($year) {
+            $query->whereYear('day_of_tanggal_pengajuan_proyek', $year);
+        })
+        ->when($month, function ($query) use ($month) {
+            $query->whereMonth('day_of_tanggal_pengajuan_proyek', $month);
+        })
+        ->groupBy('nib');
+
+        if ($search) {
+            $query->where('uraian_skala_usaha', 'LIKE', "%{$search}%");
+        }
+        $items = $query->orderBy('day_of_tanggal_pengajuan_proyek', 'asc')->paginate($perPage);
+        $items->withPath(url('proyek/detail'));
         return view('admin.investor.proyek',compact('judul','month','year','skala_usaha','perPage','items','search'));
         
+    }
+    public function verifikasi(Request $request)
+    {
+        $judul='Verifikasi Proyek OSS';
+        $month = $request->input('month');
+        $year = $request->input('year');
+        $nib = $request->input('nib');
+        $search = $request->input('search');
+        $perPage = $request->input('perPage', 150);
+        $query = Proyek::whereYear('day_of_tanggal_pengajuan_proyek', $year)->whereMonth('day_of_tanggal_pengajuan_proyek', $month)->where('nib', $nib);
+        $items = $query->paginate($perPage);
+        $profil = $query->first();
+        $items->withPath(url('proyek/verifikasi'));
+        return view('admin.investor.verifikasi',compact('judul','month','year','items','search','perPage','nib','profil'));
     }
 }
 
