@@ -81,11 +81,40 @@ class ProyekController extends Controller
         $year = $request->input('year');
         $nib = $request->input('nib');
         $id_proyek = $request->input('id_proyek');
-        $data_kbli = Proyek::whereYear('day_of_tanggal_pengajuan_proyek', $year)->whereMonth('day_of_tanggal_pengajuan_proyek', $month)->where('nib', $nib)->where('id_proyek', $id_proyek)->first();
-        
-                             
+
+        $data_kbli = Proyek::where('nib', $nib)
+            ->where('id_proyek', $id_proyek)
+            ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
+            ->whereMonth('day_of_tanggal_pengajuan_proyek', $month)
+            ->first();
+
         if ($data_kbli) {
-            return response()->json($data_kbli);
+            $kbli_now = $data_kbli->kbli;
+
+            $data_past = Proyek::where('nib', $nib)
+            ->where(function($q) use ($year, $month) {
+                $q->whereYear('day_of_tanggal_pengajuan_proyek', '<', $year)
+                  ->orWhere(function($q) use ($year, $month) {
+                  $q->whereYear('day_of_tanggal_pengajuan_proyek', $year)
+                    ->whereMonth('day_of_tanggal_pengajuan_proyek', '<', $month);
+                  });
+            })
+            ->orderBy('kbli', 'asc')
+            ->get();
+
+            $data_past_kbli = Proyek::where('nib', $nib)
+            ->where('kbli', $kbli_now)
+            ->where(function($q) use ($year, $month) {
+                $q->whereYear('day_of_tanggal_pengajuan_proyek', '<', $year)
+                  ->orWhere(function($q) use ($year, $month) {
+                  $q->whereYear('day_of_tanggal_pengajuan_proyek', $year)
+                    ->whereMonth('day_of_tanggal_pengajuan_proyek', '<', $month);
+                  });
+            })
+            ->orderBy('day_of_tanggal_pengajuan_proyek', 'asc')
+            ->get();
+
+            return response()->json(['now' => $data_kbli, 'past' => $data_past, 'kblipast' => $data_past_kbli], 200);
         }
 
         return response()->json(['message' => 'User not found'], 404);
@@ -247,7 +276,7 @@ class ProyekController extends Controller
         $search = $request->input('search');
         $perPage = $request->input('perPage', 150);
         $query = Proyek::whereYear('day_of_tanggal_pengajuan_proyek', $year)->whereMonth('day_of_tanggal_pengajuan_proyek', $month)->where('nib', $nib);
-        $items = $query->paginate($perPage);
+        $items = $query->orderBy('kbli', 'asc')->paginate($perPage);
         $profil = $query->first();
         $items->withPath(url('proyek/verifikasi'));
         return view('admin.investor.verifikasi',compact('judul','month','year','items','search','perPage','nib','profil'));

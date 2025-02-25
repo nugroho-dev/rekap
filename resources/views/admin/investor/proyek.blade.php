@@ -125,7 +125,7 @@
                   <div class="card-body">
                     <div class="table-responsive">
                       <table class="table table-vcenter">
-                        <thead>
+                        <thead class="sticky-top">
                           <tr class="text-center">
                             <th>Skala Usaha</th>
                             <th>Jumlah Investor</th>
@@ -209,18 +209,18 @@
                   </div>
                   <div class="table-responsive">
                     <table class="table card-table table-vcenter text-nowrap  table-striped ">
-                      <thead>
+                      <thead class="sticky-top">
                         <tr>
-                          <th class="w-1">No.</th>
-                          <th>NIB </th>
-                          <th>Tanggal Terbit</th>
-                          <th>Nama Perusahaan</th>
-                          <th>Jenis Perusahaan</th>
-                          <th>Skala Usaha</th>
-                          <th>Jumlah KBLI</th>
-                          <th>Jumlah Investasi</th>
-                          <th>Jumlah Tenaga Kerja</th>
-                          <th>*</th>
+                          <th scope="col" class="w-1">No.</th>
+                          <th scope="col">NIB </th>
+                          <th scope="col">Tanggal Terbit</th>
+                          <th scope="col">Nama Perusahaan</th>
+                          <th scope="col">Jenis Perusahaan</th>
+                          <th scope="col">Skala Usaha</th>
+                          <th scope="col">Jumlah KBLI</th>
+                          <th scope="col">Jumlah Investasi</th>
+                          <th scope="col">Jumlah Tenaga Kerja</th>
+                          <th scope="col">*</th>
                         </tr>
                       </thead>
                       <tbody class="font-monospace fs-5" >

@@ -494,113 +494,69 @@
                             </tbody>
                           </table>
                         </div>
-                        <div class="col-md-6 col-sm-12">
-                          <div class="alert alert-success" role="alert">
-                            <div class="d-flex">
-                              <div>
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  class="icon alert-icon"
-                                  width="24"
-                                  height="24"
-                                  viewBox="0 0 24 24"
-                                  stroke-width="2"
-                                  stroke="currentColor"
-                                  fill="none"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                >
-                                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                  <path d="M5 12l5 5l10 -10" />
-                                </svg>
-                              </div>
-                              <div>
-                                <h4 class="alert-title">Wow! Everything worked!</h4>
-                                <div class="text-secondary">Your account has been saved!</div>
-                              </div>
-                            </div>
-                          </div>
+                        <div class="col-md-6 col-sm-12" >
                           <div class="alert alert-info" role="alert">
                             <div class="d-flex">
-                              <div>
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  class="icon alert-icon"
-                                  width="24"
-                                  height="24"
-                                  viewBox="0 0 24 24"
-                                  stroke-width="2"
-                                  stroke="currentColor"
-                                  fill="none"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                >
-                                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                  <circle cx="12" cy="12" r="9" />
-                                  <line x1="12" y1="8" x2="12.01" y2="8" />
-                                  <polyline points="11 12 12 12 12 16 13 16" />
-                                </svg>
-                              </div>
-                              <div>
-                                <h4 class="alert-title">Did you know?</h4>
-                                <div class="text-secondary">Here is something that you might like to know.</div>
+                            <div>
+                              <svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                              <circle cx="12" cy="12" r="9" />
+                              <line x1="12" y1="8" x2="12.01" y2="8" />
+                              <polyline points="11 12 12 12 12 16 13 16" />
+                              </svg>
+                            </div>
+                            <div>
+                              <h4 class="alert-title">Informasi !</h4>
+                              <div class="text-secondary" >
+                                <ol>
+                                  <li>Tanggal Terbit NIB: <span id='sugestionNib'></span> </li>
+       
+                                  <li ><p id="sugestionKbli" class="m-0"></p> <span id="sugestionListKbli"></span></li>
+                                  
+                                </ol>
                               </div>
                             </div>
+                            </div>
                           </div>
-                          <div class="alert alert-warning" role="alert">
+                          <div class="alert alert-success" role="alert">
                             <div class="d-flex">
-                              <div>
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  class="icon alert-icon"
-                                  width="24"
-                                  height="24"
-                                  viewBox="0 0 24 24"
-                                  stroke-width="2"
-                                  stroke="currentColor"
-                                  fill="none"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                >
-                                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                  <path d="M12 9v2m0 4v.01" />
-                                  <path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75" />
-                                </svg>
-                              </div>
-                              <div>
-                                <h4 class="alert-title">Uh oh, something went wrong</h4>
-                                <div class="text-secondary">Sorry! There was a problem with your request.</div>
+                            <div>
+                              <svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                              <circle cx="12" cy="12" r="9" />
+                              <line x1="12" y1="8" x2="12.01" y2="8" />
+                              <polyline points="11 12 12 12 12 16 13 16" />
+                              </svg>
+                            </div>
+                            <div>
+                              <h4 class="alert-title">Saran Verifikasi !</h4>
+                              <div class="text-secondary text-justify" >
+                                Dari informasi yang ada, sistem menyarankan untuk melakukan verifikasi KBLI <span id="kbli1"></span> <span id="judulKbli1"></span> ini, dengan nilai investasi <span id="jumlahInvestasi1"></span> adalah <span id="sugestionVerifKbli" class="text-success"></span>
                               </div>
                             </div>
-                          </div>
-                          <div class="alert alert-danger" role="alert">
-                            <div class="d-flex">
-                              <div>
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  class="icon alert-icon"
-                                  width="24"
-                                  height="24"
-                                  viewBox="0 0 24 24"
-                                  stroke-width="2"
-                                  stroke="currentColor"
-                                  fill="none"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                >
-                                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                  <circle cx="12" cy="12" r="9" />
-                                  <line x1="12" y1="8" x2="12" y2="12" />
-                                  <line x1="12" y1="16" x2="12.01" y2="16" />
-                                </svg>
-                              </div>
-                              <div>
-                                <h4 class="alert-title">I'm so sorry&hellip;</h4>
-                                <div class="text-secondary">Your account has been deleted and can't be restored.</div>
-                              </div>
                             </div>
                           </div>
-                              
+                        </div>
+                        <div class="col-sm-12 col-md-12">
+                          <div class="table-responsive ">
+                            <table class="table table-vcenter caption-top">
+                              <caption class="font-monospace  h3">Proyek yang dimiliki pada periode sebelumnya  oleh <span id='namaPerusahaan'></span> :</caption>
+                              <thead>
+                                <tr>
+                                  <th>KBLI</th>
+                                  <th>Judul KBLI</th>
+                                  <th>Nama / Alamat Proyek</th>
+                                  <th>Tanggal Proyek</th>
+                                  <th>Jumlah Investasi</th>
+                                  <th class="w-1"></th>
+                                </tr>
+                              </thead>
+                              <tbody class="font-monospace fs-5" id=listProyek>
+                                
+                              </tbody>
+                            </table>
+                          </div>
+                          
                         </div>
                       </div>
                     </div>
@@ -624,38 +580,75 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
-        $('.openModal').on('click', function() {
-            const userId = $(this).data('id');
-            const nib = $(this).data('nib');
-            const month = $(this).data('month');
-            const year = $(this).data('year');
-            const kbli = $(this).data('kbli');
-            $.ajax({
-                url: `{{ url('/proyek/show?id_proyek=')}}${userId}&nib=${nib}&month=${month}&year=${year}`, // Endpoint resource controller
-                type: 'GET',
-                success: function(data) {
-                      $('#exampleModal').modal('show');
-                      $('#namaProyek').text(data.nama_proyek);
-                      $('#idProyek').text(data.id_proyek);
-                      $('#alamatUsaha').text(data.alamat_usaha);
-                      $('#kelurahanUsaha').text(data.kelurahan_usaha);
-                      $('#kecamatanUsaha').text(data.kecamatan_usaha);
-                      $('#kabKotaUsaha').text(data.kab_kota_usaha);
-                      $('#uraianJenisProyek').text(data.uraian_jenis_proyek);
-                      $('#uraianStatusPenanamanModal').text(data.uraian_status_penanaman_modal);
-                      $('#uraianResikoProyek').text(data.uraian_risiko_proyek);
-                      $('#uraianSkalaUsaha').text(data.uraian_skala_usaha);
-                      $('#jumlahInvestasi').text(new Intl.NumberFormat("id-ID", {style: "currency", currency: "IDR"}).format(data.jumlah_investasi));
-                      $('#kbli').text(data.kbli);
-                      $('#judulKbli').text(data.judul_kbli);
-                      $('#dayOfTanggalPengajuanProyek').text(new Intl.DateTimeFormat("id-ID", { dateStyle: "full"}).format(new Date(data.day_of_tanggal_pengajuan_proyek)));
-                      $('#tki').text(data.tki);
-                },
-                error: function() {
-                    alert('Unable to fetch user details.');
-                }
-            });
-        });
+      $('.openModal').on('click', function() {
+      const userId = $(this).data('id');
+      const nib = $(this).data('nib');
+      const month = $(this).data('month');
+      const year = $(this).data('year');
+      const kbli = $(this).data('kbli');
+      $.ajax({
+        url: `{{ url('/proyek/show') }}?id_proyek=${userId}&nib=${nib}&month=${month}&year=${year}`,
+        type: 'GET',
+        success: function(data) {
+        const { now: dataNow, past: dataPast, kblipast: kbliPast } = data;
+        
+        $('#exampleModal').modal('show');
+        $('#namaPerusahaan').text(dataNow.nama_perusahaan);
+        $('#namaProyek').text(dataNow.nama_proyek);
+        $('#idProyek').text(dataNow.id_proyek);
+        $('#alamatUsaha').text(dataNow.alamat_usaha);
+        $('#kelurahanUsaha').text(dataNow.kelurahan_usaha);
+        $('#kecamatanUsaha').text(dataNow.kecamatan_usaha);
+        $('#kabKotaUsaha').text(dataNow.kab_kota_usaha);
+        $('#uraianJenisProyek').text(dataNow.uraian_jenis_proyek);
+        $('#uraianStatusPenanamanModal').text(dataNow.uraian_status_penanaman_modal);
+        $('#uraianResikoProyek').text(dataNow.uraian_risiko_proyek);
+        $('#uraianSkalaUsaha').text(dataNow.uraian_skala_usaha);
+        $('#jumlahInvestasi, #jumlahInvestasi1').text(new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(dataNow.jumlah_investasi));
+        $('#kbli, #kbli1').text(dataNow.kbli);
+        $('#judulKbli, #judulKbli1').text(dataNow.judul_kbli);
+        $('#dayOfTanggalPengajuanProyek').text(new Intl.DateTimeFormat("id-ID", { dateStyle: "full" }).format(new Date(dataNow.day_of_tanggal_pengajuan_proyek)));
+        $('#tki').text(dataNow.tki);
+        $('#sugestionNib').text(new Intl.DateTimeFormat("id-ID", { dateStyle: "full" }).format(new Date(dataNow.tanggal_terbit_oss)));
+        
+        $('#sugestionKbli').empty();
+        $('#sugestionListKbli').empty();
+        if (kbliPast.length > 0) {
+          $('#sugestionKbli').html('Terdapat data proyek pada periode sebelumnya dengan KBLI yang sama, yaitu :');
+          $('#sugestionVerifKbli').html('Penambahan Investasi');
+          kbliPast.forEach(item => {
+          $('#sugestionListKbli').append(`<ul><li>KBLI ${item.kbli}, pada tanggal ${new Intl.DateTimeFormat("id-ID", { dateStyle: "full" }).format(new Date(item.day_of_tanggal_pengajuan_proyek))} dengan jumlah investasi ${new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(item.jumlah_investasi)}</li></ul>`);
+          });
+        } else {
+          $('#sugestionKbli').html('Tidak ada data proyek pada periode sebelumnya dengan KBLI yang sama');
+          $('#sugestionVerifKbli').html('Investasi Baru');
+        }
+        
+        $('#listProyek').empty();
+        if (dataPast.length > 0) {
+          dataPast.forEach(item => {
+          $('#listProyek').append(`
+            <tr>
+            <td>${item.kbli}</td>
+            <td>${item.judul_kbli}</td>
+            <td>${item.nama_proyek}
+              <div class="text-muted text-wrap">${item.alamat_usaha}</div>
+            </td>
+            <td>${new Intl.DateTimeFormat("id-ID", { dateStyle: "full" }).format(new Date(item.day_of_tanggal_pengajuan_proyek))}</td>
+            <td>${new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(item.jumlah_investasi)}</td>
+            <td><a href="{{ url('/proyek/verifikasi') }}?month=${new Date(item.day_of_tanggal_pengajuan_proyek).getMonth() + 1}&year=${new Date(item.day_of_tanggal_pengajuan_proyek).getFullYear()}&nib=${item.nib}" target="_blank">Lihat</a></td>
+            </tr>
+          `);
+          });
+        } else {
+          $('#listProyek').append('<tr><td colspan="6" class="text-center">Tidak ada data</td></tr>');
+        }
+        },
+        error: function() {
+        alert('Unable to fetch user details.');
+        }
+      });
+      });
     });
 </script>
 @endsection
