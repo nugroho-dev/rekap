@@ -85,13 +85,10 @@ Route::resource('/konfigurasi/instansi', InstansiController::class)->middleware(
 Route::get('/konfigurasi/user/checkSlug', [UsersDashboardController::class, 'checkSlug'])->middleware('auth');
 Route::resource('/konfigurasi/user', UsersDashboardController::class)->middleware('auth');
 
-Route::resource('/konsultasi', KonsultasiDashboardController::class)->middleware('auth');
-Route::post('/consult/import_excel', [KonsultasiDashboardController::class, 'import_excel'])->middleware('auth');
-//Route::get('/pelayanan/konsultasi/display', [KonsultasiDashboardController::class, 'display'])->middleware('auth');
-//Route::post('/pelayanan/konsultasi/display', [KonsultasiDashboardController::class, 'display'])->middleware('auth');
-//Route::post('/pelayanan/konsultasi/print', [KonsultasiDashboardController::class, 'print'])->middleware('auth');
+Route::get('/konsultasi', [KonsultasiDashboardController::class, 'index'])->middleware('auth');
+Route::post('/konsultasi', [KonsultasiDashboardController::class, 'index'])->middleware('auth');
+Route::post('/konsultasi/import_excel', [KonsultasiDashboardController::class, 'import_excel'])->middleware('auth');
 Route::post('/konsultasicari', [KonsultasiDashboardController::class, 'index'])->middleware('auth');
-//Route::get('/pelayanan/konsultasi/checkSlug', [KonsultasiDashboardController::class, 'checkSlug'])->middleware('auth');
 
 Route::resource('/commitment', DashboardKomitmenController::class)->middleware('auth');
 Route::post('/commitment/import_excel', [DashboardKomitmenController::class, 'import_excel'])->middleware('auth');

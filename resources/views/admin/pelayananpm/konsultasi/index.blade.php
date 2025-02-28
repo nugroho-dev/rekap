@@ -76,7 +76,7 @@
                         Menampilkan
                         <div class="mx-2 d-inline-block">
                           
-                          <form action="{{ url('/konsultasisort')}}" method="POST">
+                          <form action="{{ url('/konsultasi')}}" method="POST">
                             @csrf
                             <input type="hidden" name="page" value="{{ request()->get('page', 1) }}">
                             <select name="perPage" id="myselect" onchange="this.form.submit()" class="form-control form-control-sm">
@@ -93,7 +93,7 @@
                       <div class="ms-auto text-muted">
                         Cari:
                         <div class="ms-2 d-inline-block ">
-                          <form action="{{ url('/konsultasisort')}}" method="POST">
+                          <form action="{{ url('/konsultasi')}}" method="POST">
                             @csrf
                             <div class="input-group">
                               <input type="text" name="search" class="form-control form-control-sm" aria-label="cari" value="{{ old('search') }}">
@@ -111,8 +111,12 @@
                       <thead class="text-center">
                         <tr>
                           <th class="w-1" >No.</th>
-                          <th class="w-1" >Profil</th>
-                          <th >Konsultasi</th>
+                          <th class="w-1" >No Telp</th>
+                          <th >Nama</th>
+                          <th >Perihal</th>
+                          <th >Keterangan</th>
+                          <th >Jenis</th>
+                          <th >Tanggal</th>
                           <th >*</th>
                         </tr>
                       </thead>
@@ -128,16 +132,16 @@
                         <tr>
                           <td>{{ $loop->iteration + $items->firstItem()-1 }}</td>
                           <td >
-                            <div>{{ $item->nama}}</div>
-                            <div class="text-secondary">{{ $item->nama_perusahaan}}</div>
-                            <div class="text-secondary">{{ $item->no_telp}}</div>
-                            <div class="text-secondary">{{ $item->email}}</div>
-                            <div class="text-secondary">{{ $item->alamat}}</div>
-                            </td>
+                            <div>{{ $item->no_hp}}</div>
+                          </td>
+                          <td class="text-secondary">{{ $item->nama_pemohon}}</td>
+                            <td class="text-secondary">{{ $item->perihal}}</td>
+                            <td class="text-secondary">{{ $item->keterangan}}</td>
+                            <td class="text-secondary">{{ $item->jenis}}</td>
+                           
                           <td class="text-wrap text-justify">
                             <div>{{ Carbon\Carbon::parse($item->tanggal)->translatedFormat('d F Y') }}</div>
-                            <div class="text-secondary">{{ $item->lokasi_layanan}}</div>
-                            <div class="text-secondary">{{ $item->kendala}}</div>
+                           
                           </td>
                           <td class="text-center">
                             <span class="dropdown">
@@ -183,7 +187,7 @@
               $currentYear = date('Y'); // Tahun sekarang
               @endphp
               <div class="modal  fade" id="modal-team" tabindex="-1" role="dialog" aria-hidden="true">
-                <form method="post" action="{{ url('/consult/import_excel')}}" enctype="multipart/form-data">
+                <form method="post" action="{{ url('/konsultasi/import_excel')}}" enctype="multipart/form-data">
                   {{ csrf_field() }}
                 <div class="modal-dialog modal-dialog-centered" role="document">
                   <div class="modal-content">
@@ -231,7 +235,7 @@
                             <div class="tab-content">
                               <div class="tab-pane fade active show" id="tabs-home-8" role="tabpanel">
                                 <h4>Pilih Tanggal :</h4>
-                                <form method="post" action="{{ url('/konsultasisort')}}" enctype="multipart/form-data">
+                                <form method="post" action="{{ url('/konsultasi')}}" enctype="multipart/form-data">
                                   @csrf
                                 <div class="input-group mb-2">
                                   <input type="date" class="form-control" name="date_start" autocomplete="off">
@@ -246,7 +250,7 @@
                               <div class="tab-pane fade" id="tabs-profile-8" role="tabpanel">
                                 <h4>Pilih Bulan :</h4>
                                 <div>
-                                  <form method="post" action="{{ url('/konsultasisort')}}" enctype="multipart/form-data">
+                                  <form method="post" action="{{ url('/konsultasi')}}" enctype="multipart/form-data">
                                     @csrf
                                   <div class="row g-2">
                                     <div class="col-4">
@@ -275,7 +279,7 @@
                               <div class="tab-pane fade" id="tabs-activity-8" role="tabpanel">
                                 <h4>Pilih Tahun :</h4>
                                 <div>
-                                  <form method="post" action="{{ url('/konsultasisort')}}" enctype="multipart/form-data">
+                                  <form method="post" action="{{ url('/konsultasi')}}" enctype="multipart/form-data">
                                     @csrf
                                   <div class="row g-2">
                                     <div class="col-4">
