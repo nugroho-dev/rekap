@@ -19,20 +19,20 @@ class KonsultasiImport implements ToModel ,WithHeadingRow ,WithValidation
     */
     public function model(array $row)
     {
-        //$existingData = Konsultasi::where('id_rule', $row['id_rule'])->first();
-        //if ($existingData) {
+        $existingData = Konsultasi::where('id_rule', $row['id_rule'])->first();
+        if ($existingData) {
             // Jika data ditemukan, perbarui
-            //$existingData->update([
-            //'tanggal'=> Carbon::instance(Date::excelToDateTimeObject($row['tanggal']))->toDateString(),
-            //'nama_pemohon'=> $row['nama_pemohon'],
-            //'no_hp'=> $row['no_hp'],
-            //'perihal'=> $row['perihal'],
-            //'keterangan'=> $row['keterangan'] ,
-            //'jenis'=> $row['jenis'],
-            //'del'=> 0,
-           // ]);
-            //return null;
-        //}
+            $existingData->update([
+            'tanggal'=> Carbon::instance(Date::excelToDateTimeObject($row['tanggal']))->toDateString(),
+            'nama_pemohon'=> $row['nama_pemohon'],
+            'no_hp'=> $row['no_hp'],
+            'perihal'=> $row['perihal'],
+            'keterangan'=> $row['keterangan'] ,
+            'jenis'=> $row['jenis'],
+            'del'=> 0,
+            ]);
+            return null;
+        }
         return new Konsultasi([
             'id_rule'=> $row['id_rule'],
             'tanggal'=> Carbon::instance(Date::excelToDateTimeObject($row['tanggal']))->toDateString(),
