@@ -29,6 +29,7 @@ class KonsultasiImport implements ToModel ,WithHeadingRow ,WithValidation
             'perihal'=> $row['perihal'],
             'keterangan'=> $row['keterangan'] ,
             'jenis'=> $row['jenis'],
+            'jenis_konsultasi'=> $row['jenis_konsultasi'],
             'del'=> 0,
             ]);
             return null;
@@ -41,6 +42,7 @@ class KonsultasiImport implements ToModel ,WithHeadingRow ,WithValidation
             'perihal'=> $row['perihal'],
             'keterangan'=> $row['keterangan'] ,
             'jenis'=> $row['jenis'],
+            'jenis_konsultasi'=> $row['jenis_konsultasi'],
         ]);
     }
     public function rules(): array
