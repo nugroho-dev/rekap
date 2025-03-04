@@ -155,6 +155,9 @@
                                 <a class="dropdown-item" href="{{ url('/sicantik/'.$item->slug.'')}}" >
                                   Lihat Proses
                                 </a>
+                                <a class="dropdown-item" href="https://sicantik.go.id/webroot/files/signed/{{$item->file_signed_report}}" >
+                                  Download Izin
+                                </a>
                               </div>
                             </span>
                            
