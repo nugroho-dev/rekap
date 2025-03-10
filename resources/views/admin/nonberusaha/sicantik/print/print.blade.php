@@ -115,7 +115,7 @@
         </tr>
         <tr>
             <td></td>
-            <td style="text-align: center; font-weight: bolder; text-transform: uppercase; text-decoration: underline;">{{ $nama }}</td>
+            <td style="text-align: center; font-weight: bolder; text-transform: uppercase; text-decoration: underline;" >{{ $nama }}</td>
         <tr>
         <tr>
             <td></td>
