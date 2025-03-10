@@ -69,27 +69,27 @@
         <table  style="border-collapse: collapse; width: 100%; border: 1px solid black;">
               <thead>
                 <tr style="border: 1px solid black;">
-                 <th style="border: 1px solid black">No</th>
-                 <th style="border: 1px solid black">Nomor Izin</th>
-                 <th style="border: 1px solid black">Nama Pemohon</th>
-                 <th style="border: 1px solid black">Jenis Izin</th>
-                 <th style="border: 1px solid black">Tanggal Terbit</th>
+                 <th style="border: 1px solid black">No </th>
+                 <th style="border: 1px solid black">Nomor Izin </th>
+                 <th style="border: 1px solid black">Nama Pemohon </th>
+                 <th style="border: 1px solid black">Jenis Izin </th>
+                 <th style="border: 1px solid black">Tanggal Terbit </th>
                 </tr>
               </thead>
               <tbody> 
                 @foreach($items as $item)
                 <tr style="border: 1px solid black; text-align: left;">
-                    <td style="border: 1px solid black"><div style="margin-left: 5px;">{{ $loop->iteration }}</div></td>
-                    <td style="border: 1px solid black"> 
-                    <div style="font-weight: bolder; margin-left: 5px;">{{ $item['no_izin'] }}</div>
-                    <div style="margin-left: 5px;">({{ $item['no_permohonan'] }})</div>
+                    <td style="border: 1px solid black"><div style="margin-left: 5px;">{{ $loop->iteration }}</div> </td>
+                    <td style="border: 1px solid black">  
+                    <div style="font-weight: bolder; margin-left: 5px;">{{ $item['no_izin'] }} </div>
+                    <div style="margin-left: 5px;">({{ $item['no_permohonan'] }})</div> 
                     </td>
-                    <td style="border: 1px solid black; "><div style="font-weight: bolder; margin-left: 5px;">{{ $item['nama'] }}</div>
+                    <td style="border: 1px solid black; "><div style="font-weight: bolder; margin-left: 5px;">{{ $item['nama'] }} </div>
                         <div style="margin-left: 5px;">{{ $item['no_hp'] }}</div>
                     </td>
-                    <td style="border: 1px solid black"><div style="font-weight: bolder; margin-left: 5px;">{{ $item['jenis_izin'] }}</div>
-                        <div style="margin-left: 5px;">{{ $item['jenis_permohonan'] }}</div></td>
-                    <td style="white-space: nowrap; border: 1px solid black;"><div style="font-weight: bolder; margin-left: 5px;">{{ is_null($item['tgl_penetapan']) ? '-' : Carbon\Carbon::parse($item['tgl_penetapan'])->translatedFormat('d F Y') }}</div></td>
+                    <td style="border: 1px solid black"><div style="font-weight: bolder; margin-left: 5px;">{{ $item['jenis_izin'] }} </div>
+                        <div style="margin-left: 5px;">{{ $item['jenis_permohonan'] }}</div> </td>
+                    <td style="white-space: nowrap; border: 1px solid black;"><div style="font-weight: bolder; margin-left: 5px;">{{ is_null($item['tgl_penetapan']) ? '-' : Carbon\Carbon::parse($item['tgl_penetapan'])->translatedFormat('d F Y') }}</div> </td>
                 </tr>
                 @endforeach
                 
