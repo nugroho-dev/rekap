@@ -156,10 +156,34 @@
 	<script src="{{ asset('tabler/dist/libs/litepicker/dist/litepicker.js?1684106062') }}" defer=""></script>
 	<script src="{{ asset('tabler/dist/libs/tom-select/dist/js/tom-select.base.min.js?1684106062') }}" defer></script>
 	<script src="{{ asset('tabler/dist/libs/tinymce/tinymce.min.js?1684106062') }}" defer></script>
-	
+	<script src="{{ asset('sweetalert2/js/sweetalert2.all.js') }}"></script>
     <!-- Tabler Core -->
     <script src="{{ asset('tabler/dist/js/tabler.min.js?1684106062') }}" defer></script>
     <script src="{{ asset('tabler/dist/js/demo.min.js?1684106062') }}" defer></script>
+	@if(session()->has('success'))
+    <script>
+        Swal.fire({
+                title: 'Berhasil',
+                text: '{{ session('success') }}',
+                icon: 'success',
+                confirmButtonText: 'Tutup',
+                showConfirmButton: true,
+                timer: 6500
+        })
+    </script> 
+	@endif
+	@if(session()->has('error'))
+    <script>
+        Swal.fire({
+                title: 'Kesalahan Input Tanggal',
+                text: '{{ session('error') }}',
+                icon: 'error',
+                confirmButtonText: 'Tutup',
+                showConfirmButton: true,
+                timer: 6500
+        })
+    </script>
+	 @endif
 	<script>
 		// @formatter:off
 		document.addEventListener("DOMContentLoaded", function () {

@@ -78,8 +78,11 @@ Route::post('/login', [LoginController::class, 'authenticate']);
 Route::get('/logout', [LoginController::class, 'logout']);
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('auth');
 Route::get('/maintenance', [MaintenanceController::class, 'index'])->middleware('auth');
+
 Route::get('/konfigurasi/pegawai/checkSlug', [PegawaiController::class, 'checkSlug'])->middleware('auth');
+Route::get('/konfigurasi/pegawai/ttd/{slug}', [PegawaiController::class, 'checkTtd'])->middleware('auth');
 Route::resource('/konfigurasi/pegawai', PegawaiController::class)->middleware('auth');
+
 Route::get('/konfigurasi/instansi/checkSlug', [InstansiController::class, 'checkSlug'])->middleware('auth');
 Route::resource('/konfigurasi/instansi', InstansiController::class)->middleware('auth');
 Route::get('/konfigurasi/user/checkSlug', [UsersDashboardController::class, 'checkSlug'])->middleware('auth');
@@ -154,6 +157,8 @@ Route::get('/bisnis/check/checkSlug', [DashboardBusinessController::class, 'chec
 
 Route::get('/sicantik', [DashboardVprosesSicantikController::class, 'index'])->middleware('auth');
 Route::post('/sicantik', [DashboardVprosesSicantikController::class, 'index'])->middleware('auth');
+Route::get('/sicantik/print', [DashboardVprosesSicantikController::class, 'print'])->middleware('auth');
+Route::post('/sicantik/print', [DashboardVprosesSicantikController::class, 'print'])->middleware('auth');
 Route::get('/sicantik/statistik', [DashboardVprosesSicantikController::class, 'statistik'])->middleware('auth');
 Route::post('/sicantik/statistik', [DashboardVprosesSicantikController::class, 'statistik'])->middleware('auth');
 Route::post('/sicantik/sych', [DashboardVprosesSicantikController::class, 'sync'])->middleware('auth');

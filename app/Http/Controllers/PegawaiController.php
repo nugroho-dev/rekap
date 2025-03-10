@@ -42,6 +42,7 @@ class PegawaiController extends Controller
         }
         $validatedData['del'] = 0;
         $validatedData['user_status'] = 0;
+        $validatedData['ttd'] = 0;
         Pegawai::create($validatedData);
         return redirect('/konfigurasi/pegawai')->with('success', 'Pegawai Baru Berhasil di Tambahkan !');
     }
@@ -95,7 +96,18 @@ class PegawaiController extends Controller
     {
         //
     }
+    public function checkTtd(Request $request)
+    {
+        Pegawai::where('ttd', 1)->update(['ttd' => 0]);
 
+        $pegawai = Pegawai::where('slug', $request->slug)->first();
+        if ($pegawai) {
+            $pegawai->update(['ttd' => 1]);
+            return redirect('/konfigurasi/pegawai')->with('success', 'Set Penanda Tangan Berhasil di Tambahkan!');
+        }
+
+        return redirect('/konfigurasi/pegawai')->with('error', 'Pegawai tidak ditemukan!');
+    }
     public function checkSlug(Request $request)
     {
         $slug = SlugService::createSlug(Pegawai::class, 'slug', $request->title);

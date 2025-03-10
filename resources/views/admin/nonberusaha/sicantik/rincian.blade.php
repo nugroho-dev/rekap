@@ -122,8 +122,14 @@
                   Lihat Rincian Izin Terbit
                 </button>
                 </form>
+                
+                  <a href="{{ url('/sicantik/print?month='.$month.'&year='.$year.'&search='.$data->jenis_izin.'')}}" target="_blank" class="dropdown-item">
+                    Cetak Rincian Izin Terbit
+                  </a>
+                 
               </div>
-            </span></td>
+            </span>
+          </td>
           </tr>
           @endforeach
             <tr>

@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Instansi;
+use App\Models\Pegawai;
 use App\Models\Vproses;
 use App\Models\Vpstatistik;
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Proses;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -57,6 +60,59 @@ class DashboardVprosesSicantikController extends Controller
 
 		return view('admin.nonberusaha.sicantik.index', compact('judul', 'items', 'perPage', 'search', 'date_start', 'date_end', 'month', 'year'));
     }
+	public function print(Request $request)
+	{
+		
+		$judul = 'Data Izin SiCantik';
+		$query = Vproses::query();
+		$instansi = Instansi::where('slug', '=', 'dinas-penanaman-modal-dan-pelayanan-terpadu-satu-pintu-kota-magelang')->first();
+		$pegawai = Pegawai::where('ttd', 1)->first();
+		$nama = $pegawai->nama;
+		$nip = $pegawai->nip;
+		$search = $request->input('search');
+		$date_start = $request->input('date_start');
+		$date_end = $request->input('date_end');
+		$month = $request->input('month');
+		$year = $request->input('year');
+		$jenis_izin = $request->input('jenis_izin');
+		$logo = $instansi->logo;
+		
+		if ($search) {
+			$query->where(function ($q) use ($search) {
+			$q->where('no_permohonan', 'LIKE', "%{$search}%")
+			  ->orWhere('nama', 'LIKE', "%{$search}%")
+			  ->orWhere('jenis_izin', 'LIKE', "%{$search}%");
+			});
+		}
+
+		if ($date_start && $date_end) {
+			if ($date_start > $date_end) {
+			return redirect('/sicantik')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda');
+			}
+			$query->whereBetween('tgl_penetapan', [$date_start, $date_end]);
+		}
+
+		if ($jenis_izin && $month && $year) {
+			$query->where('jenis_izin', $jenis_izin)
+			  ->whereMonth('tgl_penetapan', $month)
+			  ->whereYear('tgl_penetapan', $year);
+		} elseif ($month && $year) {
+			$query->whereMonth('tgl_penetapan', $month)
+			  ->whereYear('tgl_penetapan', $year);
+		} elseif ($year) {
+			$query->whereYear('tgl_penetapan', $year);
+		}
+
+		$perPage = $request->input('perPage', 111);
+		$items = $query->orderBy('tgl_pengajuan', 'ASC')
+				   ->orderBy('no_permohonan', 'ASC')
+				   ->paginate($perPage);
+		$items->withPath(url('/sicantik'));
+		return Pdf::loadView('admin.nonberusaha.sicantik.print.print', compact('items','search','logo', 'month', 'year','nama','nip'))
+			->setPaper('A4', 'landscape')
+			->stream('sicantik.pdf');
+	}
+
 	public function statistik(Request $request)
     {
 		$judul='Statistik Izin SiCantik';
