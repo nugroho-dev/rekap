@@ -81,7 +81,7 @@
                 <tr style="border: 1px solid black; text-align: left;">
                     <td style="border: 1px solid black"><div style="margin-left: 5px;">{{ $loop->iteration }}</div> </td>
                     <td style="border: 1px solid black">  
-                    <div style="font-weight: bolder; margin-left: 5px;">{{ $item['no_izin'] }} </div>
+                    <div style="font-weight: bolder; margin-left: 5px;">{{ $item['no_izin'] }} v</div>
                     <div style="margin-left: 5px;">({{ $item['no_permohonan'] }})</div> 
                     </td>
                     <td style="border: 1px solid black; "><div style="font-weight: bolder; margin-left: 5px;">{{ $item['nama'] }} </div>
