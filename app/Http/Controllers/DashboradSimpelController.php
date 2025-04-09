@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use App\Models\Vsimpel;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Models\Instansi;
+use App\Models\Pegawai;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 
 class DashboradSimpelController extends Controller
@@ -142,5 +145,66 @@ class DashboradSimpelController extends Controller
             });
         }
 		return view('admin.nonberusaha.simpel.rincian',compact('judul','month','year','rataRataJumlahHariPerJenisIzin', 'rataRataJumlahHari','total_izin','totalJumlahHari'));
+    }
+    public function print(Request $request)
+	{
+        $judul='Data Izin Pemakaman';
+        $query = Vsimpel::query();
+        $instansi = Instansi::where('slug', '=', 'dinas-penanaman-modal-dan-pelayanan-terpadu-satu-pintu-kota-magelang')->first();
+		$pegawai = Pegawai::where('ttd', 1)->first();
+        $nama = $pegawai->nama;
+		$nip = $pegawai->nip;
+        $search = $request->input('search');
+        $date_start = $request->input('date_start');
+        $date_end = $request->input('date_end');
+        $month = $request->input('month');
+        $year = $request->input('year');
+        $logo = $instansi->logo;
+        if ($request->has('search')) {
+            $query->where(function($q) use ($search) {
+            $q->where('pemohon', 'LIKE', "%{$search}%")
+              ->orWhere('nama', 'LIKE', "%{$search}%")
+              ->orWhere('jasa', 'LIKE', "%{$search}%")
+              ->orWhere('asal', 'LIKE', "%{$search}%")
+              ->orWhere('desa', 'LIKE', "%{$search}%")
+              ->orWhere('kec', 'LIKE', "%{$search}%");
+            });
+        }
+
+        if ($date_start && $date_end) {
+            if ($date_start > $date_end) {
+            return redirect('/simpel')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda');
+            } else {
+            $query->whereBetween('tte', [$date_start, $date_end]);
+            }
+        }
+
+        if ($search && $month && $year) {
+            if (empty($month) || empty($year)) {
+            return redirect('/simpel')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda');
+            } else {
+            $query->whereMonth('rekomendasi', $month)
+                  ->whereYear('rekomendasi', $year)
+                  ->where('jasa', 'LIKE', "%{$search}%");
+            }
+        } elseif ($month && $year) {
+            if (empty($month) || empty($year)) {
+            return redirect('/simpel')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda');
+            } else {
+            $query->whereMonth('rekomendasi', $month)
+                  ->whereYear('rekomendasi', $year);
+            }
+        }
+
+        if ($year) {
+            $query->whereYear('rekomendasi', $year);
+        }
+
+        $perPage = $request->input('perPage', 111);
+        $items = $query->orderBy('daftar', 'desc')->paginate($perPage);
+		$items->withPath(url('/simpel'));
+		return Pdf::loadView('admin.nonberusaha.simpel.print.print', compact('items','search','logo', 'month', 'year','nama','nip'))
+			->setPaper('A4', 'landscape')
+			->stream('simpel.pdf');
     }
 }

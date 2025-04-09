@@ -179,6 +179,8 @@ Route::resource('/mppd', MppdController::class)->middleware('auth');
 
 Route::get('/simpel', [DashboradSimpelController::class, 'index'])->middleware('auth');
 Route::post('/simpel', [DashboradSimpelController::class, 'index'])->middleware('auth');
+Route::get('/simpel/print', [DashboradSimpelController::class, 'print'])->middleware('auth');
+Route::post('/simpel/print', [DashboradSimpelController::class, 'print'])->middleware('auth');
 Route::get('/simpel/statistik', [DashboradSimpelController::class, 'statistik'])->middleware('auth');
 Route::post('/simpel/statistik', [DashboradSimpelController::class, 'statistik'])->middleware('auth');
 Route::post('/simpel/rincian', [DashboradSimpelController::class, 'rincian'])->middleware('auth');
