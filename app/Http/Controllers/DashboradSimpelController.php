@@ -201,7 +201,7 @@ class DashboradSimpelController extends Controller
         }
 
         $perPage = $request->input('perPage', 111);
-        $items = $query->orderBy('daftar', 'desc')->paginate($perPage);
+        $items = $query->orderBy('daftar', 'asc')->paginate($perPage);
 		$items->withPath(url('/simpel'));
 		return Pdf::loadView('admin.nonberusaha.simpel.print.print', compact('items','search','logo', 'month', 'year','nama','nip'))
 			->setPaper('A4', 'landscape')
