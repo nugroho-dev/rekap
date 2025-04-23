@@ -129,6 +129,7 @@ Route::get('/berusaha', [DashboardBerusahaController::class, 'index'])->middlewa
 Route::post('/berusaha', [DashboardBerusahaController::class, 'index'])->middleware('auth');
 Route::post('/berusaha/import_excel', [DashboardBerusahaController::class, 'import_excel'])->middleware('auth');
 Route::get('/berusaha/statistik', [DashboardBerusahaController::class, 'statistik'])->middleware('auth');
+Route::post('/berusaha/statistik', [DashboardBerusahaController::class, 'statistik'])->middleware('auth');
 Route::get('/pengawasan', [DashboardPengawasanController::class, 'index'])->middleware('auth');
 Route::post('/pengawasan', [DashboardPengawasanController::class, 'index'])->middleware('auth');
 Route::get('/pengawasan/{item:nomor_kode_proyek}', [DashboardPengawasanController::class, 'edit'])->middleware('auth');

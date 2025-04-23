@@ -96,18 +96,41 @@ class DashboardBerusahaController extends Controller
 		// alihkan halaman kembali
 		return redirect('/berusaha')->with('success', 'Data Berhasil Diimport !');
 	}
-	public function statistik()
+	public function statistik(Request $request)
 	{
 		$judul='Data Izin Berusaha';
+		$year = date('Y');
 		$query = Berusaha::query();
-		$chartquery = "SELECT month(day_of_tgl_izin) as bulan,COUNT(*) AS jumlah_nib FROM (SELECT day_of_tgl_izin, count(nib) as s FROM berusaha GROUP BY nib) AS by_nib group by month(day_of_tgl_izin)";
-		$resikoquery = "SELECT month(day_of_tgl_izin) AS bulan, COUNT(CASE WHEN kd_resiko = 'R' THEN kd_resiko ELSE NULL END) AS R,COUNT(CASE WHEN kd_resiko = 'MR' THEN kd_resiko ELSE NULL END) AS MR,COUNT(CASE WHEN kd_resiko = 'MT' THEN kd_resiko ELSE NULL END) AS MT,COUNT(CASE WHEN kd_resiko = 'T' THEN kd_resiko ELSE NULL END) AS T,COUNT(CASE WHEN kd_resiko = '' THEN kd_resiko ELSE NULL END) AS UNCLAS FROM berusaha GROUP by month(day_of_tgl_izin)";
-		$itemsnib=$query->select(DB::raw('COUNT(*) as total'))->groupBy('nib')->get();
+		
+		if ($request->has('year')) {
+			$year = $request->input('year');
+		}else{
+			$year = date('Y');
+		}
+		$chartquery = "SELECT 
+		month(day_of_tgl_izin) as bulan,
+		COUNT(*) AS jumlah_nib 
+		FROM (SELECT day_of_tgl_izin, count(nib) as s FROM berusaha GROUP BY nib) AS by_nib 
+		where year(day_of_tgl_izin) = $year
+		group by month(day_of_tgl_izin)";
+		
+		$resikoquery = "SELECT 
+		month(day_of_tgl_izin) AS bulan, 
+		COUNT(CASE WHEN kd_resiko = 'R' THEN kd_resiko ELSE NULL END) AS R,
+		COUNT(CASE WHEN kd_resiko = 'MR' THEN kd_resiko ELSE NULL END) AS MR,
+		COUNT(CASE WHEN kd_resiko = 'MT' THEN kd_resiko ELSE NULL END) AS MT,
+		COUNT(CASE WHEN kd_resiko = 'T' THEN kd_resiko ELSE NULL END) AS T,
+		COUNT(CASE WHEN kd_resiko = '' THEN kd_resiko ELSE NULL END) AS UNCLAS 
+		FROM berusaha 
+		where year(day_of_tgl_izin) = $year
+		GROUP by month(day_of_tgl_izin)";
+
+		$itemsnib=$query->select(DB::raw('COUNT(*) as total'))->whereYear('day_of_tgl_izin', $year)->groupBy('nib')->get();
 		$totalPerBulan = DB::select($chartquery);
 		$resikoPerBulan = DB::select($resikoquery);
 		$totalAll = $itemsnib->count('total');
-		$itemsrisiko=Berusaha::select('kd_resiko',DB::raw('COUNT(*) as total'))->groupBy('kd_resiko')->orderBy('total', 'desc')->get();
-		$itemsjenisizin=Berusaha::select('uraian_jenis_perizinan',DB::raw('COUNT(*) as total'))->groupBy('uraian_jenis_perizinan')->orderBy('total', 'desc')->get();
-		return view('admin.berusaha.statistik',compact('judul','totalAll','totalPerBulan', 'itemsrisiko','itemsjenisizin','resikoPerBulan'));
+		$itemsrisiko=Berusaha::select('kd_resiko',DB::raw('COUNT(*) as total'))->whereYear('day_of_tgl_izin', $year)->groupBy('kd_resiko')->orderBy('total', 'desc')->get();
+		$itemsjenisizin=Berusaha::select('uraian_jenis_perizinan',DB::raw('COUNT(*) as total'))->whereYear('day_of_tgl_izin', $year)->groupBy('uraian_jenis_perizinan')->orderBy('total', 'desc')->get();
+		return view('admin.berusaha.statistik',compact('judul','totalAll','totalPerBulan', 'itemsrisiko','itemsjenisizin','resikoPerBulan','year'));
 	}
 }
