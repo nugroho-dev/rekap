@@ -73,9 +73,9 @@ Route::get('/send-mail', [MailController::class, 'index']);
 Route::get('/proses', [SicantikProsesController::class, 'index']);
 Route::post('/proses', [SicantikProsesController::class, 'index']);
 Route::post('/send-mail/{id}', [MailController::class, 'index']);
-Route::get('/login', [LoginController::class, 'index'])->name('login')->middleware('guest');
-Route::post('/login', [LoginController::class, 'authenticate']);
-Route::get('/logout', [LoginController::class, 'logout']);
+// Route::get('/login', [LoginController::class, 'index'])->name('login')->middleware('guest');
+// Route::post('/login', [LoginController::class, 'authenticate']);
+// Route::get('/logout', [LoginController::class, 'logout']);
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('auth');
 Route::get('/maintenance', [MaintenanceController::class, 'index'])->middleware('auth');
 

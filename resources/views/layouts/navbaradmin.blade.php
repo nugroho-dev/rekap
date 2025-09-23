@@ -1,4 +1,4 @@
- <header class="navbar navbar-expand-md d-none d-lg-flex d-print-none" >
+<header class="navbar navbar-expand-md d-none d-lg-flex d-print-none" >
         <div class="container-xl">
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -111,7 +111,14 @@
               <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
                 <a href="{{ url('/') }}" class="dropdown-item">Home</a>
                 <a href="#" class="dropdown-item">Profile</a>
-                <a href="{{ url('/logout') }}" class="dropdown-item">Logout</a>
+
+                {{-- ganti link logout GET -> form POST untuk Fortify --}}
+                <form method="POST" action="{{ route('logout') }}" class="m-0">
+                    @csrf
+                    <button type="submit" class="dropdown-item" style="cursor:pointer;">
+                        Logout
+                    </button>
+                </form>
               </div>
             </div>
           </div>
