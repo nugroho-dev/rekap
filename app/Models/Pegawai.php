@@ -5,34 +5,55 @@ namespace App\Models;
 use Cviebrock\EloquentSluggable\Sluggable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes; // added
+use Illuminate\Support\Str; // added
 
 class Pegawai extends Model
 {
-    use HasFactory, Sluggable;
+    use HasFactory, Sluggable, SoftDeletes; // SoftDeletes added
+
     protected $connection = 'mysql';
     protected $guarded = ['id'];
     public $table = "pegawai";
+
+    // automatically cast uuid as string (optional)
+    protected $casts = [
+        'uuid' => 'string',
+    ];
+
+    // generate uuid on creating
+    protected static function booted()
+    {
+        static::creating(function ($model) {
+            if (empty($model->uuid)) {
+                $model->uuid = (string) Str::uuid();
+            }
+        });
+    }
+
+    // changed relation: pegawai belongsTo instansi via instansi_uuid -> instansi.uuid
     public function instansi()
     {
-        return $this->belongsTo(Instansi::class,'id_instansi');
+        return $this->belongsTo(Instansi::class, 'instansi_uuid', 'uuid');
     }
-    public function pengaduan()
-    {
-        return $this->hasMany(Pengaduan::class,'id');
-    }
+
+    // perbaiki relasi ke User (pegawai hasOne user via users.id_pegawai)
     public function user()
     {
-        return $this->belongsTo(User::class,'id_pegawai');
+        return $this->hasOne(User::class, 'id_pegawai', 'id');
     }
+
     public function getRouteKeyName()
     {
-        return 'slug';
+        return 'uuid';
     }
+
     public function sluggable(): array
     {
+        // gunakan field 'nama' sebagai source (bukan 'title')
         return [
             'slug' => [
-                'source' => 'title'
+                'source' => 'nama'
             ]
         ];
     }

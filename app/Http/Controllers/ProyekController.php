@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use App\Models\Proses;
+use Illuminate\Support\Facades\Log;
 
 use function PHPUnit\Framework\isNull;
 
@@ -19,41 +20,63 @@ class ProyekController extends Controller
      */
     public function index(Request $request)
     {
-		$judul = 'Data Proyek Berusaha';
-		$query = Proyek::query();
-		$search = $request->input('search');
-		$date_start = $request->input('date_start');
-		$date_end = $request->input('date_end');
-		$month = $request->input('month');
-		$year = $request->input('year');
+        $judul = 'Data Proyek Berusaha';
+        $query = Proyek::query();
 
-		if ($search) {
-			$query->where(function($q) use ($search) {
-			$q->where('nama_perusahaan', 'LIKE', "%{$search}%")
-			  ->orWhere('nib', 'LIKE', "%{$search}%")
-			  ->orWhere('kbli', 'LIKE', "%{$search}%");
-			});
-		}
+        // select hanya kolom yang dipakai di view (kurangi payload)
+        $query->select([
+            'id_proyek','nib','nama_perusahaan','kbli','judul_kbli',
+            'nama_proyek','uraian_jenis_proyek','uraian_risiko_proyek',
+            'kl_sektor_pembina','day_of_tanggal_pengajuan_proyek',
+            'tanggal_terbit_oss','jumlah_investasi','tki',
+            'nama_user','email','nomor_telp','alamat_usaha',
+            'kelurahan_usaha','kecamatan_usaha','kab_kota_usaha',
+            'longitude','latitude','uraian_skala_usaha'
+        ]);
 
-		if ($date_start && $date_end) {
-			if ($date_start > $date_end) {
-			return redirect('/proyek')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda');
-			}
-			$query->whereBetween('day_of_tanggal_pengajuan_proyek', [$date_start, $date_end]);
-		}
+        $search = $request->input('search');
+        $date_start = $request->input('date_start');
+        $date_end = $request->input('date_end');
+        $month = $request->input('month');
+        $year = $request->input('year');
 
-		if ($month && $year) {
-			$query->whereMonth('day_of_tanggal_pengajuan_proyek', $month)
-			  ->whereYear('day_of_tanggal_pengajuan_proyek', $year);
-		} elseif ($year) {
-			$query->whereYear('day_of_tanggal_pengajuan_proyek', $year);
-		}
+        if ($search) {
+            // prefer indexable columns first (nib, kbli) then text search on nama_perusahaan
+            $query->where(function($q) use ($search) {
+                $q->where('nib', 'LIKE', "%{$search}%")
+                  ->orWhere('kbli', 'LIKE', "%{$search}%")
+                  ->orWhere('nama_perusahaan', 'LIKE', "%{$search}%");
+            });
+        }
 
-		$perPage = $request->input('perPage', 50);
-		 $items = $query->orderBy('day_of_tanggal_pengajuan_proyek', 'asc')->paginate($perPage);
-		$items->withPath(url('/proyek'));
+        if ($date_start && $date_end) {
+            if ($date_start > $date_end) {
+                return redirect('/proyek')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda');
+            }
+            $query->whereBetween('day_of_tanggal_pengajuan_proyek', [$date_start, $date_end]);
+        }
 
-		return view('admin.investor.index', compact('judul', 'items', 'perPage', 'search', 'date_start', 'date_end', 'month', 'year'));
+        if ($month && $year) {
+            // gunakan whereRaw jika indeks composite diperlukan, namun indeks pada tanggal lebih efektif
+            $query->whereMonth('day_of_tanggal_pengajuan_proyek', $month)
+                  ->whereYear('day_of_tanggal_pengajuan_proyek', $year);
+        } elseif ($year) {
+            $query->whereYear('day_of_tanggal_pengajuan_proyek', $year);
+        }
+
+        $perPage = (int) $request->input('perPage', 50);
+
+        // simplePaginate menghindari COUNT(*) yang berat untuk tabel besar
+        $items = $query->orderBy('day_of_tanggal_pengajuan_proyek', 'asc')->paginate($perPage);
+
+        // ambil skipped rows / import errors dari session (flash) dan teruskan ke view
+        $importSkipped = session('import_skipped', []);
+        $importErrors = session('import_errors', []);
+
+        return view('admin.proyek.index', compact(
+            'judul','items','perPage','search','date_start','date_end','month','year',
+            'importSkipped','importErrors'
+        ));
     }
 
     /**
@@ -150,28 +173,37 @@ class ProyekController extends Controller
  
 	public function import_excel(Request $request) 
 	{
-		// validasi
-		$this->validate($request, [
-			'file' => 'required|mimes:csv,xls,xlsx'
-		]);
- 
-		// menangkap file excel
-		$file = $request->file('file');
- 
-		// membuat nama file unik
-		$nama_file = rand().$file->getClientOriginalName();
+        $this->validate($request, [
+            'file' => 'required|mimes:csv,xls,xlsx'
+        ]);
 
-		// upload ke folder file_siswa di dalam folder public
-		$file->move(base_path('storage/app/public/file_proyek'), $nama_file);
+        $file = $request->file('file');
+        $nama_file = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
 
-		// import data
-		Excel::import(new ProyekImport, base_path('storage/app/public/file_proyek/' . $nama_file));
- 
-		// notifikasi dengan session
-		//Session::flash('sukses','Data  Berhasil Diimport!');
- 
-		// alihkan halaman kembali
-		return redirect('/proyek')->with('success', 'Data Berhasil Diimport !');
+        $path = $file->storeAs('file_proyek', $nama_file, 'public');
+
+        try {
+            Excel::import(new ProyekImport, storage_path('app/public/' . $path));
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+            $failures = $e->failures();
+            Log::error('Excel validation failures: '.json_encode($failures));
+            return redirect('/berusaha/proyek')->with('error', 'File tidak valid.')->with('import_errors', $failures);
+        } catch (\Throwable $e) {
+            Log::error('Import failed: '.$e->getMessage());
+            return redirect('/berusaha/proyek')->with('error', 'Import gagal: '.$e->getMessage());
+        }
+
+        // ambil skipped dari session (ProyekImport telah men-flash jika ada)
+        $skipped = session('import_skipped', []);
+
+        if (!empty($skipped)) {
+            $count = count($skipped);
+            return redirect('/berusaha/proyek')
+                ->with('warning', "Import selesai, namun {$count} baris tidak diimpor.")
+                ->with('import_skipped', $skipped);
+        }
+
+        return redirect('/berusaha/proyek')->with('success', 'Data Berhasil Diimport !');
 	}
 	public function statistik(Request $request)
     {

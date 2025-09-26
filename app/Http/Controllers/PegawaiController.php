@@ -7,18 +7,38 @@ use Illuminate\Http\Request;
 use \Cviebrock\EloquentSluggable\Services\SlugService;
 use App\Models\Instansi;
 use App\Models\Pegawai;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 
 class PegawaiController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $judul = 'Data Pegawai';
-        $items = Pegawai::where('del', 0)->paginate(15);
-        return view('admin.konfigurasi.pegawai.index', compact('judul', 'items'));
+
+        $q = trim((string) $request->input('q', ''));
+
+        $query = Pegawai::with('instansi')
+            ->where('del', 0)
+            ->whereNull('deleted_at');
+
+        if ($q !== '') {
+            $query->where(function ($sub) use ($q) {
+                $sub->where('nama', 'like', "%{$q}%")
+                    ->orWhere('nip', 'like', "%{$q}%")
+                    ->orWhereHas('instansi', function ($inq) use ($q) {
+                        $inq->where('nama_instansi', 'like', "%{$q}%");
+                    });
+            });
+        }
+
+        $items = $query->orderBy('nama')->paginate(15)->appends(['q' => $q]);
+
+        return view('admin.konfigurasi.pegawai.index', compact('judul', 'items', 'q'));
     }
 
     /**
@@ -27,8 +47,11 @@ class PegawaiController extends Controller
     public function create()
     {
         $judul = 'Buat Data Pegawai';
-        $items = Instansi::where('del', 0)->get();
-        return view('admin.konfigurasi.pegawai.create', compact('judul','items'));
+        // Ambil instansi aktif
+        $items = Instansi::where('del', 0)->whereNull('deleted_at')->get();
+        // generate token server-side
+        $pegawai_token = (string) Str::uuid();
+        return view('admin.konfigurasi.pegawai.create', compact('judul','items','pegawai_token'));
     }
 
     /**
@@ -36,14 +59,31 @@ class PegawaiController extends Controller
      */
     public function store(Request $request)
     {
-        $validatedData = $request->validate(['pegawai_token' => 'required','nama' => 'required|max:255', 'slug' => 'required|unique:pegawai', 'nip' => 'required', 'id_instansi' => 'required', 'no_hp' => 'required', 'foto' => 'image|file|max:1024']);
-        if ($request->file('foto')) {
-            $validatedData['foto'] = $request->file('foto')->store('public/foto-images');
+        $validated = $request->validate([
+            'pegawai_token' => 'required',
+            'nama' => 'required|max:255',
+            'slug' => 'required|unique:pegawai',
+            'nip' => 'required',
+            // require instansi_uuid (exists on instansi.uuid)
+            'instansi_uuid' => 'required|exists:instansi,uuid',
+            'no_hp' => 'required',
+            'foto' => 'nullable|image|file|max:1024',
+        ]);
+
+        // maintain legacy numeric id_instansi for compatibility
+        $instansi = Instansi::where('uuid', $validated['instansi_uuid'])->first();
+        if ($instansi) {
+            $validated['id_instansi'] = $instansi->id;
         }
-        $validatedData['del'] = 0;
-        $validatedData['user_status'] = 0;
-        $validatedData['ttd'] = 0;
-        Pegawai::create($validatedData);
+
+        $this->handleFotoUpload($request, $validated);
+
+        $validated['del'] = 0;
+        $validated['user_status'] = 0;
+        $validated['ttd'] = 0;
+
+        Pegawai::create($validated);
+
         return redirect('/konfigurasi/pegawai')->with('success', 'Pegawai Baru Berhasil di Tambahkan !');
     }
 
@@ -58,10 +98,10 @@ class PegawaiController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(pegawai $pegawai)
+    public function edit(Pegawai $pegawai)
     {
         $judul = 'Edit Data Pegawai';
-        $items = Instansi::where('del', 0)->get();
+        $items = Instansi::where('del', 0)->whereNull('deleted_at')->get();
         return view('admin.konfigurasi.pegawai.edit', compact('judul','items', 'pegawai'));
     }
     
@@ -69,33 +109,76 @@ class PegawaiController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, pegawai $pegawai)
+    public function update(Request $request, Pegawai $pegawai)
     {
-        $validatedData = $request->validate(['pegawai_token' => 'required','nama' => 'required|max:255', 'nip' => 'required', 'id_instansi' => 'required', 'no_hp' => 'required', 'foto' => 'image|file|max:1024']);
-        if ($request->file('foto')) {
-            $validatedData['foto'] = $request->file('foto')->store('public/foto-images');
+        $validated = $request->validate([
+            'pegawai_token' => 'required',
+            'nama' => 'required|max:255',
+            'slug' => 'sometimes|required|unique:pegawai,slug,'.$pegawai->id,
+            'nip' => 'required',
+            'instansi_uuid' => 'required|exists:instansi,uuid',
+            'no_hp' => 'required',
+            'foto' => 'nullable|image|file|max:1024',
+        ]);
+
+        // keep numeric id_instansi in sync
+        $instansi = Instansi::where('uuid', $validated['instansi_uuid'])->first();
+        if ($instansi) {
+            $validated['id_instansi'] = $instansi->id;
         }
-        $validatedData['del'] = 0;
-        if ($request->slug != $pegawai->slug) {
-            $rules['slug'] = 'required|unique:pegawai';
-        }
-        if ($request->file('foto')) {
-            if ($request->oldImageFile) {
-                Storage::delete($request->oldImageFile);
+
+        $this->handleFotoUpload($request, $validated, $pegawai);
+
+        $validated['del'] = 0;
+
+        $pegawai->update($validated);
+
+        return redirect('/konfigurasi/pegawai')->with('success', 'Data Pegawai Berhasil di Update !');
+    }
+
+    // helper untuk upload foto (dipakai di store & update)
+    protected function handleFotoUpload(Request $request, array &$data, Pegawai $pegawai = null)
+    {
+        if ($request->hasFile('foto')) {
+            // hapus file lama jika ada (untuk update) — gunakan disk 'public'
+            if ($pegawai && $pegawai->foto) {
+                Storage::disk('public')->delete($pegawai->foto);
             }
-            $validatedData['foto'] = $request->file('foto')->store('public/foto-images');
+            // simpan di disk public sehingga Storage::url() bekerja
+            $path = $request->file('foto')->store('foto-images', 'public');
+            $data['foto'] = $path;
         }
-        Pegawai::where('id',$pegawai->id)->update($validatedData);;
-        return redirect('/konfigurasi/pegawai')->with('success', 'Pegawai Baru Berhasil di Tambahkan !');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(pegawai $pegawai)
+    public function destroy(Pegawai $pegawai)
     {
-        //
+        $pegawai->update(['del' => 1]);
+        $pegawai->delete();
+        return redirect()->back()->with('success', 'Pegawai dihapus.');
     }
+
+    public function restore($uuid)
+    {
+        $pegawai = Pegawai::withTrashed()->where('uuid', $uuid)->firstOrFail();
+        $pegawai->restore();
+        $pegawai->update(['del' => 0]);
+        return redirect()->back()->with('success', 'Pegawai dikembalikan.');
+    }
+
+    public function forceDelete($uuid)
+    {
+        $pegawai = Pegawai::withTrashed()->where('uuid', $uuid)->firstOrFail();
+        // hapus file foto jika ada
+        if ($pegawai->foto) {
+            Storage::disk('public')->delete($pegawai->foto);
+        }
+        $pegawai->forceDelete();
+        return redirect()->back()->with('success', 'Pegawai dihapus permanen.');
+    }
+
     public function checkTtd(Request $request)
     {
         Pegawai::where('ttd', 1)->update(['ttd' => 0]);

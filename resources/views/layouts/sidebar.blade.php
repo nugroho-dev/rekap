@@ -160,8 +160,8 @@
                 </a>
                 <div class="dropdown-menu {{ Request::is('realiasi*')?'show':'close' }} {{ Request::is('pengawasan*')?'show':'close' }}">
                   <div class="dropdown-menu-columns">
-                      <a class="dropdown-item" href="{{ url('/realiasi/investasi/verifikasi') }}">
-                        Data Proyek
+                      <a class="dropdown-item" href="{{ route('proyek.verification.index') }}">
+                        Verifikasi Proyek
                       </a>
                        <a class="dropdown-item" href="{{ url('/maintenance') }}">
                         Realisasi Investasi (LKPM)
@@ -200,8 +200,18 @@
                 </a>
                 <div class="dropdown-menu {{ Request::is('berusaha*')?'show':'close' }}">
                   <div class="dropdown-menu-columns">
-                      <a class="dropdown-item" href="{{ url('/berusaha') }}">
-                        Perizinan Berusaha
+                      <a class="dropdown-item" href="{{ url('/berusaha/proyek') }}">
+                        Data Proyek
+                      </a>
+                  </div>
+                  <div class="dropdown-menu-columns">
+                      <a class="dropdown-item" href="{{ url('/berusaha/izin') }}">
+                        Data Izin
+                      </a>
+                  </div>
+                  <div class="dropdown-menu-columns">
+                      <a class="dropdown-item" href="{{ url('/berusaha/nib') }}">
+                        Data NIB
                       </a>
                   </div>
                 </div>

@@ -13,11 +13,25 @@ class InstansiController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $judul='Data Instansi';
-        $items=Instansi::where('del', 0)->paginate(15);
-        return view('admin.konfigurasi.instansi.index', compact('judul','items'));
+        $judul = 'Data Instansi';
+        $q = trim((string) $request->input('q', ''));
+
+        $query = Instansi::query()
+            ->where('del', 0)
+            ->whereNull('deleted_at');
+
+        if ($q !== '') {
+            $query->where(function ($sub) use ($q) {
+                $sub->where('nama_instansi', 'like', "%{$q}%")
+                    ->orWhere('alamat', 'like', "%{$q}%");
+            });
+        }
+
+        $items = $query->orderBy('nama_instansi')->paginate(15)->appends(['q' => $q]);
+
+        return view('admin.konfigurasi.instansi.index', compact('judul', 'items', 'q'));
     }
 
     /**
@@ -34,12 +48,21 @@ class InstansiController extends Controller
      */
     public function store(Request $request)
     {
-        $validatedData = $request->validate(['nama_instansi' => 'required|max:255', 'slug' => 'required|unique:instansi', 'alamat' => 'required', 'logo' => 'image|file|max:1024']);
+        $validatedData = $request->validate([
+            'nama_instansi' => 'required|max:255',
+            'slug' => 'required|unique:instansi',
+            'alamat' => 'required',
+            'logo' => 'nullable|image|file|max:1024'
+        ]);
+
         if ($request->file('logo')) {
-            $validatedData['logo'] = $request->file('logo')->store('public/logo-images');
+            // simpan di disk public
+            $validatedData['logo'] = $request->file('logo')->store('logo-images', 'public');
         }
+
         $validatedData['del'] = 0;
         Instansi::create($validatedData);
+
         return redirect('/konfigurasi/instansi')->with('success', 'Instansi Baru Berhasil di Tambahkan !');
     }
 
@@ -65,20 +88,29 @@ class InstansiController extends Controller
      */
     public function update(Request $request, Instansi $instansi)
     {
-        $rules=['nama_instansi' => 'required|max:255', 'alamat' => 'required', 'logo' => 'image|file|max:1024'];
+        $rules = [
+            'nama_instansi' => 'required|max:255',
+            'alamat' => 'required',
+            'logo' => 'nullable|image|file|max:1024'
+        ];
+
         if ($request->slug != $instansi->slug) {
             $rules['slug'] = 'required|unique:instansi';
         }
+
         $validatedData = $request->validate($rules);
+
         if ($request->file('logo')) {
-            if ($request->oldImage) {
-                Storage::delete($request->oldImage);
+            if ($instansi->logo) {
+                Storage::disk('public')->delete($instansi->logo);
             }
-            $validatedData['logo'] = $request->file('logo')->store('public/logo-images');
+            $validatedData['logo'] = $request->file('logo')->store('logo-images', 'public');
         }
+
         $validatedData['del'] = 0;
-        Instansi::where('id', $instansi->id)->update($validatedData);
-        return redirect('/konfigurasi/instansi')->with('success', 'Instansi Baru Berhasil di Tambahkan !');
+        $instansi->update($validatedData);
+
+        return redirect('/konfigurasi/instansi')->with('success', 'Instansi Berhasil di Update !');
     }
 
     /**
@@ -86,9 +118,12 @@ class InstansiController extends Controller
      */
     public function destroy(Instansi $instansi)
     {
-        $validatedData['del'] = 1;
-        Instansi::where('id', $instansi->id)->update($validatedData);
-        return redirect('/konfigurasi/instansi')->with('success', 'Instansi Baru Berhasil di hapus!');
+        // legacy flag
+        $instansi->update(['del' => 1]);
+        // soft delete
+        $instansi->delete();
+
+        return redirect('/konfigurasi/instansi')->with('success', 'Instansi berhasil dihapus (soft delete).');
     }
 
     public function checkSlug(Request $request)
@@ -97,4 +132,22 @@ class InstansiController extends Controller
         return response()->json(['slug' => $slug]);
     }
 
+    // optional: forceDelete and restore if you want to manage trashed records
+    public function restore($uuid)
+    {
+        $instansi = Instansi::withTrashed()->where('uuid', $uuid)->firstOrFail();
+        $instansi->restore();
+        $instansi->update(['del' => 0]);
+        return redirect()->back()->with('success', 'Instansi dikembalikan.');
+    }
+
+    public function forceDelete($uuid)
+    {
+        $instansi = Instansi::withTrashed()->where('uuid', $uuid)->firstOrFail();
+        if ($instansi->logo) {
+            Storage::disk('public')->delete($instansi->logo);
+        }
+        $instansi->forceDelete();
+        return redirect()->back()->with('success', 'Instansi dihapus permanen.');
+    }
 }

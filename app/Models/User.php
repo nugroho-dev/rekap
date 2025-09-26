@@ -40,8 +40,10 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    // user belongsTo pegawai via id_pegawai
     public function pegawai()
     {
-        return $this->hasOne(Pegawai::class,'id');
+        return $this->belongsTo(Pegawai::class, 'id_pegawai');
     }
 }
