@@ -658,6 +658,7 @@ class ProyekVerificationController extends Controller
             'month' => 'nullable|integer|min:1|max:12',
             'q' => 'nullable|string',
             'filter' => 'nullable|string|in:all,verified,unverified',
+            'verified_at' => 'nullable|date',
         ]);
 
         $year = $data['year'] ?? date('Y');
@@ -735,7 +736,12 @@ class ProyekVerificationController extends Controller
                 $verify->status_perusahaan = $rec_status_perusahaan;
                 $verify->status_kbli = $rec_status_kbli;
                 $verify->notes = $verify->notes ?? 'Diterapkan otomatis dari rekomendasi sistem';
-                $verify->verified_at = Carbon::now();
+                // use provided verified_at if present, otherwise use current time
+                if (!empty($data['verified_at'])) {
+                    try { $verify->verified_at = Carbon::parse($data['verified_at']); } catch (\Exception $e) { $verify->verified_at = Carbon::now(); }
+                } else {
+                    $verify->verified_at = Carbon::now();
+                }
                 $verify->verified_by = Auth::id() ?? null;
                 $verify->save();
                 $applied++;

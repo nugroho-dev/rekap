@@ -29,6 +29,29 @@
           </div>
         </div>
 
+        <!-- Modal: pick verification date -->
+        <div class="modal" id="applyRecsModal" tabindex="-1" style="display:none;">
+          <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Pilih Tanggal Verifikasi</h5>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <div class="mb-2">
+                  <label class="form-label">Tanggal</label>
+                  <input type="date" id="applyRecsDate" class="form-control" value="{{ \Carbon\Carbon::now()->toDateString() }}">
+                  <div class="form-text">Pilih tanggal yang akan digunakan untuk semua verifikasi yang diterapkan.</div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" id="applyRecsCancel" class="btn btn-secondary btn-sm">Batal</button>
+                <button type="button" id="applyRecsConfirm" class="btn btn-primary btn-sm">Terapkan</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="card-body border-bottom py-2">
           <div class="d-flex">
                 <div class="text-secondary">Tampilkan
@@ -170,8 +193,25 @@
     document.addEventListener('DOMContentLoaded', function () {
       const btn = document.getElementById('applyRecsBtn');
       if (!btn) return;
-      btn.addEventListener('click', async function () {
-        if (!confirm('Terapkan rekomendasi sistem untuk semua baris yang direkomendasikan pada halaman ini?')) return;
+      btn.addEventListener('click', function () {
+        // show modal
+        const modal = document.getElementById('applyRecsModal');
+        if (!modal) return;
+        modal.style.display = 'block';
+      });
+
+      const modal = document.getElementById('applyRecsModal');
+      const cancel = document.getElementById('applyRecsCancel');
+      const confirmBtn = document.getElementById('applyRecsConfirm');
+      const dateInput = document.getElementById('applyRecsDate');
+      if (cancel) cancel.addEventListener('click', function () { modal.style.display = 'none'; });
+      if (modal) modal.addEventListener('click', function (e) { if (e.target === modal) modal.style.display = 'none'; });
+
+      if (confirmBtn) confirmBtn.addEventListener('click', async function () {
+        const date = dateInput ? dateInput.value : '';
+        if (!date) { alert('Pilih tanggal verifikasi'); return; }
+        if (!confirm('Yakin menerapkan rekomendasi dengan tanggal verifikasi ' + date + '?')) return;
+        modal.style.display = 'none';
         btn.disabled = true;
         btn.innerText = 'Menerapkan...';
         try {
@@ -180,6 +220,7 @@
           params.append('month', '{{ $month }}');
           params.append('q', '{{ request('q') ?? '' }}');
           params.append('filter', '{{ request('filter','all') }}');
+          params.append('verified_at', date);
 
           const res = await fetch('{{ route('proyek.verification.applyRecommendations') }}', {
             method: 'POST',
