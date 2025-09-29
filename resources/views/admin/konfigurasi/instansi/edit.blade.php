@@ -48,6 +48,12 @@
                     </div>
 
                     <div class="mb-3">
+                        <label class="form-label">Alias</label>
+                        <input type="text" class="form-control" id="alias" name="alias" placeholder="Alias pendek atau singkatan" value="{{ old('alias', $instansi->alias ?? '') }}">
+                        @error('alias') <small class="form-hint text-danger">{{ $message }}</small> @enderror
+                    </div>
+
+                    <div class="mb-3">
                         <label class="form-label required">Alamat Instansi</label>
                         <input type="text" class="form-control" name="alamat" placeholder="Alamat Instansi" value="{{ old('alamat', $instansi->alamat) }}">
                         @error('alamat') <small class="form-hint text-danger">{{ $message }}</small> @enderror

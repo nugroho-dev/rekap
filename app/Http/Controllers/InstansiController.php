@@ -50,6 +50,7 @@ class InstansiController extends Controller
     {
         $validatedData = $request->validate([
             'nama_instansi' => 'required|max:255',
+            'alias' => 'nullable|string|max:255',
             'slug' => 'required|unique:instansi',
             'alamat' => 'required',
             'logo' => 'nullable|image|file|max:1024'
@@ -90,6 +91,7 @@ class InstansiController extends Controller
     {
         $rules = [
             'nama_instansi' => 'required|max:255',
+            'alias' => 'nullable|string|max:255',
             'alamat' => 'required',
             'logo' => 'nullable|image|file|max:1024'
         ];

@@ -203,7 +203,10 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('proyek')->middleware('auth')->group(function () {
         Route::get('/realisasi/verifikasi', [ProyekVerificationController::class, 'index'])->name('proyek.verification.index');
+        // standalone verification form page
+        Route::get('/realisasi/verifikasi/form', [ProyekVerificationController::class, 'form'])->name('proyek.verification.form');
         Route::post('/realisasi/verifikasi', [ProyekVerificationController::class, 'store'])->name('proyek.verification.store');
+    Route::post('/realisasi/verifikasi/apply-recommendations', [ProyekVerificationController::class, 'applyRecommendations'])->name('proyek.verification.applyRecommendations');
         Route::post('/realisasi/verifikasi/{proyekVerification}/status', [ProyekVerificationController::class, 'updateStatus'])->name('proyek.verification.updateStatus');
         Route::delete('/realisasi/verifikasi/{proyekVerification}', [ProyekVerificationController::class, 'destroy'])->name('proyek.verification.destroy');
     });

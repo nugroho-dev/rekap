@@ -73,28 +73,28 @@
                   <span class="dropdown">
                     <button class="btn dropdown-toggle align-text-top" data-bs-boundary="viewport" data-bs-toggle="dropdown">Actions</button>
                     <div class="dropdown-menu dropdown-menu-end">
-                      <a class="dropdown-item" href="{{ route('konfigurasi.pegawai.edit', $item) }}">Edit</a>
+                      <a class="dropdown-item" href="{{ route('konfigurasi.pegawai.edit', $item->uuid ?? $item->id) }}">Edit</a>
 
                       @if($item->trashed())
-                        <form method="POST" action="{{ route('konfigurasi.pegawai.restore', $item) }}">
+                        <form method="POST" action="{{ route('konfigurasi.pegawai.restore', $item->uuid ?? $item->id) }}">
                           @csrf
                           @method('PUT')
                           <button type="submit" class="dropdown-item">Restore</button>
                         </form>
 
-                        <form method="POST" action="{{ route('konfigurasi.pegawai.forceDelete', $item) }}">
+                        <form method="POST" action="{{ route('konfigurasi.pegawai.forceDelete', $item->uuid ?? $item->id) }}">
                           @csrf
                           @method('DELETE')
                           <button type="submit" class="dropdown-item text-danger">Delete Permanently</button>
                         </form>
                       @else
-                        <form method="POST" action="{{ route('konfigurasi.pegawai.destroy', $item) }}" onsubmit="return confirm('Hapus pegawai ini?')">
+                        <form method="POST" action="{{ route('konfigurasi.pegawai.destroy', $item->uuid ?? $item->id) }}" onsubmit="return confirm('Hapus pegawai ini?')">
                           @csrf
                           @method('DELETE')
                           <button class="dropdown-item">Hapus</button>
                         </form>
 
-                        <a class="dropdown-item" href="{{ route('konfigurasi.pegawai.ttd', $item) }}">Set Tanda Tangan</a>
+                        <a class="dropdown-item" href="{{ route('konfigurasi.pegawai.ttd', $item->uuid ?? $item->id) }}">Set Tanda Tangan</a>
                       @endif
 
                     </div>

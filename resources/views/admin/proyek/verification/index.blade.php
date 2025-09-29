@@ -38,7 +38,7 @@
 
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table class="table card-table table-vcenter text-nowrap table-striped">
+  <table class="table card-table table-vcenter table-striped">
           <thead>
             <tr>
               <th class="w-1">No.</th>
@@ -64,8 +64,8 @@
                 <td class="align-middle">{{ $m['year'] }}</td>
 
                 <!-- Projects -->
-                <td class="align-middle text-center">
-                  <div class="fw-semibold mb-1">{{ number_format($m['total'] ?? 0, 0, ',', '.') }} proyek</div>
+                <td class="align-middle text-center text-nowrap">
+                  <div class="fw-semibold mb-1"><a href="{{ route('proyek.verification.index', ['year' => $year, 'month' => $m['month']]) }}">{{ number_format($m['total'] ?? 0, 0, ',', '.') }} proyek</a></div>
 
                   <div class="d-flex justify-content-center gap-2 small text-muted">
                     <div><span class="badge bg-primary">PMA {{ number_format($m['count_pma'] ?? 0, 0, ',', '.') }}</span></div>
@@ -80,7 +80,7 @@
                 </td>
 
                 <!-- Investment -->
-                <td class="align-middle text-end">
+                <td class="align-middle text-end text-nowrap">
                   <div class="fw-semibold">Rp {{ number_format($m['sum_investasi'] ?? 0, 2, ',', '.') }}</div>
 
                   <div class="small text-muted mt-1">
@@ -90,21 +90,77 @@
                 </td>
 
                 <!-- Labor -->
-                <td class="align-middle text-center">
+                <td class="align-middle text-center text-nowrap">
                   <div class="fw-semibold">{{ number_format($m['sum_tki'] ?? 0, 0, ',', '.') }}</div>
                   <div class="text-muted small">Tenaga Kerja</div>
                 </td>
 
-                <!-- Verified -->
-                <td class="align-middle text-end">
-                  <div class="fw-semibold">{{ number_format($m['verified_count'] ?? 0, 0, ',', '.') }} proyek</div>
-                  <div class="text-muted small">terverifikasi</div>
+                <!-- Verified (clean layout) -->
+                <td class="align-middle text-end text-nowrap">
+                  <div class="d-flex flex-column gap-2 text-end text-nowrap" >
+                    <div class="d-flex justify-content-between w-100">
+                      <div class="text-muted small">Terverifikasi</div>
+                      <div class="fw-semibold">{{ number_format($m['verified_count'] ?? 0, 0, ',', '.') }} proyek</div>
+                    </div>
 
-                  <div class="fw-semibold mt-1">Rp {{ number_format($m['verified_sum_investasi'] ?? 0, 2, ',', '.') }}</div>
+                    <div class="d-flex justify-content-between w-100">
+                      <div class="text-muted small">Perusahaan terverifikasi</div>
+                      <div class="fw-semibold">{{ number_format((($m['verified_unique_companies_baru'] ?? 0) + ($m['verified_unique_companies_lama'] ?? 0)),0,',','.') }}</div>
+                    </div>
 
-                  <div class="small text-success mt-1">
-                    PMA: Rp {{ number_format($m['verified_sum_pma'] ?? 0, 2, ',', '.') }} |
-                    PMDN: Rp {{ number_format($m['verified_sum_pmdn'] ?? 0, 2, ',', '.') }}
+                    <div class="d-flex justify-content-between w-100">
+                      <div class="text-muted small">Pending / Perusahaan</div>
+                      <div class="fw-semibold small">{{ number_format($m['pending_count'] ?? 0,0,',','.') }} / {{ number_format($m['pending_unique_companies'] ?? 0,0,',','.') }}</div>
+                    </div>
+
+                    <div class="d-flex justify-content-between w-100">
+                      <div class="text-muted small">Dari pengajuan bulan lalu → diverifikasi</div>
+                      <div class="fw-semibold text-info">{{ number_format($m['cross_submission_prev'] ?? 0,0,',','.') }} proyek</div>
+                    </div>
+
+                    <div class="d-flex justify-content-between w-100">
+                      <div class="text-muted small">Dari pending bulan lalu → diverifikasi</div>
+                      <div class="fw-semibold text-info">{{ number_format($m['cross_pending_prev'] ?? 0,0,',','.') }} proyek</div>
+                    </div>
+
+                    <div class="d-flex justify-content-between w-100">
+                      <div class="text-muted small">Belum terverifikasi</div>
+                      <div class="fw-semibold text-danger">{{ number_format($m['unverified_count'] ?? 0,0,',','.') }} proyek</div>
+                    </div>
+
+                    <hr class="my-1" />
+
+                    <div class="d-flex justify-content-between w-100">
+                      <div class="text-muted small">Investasi Terverifikasi</div>
+                      <div class="fw-semibold">Rp {{ number_format($m['verified_sum_investasi'] ?? 0, 2, ',', '.') }}</div>
+                    </div>
+
+                    <div class="d-flex justify-content-between w-100">
+                      <div class="text-muted small">PMA / PMDN (Rp)</div>
+                      <div class="fw-semibold small">PMA: Rp {{ number_format($m['verified_sum_pma'] ?? 0, 2, ',', '.') }} &nbsp;|&nbsp; PMDN: Rp {{ number_format($m['verified_sum_pmdn'] ?? 0, 2, ',', '.') }}</div>
+                    </div>
+
+                    <div class="d-flex justify-content-between w-100">
+                      <div class="text-muted small">Perusahaan (baru / lama)</div>
+                      <div class="fw-semibold small">{{ number_format($m['verified_unique_companies_baru'] ?? 0,0,',','.') }} / {{ number_format($m['verified_unique_companies_lama'] ?? 0,0,',','.') }}</div>
+                    </div>
+
+                    <div class="d-flex justify-content-between w-100">
+                      <div class="text-muted small">Investasi (baru / penambahan)</div>
+                      <div class="fw-semibold small">{{ number_format($m['verified_count_investasi_baru'] ?? 0,0,',','.') }} / {{ number_format($m['verified_count_investasi_tambah'] ?? 0,0,',','.') }} proyek — Rp {{ number_format($m['verified_sum_investasi_baru'] ?? 0,2,',','.') }} / Rp {{ number_format($m['verified_sum_investasi_tambah'] ?? 0,2,',','.') }}</div>
+                    </div>
+                    
+                    <!-- PMA breakdown by baru / penambahan -->
+                    <div class="d-flex justify-content-between w-100">
+                      <div class="text-muted small">PMA (baru / penambahan)</div>
+                      <div class="fw-semibold small">{{ number_format($m['verified_count_pma_baru'] ?? 0,0,',','.') }} / {{ number_format($m['verified_count_pma_tambah'] ?? 0,0,',','.') }} proyek — Rp {{ number_format($m['verified_sum_pma_baru'] ?? 0,2,',','.') }} / Rp {{ number_format($m['verified_sum_pma_tambah'] ?? 0,2,',','.') }}</div>
+                    </div>
+
+                    <!-- PMDN breakdown by baru / penambahan -->
+                    <div class="d-flex justify-content-between w-100">
+                      <div class="text-muted small">PMDN (baru / penambahan)</div>
+                      <div class="fw-semibold small">{{ number_format($m['verified_count_pmdn_baru'] ?? 0,0,',','.') }} / {{ number_format($m['verified_count_pmdn_tambah'] ?? 0,0,',','.') }} proyek — Rp {{ number_format($m['verified_sum_pmdn_baru'] ?? 0,2,',','.') }} / Rp {{ number_format($m['verified_sum_pmdn_tambah'] ?? 0,2,',','.') }}</div>
+                    </div>
                   </div>
                 </td>
               </tr>
@@ -116,7 +172,7 @@
               <th colspan="3" class="text-end">Total Tahun {{ $year }}</th>
 
               <!-- Total Proyek (counts) -->
-              <th class="text-center">
+              <th class="text-center text-nowrap">
                 <div class="fw-semibold">{{ number_format($totalYear ?? 0, 0, ',', '.') }} proyek</div>
                 <div class="small text-muted mt-1">
                   PMA: {{ number_format($totalCountPmaYear ?? 0,0,',','.') }} &nbsp;|&nbsp; PMDN: {{ number_format($totalCountPmdnYear ?? 0,0,',','.') }}
@@ -128,11 +184,13 @@
                 </div>
               </th>
 
-              <!-- Total Investasi -->
-              <th class="text-end">
+              <!-- Total Investasi (and verified PMA/PMDN breakdown) -->
+              <th class="text-end text-nowrap">
                 <div class="fw-semibold">Rp {{ number_format($totalInvestasiYear ?? 0, 2, ',', '.') }}</div>
                 <div class="small text-muted mt-1">
-                  PMA: Rp {{ number_format($totalSumPmaYear ?? 0, 2, ',', '.') }} &nbsp;|&nbsp; PMDN: Rp {{ number_format($totalSumPmdnYear ?? 0, 2, ',', '.') }}
+                  <!-- Show verified PMA/PMDN split by baru / penambahan -->
+                  PMA (baru / penambahan): Rp {{ number_format($totalVerifiedSumPmaBaruYear ?? 0, 2, ',', '.') }} / Rp {{ number_format($totalVerifiedSumPmaTambahYear ?? 0, 2, ',', '.') }}<br>
+                  PMDN (baru / penambahan): Rp {{ number_format($totalVerifiedSumPmdnBaruYear ?? 0, 2, ',', '.') }} / Rp {{ number_format($totalVerifiedSumPmdnTambahYear ?? 0, 2, ',', '.') }}
                 </div>
               </th>
 
@@ -141,13 +199,72 @@
                 <div class="fw-semibold">{{ number_format($totalTkiYear ?? 0, 0, ',', '.') }} tenaga kerja</div>
               </th>
 
-              <!-- Total Terverifikasi -->
+              <!-- Total Terverifikasi (clean) -->
               <th class="text-end">
-                <div class="fw-semibold">{{ number_format($totalVerifiedYear ?? 0,0,',','.') }} proyek</div>
-                <div class="fw-semibold mt-1">Rp {{ number_format($totalVerifiedInvestasiYear ?? 0, 2, ',', '.') }}</div>
-                <div class="small text-success mt-1">
-                  PMA (terverifikasi): Rp {{ number_format($totalVerifiedSumPmaYear ?? 0, 2, ',', '.') }} &nbsp;|&nbsp; PMDN (terverifikasi): Rp {{ number_format($totalVerifiedSumPmdnYear ?? 0, 2, ',', '.') }}
+                <div class="d-flex flex-column gap-2 text-end text-nowrap" >
+                  <div class="d-flex justify-content-between w-100">
+                    <div class="text-muted small">Total terverifikasi (proyek)</div>
+                    <div class="fw-semibold">{{ number_format($totalVerifiedYear ?? 0,0,',','.') }} proyek</div>
+                  </div>
+
+                  <div class="d-flex justify-content-between w-100">
+                    <div class="text-muted small">Perusahaan terverifikasi</div>
+                    <div class="fw-semibold">{{ number_format((($totalVerifiedUniqueCompaniesBaruYear ?? 0) + ($totalVerifiedUniqueCompaniesLamaYear ?? 0)),0,',','.') }}</div>
+                  </div>
+
+                  <div class="d-flex justify-content-between w-100">
+                    <div class="text-muted small">Pending / Perusahaan</div>
+                    <div class="fw-semibold small">{{ number_format($totalPendingYear ?? 0,0,',','.') }} / {{ number_format($totalPendingUniqueCompaniesYear ?? 0,0,',','.') }}</div>
+                  </div>
+
+                  <div class="d-flex justify-content-between w-100">
+                    <div class="text-muted small">Dari pengajuan bulan lalu → diverifikasi (total)</div>
+                    <div class="fw-semibold text-info">{{ number_format($months->sum('cross_submission_prev') ?? 0,0,',','.') }} proyek</div>
+                  </div>
+
+                  <div class="d-flex justify-content-between w-100">
+                    <div class="text-muted small">Dari pending bulan lalu → diverifikasi (total)</div>
+                    <div class="fw-semibold text-info">{{ number_format($months->sum('cross_pending_prev') ?? 0,0,',','.') }} proyek</div>
+                  </div>
+
+                  <div class="d-flex justify-content-between w-100">
+                    <div class="text-muted small">Belum terverifikasi</div>
+                    <div class="fw-semibold text-danger">{{ number_format($totalUnverifiedYear ?? 0,0,',','.') }} proyek</div>
+                  </div>
+
+                  <hr class="my-1" />
+
+                  <div class="d-flex justify-content-between w-100">
+                    <div class="text-muted small">Investasi terverifikasi (Rp)</div>
+                    <div class="fw-semibold">Rp {{ number_format($totalVerifiedInvestasiYear ?? 0, 2, ',', '.') }}</div>
+                  </div>
+
+                  <div class="d-flex justify-content-between w-100">
+                    <div class="text-muted small">PMA / PMDN (Rp)</div>
+                    <div class="fw-semibold small">PMA: Rp {{ number_format($totalVerifiedSumPmaYear ?? 0, 2, ',', '.') }} &nbsp;|&nbsp; PMDN: Rp {{ number_format($totalVerifiedSumPmdnYear ?? 0, 2, ',', '.') }}</div>
+                  </div>
+
+                  <div class="d-flex justify-content-between w-100">
+                    <div class="text-muted small">Perusahaan (baru / lama)</div>
+                    <div class="fw-semibold small">{{ number_format($totalVerifiedUniqueCompaniesBaruYear ?? 0,0,',','.') }} / {{ number_format($totalVerifiedUniqueCompaniesLamaYear ?? 0,0,',','.') }}</div>
+                  </div>
+
+                  <div class="d-flex justify-content-between w-100">
+                    <div class="text-muted small">Investasi (baru / penambahan)</div>
+                    <div class="fw-semibold small">{{ number_format($totalVerifiedCountInvestasiBaruYear ?? 0,0,',','.') }} / {{ number_format($totalVerifiedCountInvestasiTambahYear ?? 0,0,',','.') }} proyek — Rp {{ number_format($totalVerifiedSumInvestasiBaruYear ?? 0,2,',','.') }} / Rp {{ number_format($totalVerifiedSumInvestasiTambahYear ?? 0,2,',','.') }}</div>
+                  </div>
+                  
+                  <div class="d-flex justify-content-between w-100">
+                    <div class="text-muted small">PMA (baru / penambahan)</div>
+                    <div class="fw-semibold small">{{ number_format($totalVerifiedCountPmaBaruYear ?? 0,0,',','.') }} / {{ number_format($totalVerifiedCountPmaTambahYear ?? 0,0,',','.') }} proyek — Rp {{ number_format($totalVerifiedSumPmaBaruYear ?? 0,2,',','.') }} / Rp {{ number_format($totalVerifiedSumPmaTambahYear ?? 0,2,',','.') }}</div>
+                  </div>
+
+                  <div class="d-flex justify-content-between w-100">
+                    <div class="text-muted small">PMDN (baru / penambahan)</div>
+                    <div class="fw-semibold small">{{ number_format($totalVerifiedCountPmdnBaruYear ?? 0,0,',','.') }} / {{ number_format($totalVerifiedCountPmdnTambahYear ?? 0,0,',','.') }} proyek — Rp {{ number_format($totalVerifiedSumPmdnBaruYear ?? 0,2,',','.') }} / Rp {{ number_format($totalVerifiedSumPmdnTambahYear ?? 0,2,',','.') }}</div>
+                  </div>
                 </div>
+              </th>
               </th>
             </tr>
           </tfoot>

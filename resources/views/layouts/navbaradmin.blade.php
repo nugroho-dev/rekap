@@ -101,11 +101,28 @@
               </div>
             </div>
             <div class="nav-item dropdown">
+              @php
+                  // prepare safe user-related variables to avoid null property access
+                  $user = auth()->user();
+                  $pegawai = $user?->pegawai ?? null;
+                  $instansiAlias = $pegawai?->instansi?->alias ?? '';
+                  // avatar fallback
+                  $avatarUrl = asset('images/avatar.png');
+                  if ($pegawai && !empty($pegawai->foto)) {
+                      try {
+                          $avatarUrl = url(Storage::url($pegawai->foto));
+                      } catch (\Throwable $e) {
+                          // keep default avatar on error
+                          $avatarUrl = asset('images/avatar.png');
+                      }
+                  }
+              @endphp
+
               <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Open user menu">
-                <span class="avatar avatar-sm" style="background-image: url({{ url(Storage::url(auth()->user()->pegawai->foto)) }})"></span>
+                <span class="avatar avatar-sm" style="background-image: url('{{ $avatarUrl }}')"></span>
                 <div class="d-none d-xl-block ps-2 text-capitalize">
-                  <div>{{ auth()->user()->pegawai->nama}}</div>
-                  <div class="mt-1 small text-muted">{{ auth()->user()->pegawai->instansi->alias }}</div>
+                  <div>{{ $pegawai?->nama ?? ($user->email ?? 'User') }}</div>
+                  <div class="mt-1 small text-muted">{{ $instansiAlias }}</div>
                 </div>
               </a>
               <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">

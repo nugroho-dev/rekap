@@ -62,6 +62,15 @@
                     </div>
                   </div>
                   <div class="mb-3">
+                    <label class="form-label">Alias</label>
+                    <div>
+                      <input type="text" class="form-control" placeholder="Alias pendek atau singkatan" id="alias" name="alias" value="{{ old('alias') }}">
+                      @error ('alias')
+                      <small class="form-hint text-danger">{{ $message }}</small>
+                      @enderror
+                    </div>
+                  </div>
+                  <div class="mb-3">
                     <label class="form-label required">Alamat Instansi</label>
                     <div>
                       <input type="text" class="form-control" aria-describedby="emailHelp" placeholder="Alamat Instansi" name="alamat" value="{{ old('alamat') }}">

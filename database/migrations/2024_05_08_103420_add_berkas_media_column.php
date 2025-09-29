@@ -11,10 +11,24 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Add columns and foreign key only if the pengaduan table exists
+        if (!Schema::hasTable('pengaduan')) {
+            return;
+        }
+
         Schema::table('pengaduan', function (Blueprint $table) {
-            $table->char('file')->nullable();
-            $table->unsignedBigInteger('id_media')->nullable();
-            $table->foreign('id_media')->references('id')->on('mediapengaduan');
+            if (!Schema::hasColumn('pengaduan', 'file')) {
+                $table->char('file')->nullable();
+            }
+
+            if (!Schema::hasColumn('pengaduan', 'id_media')) {
+                $table->unsignedBigInteger('id_media')->nullable();
+            }
+
+            // Add foreign key only if the referenced table and column exist
+            if (Schema::hasTable('mediapengaduan') && Schema::hasColumn('mediapengaduan', 'id')) {
+                $table->foreign('id_media')->references('id')->on('mediapengaduan');
+            }
         });
     }
 
