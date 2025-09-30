@@ -11,7 +11,7 @@
       height: 1px;
       min-width: 8px;
       margin: 0 .5rem;
-      background-image: radial-gradient(circle, rgb(0, 0, 0) 0.8px, rgb(0, 0, 0) 0.8px);
+      background-image: radial-gradient(circle, rgba(0, 0, 0, 0.452) 0.8px, rgba(0, 0, 0, 0) 0.8px);
       background-size: 6px 1px;
       background-repeat: repeat-x;
       align-self: center;
@@ -142,7 +142,10 @@
                   <div class="text-nowrap" >
                     <div class="d-flex justify-content-between w-auto">
                       <div class="text-muted small">Terverifikasi</div>
-                      <div class="fw-semibold">{{ number_format($m['verified_count'] ?? 0, 0, ',', '.') }} proyek</div>
+                      <div class="fw-semibold">
+                        <a href="{{ route('proyek.verification.list', ['year' => $year, 'month' => $m['month']]) }}" class="text-decoration-none">{{ number_format($m['verified_count'] ?? 0, 0, ',', '.') }}</a>
+                        &nbsp;proyek
+                      </div>
                     </div>
 
                     <div class="d-flex justify-content-between w-100">
@@ -299,116 +302,202 @@
 
           <tfoot>
             <tr class="table-active">
-              <th colspan="3" class="text-end">Total Tahun {{ $year }}</th>
+              <td class="align-middle"></td>
 
-              <!-- Total Proyek (counts) -->
-              <th class="text-center text-nowrap">
-                <div class="fw-semibold">{{ number_format($totalYear ?? 0, 0, ',', '.') }} proyek</div>
-                <div class="small text-muted mt-1">
-                  PMA: {{ number_format($totalCountPmaYear ?? 0,0,',','.') }} &nbsp;|&nbsp; PMDN: {{ number_format($totalCountPmdnYear ?? 0,0,',','.') }}
+              <td class="align-middle">
+                <div class="fw-semibold">Total Tahun {{ $year }}</div>
+                <div class="text-muted small">Ringkasan tahunan</div>
+              </td>
+
+              <td class="align-middle"></td>
+
+              <td class="align-middle text-center text-nowrap">
+                <div class="fw-semibold mb-1">{{ number_format($totalYear ?? 0, 0, ',', '.') }} proyek</div>
+
+                <div class="d-flex justify-content-center gap-2 small text-muted">
+                  <div><span class="badge bg-primary">PMA {{ number_format($totalCountPmaYear ?? 0, 0, ',', '.') }}</span></div>
+                  <div><span class="badge bg-secondary">PMDN {{ number_format($totalCountPmdnYear ?? 0, 0, ',', '.') }}</span></div>
                 </div>
-                <div class="small text-muted mt-1">
+
+                <div class="text-muted small mt-1">
                   Perusahaan: {{ number_format($totalUniqueCompaniesYear ?? 0,0,',','.') }}
                   &nbsp;|&nbsp; PMA: {{ number_format($totalUniqueCompaniesPmaYear ?? 0,0,',','.') }}
                   &nbsp;|&nbsp; PMDN: {{ number_format($totalUniqueCompaniesPmdnYear ?? 0,0,',','.') }}
                 </div>
-              </th>
+              </td>
 
-              <!-- Total Investasi (and verified PMA/PMDN breakdown) -->
-              <th class="text-start text-nowrap">
+              <td class="align-middle text-start text-nowrap w-25">
                 <div class="fw-semibold">Rp {{ number_format($totalInvestasiYear ?? 0, 2, ',', '.') }}</div>
-                <div class="small text-muted mt-1">
-                  <!-- Show verified PMA/PMDN split by baru / penambahan -->
+
+                <div class="small text-muted mt-1 d-none d-md-block">
                   <ol class="mb-0 ps-3">
                     <li>
-                      <strong>PMA</strong>
-                      <ul class="mb-0 ps-3">
-                        <li>Baru: Rp {{ number_format($totalVerifiedSumPmaBaruYear ?? 0, 2, ',', '.') }}</li>
-                        <li>Penambahan: Rp {{ number_format($totalVerifiedSumPmaTambahYear ?? 0, 2, ',', '.') }}</li>
-                      </ul>
+                      <div class="leader-row w-100">
+                        <div class="leader-label"><strong>PMA (total)</strong></div>
+                        <div class="leader-dots"></div>
+                        <div class="leader-value">Rp {{ number_format($totalSumPmaYear ?? 0, 2, ',', '.') }}</div>
+                      </div>
                     </li>
                     <li>
-                      <strong>PMDN</strong>
-                      <ul class="mb-0 ps-3">
-                        <li>Baru: Rp {{ number_format($totalVerifiedSumPmdnBaruYear ?? 0, 2, ',', '.') }}</li>
-                        <li>Penambahan: Rp {{ number_format($totalVerifiedSumPmdnTambahYear ?? 0, 2, ',', '.') }}</li>
-                      </ul>
+                      <div class="leader-row w-100">
+                        <div class="leader-label"><strong>PMDN (total)</strong></div>
+                        <div class="leader-dots"></div>
+                        <div class="leader-value">Rp {{ number_format($totalSumPmdnYear ?? 0, 2, ',', '.') }}</div>
+                      </div>
                     </li>
                   </ol>
                 </div>
-              </th>
 
-              <!-- Total Tenaga Kerja -->
-              <th class="text-center">
-                <div class="fw-semibold">{{ number_format($totalTkiYear ?? 0, 0, ',', '.') }} tenaga kerja</div>
-              </th>
+                <div class="small text-muted mt-1 d-block d-md-none">
+                  PMA: Rp {{ number_format($totalSumPmaYear ?? 0, 2, ',', '.') }} • PMDN: Rp {{ number_format($totalSumPmdnYear ?? 0, 2, ',', '.') }}
+                </div>
+              </td>
 
-              <!-- Total Terverifikasi (clean) -->
-              <th class="text-end">
-                <div class="d-flex flex-column gap-2 text-end text-nowrap" >
+              <td class="align-middle text-center text-nowrap">
+                <div class="fw-semibold">{{ number_format($totalTkiYear ?? 0, 0, ',', '.') }}</div>
+                <div class="text-muted small">Tenaga Kerja</div>
+              </td>
+
+              <!-- Verified: tampilkan detail sama persis seperti per-bulan -->
+              <td class="align-middle">
+                <div class="text-nowrap">
                   <div class="d-flex justify-content-between w-100">
-                    <div class="text-muted small">Total terverifikasi (proyek)</div>
+                    <div class="text-muted small">Terverifikasi</div>
                     <div class="fw-semibold">{{ number_format($totalVerifiedYear ?? 0,0,',','.') }} proyek</div>
                   </div>
 
-                  <div class="d-flex justify-content-between w-100">
-                    <div class="text-muted small">Perusahaan terverifikasi</div>
-                    <div class="fw-semibold">{{ number_format((($totalVerifiedUniqueCompaniesBaruYear ?? 0) + ($totalVerifiedUniqueCompaniesLamaYear ?? 0)),0,',','.') }}</div>
-                  </div>
-
-                  <div class="d-flex justify-content-between w-100">
-                    <div class="text-muted small">Pending / Perusahaan</div>
-                    <div class="fw-semibold small">{{ number_format($totalPendingYear ?? 0,0,',','.') }} / {{ number_format($totalPendingUniqueCompaniesYear ?? 0,0,',','.') }}</div>
-                  </div>
-
-                  <div class="d-flex justify-content-between w-100">
-                    <div class="text-muted small">Dari pengajuan bulan lalu → diverifikasi (total)</div>
-                    <div class="fw-semibold text-info">{{ number_format($months->sum('cross_submission_prev') ?? 0,0,',','.') }} proyek</div>
-                  </div>
-
-                  <div class="d-flex justify-content-between w-100">
-                    <div class="text-muted small">Dari pending bulan lalu → diverifikasi (total)</div>
-                    <div class="fw-semibold text-info">{{ number_format($months->sum('cross_pending_prev') ?? 0,0,',','.') }} proyek</div>
-                  </div>
-
-                  <div class="d-flex justify-content-between w-100">
-                    <div class="text-muted small">Belum terverifikasi</div>
-                    <div class="fw-semibold text-danger">{{ number_format($totalUnverifiedYear ?? 0,0,',','.') }} proyek</div>
-                  </div>
-
-                  <hr class="my-1" />
-
-                  <div class="d-flex justify-content-between w-100">
-                    <div class="text-muted small">Investasi terverifikasi (Rp)</div>
+                  <div class="d-flex justify-content-between w-100 mt-1">
+                    <div class="text-muted small">Investasi Terverifikasi</div>
                     <div class="fw-semibold">Rp {{ number_format($totalVerifiedInvestasiYear ?? 0, 2, ',', '.') }}</div>
                   </div>
 
-                  <div class="d-flex justify-content-between w-100">
-                    <div class="text-muted small">PMA / PMDN (Rp)</div>
-                    <div class="fw-semibold small">PMA: Rp {{ number_format($totalVerifiedSumPmaYear ?? 0, 2, ',', '.') }} &nbsp;|&nbsp; PMDN: Rp {{ number_format($totalVerifiedSumPmdnYear ?? 0, 2, ',', '.') }}</div>
+                  <div class="small d-none d-md-block mt-2">
+                    <ol class="mb-0 ps-3">
+                      <li>
+                        <strong>Investasi Terverifikasi (Rp)</strong>
+                        <ul class="mb-0 ps-3">
+                          <li>
+                            <div class="leader-row w-100">
+                              <div class="leader-label">Jumlah terverifikasi</div>
+                              <div class="leader-dots"></div>
+                              <div class="leader-value"><span class="fw-semibold">Rp {{ number_format($totalVerifiedInvestasiYear ?? 0, 2, ',', '.') }}</span></div>
+                            </div>
+                          </li>
+                        </ul>
+                      </li>
+
+                      <li class="mt-2">
+                        <strong>PMA / PMDN</strong>
+                        <ul class="mb-0 ps-3">
+                          <li>
+                            <div class="d-flex justify-content-between w-100">
+                              <div class="leader-label">PMA</div>
+                              <div class="leader-dots"></div>
+                              <div class="leader-value">Rp {{ number_format($totalVerifiedSumPmaYear ?? 0, 2, ',', '.') }}</div>
+                            </div>
+                          </li>
+                          <li>
+                            <div class="d-flex justify-content-between w-100">
+                              <div class="leader-label">PMDN</div>
+                              <div class="leader-dots"></div>
+                              <div class="leader-value">Rp {{ number_format($totalVerifiedSumPmdnYear ?? 0, 2, ',', '.') }}</div>
+                            </div>
+                          </li>
+                        </ul>
+                      </li>
+
+                      <li class="mt-2">
+                        <strong>Perusahaan (baru / lama)</strong>
+                        <ul class="mb-0 ps-3">
+                          <li>
+                            <div class="d-flex justify-content-between w-100">
+                              <div class="leader-label">Baru</div>
+                              <div class="leader-dots"></div>
+                              <div class="leader-value">{{ number_format($totalVerifiedUniqueCompaniesBaruYear ?? 0,0,',','.') }}</div>
+                            </div>
+                          </li>
+                          <li>
+                            <div class="d-flex justify-content-between w-100">
+                              <div class="leader-label">Lama</div>
+                              <div class="leader-dots"></div>
+                              <div class="leader-value">{{ number_format($totalVerifiedUniqueCompaniesLamaYear ?? 0,0,',','.') }}</div>
+                            </div>
+                          </li>
+                        </ul>
+                      </li>
+
+                      <li class="mt-2">
+                        <strong>Investasi (baru / penambahan)</strong>
+                        <ul class="mb-0 ps-3">
+                          <li>
+                            <div class="d-flex justify-content-between w-100">
+                              <div class="leader-label">Baru</div>
+                              <div class="leader-dots"></div>
+                              <div class="leader-value">{{ number_format($totalVerifiedCountInvestasiBaruYear ?? 0,0,',','.') }} proyek — Rp {{ number_format($totalVerifiedSumInvestasiBaruYear ?? 0,2,',','.') }}</div>
+                            </div>
+                          </li>
+                          <li>
+                            <div class="d-flex justify-content-between w-100">
+                              <div class="leader-label">Penambahan</div>
+                              <div class="leader-dots"></div>
+                              <div class="leader-value">{{ number_format($totalVerifiedCountInvestasiTambahYear ?? 0,0,',','.') }} proyek — Rp {{ number_format($totalVerifiedSumInvestasiTambahYear ?? 0,2,',','.') }}</div>
+                            </div>
+                          </li>
+                        </ul>
+                      </li>
+
+                      <li class="mt-2">
+                        <strong>PMA (baru / penambahan)</strong>
+                        <ul class="mb-0 ps-3">
+                          <li>
+                            <div class="d-flex justify-content-between w-100">
+                              <div class="leader-label">Baru</div>
+                              <div class="leader-dots"></div>
+                              <div class="leader-value">Rp {{ number_format($totalVerifiedSumPmaBaruYear ?? 0,2,',','.') }}</div>
+                            </div>
+                          </li>
+                          <li>
+                            <div class="d-flex justify-content-between w-100">
+                              <div class="leader-label">Penambahan</div>
+                              <div class="leader-dots"></div>
+                              <div class="leader-value"> Rp {{ number_format($totalVerifiedSumPmaTambahYear ?? 0,2,',','.') }}</div>
+                            </div>
+                          </li>
+                        </ul>
+                      </li>
+
+                      <li class="mt-2">
+                        <strong>PMDN (baru / penambahan)</strong>
+                        <ul class="mb-0 ps-3">
+                          <li>
+                            <div class="d-flex justify-content-between w-100">
+                              <div class="leader-label">Baru</div>
+                              <div class="leader-dots"></div>
+                              <div class="leader-value">Rp {{ number_format($totalVerifiedSumPmdnBaruYear ?? 0,2,',','.') }}</div>
+                            </div>
+                          </li>
+                          <li>
+                            <div class="d-flex justify-content-between w-100">
+                              <div class="leader-label">Penambahan</div>
+                              <div class="leader-dots"></div>
+                              <div class="leader-value">Rp {{ number_format($totalVerifiedSumPmdnTambahYear ?? 0,2,',','.') }}</div>
+                            </div>
+                          </li>
+                        </ul>
+                      </li>
+
+                    </ol>
                   </div>
 
-                  <div class="d-flex justify-content-between w-100">
-                    <div class="text-muted small">Perusahaan (baru / lama)</div>
-                    <div class="fw-semibold small">{{ number_format($totalVerifiedUniqueCompaniesBaruYear ?? 0,0,',','.') }} / {{ number_format($totalVerifiedUniqueCompaniesLamaYear ?? 0,0,',','.') }}</div>
-                  </div>
-
-                  <div class="d-flex justify-content-between w-100">
-                    <div class="text-muted small">Investasi (baru / penambahan)</div>
-                    <div class="fw-semibold small">{{ number_format($totalVerifiedCountInvestasiBaruYear ?? 0,0,',','.') }} / {{ number_format($totalVerifiedCountInvestasiTambahYear ?? 0,0,',','.') }} proyek — Rp {{ number_format($totalVerifiedSumInvestasiBaruYear ?? 0,2,',','.') }} / Rp {{ number_format($totalVerifiedSumInvestasiTambahYear ?? 0,2,',','.') }}</div>
-                  </div>
-                  
-                  <div class="d-flex justify-content-between w-100">
-                    <div class="text-muted small">PMA (baru / penambahan)</div>
-                    <div class="fw-semibold small">{{ number_format($totalVerifiedCountPmaBaruYear ?? 0,0,',','.') }} / {{ number_format($totalVerifiedCountPmaTambahYear ?? 0,0,',','.') }} proyek — Rp {{ number_format($totalVerifiedSumPmaBaruYear ?? 0,2,',','.') }} / Rp {{ number_format($totalVerifiedSumPmaTambahYear ?? 0,2,',','.') }}</div>
-                  </div>
-
-                  <div class="d-flex justify-content-between w-100">
-                    <div class="text-muted small">PMDN (baru / penambahan)</div>
-                    <div class="fw-semibold small">{{ number_format($totalVerifiedCountPmdnBaruYear ?? 0,0,',','.') }} / {{ number_format($totalVerifiedCountPmdnTambahYear ?? 0,0,',','.') }} proyek — Rp {{ number_format($totalVerifiedSumPmdnBaruYear ?? 0,2,',','.') }} / Rp {{ number_format($totalVerifiedSumPmdnTambahYear ?? 0,2,',','.') }}</div>
+                  <div class="d-block d-md-none small mt-2 text-muted">
+                    Terverifikasi: Rp {{ number_format($totalVerifiedInvestasiYear ?? 0, 2, ',', '.') }} — {{ number_format($totalVerifiedYear ?? 0,0,',','.') }} proyek
+                    <br>
+                    PMA baru: Rp {{ number_format($totalVerifiedSumPmaBaruYear ?? 0, 2, ',', '.') }} • PMA tambah: Rp {{ number_format($totalVerifiedSumPmaTambahYear ?? 0, 2, ',', '.') }}
+                    <br>
+                    PMDN baru: Rp {{ number_format($totalVerifiedSumPmdnBaruYear ?? 0, 2, ',', '.') }} • PMDN tambah: Rp {{ number_format($totalVerifiedSumPmdnTambahYear ?? 0, 2, ',', '.') }}
                   </div>
                 </div>
-              </th>
+              </td>
             </tr>
           </tfoot>
         </table>

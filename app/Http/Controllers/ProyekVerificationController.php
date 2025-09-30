@@ -130,56 +130,75 @@ class ProyekVerificationController extends Controller
         $verificationTable = (new ProyekVerification)->getTable();
 
         // Ambil agregasi terverifikasi berdasarkan proyek_verification.verified_at
-        $verified = ProyekVerification::selectRaw(
-                "MONTH({$verificationTable}.verified_at) as month,
-                 COUNT(*) as verified_count,
-                 COALESCE(SUM({$proyekTable}.jumlah_investasi),0) as verified_sum_investasi,
-                 COALESCE(SUM(CASE WHEN LOWER({$proyekTable}.uraian_status_penanaman_modal) LIKE '%pma%' THEN {$proyekTable}.jumlah_investasi ELSE 0 END),0) as verified_sum_pma,
-                 COALESCE(SUM(CASE WHEN LOWER({$proyekTable}.uraian_status_penanaman_modal) LIKE '%pmdn%' THEN {$proyekTable}.jumlah_investasi ELSE 0 END),0) as verified_sum_pmdn,
-                 COALESCE(SUM(CASE WHEN LOWER({$proyekTable}.uraian_status_penanaman_modal) LIKE '%pma%' THEN 1 ELSE 0 END),0) as verified_count_pma,
-                 COALESCE(SUM(CASE WHEN LOWER({$proyekTable}.uraian_status_penanaman_modal) LIKE '%pmdn%' THEN 1 ELSE 0 END),0) as verified_count_pmdn,
-                 COALESCE(COUNT(DISTINCT CASE WHEN LOWER({$proyekTable}.uraian_status_penanaman_modal) LIKE '%pma%' THEN {$proyekTable}.nib END),0) as verified_unique_companies_pma,
-                 COALESCE(COUNT(DISTINCT CASE WHEN LOWER({$proyekTable}.uraian_status_penanaman_modal) LIKE '%pmdn%' THEN {$proyekTable}.nib END),0) as verified_unique_companies_pmdn,
-              
-              COALESCE(SUM(CASE WHEN LOWER({$verificationTable}.status_perusahaan) = 'baru' THEN 1 ELSE 0 END),0) as verified_count_baru,
-              COALESCE(SUM(CASE WHEN LOWER({$verificationTable}.status_perusahaan) = 'lama' THEN 1 ELSE 0 END),0) as verified_count_lama,
-              COALESCE(COUNT(DISTINCT CASE WHEN LOWER({$verificationTable}.status_perusahaan) = 'baru' THEN {$proyekTable}.nib END),0) as verified_unique_companies_baru,
-              COALESCE(COUNT(DISTINCT CASE WHEN LOWER({$verificationTable}.status_perusahaan) = 'lama' THEN {$proyekTable}.nib END),0) as verified_unique_companies_lama,
+        // Gunakan derived table (vuniq) yang memilih satu record verifikasi terakhir per proyek-per-bulan
+        // sehingga COUNT(DISTINCT ...) dan SUM(...) tidak terduplikasi karena banyak history rows.
+        $sub = "
+            (SELECT pv_max.max_id, pv.id_proyek, pv.verified_at, pv.status_kbli, pv.status_perusahaan, pv.created_at
+             FROM {$verificationTable} pv
+             JOIN (
+                 SELECT id_proyek, MONTH(verified_at) AS month, MAX(id) AS max_id
+                 FROM {$verificationTable}
+                 WHERE status = 'verified' AND YEAR(verified_at) = {$year}
+                 GROUP BY id_proyek, MONTH(verified_at)
+             ) pv_max ON pv.id = pv_max.max_id
+            ) as vuniq
+        ";
 
-                -- status_kbli: investasi baru vs penambahan investasi
-                COALESCE(SUM(CASE WHEN LOWER({$verificationTable}.status_kbli) LIKE '%baru%' THEN 1 ELSE 0 END),0) as verified_count_investasi_baru,
-                COALESCE(SUM(CASE WHEN (LOWER({$verificationTable}.status_kbli) LIKE '%tambah%' OR LOWER({$verificationTable}.status_kbli) LIKE '%penambah%' OR LOWER({$verificationTable}.status_kbli) = 'lama' OR LOWER({$verificationTable}.status_kbli) = 'penambahan') THEN 1 ELSE 0 END),0) as verified_count_investasi_tambah,
-                COALESCE(SUM(CASE WHEN LOWER({$verificationTable}.status_kbli) LIKE '%baru%' THEN {$proyekTable}.jumlah_investasi ELSE 0 END),0) as verified_sum_investasi_baru,
-                COALESCE(SUM(CASE WHEN (LOWER({$verificationTable}.status_kbli) LIKE '%tambah%' OR LOWER({$verificationTable}.status_kbli) LIKE '%penambah%' OR LOWER({$verificationTable}.status_kbli) = 'lama' OR LOWER({$verificationTable}.status_kbli) = 'penambahan') THEN {$proyekTable}.jumlah_investasi ELSE 0 END),0) as verified_sum_investasi_tambah,
-                COALESCE(COUNT(DISTINCT CASE WHEN LOWER({$verificationTable}.status_kbli) LIKE '%baru%' THEN {$proyekTable}.nib END),0) as verified_unique_companies_investasi_baru,
-                COALESCE(COUNT(DISTINCT CASE WHEN (LOWER({$verificationTable}.status_kbli) LIKE '%tambah%' OR LOWER({$verificationTable}.status_kbli) LIKE '%penambah%' OR LOWER({$verificationTable}.status_kbli) = 'lama' OR LOWER({$verificationTable}.status_kbli) = 'penambahan') THEN {$proyekTable}.nib END),0) as verified_unique_companies_investasi_tambah,
+        $verified = DB::table(DB::raw($sub))
+            ->join("{$proyekTable} as p", 'vuniq.id_proyek', '=', 'p.id_proyek')
+            ->selectRaw(
+                "MONTH(vuniq.verified_at) as month,
+                 COUNT(DISTINCT p.id_proyek) as verified_count,
+                 COALESCE(SUM(p.jumlah_investasi),0) as verified_sum_investasi,
 
-                -- PMA split by status_kbli (baru / penambahan)
-                COALESCE(SUM(CASE WHEN LOWER({$verificationTable}.status_kbli) LIKE '%baru%' AND LOWER({$proyekTable}.uraian_status_penanaman_modal) LIKE '%pma%' THEN 1 ELSE 0 END),0) as verified_count_pma_baru,
-                COALESCE(SUM(CASE WHEN ((LOWER({$verificationTable}.status_kbli) LIKE '%tambah%' OR LOWER({$verificationTable}.status_kbli) LIKE '%penambah%' OR LOWER({$verificationTable}.status_kbli) = 'lama' OR LOWER({$verificationTable}.status_kbli) = 'penambahan') AND LOWER({$proyekTable}.uraian_status_penanaman_modal) LIKE '%pma%') THEN 1 ELSE 0 END),0) as verified_count_pma_tambah,
-                COALESCE(SUM(CASE WHEN LOWER({$verificationTable}.status_kbli) LIKE '%baru%' AND LOWER({$proyekTable}.uraian_status_penanaman_modal) LIKE '%pma%' THEN {$proyekTable}.jumlah_investasi ELSE 0 END),0) as verified_sum_pma_baru,
-                COALESCE(SUM(CASE WHEN ((LOWER({$verificationTable}.status_kbli) LIKE '%tambah%' OR LOWER({$verificationTable}.status_kbli) LIKE '%penambah%' OR LOWER({$verificationTable}.status_kbli) = 'lama' OR LOWER({$verificationTable}.status_kbli) = 'penambahan') AND LOWER({$proyekTable}.uraian_status_penanaman_modal) LIKE '%pma%') THEN {$proyekTable}.jumlah_investasi ELSE 0 END),0) as verified_sum_pma_tambah,
-                COALESCE(COUNT(DISTINCT CASE WHEN LOWER({$verificationTable}.status_kbli) LIKE '%baru%' AND LOWER({$proyekTable}.uraian_status_penanaman_modal) LIKE '%pma%' THEN {$proyekTable}.nib END),0) as verified_unique_companies_pma_baru,
-                COALESCE(COUNT(DISTINCT CASE WHEN ((LOWER({$verificationTable}.status_kbli) LIKE '%tambah%' OR LOWER({$verificationTable}.status_kbli) LIKE '%penambah%' OR LOWER({$verificationTable}.status_kbli) = 'lama' OR LOWER({$verificationTable}.status_kbli) = 'penambahan') AND LOWER({$proyekTable}.uraian_status_penanaman_modal) LIKE '%pma%') THEN {$proyekTable}.nib END),0) as verified_unique_companies_pma_tambah,
+                 /* PMA/PMDN totals (jumlah Rp) */
+                 COALESCE(SUM(CASE WHEN LOWER(p.uraian_status_penanaman_modal) LIKE '%pma%' THEN p.jumlah_investasi ELSE 0 END),0) as verified_sum_pma,
+                 COALESCE(SUM(CASE WHEN LOWER(p.uraian_status_penanaman_modal) LIKE '%pmdn%' THEN p.jumlah_investasi ELSE 0 END),0) as verified_sum_pmdn,
 
-                -- PMDN split by status_kbli (baru / penambahan)
-                COALESCE(SUM(CASE WHEN LOWER({$verificationTable}.status_kbli) LIKE '%baru%' AND LOWER({$proyekTable}.uraian_status_penanaman_modal) LIKE '%pmdn%' THEN 1 ELSE 0 END),0) as verified_count_pmdn_baru,
-                COALESCE(SUM(CASE WHEN ((LOWER({$verificationTable}.status_kbli) LIKE '%tambah%' OR LOWER({$verificationTable}.status_kbli) LIKE '%penambah%' OR LOWER({$verificationTable}.status_kbli) = 'lama' OR LOWER({$verificationTable}.status_kbli) = 'penambahan') AND LOWER({$proyekTable}.uraian_status_penanaman_modal) LIKE '%pmdn%') THEN 1 ELSE 0 END),0) as verified_count_pmdn_tambah,
-                COALESCE(SUM(CASE WHEN LOWER({$verificationTable}.status_kbli) LIKE '%baru%' AND LOWER({$proyekTable}.uraian_status_penanaman_modal) LIKE '%pmdn%' THEN {$proyekTable}.jumlah_investasi ELSE 0 END),0) as verified_sum_pmdn_baru,
-                COALESCE(SUM(CASE WHEN ((LOWER({$verificationTable}.status_kbli) LIKE '%tambah%' OR LOWER({$verificationTable}.status_kbli) LIKE '%penambah%' OR LOWER({$verificationTable}.status_kbli) = 'lama' OR LOWER({$verificationTable}.status_kbli) = 'penambahan') AND LOWER({$proyekTable}.uraian_status_penanaman_modal) LIKE '%pmdn%') THEN {$proyekTable}.jumlah_investasi ELSE 0 END),0) as verified_sum_pmdn_tambah,
-                COALESCE(COUNT(DISTINCT CASE WHEN LOWER({$verificationTable}.status_kbli) LIKE '%baru%' AND LOWER({$proyekTable}.uraian_status_penanaman_modal) LIKE '%pmdn%' THEN {$proyekTable}.nib END),0) as verified_unique_companies_pmdn_baru,
-                COALESCE(COUNT(DISTINCT CASE WHEN ((LOWER({$verificationTable}.status_kbli) LIKE '%tambah%' OR LOWER({$verificationTable}.status_kbli) LIKE '%penambah%' OR LOWER({$verificationTable}.status_kbli) = 'lama' OR LOWER({$verificationTable}.status_kbli) = 'penambahan') AND LOWER({$proyekTable}.uraian_status_penanaman_modal) LIKE '%pmdn%') THEN {$proyekTable}.nib END),0) as verified_unique_companies_pmdn_tambah
-            ")
-            ->join($proyekTable, $verificationTable . '.id_proyek', '=', $proyekTable . '.id_proyek')
-            ->where($verificationTable . '.status', 'verified')
-            ->whereNotNull($verificationTable . '.verified_at')
-            ->whereYear($verificationTable . '.verified_at', $year)
-            ->groupBy('month')
-            ->orderBy('month')
+                 /* Count proyek PMA/PMDN (use SUM(CASE...) on deduped rows) */
+                 COALESCE(SUM(CASE WHEN LOWER(p.uraian_status_penanaman_modal) LIKE '%pma%' THEN 1 ELSE 0 END),0) as verified_count_pma,
+                 COALESCE(SUM(CASE WHEN LOWER(p.uraian_status_penanaman_modal) LIKE '%pmdn%' THEN 1 ELSE 0 END),0) as verified_count_pmdn,
+
+                 /* unique companies PMA/PMDN (distinct nib) */
+                 COALESCE(COUNT(DISTINCT CASE WHEN LOWER(p.uraian_status_penanaman_modal) LIKE '%pma%' THEN p.nib END),0) as verified_unique_companies_pma,
+                 COALESCE(COUNT(DISTINCT CASE WHEN LOWER(p.uraian_status_penanaman_modal) LIKE '%pmdn%' THEN p.nib END),0) as verified_unique_companies_pmdn,
+
+                 /* status_perusahaan: baru / lama (count proyek using SUM(CASE...)) */
+                 COALESCE(SUM(CASE WHEN LOWER(vuniq.status_perusahaan) = 'baru' THEN 1 ELSE 0 END),0) as verified_count_baru,
+                 COALESCE(SUM(CASE WHEN LOWER(vuniq.status_perusahaan) = 'lama' THEN 1 ELSE 0 END),0) as verified_count_lama,
+                 COALESCE(COUNT(DISTINCT CASE WHEN LOWER(vuniq.status_perusahaan) = 'baru' THEN p.nib END),0) as verified_unique_companies_baru,
+                 COALESCE(COUNT(DISTINCT CASE WHEN LOWER(vuniq.status_perusahaan) = 'lama' THEN p.nib END),0) as verified_unique_companies_lama,
+
+                 /* status_kbli: investasi baru vs penambahan (count proyek using SUM(CASE...) + sums) */
+                 COALESCE(SUM(CASE WHEN LOWER(vuniq.status_kbli) LIKE '%baru%' THEN 1 ELSE 0 END),0) as verified_count_investasi_baru,
+                 COALESCE(SUM(CASE WHEN (LOWER(vuniq.status_kbli) LIKE '%tambah%' OR LOWER(vuniq.status_kbli) LIKE '%penambah%' OR LOWER(vuniq.status_kbli) = 'lama' OR LOWER(vuniq.status_kbli) = 'penambahan') THEN 1 ELSE 0 END),0) as verified_count_investasi_tambah,
+                 COALESCE(SUM(CASE WHEN LOWER(vuniq.status_kbli) LIKE '%baru%' THEN p.jumlah_investasi ELSE 0 END),0) as verified_sum_investasi_baru,
+                 COALESCE(SUM(CASE WHEN (LOWER(vuniq.status_kbli) LIKE '%tambah%' OR LOWER(vuniq.status_kbli) LIKE '%penambah%' OR LOWER(vuniq.status_kbli) = 'lama' OR LOWER(vuniq.status_kbli) = 'penambahan') THEN p.jumlah_investasi ELSE 0 END),0) as verified_sum_investasi_tambah,
+                 COALESCE(COUNT(DISTINCT CASE WHEN LOWER(vuniq.status_kbli) LIKE '%baru%' THEN p.nib END),0) as verified_unique_companies_investasi_baru,
+                 COALESCE(COUNT(DISTINCT CASE WHEN (LOWER(vuniq.status_kbli) LIKE '%tambah%' OR LOWER(vuniq.status_kbli) LIKE '%penambah%' OR LOWER(vuniq.status_kbli) = 'lama' OR LOWER(vuniq.status_kbli) = 'penambahan') THEN p.nib END),0) as verified_unique_companies_investasi_tambah,
+
+                 /* PMA split by baru / penambahan — check BOTH status_kbli and status_perusahaan as fallback */
+                 COALESCE(SUM(CASE WHEN (LOWER(vuniq.status_kbli) LIKE '%baru%' OR LOWER(vuniq.status_perusahaan) = 'baru') AND LOWER(p.uraian_status_penanaman_modal) LIKE '%pma%' THEN 1 ELSE 0 END),0) as verified_count_pma_baru,
+                 COALESCE(SUM(CASE WHEN ((LOWER(vuniq.status_kbli) LIKE '%tambah%' OR LOWER(vuniq.status_kbli) LIKE '%penambah%' OR LOWER(vuniq.status_kbli) = 'lama' OR LOWER(vuniq.status_kbli) = 'penambahan')) AND LOWER(p.uraian_status_penanaman_modal) LIKE '%pma%' THEN 1 ELSE 0 END),0) as verified_count_pma_tambah,
+                 COALESCE(SUM(CASE WHEN (LOWER(vuniq.status_kbli) LIKE '%baru%' OR LOWER(vuniq.status_perusahaan) = 'baru') AND LOWER(p.uraian_status_penanaman_modal) LIKE '%pma%' THEN p.jumlah_investasi ELSE 0 END),0) as verified_sum_pma_baru,
+                 COALESCE(SUM(CASE WHEN ((LOWER(vuniq.status_kbli) LIKE '%tambah%' OR LOWER(vuniq.status_kbli) LIKE '%penambah%' OR LOWER(vuniq.status_kbli) = 'lama' OR LOWER(vuniq.status_kbli) = 'penambahan')) AND LOWER(p.uraian_status_penanaman_modal) LIKE '%pma%' THEN p.jumlah_investasi ELSE 0 END),0) as verified_sum_pma_tambah,
+                 COALESCE(COUNT(DISTINCT CASE WHEN (LOWER(vuniq.status_kbli) LIKE '%baru%' OR LOWER(vuniq.status_perusahaan) = 'baru') AND LOWER(p.uraian_status_penanaman_modal) LIKE '%pma%' THEN p.nib END),0) as verified_unique_companies_pma_baru,
+                 COALESCE(COUNT(DISTINCT CASE WHEN ((LOWER(vuniq.status_kbli) LIKE '%tambah%' OR LOWER(vuniq.status_kbli) LIKE '%penambah%' OR LOWER(vuniq.status_kbli) = 'lama' OR LOWER(vuniq.status_kbli) = 'penambahan')) AND LOWER(p.uraian_status_penanaman_modal) LIKE '%pma%' THEN p.nib END),0) as verified_unique_companies_pma_tambah,
+
+                 /* PMDN split by baru / penambahan — check BOTH status_kbli and status_perusahaan as fallback */
+                 COALESCE(SUM(CASE WHEN (LOWER(vuniq.status_kbli) LIKE '%baru%' OR LOWER(vuniq.status_perusahaan) = 'baru') AND LOWER(p.uraian_status_penanaman_modal) LIKE '%pmdn%' THEN 1 ELSE 0 END),0) as verified_count_pmdn_baru,
+                 COALESCE(SUM(CASE WHEN ((LOWER(vuniq.status_kbli) LIKE '%tambah%' OR LOWER(vuniq.status_kbli) LIKE '%penambah%' OR LOWER(vuniq.status_kbli) = 'lama' OR LOWER(vuniq.status_kbli) = 'penambahan')) AND LOWER(p.uraian_status_penanaman_modal) LIKE '%pmdn%' THEN 1 ELSE 0 END),0) as verified_count_pmdn_tambah,
+                 COALESCE(SUM(CASE WHEN (LOWER(vuniq.status_kbli) LIKE '%baru%' OR LOWER(vuniq.status_perusahaan) = 'baru') AND LOWER(p.uraian_status_penanaman_modal) LIKE '%pmdn%' THEN p.jumlah_investasi ELSE 0 END),0) as verified_sum_pmdn_baru,
+                 COALESCE(SUM(CASE WHEN ((LOWER(vuniq.status_kbli) LIKE '%tambah%' OR LOWER(vuniq.status_kbli) LIKE '%penambah%' OR LOWER(vuniq.status_kbli) = 'lama' OR LOWER(vuniq.status_kbli) = 'penambahan')) AND LOWER(p.uraian_status_penanaman_modal) LIKE '%pmdn%' THEN p.jumlah_investasi ELSE 0 END),0) as verified_sum_pmdn_tambah,
+                 COALESCE(COUNT(DISTINCT CASE WHEN (LOWER(vuniq.status_kbli) LIKE '%baru%' OR LOWER(vuniq.status_perusahaan) = 'baru') AND LOWER(p.uraian_status_penanaman_modal) LIKE '%pmdn%' THEN p.nib END),0) as verified_unique_companies_pmdn_baru,
+                 COALESCE(COUNT(DISTINCT CASE WHEN ((LOWER(vuniq.status_kbli) LIKE '%tambah%' OR LOWER(vuniq.status_kbli) LIKE '%penambah%' OR LOWER(vuniq.status_kbli) = 'lama' OR LOWER(vuniq.status_kbli) = 'penambahan')) AND LOWER(p.uraian_status_penanaman_modal) LIKE '%pmdn%' THEN p.nib END),0) as verified_unique_companies_pmdn_tambah"
+            )
+            ->groupBy(DB::raw('MONTH(vuniq.verified_at)'))
+            ->orderBy(DB::raw('MONTH(vuniq.verified_at)'))
             ->get()
             ->keyBy('month');
 
-        // (no-op) - fields will be present from the SQL; ensure collection is keyed
+        // ensure $verified has predictable structure
         $verified = $verified->map(function ($r) { return $r; });
 
     // Ambil agregasi pending berdasarkan kapan record verifikasi dibuat (created_at)
@@ -249,7 +268,7 @@ class ProyekVerificationController extends Controller
                 'verified_count_lama' => $vrow ? (int) ($vrow->verified_count_lama ?? 0) : 0,
                 'verified_unique_companies_baru' => $vrow ? (int) ($vrow->verified_unique_companies_baru ?? 0) : 0,
                 'verified_unique_companies_lama' => $vrow ? (int) ($vrow->verified_unique_companies_lama ?? 0) : 0,
-                // status_kbli aggregations (investasi baru / penambahan investasi)
+                // status_kbli aggregations (investasi baru / penambahan)
                 'verified_count_investasi_baru' => $vrow ? (int) ($vrow->verified_count_investasi_baru ?? 0) : 0,
                 'verified_count_investasi_tambah' => $vrow ? (int) ($vrow->verified_count_investasi_tambah ?? 0) : 0,
                 'verified_sum_investasi_baru' => $vrow ? (float) ($vrow->verified_sum_investasi_baru ?? 0) : 0.0,
@@ -772,5 +791,111 @@ class ProyekVerificationController extends Controller
             }
             return redirect()->back()->with('error', 'Gagal menghapus verifikasi');
         }
+    }
+
+    /**
+     * Tampilkan daftar proyek yang sudah terverifikasi untuk bulan/tahun tertentu
+     * dipanggil dari halaman ringkasan ketika user mengklik nilai verifikasi.
+     */
+    public function listVerified(Request $request)
+    {
+        $judul = "Daftar Proyek Terverifikasi - ";
+        $year = (int) $request->input('year', date('Y'));
+        $month = (int) $request->input('month', date('n'));
+        $perPage = (int) $request->input('per_page', 50);
+        $allowed = [10,25,50,100,250,500];
+        if (! in_array($perPage, $allowed)) { $perPage = 50; }
+
+        $q = trim((string) $request->input('q', ''));
+
+        $query = ProyekVerification::with(['proyek','verifier'])
+            ->where('status', 'verified')
+            ->whereNotNull('verified_at')
+            ->whereYear('verified_at', $year)
+            ->whereMonth('verified_at', $month)
+            ->orderBy('verified_at', 'desc');
+
+        if (!empty($q)) {
+            $query->whereHas('proyek', function ($p) use ($q) {
+                $p->where('nama_perusahaan', 'like', "%{$q}%")
+                  ->orWhere('nama_proyek', 'like', "%{$q}%")
+                  ->orWhere('nib', 'like', "%{$q}%");
+            });
+        }
+
+        $items = $query->simplePaginate($perPage)->appends(array_filter(['year' => $year, 'month' => $month, 'q' => $q, 'per_page' => $perPage]));
+
+        // Build a summary aggregate using a deduplicated derived table (vuniq)
+        // that selects one verification row per proyek per month (MAX id) so aggregates aren't double-counted.
+        $proyekTable = (new Proyek)->getTable();
+        $verificationTable = (new \App\Models\ProyekVerification)->getTable();
+
+        $sub = "(
+            SELECT pv_max.max_id, pv.id_proyek, pv.verified_at, pv.status_kbli, pv.status_perusahaan
+            FROM {$verificationTable} pv
+            JOIN (
+                SELECT id_proyek, MONTH(verified_at) AS month, MAX(id) AS max_id
+                FROM {$verificationTable}
+                WHERE status = 'verified' AND YEAR(verified_at) = {$year}
+                GROUP BY id_proyek, MONTH(verified_at)
+            ) pv_max ON pv.id = pv_max.max_id
+        ) as vuniq";
+
+        $aggQuery = DB::table(DB::raw($sub))
+            ->join("{$proyekTable} as p", 'vuniq.id_proyek', '=', 'p.id_proyek')
+            ->whereYear('vuniq.verified_at', $year)
+            ->whereMonth('vuniq.verified_at', $month);
+
+        if (!empty($q)) {
+            $aggQuery->where(function($w) use ($q) {
+                $w->where('p.nama_perusahaan', 'like', "%{$q}%")
+                  ->orWhere('p.nama_proyek', 'like', "%{$q}%")
+                  ->orWhere('p.nib', 'like', "%{$q}%");
+            });
+        }
+
+        $summary = (array) $aggQuery->selectRaw(
+            "COALESCE(SUM(p.jumlah_investasi),0) as total_investasi, 
+             COALESCE(COUNT(DISTINCT p.nib),0) as unique_companies, 
+             COALESCE(COUNT(DISTINCT p.id_proyek),0) as total_projects, 
+             COALESCE(COUNT(DISTINCT CASE WHEN LOWER(vuniq.status_perusahaan) = 'baru' THEN p.nib END),0) as unique_companies_baru, 
+             COALESCE(COUNT(DISTINCT CASE WHEN LOWER(vuniq.status_perusahaan) = 'lama' THEN p.nib END),0) as unique_companies_lama, 
+             COALESCE(SUM(CASE WHEN LOWER(p.uraian_status_penanaman_modal) LIKE '%pma%' THEN p.jumlah_investasi ELSE 0 END),0) as sum_pma, 
+             COALESCE(SUM(CASE WHEN LOWER(p.uraian_status_penanaman_modal) LIKE '%pmdn%' THEN p.jumlah_investasi ELSE 0 END),0) as sum_pmdn, 
+             COALESCE(COUNT(DISTINCT CASE WHEN LOWER(p.uraian_status_penanaman_modal) LIKE '%pma%' THEN p.nib END),0) as unique_companies_pma, 
+            COALESCE(COUNT(DISTINCT CASE WHEN LOWER(p.uraian_status_penanaman_modal) LIKE '%pmdn%' THEN p.nib END),0) as unique_companies_pmdn,
+           /* PMA split: investasi baru vs penambahan (use status_kbli or fallback to status_perusahaan) */
+              COALESCE(SUM(CASE WHEN LOWER(p.uraian_status_penanaman_modal) LIKE '%pma%' AND (LOWER(vuniq.status_kbli) LIKE '%baru%' OR LOWER(vuniq.status_perusahaan) = 'baru') THEN p.jumlah_investasi ELSE 0 END),0) as sum_pma_baru,
+              COALESCE(SUM(CASE WHEN LOWER(p.uraian_status_penanaman_modal) LIKE '%pma%' AND (LOWER(vuniq.status_kbli) LIKE '%tambah%' OR LOWER(vuniq.status_kbli) LIKE '%penambah%' OR LOWER(vuniq.status_kbli) = 'lama' OR LOWER(vuniq.status_kbli) = 'penambahan') THEN p.jumlah_investasi ELSE 0 END),0) as sum_pma_tambah,
+              /* PMDN split: investasi baru vs penambahan (use status_kbli or fallback to status_perusahaan) */
+              COALESCE(SUM(CASE WHEN LOWER(p.uraian_status_penanaman_modal) LIKE '%pmdn%' AND (LOWER(vuniq.status_kbli) LIKE '%baru%' OR LOWER(vuniq.status_perusahaan) = 'baru') THEN p.jumlah_investasi ELSE 0 END),0) as sum_pmdn_baru,
+              COALESCE(SUM(CASE WHEN LOWER(p.uraian_status_penanaman_modal) LIKE '%pmdn%' AND (LOWER(vuniq.status_kbli) LIKE '%tambah%' OR LOWER(vuniq.status_kbli) LIKE '%penambah%' OR LOWER(vuniq.status_kbli) = 'lama' OR LOWER(vuniq.status_kbli) = 'penambahan') THEN p.jumlah_investasi ELSE 0 END),0) as sum_pmdn_tambah,
+            COALESCE(SUM(p.tki),0) as total_tki"
+        )->first();
+
+        // ensure keys exist
+        $summary = array_merge([
+            'total_investasi' => 0,
+            'unique_companies' => 0,
+            'total_projects' => 0,
+            'unique_companies_baru' => 0,
+            'unique_companies_lama' => 0,
+            'sum_pma' => 0,
+            'sum_pma_baru' => 0,
+            'sum_pma_tambah' => 0,
+            'sum_pmdn' => 0,
+            'sum_pmdn_baru' => 0,
+            'sum_pmdn_tambah' => 0,
+            'unique_companies_pma' => 0,
+            'unique_companies_pmdn' => 0,
+            'total_tki' => 0,
+        ], (array) $summary);
+
+        // Combine PMA baru + penambahan into a single sum_pma for the view
+        $summary['sum_pma'] = (float) ($summary['sum_pma_baru'] ?? 0) + (float) ($summary['sum_pma_tambah'] ?? 0);
+    // Combine PMDN baru + penambahan into a single sum_pmdn for the view
+    $summary['sum_pmdn'] = (float) ($summary['sum_pmdn_baru'] ?? 0) + (float) ($summary['sum_pmdn_tambah'] ?? 0);
+
+        return view('admin.proyek.verification.list', compact('items', 'year', 'month','judul', 'summary'));
     }
 }

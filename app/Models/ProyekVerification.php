@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
 
 class ProyekVerification extends Model
 {
@@ -30,5 +31,10 @@ class ProyekVerification extends Model
     public function proyek()
     {
         return $this->belongsTo(Proyek::class, 'id_proyek', 'id_proyek');
+    }
+
+    public function verifier()
+    {
+        return $this->belongsTo(User::class, 'verified_by');
     }
 }

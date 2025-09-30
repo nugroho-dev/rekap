@@ -210,4 +210,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/realisasi/verifikasi/{proyekVerification}/status', [ProyekVerificationController::class, 'updateStatus'])->name('proyek.verification.updateStatus');
         Route::delete('/realisasi/verifikasi/{proyekVerification}', [ProyekVerificationController::class, 'destroy'])->name('proyek.verification.destroy');
     });
+
+    // Page to list verified projects (clicked from summary table)
+    Route::get('proyek/verifikasi/terverifikasi', [ProyekVerificationController::class, 'listVerified'])
+        ->name('proyek.verification.list')
+        ->middleware('auth');
 });
