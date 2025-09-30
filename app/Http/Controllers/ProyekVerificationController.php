@@ -8,6 +8,9 @@ use App\Models\Proyek;
 use App\Models\ProyekVerification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Excel;
+use App\Exports\ProyekVerifiedExport;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ProyekVerificationController extends Controller
 {
@@ -806,7 +809,10 @@ class ProyekVerificationController extends Controller
         $allowed = [10,25,50,100,250,500];
         if (! in_array($perPage, $allowed)) { $perPage = 50; }
 
-        $q = trim((string) $request->input('q', ''));
+    $q = trim((string) $request->input('q', ''));
+    // New filters
+    $penanaman = strtolower((string) $request->input('penanaman', 'all')); // 'all'|'pma'|'pmdn'
+    $kbli_status = strtolower((string) $request->input('kbli_status', 'all')); // 'all'|'baru'|'penambahan'
 
         $query = ProyekVerification::with(['proyek','verifier'])
             ->where('status', 'verified')
@@ -823,7 +829,44 @@ class ProyekVerificationController extends Controller
             });
         }
 
-        $items = $query->simplePaginate($perPage)->appends(array_filter(['year' => $year, 'month' => $month, 'q' => $q, 'per_page' => $perPage]));
+        // penanaman filter
+        if ($penanaman === 'pma') {
+            $query->whereHas('proyek', function ($p) {
+                $p->whereRaw("LOWER(uraian_status_penanaman_modal) LIKE '%pma%'");
+            });
+        } elseif ($penanaman === 'pmdn') {
+            $query->whereHas('proyek', function ($p) {
+                $p->whereRaw("LOWER(uraian_status_penanaman_modal) LIKE '%pmdn%'");
+            });
+        }
+
+        // kbli status filter (baru / penambahan)
+        if ($kbli_status === 'baru') {
+            $query->where(function ($w) {
+                $w->whereRaw("LOWER(status_kbli) LIKE '%baru%'")
+                  ->orWhereRaw("LOWER(status_perusahaan) = 'baru'");
+            });
+        } elseif ($kbli_status === 'penambahan') {
+            $query->where(function ($w) {
+                $w->whereRaw("LOWER(status_kbli) LIKE '%tambah%'")
+                  ->orWhereRaw("LOWER(status_kbli) LIKE '%penambah%'")
+                  ->orWhereRaw("LOWER(status_kbli) = 'lama'")
+                  ->orWhereRaw("LOWER(status_perusahaan) = 'lama'");
+            });
+        }
+
+        // support explicit 'lama' filter (matches legacy 'lama' / penambahan normalized in DB)
+        if ($kbli_status === 'lama') {
+            $query->where(function ($w) {
+                $w->whereRaw("LOWER(status_kbli) = 'lama'")
+                  ->orWhereRaw("LOWER(status_perusahaan) = 'lama'");
+            });
+        }
+
+        $items = $query->simplePaginate($perPage)->appends(array_filter([
+            'year' => $year, 'month' => $month, 'q' => $q, 'per_page' => $perPage,
+            'penanaman' => $penanaman, 'kbli_status' => $kbli_status
+        ]));
 
         // Build a summary aggregate using a deduplicated derived table (vuniq)
         // that selects one verification row per proyek per month (MAX id) so aggregates aren't double-counted.
@@ -852,6 +895,23 @@ class ProyekVerificationController extends Controller
                   ->orWhere('p.nama_proyek', 'like', "%{$q}%")
                   ->orWhere('p.nib', 'like', "%{$q}%");
             });
+        }
+
+        // apply penanaman filter to aggregate
+        if ($penanaman === 'pma') {
+            $aggQuery->whereRaw("LOWER(p.uraian_status_penanaman_modal) LIKE '%pma%'");
+        } elseif ($penanaman === 'pmdn') {
+            $aggQuery->whereRaw("LOWER(p.uraian_status_penanaman_modal) LIKE '%pmdn%'");
+        }
+
+        // apply kbli_status filter to aggregate (use vuniq.status_kbli and fallback to vuniq.status_perusahaan)
+        if ($kbli_status === 'baru') {
+            $aggQuery->whereRaw("(LOWER(vuniq.status_kbli) LIKE '%baru%' OR LOWER(vuniq.status_perusahaan) = 'baru')");
+        } elseif ($kbli_status === 'penambahan') {
+            $aggQuery->whereRaw("(LOWER(vuniq.status_kbli) LIKE '%tambah%' OR LOWER(vuniq.status_kbli) LIKE '%penambah%' OR LOWER(vuniq.status_kbli) = 'lama' OR LOWER(vuniq.status_perusahaan) = 'lama')");
+        }
+        elseif ($kbli_status === 'lama') {
+            $aggQuery->whereRaw("(LOWER(vuniq.status_kbli) = 'lama' OR LOWER(vuniq.status_perusahaan) = 'lama')");
         }
 
         $summary = (array) $aggQuery->selectRaw(
@@ -897,5 +957,89 @@ class ProyekVerificationController extends Controller
     $summary['sum_pmdn'] = (float) ($summary['sum_pmdn_baru'] ?? 0) + (float) ($summary['sum_pmdn_tambah'] ?? 0);
 
         return view('admin.proyek.verification.list', compact('items', 'year', 'month','judul', 'summary'));
+    }
+
+    /**
+     * Export the filtered verified list as Excel or PDF.
+     */
+    public function exportVerified(Request $request)
+    {
+        $format = strtolower($request->input('format', 'xlsx'));
+        $year = (int) $request->input('year', date('Y'));
+        $month = (int) $request->input('month', date('n'));
+
+        // Reuse the same filtering logic from listVerified to build the query
+        $q = trim((string) $request->input('q', ''));
+        $penanaman = strtolower((string) $request->input('penanaman', 'all'));
+        $kbli_status = strtolower((string) $request->input('kbli_status', 'all'));
+
+        $query = ProyekVerification::with(['proyek','verifier'])
+            ->where('status', 'verified')
+            ->whereNotNull('verified_at')
+            ->whereYear('verified_at', $year)
+            ->whereMonth('verified_at', $month)
+            ->orderBy('verified_at', 'desc');
+
+        if (!empty($q)) {
+            $query->whereHas('proyek', function ($p) use ($q) {
+                $p->where('nama_perusahaan', 'like', "%{$q}%")
+                  ->orWhere('nama_proyek', 'like', "%{$q}%")
+                  ->orWhere('nib', 'like', "%{$q}%");
+            });
+        }
+        if ($penanaman === 'pma') {
+            $query->whereHas('proyek', function ($p) {
+                $p->whereRaw("LOWER(uraian_status_penanaman_modal) LIKE '%pma%'");
+            });
+        } elseif ($penanaman === 'pmdn') {
+            $query->whereHas('proyek', function ($p) {
+                $p->whereRaw("LOWER(uraian_status_penanaman_modal) LIKE '%pmdn%'");
+            });
+        }
+        if ($kbli_status === 'baru') {
+            $query->where(function ($w) {
+                $w->whereRaw("LOWER(status_kbli) LIKE '%baru%'")
+                  ->orWhereRaw("LOWER(status_perusahaan) = 'baru'");
+            });
+        } elseif ($kbli_status === 'penambahan') {
+            $query->where(function ($w) {
+                $w->whereRaw("LOWER(status_kbli) LIKE '%tambah%'")
+                  ->orWhereRaw("LOWER(status_kbli) LIKE '%penambah%'")
+                  ->orWhereRaw("LOWER(status_kbli) = 'lama'")
+                  ->orWhereRaw("LOWER(status_perusahaan) = 'lama'");
+            });
+        } elseif ($kbli_status === 'lama') {
+            $query->where(function ($w) {
+                $w->whereRaw("LOWER(status_kbli) = 'lama'")
+                  ->orWhereRaw("LOWER(status_perusahaan) = 'lama'");
+            });
+        }
+
+        $items = $query->get();
+
+        if ($format === 'pdf') {
+            $pdf = Pdf::loadView('admin.proyek.verification.pdf', compact('items','year','month'));
+            return $pdf->download("proyek-terverifikasi-{$year}-{$month}.pdf");
+        }
+
+        // default to Excel
+        $collection = $items->map(function ($row) {
+            return [
+                $row->id_proyek,
+                optional($row->proyek)->nama_perusahaan ?? '-',
+                optional($row->proyek)->nib ?? '-',
+                optional($row->proyek)->nama_proyek ?? '-',
+                optional($row->proyek)->kbli ?? '-',
+                optional($row->proyek)->jumlah_investasi ? (float) optional($row->proyek)->jumlah_investasi : 0,
+                optional($row->proyek)->tki ?? 0,
+                optional($row->proyek)->uraian_status_penanaman_modal ?? '-',
+                $row->status_perusahaan ?? '-',
+                $row->status_kbli ?? '-',
+                optional($row->verifier)->name ?? ($row->verified_by ?? '-'),
+                $row->verified_at ? \Carbon\Carbon::parse($row->verified_at)->toDateTimeString() : '-',
+            ];
+        });
+
+        return app(Excel::class)->download(new ProyekVerifiedExport($collection), "proyek-terverifikasi-{$year}-{$month}.xlsx");
     }
 }

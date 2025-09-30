@@ -107,13 +107,27 @@
         <form method="get" action="{{ route('proyek.verification.list') }}" class="row g-2 align-items-center">
           <input type="hidden" name="year" value="{{ $year }}">
           <input type="hidden" name="month" value="{{ $month }}">
-          <div class="col-auto">
+          <div class="col">
             <div class="input-group input-group-sm">
               <input type="search" name="q" value="{{ request('q') }}" class="form-control" placeholder="Cari perusahaan, proyek atau NIB" aria-label="Cari">
+
+              <select name="penanaman" class="form-select form-select-sm" style="max-width:120px;">
+                <option value="all" {{ request('penanaman','all') === 'all' ? 'selected' : '' }}>Semua</option>
+                <option value="pma" {{ request('penanaman') === 'pma' ? 'selected' : '' }}>PMA</option>
+                <option value="pmdn" {{ request('penanaman') === 'pmdn' ? 'selected' : '' }}>PMDN</option>
+              </select>
+
+              <select name="kbli_status" class="form-select form-select-sm" style="max-width:150px;">
+                <option value="all" {{ request('kbli_status','all') === 'all' ? 'selected' : '' }}>Semua KBLI</option>
+                <option value="baru" {{ request('kbli_status') === 'baru' ? 'selected' : '' }}>Investasi Baru</option>
+                <option value="penambahan" {{ request('kbli_status') === 'penambahan' ? 'selected' : '' }}>Penambahan</option>
+                <option value="lama" {{ request('kbli_status') === 'lama' ? 'selected' : '' }}>Lama</option>
+              </select>
+
               <button class="btn btn-outline-secondary" type="submit">Cari</button>
             </div>
           </div>
-          <div class="col-auto">
+          <div class="col-auto ms-auto">
             <select id="per_page_select" name="per_page" class="form-select form-select-sm">
               @foreach([10,25,50,100,250,500] as $pp)
                 <option value="{{ $pp }}" {{ (int)request('per_page', 50) === $pp ? 'selected' : '' }}>{{ $pp }} / halaman</option>
@@ -125,6 +139,8 @@
 
       <div class="ms-auto">
         <a href="{{ route('proyek.verification.index') }}" class="btn btn-outline-secondary btn-sm">Kembali</a>
+        <a href="{{ route('proyek.verification.export', array_merge(request()->all(), ['format' => 'xlsx'])) }}" class="btn btn-success btn-sm ms-2">Download Excel</a>
+        <a href="{{ route('proyek.verification.export', array_merge(request()->all(), ['format' => 'pdf'])) }}" target="_blank" class="btn btn-primary btn-sm ms-2">Download PDF</a>
       </div>
     </div>
 

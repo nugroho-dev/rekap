@@ -209,6 +209,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/realisasi/verifikasi/apply-recommendations', [ProyekVerificationController::class, 'applyRecommendations'])->name('proyek.verification.applyRecommendations');
         Route::post('/realisasi/verifikasi/{proyekVerification}/status', [ProyekVerificationController::class, 'updateStatus'])->name('proyek.verification.updateStatus');
         Route::delete('/realisasi/verifikasi/{proyekVerification}', [ProyekVerificationController::class, 'destroy'])->name('proyek.verification.destroy');
+        // export verified list (xlsx | pdf)
+        Route::get('/realisasi/verifikasi/export', [ProyekVerificationController::class, 'exportVerified'])->name('proyek.verification.export');
     });
 
     // Page to list verified projects (clicked from summary table)
