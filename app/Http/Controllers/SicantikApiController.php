@@ -5,131 +5,199 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class SicantikApiController extends Controller
 {
     public function index(Request $request)
     {
-        
-        $cari=$request->cari;
-        
-        $page = request('page', 1);
-        $per_page = request('per_page', 25);
-        $dispage= $page * $per_page;
-        $disfipage = ($dispage - $per_page)+1;
-        $disfipagedata = ($page-1) * $per_page;
-        if($disfipagedata==0){
-            $disfipagedata='null';
-        }
-        else {
-            $disfipagedata;
-        }
-        
-        $previous = $page - 1;
-        $next = $page + 1;
-        $response = Http::retry(10, 1000)->get('https://sicantik.go.id/api/TemplateData/keluaran/38416.json?page='. $disfipagedata.'&per_page=' . $per_page . '&cari='.$cari.'');
-        $data=$response->json();
-        $items = $data['data']['data'];
-        $count= $data['data']['count']['0']['data'];
-        //$nohp = $data['data']['data']['0']['no_hp'];
-        $totalpage = ceil($count / $per_page);
-        $secondlast = $totalpage  - 1;
-        function format($nomorhp)
-        {
-            //Terlebih dahulu kita trim dl
-            $nomorhp = trim($nomorhp);
-            //bersihkan dari karakter yang tidak perlu
-            $nomorhp = strip_tags($nomorhp);
-            // Berishkan dari spasi
-            $nomorhp = str_replace(" ", "", $nomorhp);
-            // bersihkan dari bentuk seperti  (022) 66677788
-            $nomorhp = str_replace("(", "", $nomorhp);
-            // bersihkan dari format yang ada titik seperti 0811.222.333.4
-            $nomorhp = str_replace(".", "", $nomorhp);
+        $request->validate([
+            'cari' => 'nullable|string|max:255',
+            'page' => 'nullable|integer|min:1',
+            'per_page' => 'nullable|integer|min:1|max:100',
+        ]);
 
-            //cek apakah mengandung karakter + dan 0-9
-            if (!preg_match('/[^+0-9]/', trim($nomorhp))) {
-                // cek apakah no hp karakter 1-3 adalah +62
-                if (substr(trim($nomorhp), 0, 3) == '+62') {
-                    $nomorhp = '0' . substr($nomorhp, 3);
-                }
-                // cek apakah no hp karakter 1 adalah 0
-                elseif (substr($nomorhp, 0, 1) == '0') {
-                    $nomorhp = '0' . substr($nomorhp, 1);
-                } elseif (substr($nomorhp, 0, 1) == '8') {
-                    $nomorhp = '0' . substr($nomorhp, 0);
-                } elseif (substr($nomorhp, 0, 2) == '62') {
-                    $nomorhp = '0' . substr($nomorhp, 2);
-                }
-            }
-            return $nomorhp;
+        $cari = (string) $request->input('cari', '');
+        $page = max(1, (int) $request->input('page', 1));
+        $per_page = min(100, max(1, (int) $request->input('per_page', 25)));
+
+        // keep some compatibility variables used by the view
+        $dispage = $page * $per_page;
+        $disfipage = ($dispage - $per_page) + 1;
+        $disfipagedata = ($page - 1) * $per_page;
+        if ($disfipagedata === 0) {
+            $disfipagedata = null; // prefer null instead of string 'null'
         }
-        //$userphonegsm = format($nohp);
-        return view('home', compact('items','count','page','per_page','dispage', 'disfipage','totalpage', 'previous', 'next', 'secondlast' ));
+
+        $previous = max(1, $page - 1);
+        $next = $page + 1;
+
+        $base = config('services.sicantik.url', 'https://sicantik.go.id');
+        $path = '/api/TemplateData/keluaran/38416.json';
+
+        try {
+            $response = Http::retry(3, 500)->timeout(10)->get($base . $path, [
+                'page' => $disfipagedata,
+                'per_page' => $per_page,
+                'cari' => $cari,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Sicantik API request failed', ['exception' => $e->getMessage()]);
+            $items = [];
+            $count = 0;
+            $totalpage = 0;
+            $secondlast = 0;
+            return view('home', compact('items', 'count', 'page', 'per_page', 'dispage', 'disfipage', 'totalpage', 'previous', 'next', 'secondlast'));
+        }
+
+        if (!$response->ok()) {
+            Log::error('Sicantik API returned non-OK status', ['status' => $response->status(), 'body' => $response->body()]);
+            $items = [];
+            $count = 0;
+            $totalpage = 0;
+            $secondlast = 0;
+        } else {
+            $data = $response->json();
+            $items = data_get($data, 'data.data', []);
+            $count = (int) data_get($data, 'data.count.0.data', 0);
+            $totalpage = $per_page > 0 ? (int) ceil($count / $per_page) : 0;
+            $secondlast = max(1, $totalpage - 1);
+        }
+
+        return view('home', compact('items', 'count', 'page', 'per_page', 'dispage', 'disfipage', 'disfipagedata', 'totalpage', 'previous', 'next', 'secondlast'));
     }
     public function kirim()
     {
         $id = request('id');
-        $response = Http::retry(10, 1000)->get('https://sicantik.go.id/api/TemplateData/keluaran/42533.json?key_id='. $id. '');
+        $base = config('services.sicantik.url', 'https://sicantik.go.id');
+        $path = '/api/TemplateData/keluaran/42533.json';
+        try {
+            $response = Http::retry(3, 500)->timeout(10)->get($base . $path, ['key_id' => $id]);
+        } catch (\Exception $e) {
+            Log::error('Sicantik kirim request failed', ['exception' => $e->getMessage(), 'id' => $id]);
+            abort(500, 'External API request failed');
+        }
+
+        if (!$response->ok()) {
+            Log::error('Sicantik kirim returned non-OK', ['status' => $response->status(), 'body' => $response->body()]);
+            abort(500, 'External API returned error');
+        }
+
         $data = $response->json();
-      
-        $items = $data['data']['data']['0'];
-        
-        return view('kirim', compact('items','id'));
+        $items = data_get($data, 'data.data.0', []);
+
+        return view('kirim', compact('items', 'id'));
     }
     public function dokumen(Request $request)
     {
-        $id = request('id');
-        $pesan = $request->pesan;
-        $tujuan = $request->tujuan;
-        $link = $request->link;
-        if(empty($pesan)&&empty($tujuan)&&empty($link)){
-            $response = Http::retry(10, 1000)->get('https://sicantik.go.id/api/TemplateData/keluaran/42533.json?key_id=' . $id . '');
-            $statuspesan = 'kosong';
-        }else{
-        $responsepesan = Http::retry(10, 1000)->get('http://172.18.185.247:3000/api?tujuan='. $tujuan.'&pesan='. $pesan.'&link='. $link.'');
-        $response = Http::retry(10, 1000)->get('https://sicantik.go.id/api/TemplateData/keluaran/42533.json?key_id=' . $id . '');
-        $datapesan = $responsepesan->json();
-        $statuspesan = $datapesan['status'];
-        }
-        $data = $response->json();
-        $items = $data['data']['data'];
-        $nohp = $data['data']['data']['0']['no_hp'];
-        $jenis_izin = $data['data']['data']['0']['jenis_izin'];
-        $nama = $data['data']['data']['0']['nama'];
-        $no_permohonan = $data['data']['data']['0']['no_izin'];
+        $request->validate([
+            'id' => 'required',
+            'pesan' => 'nullable|string',
+            'tujuan' => 'nullable|string',
+            'link' => 'nullable|url',
+        ]);
 
-        function gantiformat($nomorhp)
-        {
-            //Terlebih dahulu kita trim dl
-            $nomorhp = trim($nomorhp);
-            //bersihkan dari karakter yang tidak perlu
-            $nomorhp = strip_tags($nomorhp);
-            // Berishkan dari spasi
-            $nomorhp = str_replace(" ", "", $nomorhp);
-            // bersihkan dari bentuk seperti  (022) 66677788
-            $nomorhp = str_replace("(", "", $nomorhp);
-            // bersihkan dari format yang ada titik seperti 0811.222.333.4
-            $nomorhp = str_replace(".", "", $nomorhp);
+        $id = $request->input('id');
+        $pesan = (string) $request->input('pesan', '');
+        $tujuan = (string) $request->input('tujuan', '');
+        $link = (string) $request->input('link', '');
 
-            //cek apakah mengandung karakter + dan 0-9
-            if (!preg_match('/[^+0-9]/', trim($nomorhp))) {
-                // cek apakah no hp karakter 1-3 adalah +62
-                if (substr(trim($nomorhp), 0, 3) == '+62') {
-                    $nomorhp = '' . substr($nomorhp, 3);
-                }
-                // cek apakah no hp karakter 1 adalah 0
-                elseif (substr($nomorhp, 0, 1) == '0') {
-                    $nomorhp = '' . substr($nomorhp, 1);
-                } elseif (substr($nomorhp, 0, 1) == '8') {
-                    $nomorhp = '' . substr($nomorhp, 0);
-                } elseif (substr($nomorhp, 0, 2) == '62') {
-                    $nomorhp = '' . substr($nomorhp, 2);
-                }
+        $base = config('services.sicantik.url', 'https://sicantik.go.id');
+        $path = '/api/TemplateData/keluaran/42533.json';
+
+        $statuspesan = 'kosong';
+        if (empty($pesan) && empty($tujuan) && empty($link)) {
+            try {
+                $response = Http::retry(3, 500)->timeout(10)->get($base . $path, ['key_id' => $id]);
+            } catch (\Exception $e) {
+                Log::error('Sicantik dokumen request failed', ['exception' => $e->getMessage(), 'id' => $id]);
+                abort(500, 'External API request failed');
             }
-            return $nomorhp;
+        } else {
+            // send the message first (internal API)
+            try {
+                $responsepesan = Http::retry(3, 500)->timeout(10)->get('http://172.18.185.247:3000/api', [
+                    'tujuan' => $tujuan,
+                    'pesan' => $pesan,
+                    'link' => $link,
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Internal send API failed', ['exception' => $e->getMessage()]);
+                $responsepesan = null;
+            }
+
+            try {
+                $response = Http::retry(3, 500)->timeout(10)->get($base . $path, ['key_id' => $id]);
+            } catch (\Exception $e) {
+                Log::error('Sicantik dokumen request failed', ['exception' => $e->getMessage(), 'id' => $id]);
+                abort(500, 'External API request failed');
+            }
+
+            if ($responsepesan && $responsepesan->ok()) {
+                $datapesan = $responsepesan->json();
+                $statuspesan = data_get($datapesan, 'status', $statuspesan);
+            }
         }
-        $userphonegsm = gantiformat($nohp);
-        return view('dokumen', compact('items','id', 'userphonegsm', 'jenis_izin', 'nama', 'no_permohonan','statuspesan'));
+
+        if (!isset($response) || !$response->ok()) {
+            Log::error('Sicantik dokumen returned non-OK', ['response' => isset($response) ? $response->body() : null]);
+            abort(500, 'External API returned error');
+        }
+
+        $data = $response->json();
+        $items = data_get($data, 'data.data', []);
+        $nohp = data_get($data, 'data.data.0.no_hp');
+        $jenis_izin = data_get($data, 'data.data.0.jenis_izin');
+        $nama = data_get($data, 'data.data.0.nama');
+        $no_permohonan = data_get($data, 'data.data.0.no_izin');
+
+        $userphonegsm = $this->normalizePhoneForGsm((string) $nohp);
+        return view('dokumen', compact('items', 'id', 'userphonegsm', 'jenis_izin', 'nama', 'no_permohonan', 'statuspesan'));
+    }
+
+    /**
+     * Normalize phone numbers for display (returns leading 0, e.g. 0812...)
+     */
+    private function normalizePhoneForDisplay(string $number): string
+    {
+        $n = trim(strip_tags($number));
+        $n = str_replace([' ', '(', ')', '.'], '', $n);
+        if (!preg_match('/[^+0-9]/', $n)) {
+            if (str_starts_with($n, '+62')) {
+                return '0' . substr($n, 3);
+            }
+            if (str_starts_with($n, '62')) {
+                return '0' . substr($n, 2);
+            }
+            if (str_starts_with($n, '8')) {
+                return '0' . $n;
+            }
+            if (str_starts_with($n, '0')) {
+                return '0' . substr($n, 1);
+            }
+        }
+        return $n;
+    }
+
+    /**
+     * Normalize phone numbers for GSM/internal API (no leading zero, e.g. 812...)
+     */
+    private function normalizePhoneForGsm(string $number): string
+    {
+        $n = trim(strip_tags($number));
+        $n = str_replace([' ', '(', ')', '.'], '', $n);
+        if (!preg_match('/[^+0-9]/', $n)) {
+            if (str_starts_with($n, '+62')) {
+                return substr($n, 3);
+            }
+            if (str_starts_with($n, '62')) {
+                return substr($n, 2);
+            }
+            if (str_starts_with($n, '0')) {
+                return substr($n, 1);
+            }
+            return $n;
+        }
+        return $n;
     }
 }

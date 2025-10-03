@@ -840,27 +840,11 @@ class ProyekVerificationController extends Controller
             });
         }
 
-        // kbli status filter (baru / penambahan)
+        // kbli status filter: strictly check status_kbli ('baru' or 'lama')
         if ($kbli_status === 'baru') {
-            $query->where(function ($w) {
-                $w->whereRaw("LOWER(status_kbli) LIKE '%baru%'")
-                  ->orWhereRaw("LOWER(status_perusahaan) = 'baru'");
-            });
-        } elseif ($kbli_status === 'penambahan') {
-            $query->where(function ($w) {
-                $w->whereRaw("LOWER(status_kbli) LIKE '%tambah%'")
-                  ->orWhereRaw("LOWER(status_kbli) LIKE '%penambah%'")
-                  ->orWhereRaw("LOWER(status_kbli) = 'lama'")
-                  ->orWhereRaw("LOWER(status_perusahaan) = 'lama'");
-            });
-        }
-
-        // support explicit 'lama' filter (matches legacy 'lama' / penambahan normalized in DB)
-        if ($kbli_status === 'lama') {
-            $query->where(function ($w) {
-                $w->whereRaw("LOWER(status_kbli) = 'lama'")
-                  ->orWhereRaw("LOWER(status_perusahaan) = 'lama'");
-            });
+            $query->whereRaw("LOWER(status_kbli) LIKE '%baru%'");
+        } elseif ($kbli_status === 'lama') {
+            $query->whereRaw("LOWER(status_kbli) = 'lama'");
         }
 
         $items = $query->simplePaginate($perPage)->appends(array_filter([
@@ -965,6 +949,10 @@ class ProyekVerificationController extends Controller
     public function exportVerified(Request $request)
     {
         $format = strtolower($request->input('format', 'xlsx'));
+        // Temporary: raise memory and execution time limits for large exports.
+        // This is a short-term mitigation. For production, implement chunked/queued exports.
+        @ini_set('memory_limit', '1024M');
+        @set_time_limit(300);
         $year = (int) $request->input('year', date('Y'));
         $month = (int) $request->input('month', date('n'));
 
@@ -996,50 +984,63 @@ class ProyekVerificationController extends Controller
                 $p->whereRaw("LOWER(uraian_status_penanaman_modal) LIKE '%pmdn%'");
             });
         }
+        // kbli status filter: strictly check status_kbli ('baru' or 'lama') to match list view
         if ($kbli_status === 'baru') {
-            $query->where(function ($w) {
-                $w->whereRaw("LOWER(status_kbli) LIKE '%baru%'")
-                  ->orWhereRaw("LOWER(status_perusahaan) = 'baru'");
-            });
-        } elseif ($kbli_status === 'penambahan') {
-            $query->where(function ($w) {
-                $w->whereRaw("LOWER(status_kbli) LIKE '%tambah%'")
-                  ->orWhereRaw("LOWER(status_kbli) LIKE '%penambah%'")
-                  ->orWhereRaw("LOWER(status_kbli) = 'lama'")
-                  ->orWhereRaw("LOWER(status_perusahaan) = 'lama'");
-            });
+            $query->whereRaw("LOWER(status_kbli) LIKE '%baru%'");
         } elseif ($kbli_status === 'lama') {
-            $query->where(function ($w) {
-                $w->whereRaw("LOWER(status_kbli) = 'lama'")
-                  ->orWhereRaw("LOWER(status_perusahaan) = 'lama'");
-            });
+            $query->whereRaw("LOWER(status_kbli) = 'lama'");
         }
 
         $items = $query->get();
 
+        // Compute totals and metadata here so the PDF view receives the same summary as Excel
+        $totalInvestasi = $items->sum(function ($r) { return (float) (optional($r->proyek)->jumlah_investasi ? optional($r->proyek)->jumlah_investasi : 0); });
+        $totalTki = $items->sum(function ($r) { return (int) (optional($r->proyek)->tki ? optional($r->proyek)->tki : 0); });
+        $uniqueCompanies = $items->map(function ($r) { return optional($r->proyek)->nib; })->filter()->unique()->count();
+
+        $meta = [
+            'Laporan: Daftar Proyek Terverifikasi',
+            'Tahun: ' . $year,
+            'Bulan: ' . \Carbon\Carbon::createFromDate($year, $month, 1)->translatedFormat('F'),
+            'Penanaman: ' . strtoupper($penanaman),
+            'KBLI Status: ' . strtoupper($kbli_status),
+            'Pencarian: ' . ($q ?: '-'),
+        ];
+
         if ($format === 'pdf') {
-            $pdf = Pdf::loadView('admin.proyek.verification.pdf', compact('items','year','month'));
-            return $pdf->download("proyek-terverifikasi-{$year}-{$month}.pdf");
+            $orientation = strtolower((string) $request->input('orientation', 'landscape')) === 'portrait' ? 'portrait' : 'landscape';
+            $pdf = Pdf::loadView('admin.proyek.verification.pdf', compact('items','year','month','meta','totalInvestasi','totalTki','uniqueCompanies'));
+            // set paper size and orientation
+            $pdf->setPaper('a4', $orientation);
+            // Stream the PDF inline so user can preview before downloading
+            return $pdf->stream("proyek-terverifikasi-{$year}-{$month}.pdf");
         }
 
-        // default to Excel
-        $collection = $items->map(function ($row) {
-            return [
-                $row->id_proyek,
-                optional($row->proyek)->nama_perusahaan ?? '-',
-                optional($row->proyek)->nib ?? '-',
-                optional($row->proyek)->nama_proyek ?? '-',
-                optional($row->proyek)->kbli ?? '-',
-                optional($row->proyek)->jumlah_investasi ? (float) optional($row->proyek)->jumlah_investasi : 0,
-                optional($row->proyek)->tki ?? 0,
-                optional($row->proyek)->uraian_status_penanaman_modal ?? '-',
-                $row->status_perusahaan ?? '-',
-                $row->status_kbli ?? '-',
-                optional($row->verifier)->name ?? ($row->verified_by ?? '-'),
-                $row->verified_at ? \Carbon\Carbon::parse($row->verified_at)->toDateTimeString() : '-',
+        // default to Excel: use queued export to avoid memory/time issues for large datasets
+        if ($format === 'xlsx') {
+            $meta = [
+                'Laporan: Daftar Proyek Terverifikasi',
+                'Tahun: ' . $year,
+                'Bulan: ' . \Carbon\Carbon::createFromDate($year, $month, 1)->translatedFormat('F'),
+                'Penanaman: ' . strtoupper($penanaman),
+                'KBLI Status: ' . strtoupper($kbli_status),
+                'Pencarian: ' . ($q ?: '-'),
             ];
-        });
 
-        return app(Excel::class)->download(new ProyekVerifiedExport($collection), "proyek-terverifikasi-{$year}-{$month}.xlsx");
+            $fileName = "exports/proyek-terverifikasi-{$year}-{$month}-" . time() . ".xlsx";
+
+            // Use the queued export class which implements ShouldQueue + chunk reading
+            $export = new \App\Exports\Queued\ProyekVerifiedQueuedExport($year, $month, $q, $penanaman, $kbli_status, $meta);
+
+            // Excel::store will dispatch the queued export because the export implements ShouldQueue
+            try {
+                app(Excel::class)->store($export, $fileName, 'public');
+            } catch (\Exception $e) {
+                return redirect()->back()->with('error', 'Gagal menjadwalkan export: ' . $e->getMessage());
+            }
+
+            $url = asset('storage/' . $fileName);
+            return redirect()->back()->with('success', "Export dijadwalkan. File akan tersedia di: <a href='{$url}' target='_blank'>{$url}</a>");
+        }
     }
 }

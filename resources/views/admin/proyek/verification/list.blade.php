@@ -120,11 +120,14 @@
               <select name="kbli_status" class="form-select form-select-sm" style="max-width:150px;">
                 <option value="all" {{ request('kbli_status','all') === 'all' ? 'selected' : '' }}>Semua KBLI</option>
                 <option value="baru" {{ request('kbli_status') === 'baru' ? 'selected' : '' }}>Investasi Baru</option>
-                <option value="penambahan" {{ request('kbli_status') === 'penambahan' ? 'selected' : '' }}>Penambahan</option>
                 <option value="lama" {{ request('kbli_status') === 'lama' ? 'selected' : '' }}>Lama</option>
               </select>
 
               <button class="btn btn-outline-secondary" type="submit">Cari</button>
+              <select name="orientation" class="form-select form-select-sm" style="max-width:140px; margin-left:.5rem;">
+                <option value="landscape" {{ request('orientation','landscape') === 'landscape' ? 'selected' : '' }}>A4 - Landscape</option>
+                <option value="portrait" {{ request('orientation') === 'portrait' ? 'selected' : '' }}>A4 - Portrait</option>
+              </select>
             </div>
           </div>
           <div class="col-auto ms-auto">
@@ -139,8 +142,8 @@
 
       <div class="ms-auto">
         <a href="{{ route('proyek.verification.index') }}" class="btn btn-outline-secondary btn-sm">Kembali</a>
-        <a href="{{ route('proyek.verification.export', array_merge(request()->all(), ['format' => 'xlsx'])) }}" class="btn btn-success btn-sm ms-2">Download Excel</a>
-        <a href="{{ route('proyek.verification.export', array_merge(request()->all(), ['format' => 'pdf'])) }}" target="_blank" class="btn btn-primary btn-sm ms-2">Download PDF</a>
+  <a href="{{ route('proyek.verification.export', array_merge(request()->all(), ['format' => 'xlsx'])) }}" class="btn btn-success btn-sm ms-2">Download Excel</a>
+  <a href="{{ route('proyek.verification.export', array_merge(request()->all(), ['format' => 'pdf', 'orientation' => request('orientation','landscape')] )) }}" target="_blank" class="btn btn-primary btn-sm ms-2">Download PDF</a>
       </div>
     </div>
 

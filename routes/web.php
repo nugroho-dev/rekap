@@ -131,11 +131,15 @@ Route::middleware('auth')->group(function () {
     // Sicantik / proses / statistik
     Route::get('/np', [SicantikDashboardController::class, 'index']);
     Route::match(['get','post'], '/sicantik', [DashboardVprosesSicantikController::class, 'index']);
+    // Detail endpoint for AJAX: return proses steps for a given id/no_permohonan
+    Route::get('/sicantik/{id}', [DashboardVprosesSicantikController::class, 'show']);
     Route::get('/sicantik/print', [DashboardVprosesSicantikController::class, 'print']);
     Route::post('/sicantik/print', [DashboardVprosesSicantikController::class, 'print']);
     Route::get('/sicantik/statistik', [DashboardVprosesSicantikController::class, 'statistik']);
     Route::post('/sicantik/statistik', [DashboardVprosesSicantikController::class, 'statistik']);
     Route::post('/sicantik/sych', [DashboardVprosesSicantikController::class, 'sync']);
+    // New route: accept correct spelling '/sync' in addition to legacy '/sych'
+    Route::post('/sicantik/sync', [DashboardVprosesSicantikController::class, 'sync']);
     Route::post('/sicantik/rincian', [DashboardVprosesSicantikController::class, 'rincian']);
 
     // Dayoff

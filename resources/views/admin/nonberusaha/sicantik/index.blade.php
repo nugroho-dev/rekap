@@ -50,6 +50,22 @@
                           <span class="d-none d-sm-inline">
                           
                           </span>
+                          {{-- Toggle grouped / ungrouped view --}}
+                          @php
+                            // preserve existing query string but flip 'group'
+                            $currentQuery = request()->query();
+                            $isGrouped = !empty($grouped) && $grouped;
+                            $toggleQuery = $currentQuery;
+                            $toggleQuery['group'] = $isGrouped ? 0 : 1;
+                            $toggleUrl = url()->current() . '?' . http_build_query($toggleQuery);
+                          @endphp
+                          <a href="{{ $toggleUrl }}" class="btn btn-outline-secondary d-none d-sm-inline-block" title="Toggle grouped view">
+                            @if($isGrouped)
+                              Lihat Detail
+                            @else
+                              Grup
+                            @endif
+                          </a>
                           <a href="#" class="btn btn-green d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#modal-team-stat">
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-table-shortcut"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 13v-8a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-8" /><path d="M3 10h18" /><path d="M10 3v11" /><path d="M2 22l5 -5" /><path d="M7 21.5v-4.5h-4.5" /></svg>
@@ -79,6 +95,38 @@
                       </div>
                     
                     </div>
+                </div>
+              </div>
+              <!-- Detail Proses Modal -->
+              <div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="detailModalLabel">Detail Proses</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="table-responsive">
+                        <table class="table table-striped" id="detailModalTable">
+                          <thead>
+                            <tr>
+                              <th>No</th>
+                              <th>Jenis Proses ID</th>
+                              <th>Nama Proses</th>
+                              <th>Start</th>
+                              <th>End</th>
+                              <th>Status</th>
+                              <th>Keterangan</th>
+                            </tr>
+                          </thead>
+                          <tbody></tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div class="col-12">
@@ -123,27 +171,27 @@
                     </div>
                   </div>
                   <div class="table-responsive">
-                    <table class="table card-table table-vcenter text-nowrap  table-striped ">
-                      <thead class="text-center">
-                        <tr>
-                          <th class="w-1" >No.</th>
-                          <th class="w-1" >Nomor Permohonan</th>
-                          <th >Nama Pemohon</th>
-                          <th >Jenis Izin</th>
-                          <th >Proses</th>
-                          <th >Status</th>
-                          <th >Tanggal Pengajuan</th>
-                          <th >Tanggal Penetapan</th>
-                          <th >Tanggal Proses Awal</th>
-                          <th >Tanggal Proses Akhir</th>
-                          <th >Lama Proses</th>
-                          <th >*</th>
-                        </tr>
-                      </thead>
-                      <tbody class="font-monospace fs-5" >
-                       @php
-                            $no=1;
-                          
+                      <table class="table card-table table-vcenter text-nowrap  table-striped ">
+                        <thead class="text-center">
+                          <tr>
+                            <th class="w-1" >No.</th>
+                            <th class="w-1" >Nomor Permohonan</th>
+                            <th >Nama Pemohon</th>
+                            <th >Jenis Izin</th>
+                            <th >Proses</th>
+                            <th >Status</th>
+                            <th >Tanggal Pengajuan</th>
+                            <th >Tanggal Penetapan</th>
+                            <th >Tanggal Proses Awal</th>
+                            <th >Tanggal Proses Akhir</th>
+                            <th >Lama Proses</th>
+                            <th >Jumlah Hari Kerja</th>
+                            <th >*</th>
+                          </tr>
+                        </thead>
+                        <tbody class="font-monospace fs-5" >
+                         @php
+                              $no=1;
                         @endphp
                         @foreach ($items as $index => $item)
                         @php
@@ -156,171 +204,42 @@
                           <td class="text-justify text-wrap">{{ $item->nama }}</td>
                           <td class="text-justify text-wrap">{{ $item->jenis_izin }}</td>
                           <td class="text-justify text-wrap">{{ $item->nama_proses }}</td>
-                          <td class="text-center">{{ is_null($item->end_date_akhir) ? 'Proses' : (Carbon\Carbon::parse($item->end_date_akhir)->translatedFormat('Y')==0001?'Proses':'Terbit')}}</td>
+                          <td class="text-center">
+                            @php $status40 = $item->status_jenis_40 ?? null; @endphp
+                            @if(!is_null($status40) && $status40 !== '')
+                              {{ $status40 }}
+                            @else
+                              {{ is_null($item->end_date_akhir) ? 'Proses' : (Carbon\Carbon::parse($item->end_date_akhir)->translatedFormat('Y')==0001?'Proses':'Terbit') }}
+                            @endif
+                          </td>
                           <td class="text-center">{{ Carbon\Carbon::parse($item->tgl_pengajuan)->translatedFormat('d F Y') }}</td>
                           <td class="text-center">{{  is_null($item->tgl_penetapan) ? 'Proses' : Carbon\Carbon::parse($item->tgl_penetapan)->translatedFormat('d F Y')}}</td>
                           <td class="text-center">{!! is_null($item->start_date_awal) ? '<span class="text-warning">Waktu SLA Belum Jalankan <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="currentColor"  class="icon icon-tabler icons-tabler-filled icon-tabler-alert-triangle"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 1.67c.955 0 1.845 .467 2.39 1.247l.105 .16l8.114 13.548a2.914 2.914 0 0 1 -2.307 4.363l-.195 .008h-16.225a2.914 2.914 0 0 1 -2.582 -4.2l.099 -.185l8.11 -13.538a2.914 2.914 0 0 1 2.491 -1.403zm.01 13.33l-.127 .007a1 1 0 0 0 0 1.986l.117 .007l.127 -.007a1 1 0 0 0 0 -1.986l-.117 -.007zm-.01 -7a1 1 0 0 0 -.993 .883l-.007 .117v4l.007 .117a1 1 0 0 0 1.986 0l.007 -.117v-4l-.007 -.117a1 1 0 0 0 -.993 -.883z" /></svg></span>' : (Carbon\Carbon::parse($item->start_date_awal)->translatedFormat('Y')==0001?'<span class="text-warning">Waktu SLA Belum Jalankan <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="currentColor"  class="icon icon-tabler icons-tabler-filled icon-tabler-alert-triangle"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 1.67c.955 0 1.845 .467 2.39 1.247l.105 .16l8.114 13.548a2.914 2.914 0 0 1 -2.307 4.363l-.195 .008h-16.225a2.914 2.914 0 0 1 -2.582 -4.2l.099 -.185l8.11 -13.538a2.914 2.914 0 0 1 2.491 -1.403zm.01 13.33l-.127 .007a1 1 0 0 0 0 1.986l.117 .007l.127 -.007a1 1 0 0 0 0 -1.986l-.117 -.007zm-.01 -7a1 1 0 0 0 -.993 .883l-.007 .117v4l.007 .117a1 1 0 0 0 1.986 0l.007 -.117v-4l-.007 -.117a1 1 0 0 0 -.993 -.883z" /></svg></span>': Carbon\Carbon::parse($item->start_date_awal)->translatedFormat('d F Y h:i a')) !!}</td>
                           <td class="text-center">
-                            {!! 
-                              (is_null($item->start_date_awal) && is_null($item->end_date_akhir)) || 
-                              (Carbon\Carbon::parse($item->start_date_awal)->translatedFormat('Y') == 0001 && 
-                               Carbon\Carbon::parse($item->end_date_akhir)->translatedFormat('Y') == 0001) 
-                              ? '<span class="text-warning">Waktu SLA Belum Jalankan <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="icon icon-tabler icons-tabler-filled icon-tabler-alert-triangle"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 1.67c.955 0 1.845 .467 2.39 1.247l.105 .16l8.114 13.548a2.914 2.914 0 0 1 -2.307 4.363l-.195 .008h-16.225a2.914 2.914 0 0 1 -2.582 -4.2l.099 -.185l8.11 -13.538a2.914 2.914 0 0 1 2.491 -1.403zm.01 13.33l-.127 .007a1 1 0 0 0 0 1.986l.117 .007l.127 -.007a1 1 0 0 0 0 -1.986l-.117 -.007zm-.01 -7a1 1 0 0 0 -.993 .883l-.007 .117v4l.007 .117a1 1 0 0 0 1.986 0l.007 -.117v-4l-.007 -.117a1 1 0 0 0 -.993 -.883z" /></svg></span>' 
-                              : (is_null($item->end_date_akhir) || Carbon\Carbon::parse($item->end_date_akhir)->translatedFormat('Y') == 0001
-                                ? Carbon\Carbon::parse($item->proses_mulai)->translatedFormat('d F Y h:i a') 
-                                : Carbon\Carbon::parse($item->end_date_akhir)->translatedFormat('d F Y h:i a')) 
-                            !!}
+                            @if(is_null($item->end_date_akhir))
+                              Proses
+                            @else
+                              @php $rawEnd = (string) $item->end_date_akhir; @endphp
+                              @if(in_array($rawEnd, ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000']))
+                                menunggu proses
+                              @else
+                                {{ Carbon\Carbon::parse($rawEnd)->translatedFormat('d F Y H:i') }}
+                              @endif
+                            @endif
                           </td>
-                          <td class="text-center">{{ $item->jumlah_hari_kerja }} {!! is_null( $item->jumlah_hari_kerja) ? '<svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="currentColor"  class="icon icon-tabler icons-tabler-filled icon-tabler-alert-triangle"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 1.67c.955 0 1.845 .467 2.39 1.247l.105 .16l8.114 13.548a2.914 2.914 0 0 1 -2.307 4.363l-.195 .008h-16.225a2.914 2.914 0 0 1 -2.582 -4.2l.099 -.185l8.11 -13.538a2.914 2.914 0 0 1 2.491 -1.403zm.01 13.33l-.127 .007a1 1 0 0 0 0 1.986l.117 .007l.127 -.007a1 1 0 0 0 0 -1.986l-.117 -.007zm-.01 -7a1 1 0 0 0 -.993 .883l-.007 .117v4l.007 .117a1 1 0 0 0 1.986 0l.007 -.117v-4l-.007 -.117a1 1 0 0 0 -.993 -.883z" /></svg>' : 'Hari' !!} {{ $item->durasi }}</td>
-                          
+                          <td class="text-center">{{ $item->lama_proses ?? '-' }}</td>
+                          <td class="text-center">{{ $item->jumlah_hari_kerja ?? (isset($item->jumlah_hari_kerja) ? $item->jumlah_hari_kerja : '-') }}</td>
                           <td class="text-center">
-                            <span class="dropdown">
-                              
-                              <button class="btn dropdown-toggle align-text-top" data-bs-boundary="viewport" data-bs-toggle="dropdown">Action</button>
-                              <div class="dropdown-menu dropdown-menu-end">
-                                <a class="dropdown-item" href="{{ url('/sicantik/'.$item->slug.'')}}" >
-                                  Lihat Proses
-                                </a>
-                                <a class="dropdown-item" target="_blank" href="https://sicantik.go.id/webroot/files/signed/{{$item->file_signed_report}}" >
-                                  Download Izin
-                                </a>
-                              </div>
-                            </span>
-                           
+                            <div class="btn-group">
+                              <button type="button" class="btn btn-sm btn-outline-primary detailBtn" data-id="{{ $item->id_proses_permohonan ?? $item->id ?? $item->no_permohonan }}">Detail</button>
+                              <a href="{{ url('/sicantik?search='.$item->no_permohonan) }}" class="btn btn-sm btn-outline-secondary">Lihat</a>
+                            </div>
+                          </td>
                         </tr>
                         @endforeach
-                        @if($items->count() == 0)
-                        <tr >
-                          <td class="h3 text-capitalize" colspan='18'>tidak ada informasi yang ditampilkan <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-mood-puzzled"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14.986 3.51a9 9 0 1 0 1.514 16.284c2.489 -1.437 4.181 -3.978 4.5 -6.794" /><path d="M10 10h.01" /><path d="M14 8h.01" /><path d="M12 15c1 -1.333 2 -2 3 -2" /><path d="M20 9v.01" /><path d="M20 6a2.003 2.003 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483" /></svg> tidak ada informasi yang ditampilkan</td>
-                        </tr>
-                        @endif
-                      </tbody>
-                    </table>
+                        </tbody>
+                      </table>
                   </div>
-                  <div class="card-footer d-flex align-items-center">
-                     {{ $items->appends(['perPage' => $perPage])->appends(['search' => $search])->appends(['date_start' => $date_start])->appends(['date_end' => $date_end])->appends(['month' => $month])->appends(['year' => $year])->links() }}
-                  </div>
-                </div>
-              </div>
-              @php
-              use Carbon\Carbon;
-
-              $namaBulan = [];
-              for ($i = 1; $i <= 12; $i++) {
-                $namaBulan[] = Carbon::createFromDate(null, $i, 1)->translatedFormat('F');
-              }
-
-              $startYear = 2018;
-              $currentYear = date('Y'); // Tahun sekarang
-              @endphp
-              <div class="modal fade" id="modal-team" tabindex="-1" role="dialog" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered" role="document">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h5 class="modal-title">Sortir Berdasarkan :</h5>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="card">
-                          <div class="card-header">
-                            <ul class="nav nav-tabs card-header-tabs nav-fill" data-bs-toggle="tabs" role="tablist">
-                              <li class="nav-item" role="presentation">
-                                <a href="#tabs-home-8" class="nav-link active" data-bs-toggle="tab" aria-selected="true" role="tab">Tanggal</a>
-                              </li>
-                            </ul>
-                          </div>
-                          <div class="card-body">
-                            <div class="tab-content">
-                              <div class="tab-pane fade active show" id="tabs-home-8" role="tabpanel">
-                                <h4>Pilih Tanggal :</h4>
-                                <form method="post" action="{{ url('/sicantik/sych')}}" enctype="multipart/form-data">
-                                  @csrf
-                                <div class="input-group mb-2">
-                                  <input type="date" class="form-control" name="date_start" autocomplete="off">
-                                  <span class="input-group-text">
-                                    s/d
-                                  </span>
-                                  <input type="date" class="form-control" name="date_end" autocomplete="off">
-                                  <button type="submit" class="btn btn-primary">Tampilkan</button>
-                                </div>
-                                </form>
-                              </div>
-                              
-                              
-                            </div>
-                          </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn me-auto" data-bs-dismiss="modal">Tutup</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-             
-
-              <div class="modal" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h5 class="modal-title">Pratinjau Dokumen</h5>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                      <div class="flexible-container">
-                        <iframe id="pdfViewer" src="" width="100%" height="500px" frameborder="0"></iframe>
-                      </div>
-                    </div>
-                    <div class="modal-footer">
-                      
-                      <a href="#" class="btn btn-primary ms-auto" data-bs-dismiss="modal">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-plus" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                          <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                          <path d="M12 5l0 14"></path>
-                          <path d="M5 12l14 0"></path>
-                        </svg>
-                        Tutup
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="modal fade" id="userModalDel" tabindex="-1" style="display: none;" aria-hidden="true">
-                <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
-                  <div class="modal-content">
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    <div class="modal-status bg-danger"></div>
-                    <div class="modal-body text-center py-4">
-                      <!-- Download SVG icon from http://tabler-icons.io/i/alert-triangle -->
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon mb-2 text-danger icon-lg"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M12 9v4"></path><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z"></path><path d="M12 16h.01"></path></svg>
-                      <h3>Anda yakin ?</h3>
-                      <div class="text-secondary">Hapus Data Business Meeting <span id="userName"></span> !</div>
-                    </div>
-                    <div class="modal-footer">
-                      <div class="w-100">
-                        <div class="row">
-                          <div class="col"><a href="#" class="btn w-100" data-bs-dismiss="modal">
-                              Batal
-                            </a>
-                          </div>
-                          <div class="col">
-                          <form method="post" id="delLoi" action="">
-                            @method('delete')
-                            @csrf
-                          
-                            <button type="submit" class="btn btn-danger w-100">
-                              Hapus
-                            </button>
-                          
-                          </form>
-                        </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
               <div class="modal fade" id="userModalWar" tabindex="-1" style="display: none;" aria-hidden="true">
                 <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
@@ -450,7 +369,7 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
-        $('.openModal').on('click', function() {
+    $('.openModal').on('click', function() {
             const userId = $(this).data('id');
           
             $.ajax({
@@ -475,6 +394,37 @@
             });
         });
     });
+  // Detail modal handler
+  $(document).on('click', '.detailBtn', function() {
+    const id = $(this).data('id');
+    // fetch details
+    $.ajax({
+      url: `{{ url('/sicantik') }}/${id}`,
+      type: 'GET',
+      success: function(res) {
+        if (res && res.steps) {
+          const tbody = $('#detailModalTable tbody');
+          tbody.empty();
+          res.steps.forEach(function(step, idx) {
+            const tr = $('<tr>');
+            tr.append($('<td>').text(idx+1));
+            tr.append($('<td>').text(step.jenis_proses_id));
+            tr.append($('<td>').text(step.nama_proses));
+            tr.append($('<td>').text(step.start || '-'));
+            tr.append($('<td>').text(step.end || '-'));
+            tr.append($('<td>').text(step.status || '-'));
+            tr.append($('<td>').text(step.keterangan || '-'));
+            tbody.append(tr);
+          });
+          $('#detailModalLabel').text('Detail Proses: ' + (res.record.no_permohonan || res.record.id));
+          $('#detailModal').modal('show');
+        }
+      },
+      error: function() {
+        alert('Gagal mengambil detail proses');
+      }
+    });
+  });
     $(document).ready(function() {
         $('.openModalDel').on('click', function() {
             const userId = $(this).data('id');
