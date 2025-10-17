@@ -11,6 +11,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use App\Models\Proses;
+use Illuminate\Database\Eloquent\Model as EloquentModel;
 
 class SyncSicantikProsesJob implements ShouldQueue
 {
@@ -117,9 +119,33 @@ class SyncSicantikProsesJob implements ShouldQueue
             foreach ($chunk as $row) {
                 if (!is_array($row)) continue;
                 $clean = array_intersect_key($row, array_flip($allowed));
+
+                // If incoming row lacks id_proses_permohonan, try to map to an existing record via no_permohonan
+                $hasId = !empty($clean['id_proses_permohonan']);
+                $hasNo = !empty($clean['no_permohonan']);
+
+                if (!$hasId && $hasNo) {
+                    try {
+                        $existing = DB::table('proses')->where('no_permohonan', trim($clean['no_permohonan']))->select('id_proses_permohonan')->first();
+                        if ($existing && !empty($existing->id_proses_permohonan)) {
+                            $clean['id_proses_permohonan'] = $existing->id_proses_permohonan;
+                            Log::info('SyncSicantikProsesJob: mapped incoming row to existing id via no_permohonan', ['no_permohonan' => $clean['no_permohonan'], 'mapped_id' => $existing->id_proses_permohonan]);
+                        }
+                    } catch (\Throwable $e) {
+                        // on error, skip mapping and proceed — we'll either insert or skip below
+                    }
+                }
+
                 // Normalize/trim simple string fields to reduce payload size
                 if (isset($clean['nama'])) $clean['nama'] = is_string($clean['nama']) ? trim($clean['nama']) : $clean['nama'];
                 if (isset($clean['no_permohonan'])) $clean['no_permohonan'] = is_string($clean['no_permohonan']) ? trim($clean['no_permohonan']) : $clean['no_permohonan'];
+
+                // If the row has neither id_proses_permohonan nor no_permohonan, skip it to avoid creating duplicate/anonymous rows
+                if (empty($clean['id_proses_permohonan']) && empty($clean['no_permohonan'])) {
+                    Log::warning('SyncSicantikProsesJob: skipping row without identifier', ['sample' => array_slice($row, 0, 5)]);
+                    continue;
+                }
+
                 $toUpsert[] = $clean;
             }
 
@@ -130,16 +156,42 @@ class SyncSicantikProsesJob implements ShouldQueue
 
             try {
                 DB::beginTransaction();
-                // upsert on id_proses_permohonan
-                $uniqueBy = ['id_proses_permohonan'];
-                $updateCols = array_values(array_diff(array_keys($toUpsert[0]), $uniqueBy));
-                DB::table('proses')->upsert($toUpsert, $uniqueBy, $updateCols);
+                // Use Eloquent updateOrCreate per row so model events, mutators and casts run.
+                // Temporarily disable mass-assignment protection for bulk writes.
+                EloquentModel::unguard();
+
+                foreach ($toUpsert as $uRow) {
+                    // Determine lookup keys: prefer id_proses_permohonan, fallback to no_permohonan
+                    $lookup = [];
+                    if (!empty($uRow['id_proses_permohonan'])) {
+                        $lookup = ['id_proses_permohonan' => $uRow['id_proses_permohonan']];
+                    } elseif (!empty($uRow['no_permohonan'])) {
+                        $lookup = ['no_permohonan' => $uRow['no_permohonan']];
+                    } else {
+                        // shouldn't happen due to earlier guard, but skip defensively
+                        continue;
+                    }
+
+                    try {
+                        Proses::updateOrCreate($lookup, $uRow);
+                    } catch (\Throwable $e) {
+                        // Log individual row failures but keep processing the chunk
+                        Log::error('SyncSicantikProsesJob: updateOrCreate failed for row', ['error' => $e->getMessage(), 'lookup' => $lookup]);
+                    }
+                }
+
+                EloquentModel::reguard();
                 DB::commit();
                 $processed += count($toUpsert);
-                Log::info('SyncSicantikProsesJob: upsert chunk completed', ['chunk' => $chunkIndex, 'rows' => count($toUpsert)]);
+                Log::info('SyncSicantikProsesJob: upsert(chunk->updateOrCreate) completed', ['chunk' => $chunkIndex, 'rows' => count($toUpsert)]);
             } catch (\Throwable $e) {
                 DB::rollBack();
-                Log::error('SyncSicantikProsesJob: upsert failed', ['error' => $e->getMessage(), 'chunk' => $chunkIndex]);
+                // Ensure reguard even on failure
+                try {
+                    EloquentModel::reguard();
+                } catch (\Throwable $_) {
+                }
+                Log::error('SyncSicantikProsesJob: upsert/updateOrCreate failed', ['error' => $e->getMessage(), 'chunk' => $chunkIndex]);
             }
 
             // Free memory from the processed chunk and run GC

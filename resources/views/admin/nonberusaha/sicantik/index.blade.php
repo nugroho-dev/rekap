@@ -82,12 +82,12 @@
                           <span class="d-none d-sm-inline">
                           
                           </span>
-                          <a href="#" class="btn btn-primary d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#modal-team">
+                          <a href="#" class="btn btn-primary d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#modal-sync">
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-table-import"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 21h-7a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v8" /><path d="M3 10h18" /><path d="M10 3v18" /><path d="M19 22v-6" /><path d="M22 19l-3 -3l-3 3" /></svg>
                             Tambah Data
                           </a>
-                          <a href="#" class="btn btn-primary d-sm-none btn-icon" data-bs-toggle="modal" data-bs-target="#modal-team">
+                          <a href="#" class="btn btn-primary d-sm-none btn-icon" data-bs-toggle="modal" data-bs-target="#modal-sync">
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-table-import"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 21h-7a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v8" /><path d="M3 10h18" /><path d="M10 3v18" /><path d="M19 22v-6" /><path d="M22 19l-3 -3l-3 3" /></svg>
                           </a>
@@ -122,6 +122,14 @@
                           <tbody></tbody>
                         </table>
                       </div>
+
+                        <div class="card-footer d-flex align-items-center">
+                          <p class="m-0 text-muted">Menampilkan {{ $items->firstItem() ?? 0 }} - {{ $items->lastItem() ?? 0 }} dari {{ $items->total() }} item</p>
+                          <ul class="pagination ms-auto mb-0">
+                            {{-- Preserve query string except page --}}
+                            {!! $items->appends(request()->except('page'))->links('pagination::bootstrap-5') !!}
+                          </ul>
+                        </div>
                     </div>
                     <div class="modal-footer">
                       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
@@ -140,9 +148,17 @@
                         Menampilkan
                         <div class="mx-2 d-inline-block">
                           
-                          <form action="{{ url('/sicantik')}}" method="POST">
-                            @csrf
-                            <input type="hidden" name="page" value="{{ request()->get('page', 1) }}">
+                          @php $preserveQuery = request()->except(['page','perPage']); @endphp
+                          <form action="{{ url('/sicantik')}}" method="GET">
+                            @foreach($preserveQuery as $k => $v)
+                              @if(is_array($v))
+                                @foreach($v as $vv)
+                                  <input type="hidden" name="{{ $k }}[]" value="{{ $vv }}">
+                                @endforeach
+                              @else
+                                <input type="hidden" name="{{ $k }}" value="{{ $v }}">
+                              @endif
+                            @endforeach
                             <select name="perPage" id="myselect" onchange="this.form.submit()" class="form-control form-control-sm">
                               @foreach ([5, 10, 20, 50, 60, 80, 100] as $size)
                                 <option value="{{ $size }}" {{ $perPage == $size ? 'selected' : '' }}>
@@ -157,10 +173,18 @@
                       <div class="ms-auto text-muted">
                         Cari:
                         <div class="ms-2 d-inline-block ">
-                          <form action="{{ url('/sicantik')}}" method="POST">
-                            @csrf
+                          <form action="{{ url('/sicantik') }}" method="GET">
+                            @foreach(request()->except(['page','search']) as $k => $v)
+                              @if(is_array($v))
+                                @foreach($v as $vv)
+                                  <input type="hidden" name="{{ $k }}[]" value="{{ $vv }}">
+                                @endforeach
+                              @else
+                                <input type="hidden" name="{{ $k }}" value="{{ $v }}">
+                              @endif
+                            @endforeach
                             <div class="input-group">
-                              <input type="text" name="search" class="form-control form-control-sm" aria-label="cari" value="{{ old('search') }}">
+                              <input type="search" name="search" class="form-control form-control-sm" aria-label="cari" value="{{ $search ?? '' }}">
                               <button type="submit" class="btn btn-icon btn-sm">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"></path><path d="M21 21l-6 -6"></path></svg>
                               </button>
@@ -227,8 +251,20 @@
                               @endif
                             @endif
                           </td>
-                          <td class="text-center">{{ $item->lama_proses ?? '-' }}</td>
-                          <td class="text-center">{{ $item->jumlah_hari_kerja ?? (isset($item->jumlah_hari_kerja) ? $item->jumlah_hari_kerja : '-') }}</td>
+                          <td class="text-center">
+                            @if(is_numeric($item->lama_proses))
+                              {{ number_format($item->lama_proses, 2, ',', '.') }} hari
+                            @else
+                              -
+                            @endif
+                          </td>
+                          <td class="text-center">
+                            @if(is_numeric($item->jumlah_hari_kerja))
+                              {{ $item->jumlah_hari_kerja }} hari kerja
+                            @else
+                              -
+                            @endif
+                          </td>
                           <td class="text-center">
                             <div class="btn-group">
                               <button type="button" class="btn btn-sm btn-outline-primary detailBtn" data-id="{{ $item->id_proses_permohonan ?? $item->id ?? $item->no_permohonan }}">Detail</button>
@@ -239,6 +275,13 @@
                         @endforeach
                         </tbody>
                       </table>
+                  </div>
+
+                  <div class="card-footer d-flex align-items-center">
+                    <p class="m-0 text-muted">Menampilkan {{ $items->firstItem() ?? 0 }} - {{ $items->lastItem() ?? 0 }} dari {{ $items->total() }} item</p>
+                    <div class="ms-auto">
+                      {!! $items->appends(request()->except('page'))->links('pagination::bootstrap-5') !!}
+                    </div>
                   </div>
 
               <div class="modal fade" id="userModalWar" tabindex="-1" style="display: none;" aria-hidden="true">
@@ -366,6 +409,46 @@
                   </div>
                 </div>
               </div>
+                <!-- Sync Modal -->
+                <div class="modal fade" id="modal-sync" tabindex="-1" role="dialog" aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title">Sinkronisasi Data SiCantik</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <form method="post" action="{{ url('/sicantik/sync') }}">
+                        @csrf
+                        <div class="modal-body">
+                          <div class="mb-3">
+                            <label class="form-label">Tanggal Mulai</label>
+                            <input type="date" name="date_start" class="form-control" required>
+                          </div>
+                          <div class="mb-3">
+                            <label class="form-label">Tanggal Selesai</label>
+                            <input type="date" name="date_end" class="form-control" required>
+                          </div>
+                          <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="async" value="1" id="syncAsync" checked>
+                            <label class="form-check-label" for="syncAsync">Jalankan Asinkron (disarankan)</label>
+                          </div>
+                          <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="force_sync" value="1" id="syncForce">
+                            <label class="form-check-label" for="syncForce">Jalankan sinkron secara langsung (force)</label>
+                          </div>
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="statistik" value="1" id="syncStat">
+                            <label class="form-check-label" for="syncStat">Arahkan ke Statistik setelah selesai</label>
+                          </div>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                          <button type="submit" class="btn btn-primary">Jadwalkan Sinkron</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {

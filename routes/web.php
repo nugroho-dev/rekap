@@ -131,12 +131,17 @@ Route::middleware('auth')->group(function () {
     // Sicantik / proses / statistik
     Route::get('/np', [SicantikDashboardController::class, 'index']);
     Route::match(['get','post'], '/sicantik', [DashboardVprosesSicantikController::class, 'index']);
-    // Detail endpoint for AJAX: return proses steps for a given id/no_permohonan
-    Route::get('/sicantik/{id}', [DashboardVprosesSicantikController::class, 'show']);
+    // Create new Sicantik entry (form + store)
+    Route::get('/sicantik/create', [DashboardVprosesSicantikController::class, 'create']);
+    Route::post('/sicantik', [DashboardVprosesSicantikController::class, 'store']);
+    // Detail and supporting endpoints for Sicantik
     Route::get('/sicantik/print', [DashboardVprosesSicantikController::class, 'print']);
     Route::post('/sicantik/print', [DashboardVprosesSicantikController::class, 'print']);
+    // Statistik routes must be registered before the parameterized detail route
     Route::get('/sicantik/statistik', [DashboardVprosesSicantikController::class, 'statistik']);
     Route::post('/sicantik/statistik', [DashboardVprosesSicantikController::class, 'statistik']);
+    // Detail endpoint for AJAX: return proses steps for a given id/no_permohonan
+    Route::get('/sicantik/{id}', [DashboardVprosesSicantikController::class, 'show']);
     Route::post('/sicantik/sych', [DashboardVprosesSicantikController::class, 'sync']);
     // New route: accept correct spelling '/sync' in addition to legacy '/sych'
     Route::post('/sicantik/sync', [DashboardVprosesSicantikController::class, 'sync']);

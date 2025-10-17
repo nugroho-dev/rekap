@@ -8,6 +8,7 @@ use App\Models\Vproses;
 use App\Models\Vpstatistik;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Proses;
+use App\Models\Dayoff;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -65,9 +66,9 @@ class DashboardVprosesSicantikController extends Controller
 		$grouped = $request->boolean('group');
 		// Add a computed column start_date_awal: earliest end_date for jenis_proses_id = 2 per no_permohonan
 		$items = $query->selectRaw("proses.*,
-			(SELECT MIN(p2.end_date) FROM proses p2 WHERE p2.no_permohonan = proses.no_permohonan AND p2.jenis_proses_id = 2) AS start_date_awal,
-			(SELECT MAX(p3.end_date) FROM proses p3 WHERE p3.no_permohonan = proses.no_permohonan AND p3.jenis_proses_id = 40) AS end_date_akhir,
-			(SELECT p4.status FROM proses p4 WHERE p4.no_permohonan = proses.no_permohonan AND p4.jenis_proses_id = 40 ORDER BY p4.id ASC LIMIT 1) AS status_jenis_40
+			(SELECT MIN(p2.end_date) FROM proses p2 WHERE p2.permohonan_izin_id = proses.permohonan_izin_id AND p2.jenis_proses_id = 2) AS start_date_awal,
+			(SELECT MAX(p3.end_date) FROM proses p3 WHERE p3.permohonan_izin_id = proses.permohonan_izin_id AND p3.jenis_proses_id = 40) AS end_date_akhir,
+			(SELECT p4.status FROM proses p4 WHERE p4.permohonan_izin_id = proses.permohonan_izin_id AND p4.jenis_proses_id = 40 ORDER BY p4.id ASC LIMIT 1) AS status_jenis_40
 		")
 		->orderByRaw("COALESCE(tgl_pengajuan, tgl_pengajuan_time, created_at) DESC")
 		->orderBy('no_permohonan', 'ASC')
@@ -75,7 +76,116 @@ class DashboardVprosesSicantikController extends Controller
 
 		$items->withPath(url('/sicantik'));
 
-		// Calendar helpers used by the view
+        // Hitung lama_proses & jumlah_hari_kerja per item (start = end_date jenis=2, end = end_date jenis=40 or fallback)
+        $items->getCollection()->transform(function ($item) {
+            try {
+                $no = $item->permohonan_izin_id;
+
+                $invalidDates = ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000'];
+
+                // Start: earliest end_date for jenis_proses_id = 2 (if any and valid)
+                $startDate = Proses::where('permohonan_izin_id', $no)
+                    ->where('jenis_proses_id', 2)
+                    ->whereNotNull('end_date')
+                    ->whereNotIn('end_date', $invalidDates)
+                    ->min('end_date');
+
+                // Preferred end: latest end_date for jenis_proses_id = 40 (valid)
+                $endDate40 = Proses::where('permohonan_izin_id', $no)
+                    ->where('jenis_proses_id', 40)
+                    ->whereNotNull('end_date')
+                    ->whereNotIn('end_date', $invalidDates)
+                    ->max('end_date');
+
+                // Fallback end: latest valid end_date in the group
+                $lastEndDate = Proses::where('permohonan_izin_id', $no)
+                    ->whereNotNull('end_date')
+                    ->whereNotIn('end_date', $invalidDates)
+                    ->max('end_date');
+
+                $usedEnd = $endDate40 ?: $lastEndDate;
+
+				// If any proses in this permohonan has jenis_proses_id = 226, we skip counting kerja days
+				$hasJenis226 = Proses::where('permohonan_izin_id', $no)->where('jenis_proses_id', 226)->exists();
+
+				if ($startDate && $usedEnd) {
+                    $start = Carbon::parse($startDate);
+                    $end = Carbon::parse($usedEnd);
+
+					// inclusive days (allow fractional days) -> compute seconds difference and convert to days
+					$diffSeconds = $end->timestamp - $start->timestamp;
+					$daysFloat = ($diffSeconds / 86400) + 1;
+					$item->lama_proses = round($daysFloat, 2);
+
+					// business days Mon-Fri excluding national holidays from dayoff.tanggal
+					// Fetch holidays in the inclusive range once to avoid per-day queries
+					try {
+						$holidays = Dayoff::whereBetween('tanggal', [$start->toDateString(), $end->toDateString()])->pluck('tanggal')->map(function ($d) {
+							return Carbon::parse($d)->toDateString();
+						})->unique()->toArray();
+					} catch (\Throwable $e) {
+						$holidays = [];
+					}
+
+					// compute total work days in the overall range
+					$workDays = 0;
+					$cursor = $start->copy();
+					while ($cursor->lte($end)) {
+						$iso = $cursor->dayOfWeekIso; // 1..7
+						$ds = $cursor->toDateString();
+						if ($iso >= 1 && $iso <= 5 && !in_array($ds, $holidays)) $workDays++;
+						$cursor->addDay();
+					}
+
+					// If there are steps with jenis_proses_id = 226, subtract their workdays (intersected with overall range)
+					$reduction = 0;
+					if ($hasJenis226) {
+						$steps226 = Proses::where('permohonan_izin_id', $no)
+							->where('jenis_proses_id', 226)
+							->whereNotNull('start_date')
+							->whereNotIn('start_date', $invalidDates)
+							->whereNotNull('end_date')
+							->whereNotIn('end_date', $invalidDates)
+							->get(['start_date', 'end_date']);
+
+						foreach ($steps226 as $st) {
+							try {
+								$sStart = Carbon::parse($st->start_date);
+								$sEnd = Carbon::parse($st->end_date);
+							} catch (\Throwable $e) {
+								continue;
+							}
+							// intersect with overall [start, end]
+							if ($sEnd->lt($start) || $sStart->gt($end)) {
+								continue; // no overlap
+							}
+							$is = $sStart->lt($start) ? $start->copy() : $sStart->copy();
+							$ie = $sEnd->gt($end) ? $end->copy() : $sEnd->copy();
+
+							$cursor2 = $is->copy();
+							while ($cursor2->lte($ie)) {
+								$iso2 = $cursor2->dayOfWeekIso;
+								$ds2 = $cursor2->toDateString();
+								if ($iso2 >= 1 && $iso2 <= 5 && !in_array($ds2, $holidays)) $reduction++;
+								$cursor2->addDay();
+							}
+						}
+					}
+
+					$final = max(0, $workDays - $reduction);
+					$item->jumlah_hari_kerja = $final;
+                } else {
+                    $item->lama_proses = null;
+                    $item->jumlah_hari_kerja = null;
+                }
+            } catch (\Throwable $e) {
+                $item->lama_proses = null;
+                $item->jumlah_hari_kerja = null;
+            }
+            return $item;
+        });
+        
+        // Calendar helpers used by the view
 		$namaBulan = [
 			'Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'
 		];
@@ -96,11 +206,13 @@ class DashboardVprosesSicantikController extends Controller
 public function show(Request $request, $id)
 	{
 		// Try to interpret $id as slug (id_proses_permohonan) first, then as numeric id, then as no_permohonan
-		$prosesQuery = Proses::query();
-		$record = $prosesQuery->where('id_proses_permohonan', $id)
-			->orWhere('id', $id)
-			->orWhere('no_permohonan', $id)
-			->first();
+				$prosesQuery = Proses::query();
+				$record = $prosesQuery->where(function($q) use ($id) {
+								$q->where('id_proses_permohonan', $id)
+									->orWhere('id', $id)
+									->orWhere('no_permohonan', $id)
+									->orWhere('permohonan_izin_id', $id);
+						})->first();
 
 		if (!$record) {
 			return response()->json(['error' => 'Not found'], 404);
@@ -189,21 +301,38 @@ public function show(Request $request, $id)
 
 			// Compute durasi (inclusive days) and jumlah_hari_kerja (business days Mon-Fri) for the step
 			try {
-				if ($start && $end) {
-					$s->durasi = $start->diffInDays($end) + 1;
-					$workDays = 0;
-					$cursor = $start->copy();
-					while ($cursor->lte($end)) {
-						$wd = $cursor->dayOfWeekIso; // 1..7
-						if ($wd >= 1 && $wd <= 5) $workDays++;
-						$cursor->addDay();
+					if ($start && $end) {
+						// durasi as fractional inclusive days, rounded to 2 decimals
+						$diffSecondsStep = $end->timestamp - $start->timestamp;
+						$daysFloatStep = ($diffSecondsStep / 86400) + 1;
+						$s->durasi = round($daysFloatStep, 2);
+						// If this step is jenis_proses_id 226, per requirement do not count kerja days for this step
+						if ((int) $s->jenis_proses_id === 226) {
+							$s->jumlah_hari_kerja = null;
+						} else {
+							// fetch holidays for the step range and exclude them from Mon-Fri counts
+							try {
+								$holidays = Dayoff::whereBetween('tanggal', [$start->toDateString(), $end->toDateString()])->pluck('tanggal')->map(function ($d) {
+									return Carbon::parse($d)->toDateString();
+								})->unique()->toArray();
+							} catch (\Throwable $e) {
+								$holidays = [];
+							}
+							$workDays = 0;
+							$cursor = $start->copy();
+							while ($cursor->lte($end)) {
+								$wd = $cursor->dayOfWeekIso; // 1..7
+								$ds = $cursor->toDateString();
+								if ($wd >= 1 && $wd <= 5 && !in_array($ds, $holidays)) $workDays++;
+								$cursor->addDay();
+							}
+							$s->jumlah_hari_kerja = $workDays;
+						}
+					} else {
+						// If either date missing, leave as null for the caller to decide fallback
+						$s->durasi = null;
+						$s->jumlah_hari_kerja = null;
 					}
-					$s->jumlah_hari_kerja = $workDays;
-				} else {
-					// If either date missing, leave as null for the caller to decide fallback
-					$s->durasi = null;
-					$s->jumlah_hari_kerja = null;
-				}
 			} catch (\Throwable $e) {
 				$s->durasi = null;
 				$s->jumlah_hari_kerja = null;
@@ -269,62 +398,180 @@ public function show(Request $request, $id)
 
 	public function statistik(Request $request)
     {
-		$judul='Statistik Izin SiCantik';
-		$query = Proses::query();
-		$date_start = $request->input('date_start');
-		$date_end = $request->input('date_end');
-		$month = $request->input('month');
-		$now = Carbon::now();
-		$year = $request->input('year');
-		if ($request->has('year')) {
-            $year = $request->input('year');
-           
-            $jumlah_permohonan = Proses::where('jenis_proses_id', 18)
-                ->whereYear('start_date', $year)
-                ->count();
-            
-            $terbit = DB::table('sicantik.sicantik_proses_statistik')
-                ->selectRaw('month(tgl_penetapan) AS bulan, year(tgl_penetapan) AS tahun, count(tgl_penetapan) as jumlah_data, sum(jumlah_hari_kerja) - IFNULL(sum(jumlah_rekom),0) - IFNULL(sum(jumlah_cetak_rekom),0) - IFNULL(sum(jumlah_tte_rekom),0) - IFNULL(sum(jumlah_verif_rekom),0) - IFNULL(sum(jumlah_proses_bayar),0) as jumlah_hari')
-                ->whereNotNull('tgl_penetapan')
-                ->whereYear('tgl_penetapan', $year)
-                ->groupByRaw('month(tgl_penetapan)')
-                ->orderBy('bulan', 'asc')
-                ->get();
-
-            $totalJumlahData = $terbit->sum('jumlah_data');
-            $totalJumlahHari = $terbit->sum('jumlah_hari');
-            $rataRataJumlahHari = $totalJumlahData ? $totalJumlahHari / $totalJumlahData : 0;
-
-            $totalJumlahData = $terbit->sum('jumlah_data');
-                $rataRataJumlahHariPerBulan = $terbit->map(function ($item) {
-                    $item->rata_rata_jumlah_hari = $item->jumlah_hari / $item->jumlah_data;
-					return $item;
-				});
-				$coverse = $jumlah_permohonan ? number_format($totalJumlahData / $jumlah_permohonan * 100, 2) : 0;
-		} else {
-			$year = $now->year;
-			$jumlah_permohonan = Proses::where('jenis_proses_id', 18)->whereYear('start_date', [$year])->count();
-            $terbit = DB::table('sicantik.sicantik_proses_statistik')
-                ->selectRaw('month(tgl_penetapan) AS bulan, year(tgl_penetapan) AS tahun, count(tgl_penetapan) as jumlah_data, sum(jumlah_hari_kerja - COALESCE(jumlah_rekom,0) - COALESCE(jumlah_cetak_rekom,0) - COALESCE(jumlah_tte_rekom,0) - COALESCE(jumlah_verif_rekom,0) - COALESCE(jumlah_proses_bayar,0)) as jumlah_hari')
-                ->whereNotNull('tgl_penetapan')
-                ->whereYear('tgl_penetapan', $year)
-                ->groupByRaw('month(tgl_penetapan)')
-                ->orderBy('bulan', 'asc')
-                ->get();
-                $totalJumlahData = $terbit->sum('jumlah_data');
-                $totalJumlahHari = $terbit->sum('jumlah_hari');
-                $rataRataJumlahHari = $totalJumlahData ? $totalJumlahHari / $totalJumlahData : 0;
-
-            $rataRataJumlahHariPerBulan = $terbit->map(function ($item) {
-                $item->rata_rata_jumlah_hari = $item->jumlah_hari / $item->jumlah_data;
-                return $item;
-            });
-      
-			$coverse = $jumlah_permohonan ? number_format($totalJumlahData / $jumlah_permohonan * 100, 2) : 0;
-			
-		};
+		$statError = null;
+		$judul = 'Statistik Izin SiCantik';
+		$year = (int) $request->input('year', Carbon::now()->year);
+		$date_start = $request->input('date_start') ?? null;
+		$date_end = $request->input('date_end') ?? null;
+		$month = $request->input('month') ?? null;
 		
-		return view('admin.nonberusaha.sicantik.statistik',compact('judul','jumlah_permohonan','date_start','date_end','month','year','rataRataJumlahHariPerBulan', 'rataRataJumlahHari','totalJumlahData','totalJumlahHari','coverse'));
+		try {
+			$invalidDates = ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000'];
+			// Get one row per permohonan_izin_id representing an issued permit (jenis 40, selesai) in the year
+			$issued = Proses::selectRaw('permohonan_izin_id, MAX(end_date) AS end_date_40')
+				->where('jenis_proses_id', 40)
+				->whereRaw("LOWER(TRIM(status)) = 'selesai'")
+				->whereNotNull('end_date')
+				->whereYear('end_date', $year)
+				->groupBy('permohonan_izin_id')
+				->get();
+
+			// initialize buckets
+			$monthly = [];
+			for ($m = 1; $m <= 12; $m++) {
+				$monthly[$m] = ['jumlah_data' => 0, 'jumlah_hari' => 0];
+			}
+
+			foreach ($issued as $row) {
+				$no = $row->permohonan_izin_id;
+				$usedEndRaw = $row->end_date_40;
+				if (empty($usedEndRaw)) continue;
+				try {
+					$usedEnd = Carbon::parse($usedEndRaw);
+				} catch (\Throwable $e) {
+					continue;
+				}
+				// increment issued count for the month of usedEnd
+				$bulan = (int) $usedEnd->month;
+				$monthly[$bulan]['jumlah_data']++;
+
+				// compute start date same as index: min end_date where jenis_proses_id = 2
+				$startDate = Proses::where('permohonan_izin_id', $no)
+					->where('jenis_proses_id', 2)
+					->whereNotNull('end_date')
+					->whereNotIn('end_date', $invalidDates)
+					->min('end_date');
+
+				// fallback: latest valid end_date in the group
+				$lastEndDate = Proses::where('permohonan_izin_id', $no)
+					->whereNotNull('end_date')
+					->whereNotIn('end_date', $invalidDates)
+					->max('end_date');
+
+				$usedEndFinalRaw = $usedEndRaw ?: $lastEndDate;
+				if (empty($startDate) || empty($usedEndFinalRaw)) {
+					// no start or no end -> jumlah_hari not computable; skip adding days
+					continue;
+				}
+				try {
+					$start = Carbon::parse($startDate);
+					$end = Carbon::parse($usedEndFinalRaw);
+				} catch (\Throwable $e) {
+					continue;
+				}
+
+				// fetch holidays in range
+				try {
+					$holidays = Dayoff::whereBetween('tanggal', [$start->toDateString(), $end->toDateString()])->pluck('tanggal')->map(function ($d) { return Carbon::parse($d)->toDateString(); })->unique()->toArray();
+				} catch (\Throwable $e) {
+					$holidays = [];
+				}
+
+				// compute work days Mon-Fri excluding holidays
+				$workDays = 0;
+				$cursor = $start->copy();
+				while ($cursor->lte($end)) {
+					$iso = $cursor->dayOfWeekIso;
+					$ds = $cursor->toDateString();
+					if ($iso >= 1 && $iso <= 5 && !in_array($ds, $holidays)) $workDays++;
+					$cursor->addDay();
+				}
+
+				// subtract days covered by jenis_proses_id = 226 overlapping with [start,end]
+				$reduction = 0;
+				$steps226 = Proses::where('permohonan_izin_id', $no)
+					->where('jenis_proses_id', 226)
+					->whereNotNull('start_date')
+					->whereNotIn('start_date', $invalidDates)
+					->whereNotNull('end_date')
+					->whereNotIn('end_date', $invalidDates)
+					->get(['start_date', 'end_date']);
+
+				foreach ($steps226 as $st) {
+					try {
+						$sStart = Carbon::parse($st->start_date);
+						$sEnd = Carbon::parse($st->end_date);
+					} catch (\Throwable $e) {
+						continue;
+					}
+					if ($sEnd->lt($start) || $sStart->gt($end)) continue;
+					$is = $sStart->lt($start) ? $start->copy() : $sStart->copy();
+					$ie = $sEnd->gt($end) ? $end->copy() : $sEnd->copy();
+					$cursor2 = $is->copy();
+					while ($cursor2->lte($ie)) {
+						$iso2 = $cursor2->dayOfWeekIso;
+						$ds2 = $cursor2->toDateString();
+						if ($iso2 >= 1 && $iso2 <= 5 && !in_array($ds2, $holidays)) $reduction++;
+						$cursor2->addDay();
+					}
+				}
+
+				$final = max(0, $workDays - $reduction);
+				$monthly[$bulan]['jumlah_hari'] += $final;
+			}
+
+			// build result collection for 12 months
+			$rataRataJumlahHariPerBulan = collect(range(1,12))->map(function($m) use ($monthly, $year) {
+				$jumlah_data = $monthly[$m]['jumlah_data'] ?? 0;
+				$jumlah_hari = $monthly[$m]['jumlah_hari'] ?? 0;
+				$rata = $jumlah_data ? ($jumlah_hari / $jumlah_data) : 0;
+				return (object) ['bulan' => $m, 'tahun' => $year, 'jumlah_data' => $jumlah_data, 'jumlah_hari' => $jumlah_hari, 'rata_rata_jumlah_hari' => $rata];
+			});
+
+			$totalJumlahData = $rataRataJumlahHariPerBulan->sum('jumlah_data');
+			$totalJumlahHari = $rataRataJumlahHariPerBulan->sum('jumlah_hari');
+			$rataRataJumlahHari = $totalJumlahData ? $totalJumlahHari / $totalJumlahData : 0;
+			$jumlah_permohonan = $totalJumlahData;
+			$coverse = 0;
+		} catch (\Throwable $e) {
+			Log::error('DashboardVprosesSicantikController::statistik failed', ['error' => $e->getMessage()]);
+			$statError = $e->getMessage();
+			$jumlah_permohonan = 0;
+			$rataRataJumlahHariPerBulan = collect(range(1,12))->map(function($m) use ($year) {
+				return (object) ['bulan' => $m, 'tahun' => $year, 'jumlah_data' => 0, 'jumlah_hari' => 0, 'rata_rata_jumlah_hari' => 0];
+			});
+			$totalJumlahData = 0;
+			$totalJumlahHari = 0;
+			$rataRataJumlahHari = 0;
+			$coverse = 0;
+		}
+
+		return view('admin.nonberusaha.sicantik.statistik', compact('judul','jumlah_permohonan','date_start','date_end','month','year','rataRataJumlahHariPerBulan', 'rataRataJumlahHari','totalJumlahData','totalJumlahHari','coverse','statError'));
+	}
+
+	/**
+	 * Show create form for a new Proses (Tambah Data)
+	 */
+	public function create()
+	{
+		$judul = 'Tambah Data Izin SiCantik';
+		return view('admin.nonberusaha.sicantik.create', compact('judul'));
+	}
+
+	/**
+	 * Store a newly created Proses record.
+	 */
+	public function store(Request $request)
+	{
+		$validated = $request->validate([
+			'no_permohonan' => 'required|string|max:191',
+			'nama' => 'required|string|max:191',
+			'jenis_izin' => 'nullable|string|max:191',
+			'tgl_pengajuan' => 'nullable|date',
+		]);
+
+		// Create a minimal Proses record. Other fields can be set later by sync jobs or edits.
+		$proses = new Proses();
+		$proses->no_permohonan = $validated['no_permohonan'];
+		$proses->nama = $validated['nama'];
+		$proses->jenis_izin = $validated['jenis_izin'] ?? null;
+		if (!empty($validated['tgl_pengajuan'])) {
+			$proses->tgl_pengajuan = $validated['tgl_pengajuan'];
+		}
+		$proses->status = 'Proses';
+		$proses->save();
+
+		return redirect('/sicantik')->with('success', 'Data berhasil ditambahkan');
 	}
     public function rincian(Request $request)
     {

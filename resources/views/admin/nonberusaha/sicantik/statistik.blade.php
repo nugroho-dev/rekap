@@ -124,6 +124,14 @@
                   <div id="chart-revenue-bg" class="chart-sm"></div>
                 </div>
               </div>
+              @if(!empty($statError))
+                <div class="col-12 mt-3">
+                  <div class="alert alert-danger">
+                    <strong>Terjadi kesalahan saat memuat statistik:</strong>
+                    <div>{{ $statError }}</div>
+                  </div>
+                </div>
+              @endif
              
               <div class="col-lg-12 col-sm-12">
                 <div class="card">
