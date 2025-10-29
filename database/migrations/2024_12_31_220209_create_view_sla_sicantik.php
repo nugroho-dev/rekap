@@ -25,7 +25,7 @@ WITH
       tgl_pengajuan,
       end_date AS start_date_awal,
       nama_proses AS nama_proses_awal
-    FROM sicantik.proses
+    FROM data_hub.proses
     WHERE jenis_proses_id= 2
   ),
   proses_akhir AS (
@@ -34,7 +34,7 @@ WITH
       id_proses_permohonan,
       end_date AS end_date_akhir,
       nama_proses AS nama_proses_akhir
-    FROM sicantik.proses
+    FROM data_hub.proses
     WHERE jenis_proses_id = 40
   ),
   proses AS (
@@ -44,7 +44,7 @@ WITH
     jenis_proses_id,
     start_date as proses_mulai,
     end_date as proses_akhir
-    FROM sicantik.proses
+    FROM data_hub.proses
     WHERE status = 'Proses'
   )
 SELECT proses_awal.no_permohonan,jenis_izin,nama,proses.nama_proses,jenis_proses_id,status,tgl_pengajuan,proses.proses_mulai,proses.proses_akhir,start_date_awal,end_date_akhir,
