@@ -25,7 +25,7 @@ return new class extends Migration
       tgl_pengajuan,
       end_date AS start_date_awal,
       nama_proses AS nama_proses_awal
-    FROM sicantik.proses
+    FROM data_hub.proses
     WHERE jenis_proses_id= 2
   ),
   proses_akhir AS (
@@ -34,7 +34,7 @@ return new class extends Migration
       id_proses_permohonan,
       end_date AS end_date_akhir,
       nama_proses AS nama_proses_akhir
-    FROM sicantik.proses
+    FROM data_hub.proses
     WHERE jenis_proses_id = 40
   ),
   proses_rekomendasi AS (
@@ -44,7 +44,7 @@ return new class extends Migration
       start_date AS start_date_rekom,
       end_date AS end_date_rekom,
       nama_proses AS nama_proses_akhir
-    FROM sicantik.proses
+    FROM data_hub.proses
     WHERE jenis_proses_id = 7
   ),
   proses_cetak_rekom AS (
@@ -54,7 +54,7 @@ return new class extends Migration
       start_date AS start_date_cetak_rekom,
       end_date AS end_date_cetak_rekom,
       nama_proses AS nama_proses_akhir
-    FROM sicantik.proses
+    FROM data_hub.proses
     WHERE jenis_proses_id = 35
   ),
   proses_tte_rekom AS (
@@ -64,7 +64,7 @@ return new class extends Migration
       start_date AS start_date_tte_rekom,
       end_date AS end_date_tte_rekom,
       nama_proses AS nama_proses_akhir
-    FROM sicantik.proses
+    FROM data_hub.proses
     WHERE jenis_proses_id = 234
   ),
   proses_verif_rekom AS (
@@ -74,7 +74,7 @@ return new class extends Migration
 	  start_date AS start_date_verif_rekom,
       end_date AS end_date_verif_rekom,
       nama_proses AS nama_proses_akhir
-    FROM sicantik.proses
+    FROM data_hub.proses
     WHERE jenis_proses_id = 185
   ),
    proses_bayar AS (
@@ -82,7 +82,7 @@ return new class extends Migration
 	  no_permohonan,
       start_date AS start_date_bayar,
       end_date AS end_date_bayar
-    FROM sicantik.proses
+    FROM data_hub.proses
     WHERE jenis_proses_id = 226
   ),
   proses AS (
@@ -94,7 +94,7 @@ return new class extends Migration
     tgl_penetapan,
     start_date as proses_mulai,
     end_date as proses_akhir
-    FROM sicantik.proses
+    FROM data_hub.proses
     WHERE status = 'Proses'
   )
 SELECT proses_awal.no_permohonan,jenis_izin,nama,proses.nama_proses,jenis_proses_id,status,tgl_pengajuan,tgl_penetapan,proses.proses_mulai,proses.proses_akhir,start_date_awal,end_date_akhir,
