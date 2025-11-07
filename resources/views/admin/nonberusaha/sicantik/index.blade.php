@@ -99,7 +99,7 @@
               </div>
               <!-- Detail Proses Modal -->
               <div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+                <div class="modal-dialog modal-full-width modal-dialog-centered" role="document">
                   <div class="modal-content">
                     <div class="modal-header">
                       <h5 class="modal-title" id="detailModalLabel">Detail Proses</h5>
@@ -108,28 +108,23 @@
                     <div class="modal-body">
                       <div class="table-responsive">
                         <table class="table table-striped" id="detailModalTable">
-                          <thead>
+                          <thead class="table-dark text-center align-middle">
                             <tr>
-                              <th>No</th>
-                              <th>Jenis Proses ID</th>
+                              <th style="width:40px">No.</th>
                               <th>Nama Proses</th>
-                              <th>Start</th>
-                              <th>End</th>
+                              <th>Mulai</th>
+                              <th>Selesai</th>
                               <th>Status</th>
-                              <th>Keterangan</th>
+                              <th>Durasi<br>(Hari)</th>
+                              <th>Durasi<br>(Jam)</th>
+                              <th>Hari Kerja</th>
                             </tr>
                           </thead>
-                          <tbody></tbody>
+                            <tbody></tbody>
                         </table>
                       </div>
 
-                        <div class="card-footer d-flex align-items-center">
-                          <p class="m-0 text-muted">Menampilkan {{ $items->firstItem() ?? 0 }} - {{ $items->lastItem() ?? 0 }} dari {{ $items->total() }} item</p>
-                          <ul class="pagination ms-auto mb-0">
-                            {{-- Preserve query string except page --}}
-                            {!! $items->appends(request()->except('page'))->links('pagination::bootstrap-5') !!}
-                          </ul>
-                        </div>
+                        <!-- Pagination dihapus dari modal detail -->
                     </div>
                     <div class="modal-footer">
                       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
@@ -254,16 +249,17 @@
                           <td class="text-center">
                             @if(is_numeric($item->lama_proses))
                               {{ number_format($item->lama_proses, 2, ',', '.') }} hari
+                              <br><span class="text-info">({{ $item->total_hours }} jam, {{ $item->total_days }} hari)</span>
                             @else
                               -
                             @endif
                           </td>
                           <td class="text-center">
-                            @if(is_numeric($item->jumlah_hari_kerja))
+                            
+                           
                               {{ $item->jumlah_hari_kerja }} hari kerja
-                            @else
-                              -
-                            @endif
+                              <br><span class="text-info">({{ $item->business_days_decimal }} hari kerja desimal)</span>
+                           
                           </td>
                           <td class="text-center">
                             <div class="btn-group">
@@ -480,33 +476,55 @@
   // Detail modal handler
   $(document).on('click', '.detailBtn', function() {
     const id = $(this).data('id');
-    // fetch details
+    const tbody = $('#detailModalTable tbody');
+    console.log('Detail modal AJAX id:', id); // Debug log
+    tbody.html('<tr><td colspan="8" class="text-center text-muted">Memuat data...</td></tr>');
+    $('#detailModalLabel').text('Detail Proses');
+    // Accessibility: remove aria-hidden and inert when showing modal
+    $('#detailModal').removeAttr('aria-hidden').removeAttr('inert');
+    $('#detailModal').modal('show');
+    // Set focus to modal for accessibility
+    $('#detailModal').on('shown.bs.modal', function () {
+      $(this).trigger('focus');
+    });
     $.ajax({
       url: `{{ url('/sicantik') }}/${id}`,
       type: 'GET',
       success: function(res) {
-        if (res && res.steps) {
-          const tbody = $('#detailModalTable tbody');
-          tbody.empty();
+        console.log('Detail modal response:', res); // Debug log
+        tbody.empty();
+        if (res && res.steps && res.steps.length > 0) {
           res.steps.forEach(function(step, idx) {
             const tr = $('<tr>');
-            tr.append($('<td>').text(idx+1));
-            tr.append($('<td>').text(step.jenis_proses_id));
-            tr.append($('<td>').text(step.nama_proses));
-            tr.append($('<td>').text(step.start || '-'));
-            tr.append($('<td>').text(step.end || '-'));
-            tr.append($('<td>').text(step.status || '-'));
-            tr.append($('<td>').text(step.keterangan || '-'));
+            tr.append($('<td class="text-center align-middle">').text(idx+1));
+            tr.append($('<td class="align-middle">').text(step.nama_proses));
+            tr.append($('<td class="text-center align-middle">').text(step.start || '-'));
+            tr.append($('<td class="text-center align-middle">').text(step.end || '-'));
+            tr.append($('<td class="text-center align-middle">').text(step.status || '-'));
+            tr.append($('<td class="text-center align-middle">').html(typeof step.durasi === 'number' ? (step.durasi + ' hari<br><span class="text-info">(' + step.total_hours + ' jam, ' + step.total_days + ' hari)</span>') : '-'));
+            tr.append($('<td class="text-center align-middle">').text(typeof step.durasi_jam === 'number' ? (step.durasi_jam + ' jam') : (step.durasi_jam ? (step.durasi_jam + ' jam') : '-')));
+            tr.append($('<td class="text-center align-middle">').html(typeof step.jumlah_hari_kerja === 'number' ? (step.jumlah_hari_kerja + ' hari kerja<br><span class="text-info">(' + step.business_days_decimal + ' hari kerja desimal)</span>') : '-'));
             tbody.append(tr);
           });
           $('#detailModalLabel').text('Detail Proses: ' + (res.record.no_permohonan || res.record.id));
-          $('#detailModal').modal('show');
+        } else {
+          tbody.html('<tr><td colspan="8" class="text-center text-danger">Data proses tidak ditemukan.</td></tr>');
         }
       },
-      error: function() {
-        alert('Gagal mengambil detail proses');
+      error: function(xhr, status, error) {
+        console.error('AJAX error:', error);
+        tbody.html('<tr><td colspan="8" class="text-center text-danger">Gagal mengambil detail proses.</td></tr>');
       }
     });
+  });
+
+  // Reset modal saat ditutup
+  $('#detailModal').on('hidden.bs.modal', function () {
+    const tbody = $('#detailModalTable tbody');
+    tbody.html('<tr><td colspan="8" class="text-center text-muted">Pilih data dan klik tombol detail untuk melihat proses.</td></tr>');
+    $('#detailModalLabel').text('Detail Proses');
+    // Accessibility: add aria-hidden and inert when hiding modal
+    $('#detailModal').attr('aria-hidden', 'true').attr('inert', '');
   });
     $(document).ready(function() {
         $('.openModalDel').on('click', function() {

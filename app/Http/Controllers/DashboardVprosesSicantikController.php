@@ -78,47 +78,41 @@ class DashboardVprosesSicantikController extends Controller
 
         // Hitung lama_proses & jumlah_hari_kerja per item (start = end_date jenis=2, end = end_date jenis=40 or fallback)
         $items->getCollection()->transform(function ($item) {
-            try {
-                $no = $item->permohonan_izin_id;
-
-                $invalidDates = ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000'];
-
-                // Start: earliest end_date for jenis_proses_id = 2 (if any and valid)
-                $startDate = Proses::where('permohonan_izin_id', $no)
-                    ->where('jenis_proses_id', 2)
-                    ->whereNotNull('end_date')
-                    ->whereNotIn('end_date', $invalidDates)
-                    ->min('end_date');
-
-                // Preferred end: latest end_date for jenis_proses_id = 40 (valid)
-                $endDate40 = Proses::where('permohonan_izin_id', $no)
-                    ->where('jenis_proses_id', 40)
-                    ->whereNotNull('end_date')
-                    ->whereNotIn('end_date', $invalidDates)
-                    ->max('end_date');
-
-                // Fallback end: latest valid end_date in the group
-                $lastEndDate = Proses::where('permohonan_izin_id', $no)
-                    ->whereNotNull('end_date')
-                    ->whereNotIn('end_date', $invalidDates)
-                    ->max('end_date');
-
-                $usedEnd = $endDate40 ?: $lastEndDate;
-
-				// If any proses in this permohonan has jenis_proses_id = 226, we skip counting kerja days
+			try {
+				$no = $item->permohonan_izin_id;
+				$invalidDates = ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000'];
+				$startDate = Proses::where('permohonan_izin_id', $no)
+					->where('jenis_proses_id', 2)
+					->whereNotNull('end_date')
+					->whereNotIn('end_date', $invalidDates)
+					->min('end_date');
+				$endDate40 = Proses::where('permohonan_izin_id', $no)
+					->where('jenis_proses_id', 40)
+					->whereNotNull('end_date')
+					->whereNotIn('end_date', $invalidDates)
+					->max('end_date');
+				$lastEndDate = Proses::where('permohonan_izin_id', $no)
+					->whereNotNull('end_date')
+					->whereNotIn('end_date', $invalidDates)
+					->max('end_date');
+				$usedEnd = $endDate40 ?: $lastEndDate;
 				$hasJenis226 = Proses::where('permohonan_izin_id', $no)->where('jenis_proses_id', 226)->exists();
-
 				if ($startDate && $usedEnd) {
-                    $start = Carbon::parse($startDate);
-                    $end = Carbon::parse($usedEnd);
-
-					// inclusive days (allow fractional days) -> compute seconds difference and convert to days
+					$start = Carbon::parse($startDate);
+					$end = Carbon::parse($usedEnd);
 					$diffSeconds = $end->timestamp - $start->timestamp;
-					$daysFloat = ($diffSeconds / 86400) + 1;
-					$item->lama_proses = round($daysFloat, 2);
-
-					// business days Mon-Fri excluding national holidays from dayoff.tanggal
-					// Fetch holidays in the inclusive range once to avoid per-day queries
+					$item->total_hours = round($diffSeconds / 3600, 2);
+					$item->total_days = round($item->total_hours / 24, 2);
+					if ($start->isSameDay($end) && $diffSeconds > 0) {
+						$item->lama_proses = 0;
+						$item->durasi_jam = round($diffSeconds / 3600, 2);
+					} else if ($diffSeconds <= 0) {
+						$item->lama_proses = 0;
+						$item->durasi_jam = 0;
+					} else {
+						$item->lama_proses = ceil($diffSeconds / 86400);
+						$item->durasi_jam = null;
+					}
 					try {
 						$holidays = Dayoff::whereBetween('tanggal', [$start->toDateString(), $end->toDateString()])->pluck('tanggal')->map(function ($d) {
 							return Carbon::parse($d)->toDateString();
@@ -126,64 +120,48 @@ class DashboardVprosesSicantikController extends Controller
 					} catch (\Throwable $e) {
 						$holidays = [];
 					}
-
-					// compute total work days in the overall range
-					$workDays = 0;
+					// Business days as decimal
+					$businessDaysDecimal = 0.0;
 					$cursor = $start->copy();
 					while ($cursor->lte($end)) {
-						$iso = $cursor->dayOfWeekIso; // 1..7
-						$ds = $cursor->toDateString();
-						if ($iso >= 1 && $iso <= 5 && !in_array($ds, $holidays)) $workDays++;
-						$cursor->addDay();
-					}
-
-					// If there are steps with jenis_proses_id = 226, subtract their workdays (intersected with overall range)
-					$reduction = 0;
-					if ($hasJenis226) {
-						$steps226 = Proses::where('permohonan_izin_id', $no)
-							->where('jenis_proses_id', 226)
-							->whereNotNull('start_date')
-							->whereNotIn('start_date', $invalidDates)
-							->whereNotNull('end_date')
-							->whereNotIn('end_date', $invalidDates)
-							->get(['start_date', 'end_date']);
-
-						foreach ($steps226 as $st) {
-							try {
-								$sStart = Carbon::parse($st->start_date);
-								$sEnd = Carbon::parse($st->end_date);
-							} catch (\Throwable $e) {
-								continue;
+						$isBusiness = $cursor->dayOfWeekIso >= 1 && $cursor->dayOfWeekIso <= 5 && !in_array($cursor->toDateString(), $holidays);
+						if ($isBusiness) {
+							// First day
+							if ($cursor->isSameDay($start)) {
+								$endOfDay = $cursor->copy()->endOfDay();
+								$minutes = min($end->diffInMinutes($cursor), $endOfDay->diffInMinutes($cursor));
+								$businessDaysDecimal += $minutes / (24 * 60);
 							}
-							// intersect with overall [start, end]
-							if ($sEnd->lt($start) || $sStart->gt($end)) {
-								continue; // no overlap
+							// Last day
+							elseif ($cursor->isSameDay($end)) {
+								$startOfDay = $cursor->copy()->startOfDay();
+								$minutes = $end->diffInMinutes($startOfDay);
+								$businessDaysDecimal += $minutes / (24 * 60);
 							}
-							$is = $sStart->lt($start) ? $start->copy() : $sStart->copy();
-							$ie = $sEnd->gt($end) ? $end->copy() : $sEnd->copy();
-
-							$cursor2 = $is->copy();
-							while ($cursor2->lte($ie)) {
-								$iso2 = $cursor2->dayOfWeekIso;
-								$ds2 = $cursor2->toDateString();
-								if ($iso2 >= 1 && $iso2 <= 5 && !in_array($ds2, $holidays)) $reduction++;
-								$cursor2->addDay();
+							// Full day
+							else {
+								$businessDaysDecimal += 1.0;
 							}
 						}
+						$cursor->addDay()->startOfDay();
 					}
-
-					$final = max(0, $workDays - $reduction);
-					$item->jumlah_hari_kerja = $final;
-                } else {
-                    $item->lama_proses = null;
-                    $item->jumlah_hari_kerja = null;
-                }
-            } catch (\Throwable $e) {
-                $item->lama_proses = null;
-                $item->jumlah_hari_kerja = null;
-            }
-            return $item;
-        });
+					$item->business_days_decimal = round($businessDaysDecimal, 2);
+				} else {
+					$item->lama_proses = null;
+					$item->jumlah_hari_kerja = null;
+					$item->business_days_decimal = null;
+					$item->total_hours = null;
+					$item->total_days = null;
+				}
+			} catch (\Throwable $e) {
+				$item->lama_proses = null;
+				$item->jumlah_hari_kerja = null;
+				$item->business_days_decimal = null;
+				$item->total_hours = null;
+				$item->total_days = null;
+			}
+			return $item;
+		});
         
         // Calendar helpers used by the view
 		$namaBulan = [
@@ -206,59 +184,27 @@ class DashboardVprosesSicantikController extends Controller
 public function show(Request $request, $id)
 	{
 		// Try to interpret $id as slug (id_proses_permohonan) first, then as numeric id, then as no_permohonan
-				$prosesQuery = Proses::query();
-				$record = $prosesQuery->where(function($q) use ($id) {
-								$q->where('id_proses_permohonan', $id)
-									->orWhere('id', $id)
-									->orWhere('no_permohonan', $id)
-									->orWhere('permohonan_izin_id', $id);
-						})->first();
+		$prosesQuery = Proses::query();
+		$record = $prosesQuery->where(function($q) use ($id) {
+			$q->where('id_proses_permohonan', $id)
+			  ->orWhere('id', $id)
+			  ->orWhere('no_permohonan', $id)
+			  ->orWhere('permohonan_izin_id', $id);
+		})->first();
+
+		\Illuminate\Support\Facades\Log::info('Detail show called', ['id' => $id, 'record' => $record]);
 
 		if (!$record) {
+			\Illuminate\Support\Facades\Log::warning('Detail show not found', ['id' => $id]);
 			return response()->json(['error' => 'Not found'], 404);
 		}
 
-		// Get all steps for the same no_permohonan ordered by start_date
-		// don't select computed columns that may not exist in the table (durasi, jumlah_hari_kerja)
+		// Get all steps for the same no_permohonan ordered by id_proses_permohonan ASC
 		$steps = Proses::where('no_permohonan', $record->no_permohonan)
-			->orderByRaw("COALESCE(start_date, created_at) ASC")
+			->orderBy('id_proses_permohonan', 'ASC')
 			->get(['id', 'id_proses_permohonan', 'no_permohonan', 'jenis_proses_id', 'nama_proses', 'start_date', 'end_date', 'status']);
 
-		// Debug: if requested, return diagnostics about duplicated step rows
-		if ($request->boolean('debug_dupes')) {
-			$collection = $steps;
-			$total = $collection->count();
-			$uniqueIds = $collection->pluck('id')->unique()->count();
-			// group by combination likely to indicate duplicate rows
-			$groups = $collection->groupBy(function ($s) {
-				return $s->jenis_proses_id . '|' . ($s->start_date ?? '') . '|' . ($s->end_date ?? '') . '|' . ($s->nama_proses ?? '');
-			});
-			$duplicateGroups = $groups->filter(function ($g) {
-				return $g->count() > 1;
-			})->map(function ($g) {
-				return [
-					'count' => $g->count(),
-					'samples' => $g->map(function ($r) {
-						return [
-							'id' => $r->id,
-							'id_proses_permohonan' => $r->id_proses_permohonan,
-							'start_date' => $r->start_date,
-							'end_date' => $r->end_date,
-							'nama_proses' => $r->nama_proses,
-							'status' => $r->status,
-						];
-					})->values()->all(),
-				];
-			})->values()->all();
-
-			return response()->json([
-				'record_no_permohonan' => $record->no_permohonan,
-				'total_steps' => $total,
-				'unique_step_ids' => $uniqueIds,
-				'duplicate_count' => max(0, $total - $uniqueIds),
-				'duplicate_groups' => $duplicateGroups,
-			]);
-		}
+		\Illuminate\Support\Facades\Log::info('Detail show steps', ['no_permohonan' => $record->no_permohonan, 'steps_count' => $steps->count(), 'steps' => $steps]);
 
 		// Deduplicate steps by a stable signature so the UI doesn't show repeated identical rows.
 		$steps = $steps->unique(function ($s) {
@@ -272,45 +218,51 @@ public function show(Request $request, $id)
 		})->values();
 
 		// Compute a friendly label for each step (defensive parsing)
-		$steps->transform(function ($s) {
-			// Safe parse for start_date
+		$steps = $steps->transform(function ($step) {
 			$start = null;
-			if (!empty($s->start_date) && is_scalar($s->start_date)) {
+			if (!empty($step->start_date) && is_scalar($step->start_date)) {
 				try {
-					if (!in_array($s->start_date, ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000'])) {
-						$start = Carbon::parse($s->start_date);
+					if (!in_array($step->start_date, ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000'])) {
+						$start = Carbon::parse($step->start_date);
 					}
 				} catch (\Throwable $e) {
 					$start = null;
 				}
 			}
-			$s->start = $start ? $start->translatedFormat('d F Y H:i') : null;
+			$step->start = $start ? $start->translatedFormat('d F Y H:i') : null;
 
-			// Safe parse for end_date, ignoring sentinel zero dates
 			$end = null;
-			if (!empty($s->end_date) && is_scalar($s->end_date)) {
-				if (!in_array($s->end_date, ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000'])) {
+			if (!empty($step->end_date) && is_scalar($step->end_date)) {
+				if (!in_array($step->end_date, ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000'])) {
 					try {
-						$end = Carbon::parse($s->end_date);
+						$end = Carbon::parse($step->end_date);
 					} catch (\Throwable $e) {
 						$end = null;
 					}
 				}
 			}
-			$s->end = $end ? $end->translatedFormat('d F Y H:i') : null;
+			$step->end = $end ? $end->translatedFormat('d F Y H:i') : null;
 
-			// Compute durasi (inclusive days) and jumlah_hari_kerja (business days Mon-Fri) for the step
 			try {
-					if ($start && $end) {
-						// durasi as fractional inclusive days, rounded to 2 decimals
-						$diffSecondsStep = $end->timestamp - $start->timestamp;
-						$daysFloatStep = ($diffSecondsStep / 86400) + 1;
-						$s->durasi = round($daysFloatStep, 2);
-						// If this step is jenis_proses_id 226, per requirement do not count kerja days for this step
-						if ((int) $s->jenis_proses_id === 226) {
-							$s->jumlah_hari_kerja = null;
+				if ($start && $end) {
+					$diffSecondsStep = $end->timestamp - $start->timestamp;
+					$step->total_hours = round($diffSecondsStep / 3600, 2);
+					$step->total_days = round($step->total_hours / 24, 2);
+					if ($start->isSameDay($end) && $diffSecondsStep > 0) {
+						$step->durasi = 0;
+						$step->durasi_jam = round($diffSecondsStep / 3600, 2);
+						$step->jumlah_hari_kerja = 0;
+					} else if ($diffSecondsStep <= 0) {
+						$step->durasi = 0;
+						$step->durasi_jam = 0;
+						$step->jumlah_hari_kerja = 0;
+					} else {
+						$step->durasi = ceil($diffSecondsStep / 86400);
+						$step->durasi_jam = null;
+						if ((int) $step->jenis_proses_id === 226) {
+							$step->jumlah_hari_kerja = null;
+							$step->business_days_decimal = null;
 						} else {
-							// fetch holidays for the step range and exclude them from Mon-Fri counts
 							try {
 								$holidays = Dayoff::whereBetween('tanggal', [$start->toDateString(), $end->toDateString()])->pluck('tanggal')->map(function ($d) {
 									return Carbon::parse($d)->toDateString();
@@ -318,27 +270,44 @@ public function show(Request $request, $id)
 							} catch (\Throwable $e) {
 								$holidays = [];
 							}
-							$workDays = 0;
+							// Business days as decimal
+							$businessDaysDecimal = 0.0;
 							$cursor = $start->copy();
 							while ($cursor->lte($end)) {
-								$wd = $cursor->dayOfWeekIso; // 1..7
-								$ds = $cursor->toDateString();
-								if ($wd >= 1 && $wd <= 5 && !in_array($ds, $holidays)) $workDays++;
-								$cursor->addDay();
+								$isBusiness = $cursor->dayOfWeekIso >= 1 && $cursor->dayOfWeekIso <= 5 && !in_array($cursor->toDateString(), $holidays);
+								if ($isBusiness) {
+									if ($cursor->isSameDay($start)) {
+										$endOfDay = $cursor->copy()->endOfDay();
+										$minutes = min($end->diffInMinutes($cursor), $endOfDay->diffInMinutes($cursor));
+										$businessDaysDecimal += $minutes / (24 * 60);
+									} elseif ($cursor->isSameDay($end)) {
+										$startOfDay = $cursor->copy()->startOfDay();
+										$minutes = $end->diffInMinutes($startOfDay);
+										$businessDaysDecimal += $minutes / (24 * 60);
+									} else {
+										$businessDaysDecimal += 1.0;
+									}
+								}
+								$cursor->addDay()->startOfDay();
 							}
-							$s->jumlah_hari_kerja = $workDays;
+							$step->business_days_decimal = round($businessDaysDecimal, 2);
 						}
-					} else {
-						// If either date missing, leave as null for the caller to decide fallback
-						$s->durasi = null;
-						$s->jumlah_hari_kerja = null;
 					}
+				} else {
+					$step->durasi = null;
+					$step->jumlah_hari_kerja = null;
+					$step->business_days_decimal = null;
+					$step->total_hours = null;
+					$step->total_days = null;
+				}
 			} catch (\Throwable $e) {
-				$s->durasi = null;
-				$s->jumlah_hari_kerja = null;
+				$step->durasi = null;
+				$step->jumlah_hari_kerja = null;
+				$step->business_days_decimal = null;
+				$step->total_hours = null;
+				$step->total_days = null;
 			}
-
-			return $s;
+			return $step;
 		});
 
 		return response()->json(['record' => $record, 'steps' => $steps]);
@@ -467,14 +436,31 @@ public function show(Request $request, $id)
 					$holidays = [];
 				}
 
+				// durasi: if same calendar day, show jam; else hari
+				$diffSeconds = $end->timestamp - $start->timestamp;
+				if ($start->isSameDay($end) && $diffSeconds > 0) {
+					$daysFloat = 0;
+					$hoursFloat = round($diffSeconds / 3600, 2);
+				} else if ($diffSeconds <= 0) {
+					$daysFloat = 0;
+					$hoursFloat = 0;
+				} else {
+					$daysFloat = ceil($diffSeconds / 86400);
+					$hoursFloat = null;
+				}
+
 				// compute work days Mon-Fri excluding holidays
 				$workDays = 0;
-				$cursor = $start->copy();
-				while ($cursor->lte($end)) {
-					$iso = $cursor->dayOfWeekIso;
-					$ds = $cursor->toDateString();
-					if ($iso >= 1 && $iso <= 5 && !in_array($ds, $holidays)) $workDays++;
-					$cursor->addDay();
+				if ($start->eq($end)) {
+					$workDays = 0;
+				} else {
+					$cursor = $start->copy();
+					while ($cursor->lte($end)) {
+						$iso = $cursor->dayOfWeekIso;
+						$ds = $cursor->toDateString();
+						if ($iso >= 1 && $iso <= 5 && !in_array($ds, $holidays)) $workDays++;
+						$cursor->addDay();
+					}
 				}
 
 				// subtract days covered by jenis_proses_id = 226 overlapping with [start,end]
@@ -497,6 +483,9 @@ public function show(Request $request, $id)
 					if ($sEnd->lt($start) || $sStart->gt($end)) continue;
 					$is = $sStart->lt($start) ? $start->copy() : $sStart->copy();
 					$ie = $sEnd->gt($end) ? $end->copy() : $sEnd->copy();
+					if ($is->eq($ie)) {
+						continue; // same day, 0 days
+					}
 					$cursor2 = $is->copy();
 					while ($cursor2->lte($ie)) {
 						$iso2 = $cursor2->dayOfWeekIso;
