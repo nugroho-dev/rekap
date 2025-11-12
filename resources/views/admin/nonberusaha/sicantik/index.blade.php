@@ -539,8 +539,22 @@
         if (res && res.steps && res.steps.length > 0) {
           res.steps.forEach(function(step, idx) {
             const tr = $('<tr>');
-            const isOtherJenis = Number(step.jenis_proses_id) !== 2 && Number(step.jenis_proses_id) !== 18;
-            if (isOtherJenis) {
+            const jp = Number(step.jenis_proses_id);
+            const isOtherJenis = ![2, 18, 115, 13, 7, 234].includes(jp);
+            // Row coloring by status
+            const statusNorm = (step.status || '').toString().trim().toLowerCase();
+            let rowClass = '';
+            if (statusNorm === 'selesai') {
+              rowClass = 'table-success'; // green
+            } else if (statusNorm === 'proses') {
+              rowClass = step.end ? 'table-danger' : 'table-warning'; // red if processing with end time, yellow if waiting
+            } else if (statusNorm.includes('nunggu')) {
+              rowClass = 'table-warning'; // yellow for any menunggu variants
+            }
+            if (rowClass) {
+              tr.addClass(rowClass);
+            } else if (isOtherJenis) {
+              // fallback highlight for other jenis only if no status color applied
               tr.addClass('table-warning');
             }
             // Durasi hari
@@ -601,12 +615,12 @@
             tr.append($('<td class="text-center align-middle">').text(idx+1));
             const jenisCell = $('<td class="text-center align-middle">').text(step.jenis_proses_id || '-');
             if (isOtherJenis) {
-              jenisCell.append(' ').append($('<span class="badge bg-warning text-dark" title="Bukan jenis proses 2/18">!</span>'));
+              jenisCell.append(' ').append($('<span class="badge bg-warning text-dark" title="Bukan jenis proses 2/18/115/13/7/234">!</span>'));
             }
             tr.append(jenisCell);
             const namaCell = $('<td class="align-middle">').text(step.nama_proses || '-');
             if (isOtherJenis) {
-              namaCell.append(' ').append($('<span class="badge bg-warning text-dark" title="Bukan jenis proses 2/18">✱</span>'));
+              namaCell.append(' ').append($('<span class="badge bg-warning text-dark" title="Bukan jenis proses 2/18/115/13/7/234">✱</span>'));
             }
             tr.append(namaCell);
             tr.append($('<td class="text-center align-middle">').text(step.start || '-'));

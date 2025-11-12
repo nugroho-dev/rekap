@@ -212,7 +212,13 @@ public function show(Request $request, $id)
 		}
 
 		// Get all steps for the same no_permohonan ordered by id_proses_permohonan ASC
+		// Filter statuses to include 'Proses', 'Selesai', and 'Menunggu' (case-insensitive, including variants like 'menunggu proses')
 		$steps = Proses::where('no_permohonan', $record->no_permohonan)
+			->whereNotNull('status')
+			->where(function ($q) {
+				$q->whereRaw("LOWER(TRIM(status)) IN ('proses','selesai','menunggu')")
+				  ->orWhereRaw("LOWER(status) LIKE '%nunggu%'");
+			})
 			->orderBy('id_proses_permohonan', 'ASC')
 			->get(['id', 'id_proses_permohonan', 'no_permohonan', 'jenis_proses_id', 'nama_proses', 'start_date', 'end_date', 'status']);
 
