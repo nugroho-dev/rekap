@@ -25,7 +25,7 @@
                           </a>
                           <a href="{{ url('/sicantik/print')}}" class="btn btn-secondary d-sm-none btn-icon">
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
-                            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-printer"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2" /><path d="M17 9v-4a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v4" /><path d="M7 13m0 2a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2z" /></svg>
+                            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-printer"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2" /><path d="M17 9v-4a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v4" /><path d="M7 13m0 2a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2z" /></svg>
                           </a>
                         </div>
                       </div>
@@ -111,16 +111,32 @@
                           <thead class="table-dark text-center align-middle">
                             <tr>
                               <th style="width:40px">No.</th>
+                              <th>Jenis Proses ID</th>
                               <th>Nama Proses</th>
                               <th>Mulai</th>
                               <th>Selesai</th>
                               <th>Status</th>
-                              <th>Durasi<br>(Hari)</th>
-                              <th>Durasi<br>(Jam)</th>
+                              <th>Durasi</th>
+                               <th>Durasi Jam</th>
+                               <th>Durasi Menit</th>
                               <th>Hari Kerja</th>
                             </tr>
                           </thead>
-                            <tbody></tbody>
+                          <tbody>
+                            <!-- Pastikan render detail proses, kolom Hari Kerja ambil dari item.jumlah_hari_kerja -->
+                            <!-- Contoh:
+                            <tr>
+                              <td>1</td>
+                              <td>Nama Proses</td>
+                              <td>Mulai</td>
+                              <td>Selesai</td>
+                              <td>Status</td>
+                              <td>Durasi Hari</td>
+                              <td>Durasi Jam</td>
+                              <td></td>
+                                  <td>Durasi</td>
+                            -->
+                          </tbody>
                         </table>
                       </div>
 
@@ -248,17 +264,21 @@
                           </td>
                           <td class="text-center">
                             @if(is_numeric($item->lama_proses))
-                              {{ number_format($item->lama_proses, 2, ',', '.') }} hari
-                              <br><span class="text-info">({{ $item->total_hours }} jam, {{ $item->total_days }} hari)</span>
+                              {{ $item->lama_proses }} hari
+                              
                             @else
                               -
                             @endif
                           </td>
                           <td class="text-center">
                             
-                           
+                            @if(is_numeric($item->jumlah_hari_kerja))
                               {{ $item->jumlah_hari_kerja }} hari kerja
-                              <br><span class="text-info">({{ $item->business_days_decimal }} hari kerja desimal)</span>
+                            @else
+                              - 
+                            @endif
+                             
+
                            
                           </td>
                           <td class="text-center">
@@ -493,22 +513,33 @@
       success: function(res) {
         console.log('Detail modal response:', res); // Debug log
         tbody.empty();
+        let totalHariKerja = 0;
         if (res && res.steps && res.steps.length > 0) {
           res.steps.forEach(function(step, idx) {
             const tr = $('<tr>');
             tr.append($('<td class="text-center align-middle">').text(idx+1));
+            tr.append($('<td class="text-center align-middle">').text(step.jenis_proses_id || '-'));
             tr.append($('<td class="align-middle">').text(step.nama_proses));
             tr.append($('<td class="text-center align-middle">').text(step.start || '-'));
             tr.append($('<td class="text-center align-middle">').text(step.end || '-'));
             tr.append($('<td class="text-center align-middle">').text(step.status || '-'));
             tr.append($('<td class="text-center align-middle">').html(typeof step.durasi === 'number' ? (step.durasi + ' hari<br><span class="text-info">(' + step.total_hours + ' jam, ' + step.total_days + ' hari)</span>') : '-'));
-            tr.append($('<td class="text-center align-middle">').text(typeof step.durasi_jam === 'number' ? (step.durasi_jam + ' jam') : (step.durasi_jam ? (step.durasi_jam + ' jam') : '-')));
+            tr.append($('<td class="text-center align-middle">').text(Number.isInteger(step.durasi_jam) ? step.durasi_jam : (step.durasi_jam ? Math.floor(step.durasi_jam) : '-')));
+                tr.append($('<td class="text-center align-middle">').text(step.durasi_menit));
+            if (typeof step.jumlah_hari_kerja === 'number') {
+              totalHariKerja += step.jumlah_hari_kerja;
+            }
             tr.append($('<td class="text-center align-middle">').html(typeof step.jumlah_hari_kerja === 'number' ? (step.jumlah_hari_kerja + ' hari kerja<br><span class="text-info">(' + step.business_days_decimal + ' hari kerja desimal)</span>') : '-'));
             tbody.append(tr);
           });
+          // Add total row for Hari Kerja
+           const totalTr = $('<tr class="table-info fw-bold">');
+           totalTr.append($('<td colspan="11" class="text-end">').text('Total Hari Kerja'));
+           totalTr.append($('<td class="text-center">').text(totalHariKerja + ' hari kerja'));
+          tbody.append(totalTr);
           $('#detailModalLabel').text('Detail Proses: ' + (res.record.no_permohonan || res.record.id));
         } else {
-          tbody.html('<tr><td colspan="8" class="text-center text-danger">Data proses tidak ditemukan.</td></tr>');
+           tbody.html('<tr><td colspan="12" class="text-center text-danger">Data proses tidak ditemukan.</td></tr>');
         }
       },
       error: function(xhr, status, error) {
@@ -521,7 +552,7 @@
   // Reset modal saat ditutup
   $('#detailModal').on('hidden.bs.modal', function () {
     const tbody = $('#detailModalTable tbody');
-    tbody.html('<tr><td colspan="8" class="text-center text-muted">Pilih data dan klik tombol detail untuk melihat proses.</td></tr>');
+     tbody.html('<tr><td colspan="12" class="text-center text-muted">Pilih data dan klik tombol detail untuk melihat proses.</td></tr>');
     $('#detailModalLabel').text('Detail Proses');
     // Accessibility: add aria-hidden and inert when hiding modal
     $('#detailModal').attr('aria-hidden', 'true').attr('inert', '');

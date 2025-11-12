@@ -1,12 +1,12 @@
 	@php
-	use Carbon\Carbon;
+		use Carbon\Carbon;
 
-	$namaBulan = [];
-	$jumlahData = [];
-	foreach ($rataRataJumlahHariPerBulan as $data) {
-		$namaBulan[] = Carbon::createFromDate(null, $data->bulan, 1)->translatedFormat('F');
-		$jumlahData[] = $data->jumlah_data;
-	}
+		$namaBulan = [];
+		$jumlahData = [];
+		foreach ($items as $data) {
+			$namaBulan[] = Carbon::createFromDate(null, $data['bulan'], 1)->translatedFormat('F');
+			$jumlahData[] = $data['jumlah_data'];
+		}
 	@endphp
 
 	<script>

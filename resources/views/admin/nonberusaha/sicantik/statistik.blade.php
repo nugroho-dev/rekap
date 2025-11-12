@@ -1,5 +1,9 @@
 @extends('layouts.tableradminsicantikstatistik')
 @section('content')     
+@php
+  $startYear = 2018;
+  $currentYear = date('Y');
+@endphp
               <div class="page-header d-print-none">
                 <div class="container-xl">
                     <div class="row g-2 align-items-center">
@@ -138,136 +142,144 @@
                   <div class="card-header border-0">
                     <div class="card-title">Jumlah Izin Terbit SiCantik Tahun {{ $year }}</div>
                   </div>
-                  <div class="position-relative">
-                    <div class="position-absolute top-0 left-0 px-3 mt-1 w-75">
-                      <div class="row g-2">
-                        <div class="col-auto">
-                          <div class="chart-sparkline chart-sparkline-square" id="sparkline-activity-sicantik"></div>
-                        </div>
-                        
-                      </div>
-                    </div>
-                    <div id="chart-development-activity-sicantik"></div>
-                  </div>
+                  
                   <div class="card-table table-responsive">
-                    <table class="table">
-                      <thead>
+                    <table class="table table-bordered table-striped mb-4" id="rekap-bulan-table">
+                      <thead class="table-primary">
                         <tr>
                           <th>Bulan</th>
                           <th class="text-center">Jumlah Izin Terbit</th>
-                          <th class="text-center">Jumlah Waktu Proses</th>
-                          <th class="text-center">Rata Rata Waktu Proses Penerbitan</th>
-                          <th>*</th>
+                          <th class="text-center">Jumlah Lama Proses</th>
+                          <th class="text-center">Jumlah Hari Kerja</th>
+                          <th class="text-center">Rata-rata Hari Kerja</th>
                         </tr>
                       </thead>
                       <tbody>
-                        @foreach ($rataRataJumlahHariPerBulan as $data) 
+                        @foreach (collect($rekapPerBulan)->sortBy('bulan') as $rekap)
                         <tr>
-                          <td >
-                            {{ Carbon\Carbon::createFromDate(null, $data->bulan, 1)->translatedFormat('F')}}
-                          </td>
-                          <td class= "text-center">
-                            {{  $data->jumlah_data }} Izin
-                          </td>
-                          <td class= "text-center">
-                            {{ $data->jumlah_hari }} Hari
-                          </td>
+                          <td>{{ \Carbon\Carbon::createFromFormat('Y-m', $rekap['bulan'])->translatedFormat('F Y') }}</td>
+                          <td class="text-center">{{ $rekap['jumlah_izin_terbit'] }}</td>
+                          <td class="text-center">{{ $rekap['jumlah_lama_proses'] }}</td>
+                          <td class="text-center">{{ $rekap['jumlah_hari_kerja'] }}</td>
+                          <td class="text-center">{{ number_format($rekap['rata_rata_hari_kerja'], 2, ',', '.') }}</td>
                           <td class="text-center">
-                            {{ number_format($data->rata_rata_jumlah_hari, 2) }} Hari
-                          </td>
-                          <td>
-                            <span class="dropdown">
-                              
-                              <button class="btn dropdown-toggle align-text-top" data-bs-boundary="viewport" data-bs-toggle="dropdown">Action</button>
-                              <div class="dropdown-menu dropdown-menu-end">
-                                <form method="post" action="{{ url('/sicantik/rincian')}}" enctype="multipart/form-data">
-                                  @csrf
-                                <input type="hidden" name="month" value="{{ $data->bulan }}">
-                                <input type="hidden" name="year" value="{{ $year }}">
-                                <button type="submit" class="dropdown-item">
-                                  Lihat Rincian Perjenis Izin
-                                </button>
-                                </form>
-                                <form method="get" action="{{ url('/sicantik')}}" enctype="multipart/form-data">
-                                  
-                                <input type="hidden" name="month" value="{{ $data->bulan }}">
-                                <input type="hidden" name="year" value="{{ $year }}">
-                                <button type="submit" class="dropdown-item">
-                                  Lihat Rincian Izin Terbit
-                                </button>
-                                </form>
-
-
-                              
-                              </div>
-                             
-                            </span>
+                            <button type="button" class="btn btn-sm btn-outline-primary btn-rincian-bulan" data-bulan="{{ $rekap['bulan'] }}" data-label="{{ \Carbon\Carbon::createFromFormat('Y-m', $rekap['bulan'])->translatedFormat('F Y') }}" data-bs-toggle="modal" data-bs-target="#modal-detail-bulan">Rincian</button>
                           </td>
                         </tr>
                         @endforeach
-                        <tr>
-                          <td><strong>Total</strong></td>
-                          <td class="text-center"><strong>{{ $totalJumlahData }} Izin</strong></td>
-                          <td class="text-center"><strong>{{  $totalJumlahHari }} Hari</strong></td>
-                          <td class="text-center"><strong>{{ number_format($rataRataJumlahHari, 2) }} Hari</strong></td>
-                          <td></td>
-                        </tr>
                       </tbody>
                     </table>
-                  </div>
-                </div>
-              </div>
-              
-             
-              @php
-              use Carbon\Carbon;
-
-              $namaBulan = [];
-              for ($i = 1; $i <= 12; $i++) {
-                $namaBulan[] = Carbon::createFromDate(null, $i, 1)->translatedFormat('F');
-              }
-
-              $startYear = 2018;
-              $currentYear = date('Y'); // Tahun sekarang
-              @endphp
-                  <div class="modal fade" id="modal-team" tabindex="-1" role="dialog" aria-hidden="true">
-                  <div class="modal-dialog modal-dialog-centered" role="document">
-                    <div class="modal-content">
-                    <div class="modal-header">
-                      <h5 class="modal-title">Sortir Berdasarkan :</h5>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                      <div class="card">
-                      <div class="card-header">
-                        <ul class="nav nav-tabs card-header-tabs nav-fill" data-bs-toggle="tabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                          <a href="#tabs-home-8" class="nav-link active" data-bs-toggle="tab" aria-selected="true" role="tab">Tanggal</a>
-                        </li>
-                        </ul>
-                      </div>
-                      <div class="card-body">
-                        <div class="tab-content">
-                        <div class="tab-pane fade active show" id="tabs-home-8" role="tabpanel">
-                          <h4>Pilih Tanggal :</h4>
-                          <form method="post" action="{{ url('/sicantik/sych')}}" enctype="multipart/form-data">
-                          @csrf
-                          <div class="input-group mb-2">
-                            <input type="date" class="form-control" name="date_start" autocomplete="off">
-                            <span class="input-group-text">s/d</span>
-                            <input type="date" class="form-control" name="date_end" autocomplete="off">
-                            <input type="hidden" name="type" value="statistik">
-                            <button type="submit" class="btn btn-primary">Tampilkan</button>
+                    <!-- Modal rincian detail per bulan -->
+                    <div class="modal fade" id="modal-detail-bulan" tabindex="-1" role="dialog" aria-hidden="true">
+                      <div class="modal-dialog modal-full-width modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                          <div class="modal-header">
+                            <h5 class="modal-title" id="modal-detail-title">Rincian Izin Terbit</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                           </div>
-                          </form>
-                        </div>
+                          <div class="modal-body">
+                            <div class="table-responsive">
+                              <table class="table table-bordered table-hover">
+                                <thead class="table-info">
+                                  <tr>
+                                    <th>No</th>
+                                    <th>No Permohonan</th>
+                                    <th>Nama</th>
+                                    <th>Jenis Izin</th>
+                                    <th class="text-center">Lama Proses (hari)</th>
+                                    <th class="text-center">Jumlah Hari Kerja</th>
+                                  </tr>
+                                </thead>
+                                <tbody id="detail-table-body">
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
                         </div>
                       </div>
+                    </div>
+                    <script>
+                      const items = @json($items);
+                      const detailTableBody = document.getElementById('detail-table-body');
+                      let modalDetail;
+                      document.addEventListener('DOMContentLoaded', function() {
+                        modalDetail = new bootstrap.Modal(document.getElementById('modal-detail-bulan'));
+                      });
+                      document.querySelectorAll('.btn-rincian-bulan').forEach(btn => {
+                        btn.addEventListener('click', function(e) {
+                          const bulan = this.getAttribute('data-bulan');
+                          const bulanLabel = this.getAttribute('data-label');
+                          // Filter items for selected month
+                          const filtered = items.filter(item => {
+                            if (!item.end_date) return false;
+                            const d = new Date(item.end_date);
+                            const ym = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+                            return ym === bulan;
+                          });
+                          let html = '';
+                          filtered.forEach((item, idx) => {
+                            html += `<tr>
+                              <td>${idx+1}</td>
+                              <td>${item.no_permohonan ?? '-'}</td>
+                              <td>${item.nama ?? '-'}</td>
+                              <td>${item.jenis_izin ?? '-'}</td>
+                              <td class="text-center">${item.lama_proses ?? '-'}</td>
+                              <td class="text-center">${item.jumlah_hari_kerja ?? '-'}</td>
+                            </tr>`;
+                          });
+                          if (filtered.length) {
+                            const totalHariKerja = filtered.reduce((a,b)=>a+(b.jumlah_hari_kerja||0),0);
+                            const rataRataHariKerja = totalHariKerja / filtered.length;
+                            html += `<tr class="table-warning">
+                              <td colspan="4"><strong>Total</strong></td>
+                              <td class="text-center"><strong>${filtered.length} Izin</strong></td>
+                              <td class="text-center"><strong>${totalHariKerja.toLocaleString('id-ID',{minimumFractionDigits:2})} hari</strong></td>
+                            </tr>`;
+                            html += `<tr class="table-info">
+                              <td colspan="5"><strong>Rata-rata Hari Kerja</strong></td>
+                              <td class="text-center"><strong>${rataRataHariKerja.toLocaleString('id-ID',{minimumFractionDigits:2})} hari</strong></td>
+                            </tr>`;
+                          }
+                          detailTableBody.innerHTML = html;
+                          modalDetailTitle.innerText = `Rincian Izin Terbit ${bulanLabel}`;
+                          modalDetail.show();
+                        });
+                      });
+                    </script>
+                    <!-- Modal sortir tahun saja -->
+                    <div class="modal fade" id="modal-sortir-tahun" tabindex="-1" role="dialog" aria-hidden="true">
+                      <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                          <div class="modal-header">
+                            <h5 class="modal-title">Sortir Berdasarkan Tahun</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body">
+                            <form method="get" action="{{ url('/sicantik/statistik') }}">
+                              <div class="mb-3">
+                                <label for="year" class="form-label">Tahun</label>
+                                <select name="year" id="year" class="form-select">
+                                  <option value="{{ $year }}">{{ $year }}</option>
+                                  @for ($y = $startYear; $y <= $currentYear; $y++)
+                                    <option value="{{ $y }}">{{ $y }}</option>
+                                  @endfor
+                                </select>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="submit" class="btn btn-primary">Tampilkan</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn me-auto" data-bs-dismiss="modal">Tutup</button>
-                    </div>
+                    <script>
+                      // Ganti tombol sortir agar membuka modal tahun
+                      document.querySelectorAll('[data-bs-target="#modal-team-stat"]').forEach(btn => {
+                        btn.setAttribute('data-bs-target', '#modal-sortir-tahun');
+                      });
+                    </script>
                     </div>
                   </div>
                   </div>
@@ -320,7 +332,7 @@
                 </div>
                 </div>
             
- @endsection             
-            
-          
-        
+ @endsection
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+

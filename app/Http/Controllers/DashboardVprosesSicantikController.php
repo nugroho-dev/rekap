@@ -77,7 +77,7 @@ class DashboardVprosesSicantikController extends Controller
 		$items->withPath(url('/sicantik'));
 
         // Hitung lama_proses & jumlah_hari_kerja per item (start = end_date jenis=2, end = end_date jenis=40 or fallback)
-        $items->getCollection()->transform(function ($item) {
+		$items->getCollection()->transform(function ($item) {
 			try {
 				$no = $item->permohonan_izin_id;
 				$invalidDates = ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000'];
@@ -122,10 +122,12 @@ class DashboardVprosesSicantikController extends Controller
 					}
 					// Business days as decimal
 					$businessDaysDecimal = 0.0;
+					$businessDays = [];
 					$cursor = $start->copy();
 					while ($cursor->lte($end)) {
 						$isBusiness = $cursor->dayOfWeekIso >= 1 && $cursor->dayOfWeekIso <= 5 && !in_array($cursor->toDateString(), $holidays);
 						if ($isBusiness) {
+							$businessDays[] = $cursor->toDateString();
 							// First day
 							if ($cursor->isSameDay($start)) {
 								$endOfDay = $cursor->copy()->endOfDay();
@@ -145,7 +147,17 @@ class DashboardVprosesSicantikController extends Controller
 						}
 						$cursor->addDay()->startOfDay();
 					}
-					$item->business_days_decimal = round($businessDaysDecimal, 2);
+					$businessDayCount = count($businessDays);
+					$durationHours = $end->diffInHours($start);
+					if ($businessDayCount > 1 && $durationHours < ($businessDayCount * 24)) {
+						$item->jumlah_hari_kerja = $businessDayCount - 1;
+					} elseif ($businessDayCount == 2 && $durationHours < 24) {
+						$item->jumlah_hari_kerja = 1;
+					} else {
+						$item->jumlah_hari_kerja = $businessDayCount;
+					}
+					// business_days_decimal: represent fractional business days based on actual minutes
+					$item->business_days_decimal = $businessDaysDecimal > 0 ? round($businessDaysDecimal, 2) : 0;
 				} else {
 					$item->lama_proses = null;
 					$item->jumlah_hari_kerja = null;
@@ -248,20 +260,19 @@ public function show(Request $request, $id)
 					$diffSecondsStep = $end->timestamp - $start->timestamp;
 					$step->total_hours = round($diffSecondsStep / 3600, 2);
 					$step->total_days = round($step->total_hours / 24, 2);
+					$diffMinutesStep = $end->diffInMinutes($start);
+					$step->durasi_jam = $diffMinutesStep > 0 ? intdiv($diffMinutesStep, 60) : 0;
+					$step->durasi_menit = $diffMinutesStep > 0 ? ($diffMinutesStep % 60) : 0;
 					if ($start->isSameDay($end) && $diffSecondsStep > 0) {
 						$step->durasi = 0;
-						$step->durasi_jam = round($diffSecondsStep / 3600, 2);
 						$step->jumlah_hari_kerja = 0;
 					} else if ($diffSecondsStep <= 0) {
 						$step->durasi = 0;
-						$step->durasi_jam = 0;
 						$step->jumlah_hari_kerja = 0;
 					} else {
 						$step->durasi = ceil($diffSecondsStep / 86400);
-						$step->durasi_jam = null;
 						if ((int) $step->jenis_proses_id === 226) {
 							$step->jumlah_hari_kerja = null;
-							$step->business_days_decimal = null;
 						} else {
 							try {
 								$holidays = Dayoff::whereBetween('tanggal', [$start->toDateString(), $end->toDateString()])->pluck('tanggal')->map(function ($d) {
@@ -270,42 +281,43 @@ public function show(Request $request, $id)
 							} catch (\Throwable $e) {
 								$holidays = [];
 							}
-							// Business days as decimal
-							$businessDaysDecimal = 0.0;
+							$jumlahHariKerja = 0;
 							$cursor = $start->copy();
+							$businessDays = [];
 							while ($cursor->lte($end)) {
 								$isBusiness = $cursor->dayOfWeekIso >= 1 && $cursor->dayOfWeekIso <= 5 && !in_array($cursor->toDateString(), $holidays);
 								if ($isBusiness) {
-									if ($cursor->isSameDay($start)) {
-										$endOfDay = $cursor->copy()->endOfDay();
-										$minutes = min($end->diffInMinutes($cursor), $endOfDay->diffInMinutes($cursor));
-										$businessDaysDecimal += $minutes / (24 * 60);
-									} elseif ($cursor->isSameDay($end)) {
-										$startOfDay = $cursor->copy()->startOfDay();
-										$minutes = $end->diffInMinutes($startOfDay);
-										$businessDaysDecimal += $minutes / (24 * 60);
-									} else {
-										$businessDaysDecimal += 1.0;
-									}
+									$businessDays[] = $cursor->toDateString();
 								}
 								$cursor->addDay()->startOfDay();
 							}
-							$step->business_days_decimal = round($businessDaysDecimal, 2);
+							$businessDayCount = count($businessDays);
+							$durationHours = $end->diffInHours($start);
+							if ($businessDayCount > 1 && $durationHours < ($businessDayCount * 24)) {
+								$jumlahHariKerja = $businessDayCount - 1;
+							} elseif ($businessDayCount == 2 && $durationHours < 24) {
+								$jumlahHariKerja = 1;
+							} else {
+								$jumlahHariKerja = $businessDayCount;
+							}
+							$step->jumlah_hari_kerja = max(0, $jumlahHariKerja);
 						}
 					}
 				} else {
 					$step->durasi = null;
 					$step->jumlah_hari_kerja = null;
-					$step->business_days_decimal = null;
 					$step->total_hours = null;
 					$step->total_days = null;
+					$step->durasi_jam = null;
+					$step->durasi_menit = null;
 				}
 			} catch (\Throwable $e) {
 				$step->durasi = null;
 				$step->jumlah_hari_kerja = null;
-				$step->business_days_decimal = null;
 				$step->total_hours = null;
 				$step->total_days = null;
+				$step->durasi_jam = null;
+				$step->durasi_menit = null;
 			}
 			return $step;
 		});
@@ -367,165 +379,122 @@ public function show(Request $request, $id)
 
 	public function statistik(Request $request)
     {
-		$statError = null;
 		$judul = 'Statistik Izin SiCantik';
 		$year = (int) $request->input('year', Carbon::now()->year);
+		$month = $request->input('month') ?? null;
 		$date_start = $request->input('date_start') ?? null;
 		$date_end = $request->input('date_end') ?? null;
-		$month = $request->input('month') ?? null;
-		
-		try {
-			$invalidDates = ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000'];
-			// Get one row per permohonan_izin_id representing an issued permit (jenis 40, selesai) in the year
-			$issued = Proses::selectRaw('permohonan_izin_id, MAX(end_date) AS end_date_40')
-				->where('jenis_proses_id', 40)
-				->whereRaw("LOWER(TRIM(status)) = 'selesai'")
-				->whereNotNull('end_date')
-				->whereYear('end_date', $year)
-				->groupBy('permohonan_izin_id')
-				->get();
 
-			// initialize buckets
-			$monthly = [];
-			for ($m = 1; $m <= 12; $m++) {
-				$monthly[$m] = ['jumlah_data' => 0, 'jumlah_hari' => 0];
-			}
+		$query = Proses::query();
+		$query->where('jenis_proses_id', 40)
+			->whereRaw("LOWER(TRIM(status)) = 'selesai'")
+			->whereNotNull('end_date')
+			->whereYear('end_date', $year);
+		if ($month) {
+			$query->whereMonth('end_date', $month);
+		}
+		$items = $query->get();
 
-			foreach ($issued as $row) {
-				$no = $row->permohonan_izin_id;
-				$usedEndRaw = $row->end_date_40;
-				if (empty($usedEndRaw)) continue;
-				try {
-					$usedEnd = Carbon::parse($usedEndRaw);
-				} catch (\Throwable $e) {
-					continue;
-				}
-				// increment issued count for the month of usedEnd
-				$bulan = (int) $usedEnd->month;
-				$monthly[$bulan]['jumlah_data']++;
-
-				// compute start date same as index: min end_date where jenis_proses_id = 2
+		$invalidDates = ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000'];
+		$items = $items->map(function ($item) {
+			try {
+				$no = $item->permohonan_izin_id;
 				$startDate = Proses::where('permohonan_izin_id', $no)
 					->where('jenis_proses_id', 2)
 					->whereNotNull('end_date')
-					->whereNotIn('end_date', $invalidDates)
+					->whereNotIn('end_date', ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000'])
 					->min('end_date');
-
-				// fallback: latest valid end_date in the group
-				$lastEndDate = Proses::where('permohonan_izin_id', $no)
-					->whereNotNull('end_date')
-					->whereNotIn('end_date', $invalidDates)
-					->max('end_date');
-
-				$usedEndFinalRaw = $usedEndRaw ?: $lastEndDate;
-				if (empty($startDate) || empty($usedEndFinalRaw)) {
-					// no start or no end -> jumlah_hari not computable; skip adding days
-					continue;
-				}
-				try {
+				$endDate40 = $item->end_date;
+				if ($startDate && $endDate40) {
 					$start = Carbon::parse($startDate);
-					$end = Carbon::parse($usedEndFinalRaw);
-				} catch (\Throwable $e) {
-					continue;
-				}
-
-				// fetch holidays in range
-				try {
-					$holidays = Dayoff::whereBetween('tanggal', [$start->toDateString(), $end->toDateString()])->pluck('tanggal')->map(function ($d) { return Carbon::parse($d)->toDateString(); })->unique()->toArray();
-				} catch (\Throwable $e) {
-					$holidays = [];
-				}
-
-				// durasi: if same calendar day, show jam; else hari
-				$diffSeconds = $end->timestamp - $start->timestamp;
-				if ($start->isSameDay($end) && $diffSeconds > 0) {
-					$daysFloat = 0;
-					$hoursFloat = round($diffSeconds / 3600, 2);
-				} else if ($diffSeconds <= 0) {
-					$daysFloat = 0;
-					$hoursFloat = 0;
-				} else {
-					$daysFloat = ceil($diffSeconds / 86400);
-					$hoursFloat = null;
-				}
-
-				// compute work days Mon-Fri excluding holidays
-				$workDays = 0;
-				if ($start->eq($end)) {
-					$workDays = 0;
-				} else {
+					$end = Carbon::parse($endDate40);
+					$diffSeconds = $end->timestamp - $start->timestamp;
+					$item->total_hours = round($diffSeconds / 3600, 2);
+					$item->total_days = round($item->total_hours / 24, 2);
+					if ($start->isSameDay($end) && $diffSeconds > 0) {
+						$item->lama_proses = 0;
+						$item->durasi_jam = round($diffSeconds / 3600, 2);
+					} else if ($diffSeconds <= 0) {
+						$item->lama_proses = 0;
+						$item->durasi_jam = 0;
+					} else {
+						$item->lama_proses = ceil($diffSeconds / 86400);
+						$item->durasi_jam = null;
+					}
+					try {
+						$holidays = Dayoff::whereBetween('tanggal', [$start->toDateString(), $end->toDateString()])->pluck('tanggal')->map(function ($d) {
+							return Carbon::parse($d)->toDateString();
+						})->unique()->toArray();
+					} catch (\Throwable $e) {
+						$holidays = [];
+					}
+					$businessDaysDecimal = 0.0;
+					$jumlahHariKerja = 0;
 					$cursor = $start->copy();
 					while ($cursor->lte($end)) {
-						$iso = $cursor->dayOfWeekIso;
-						$ds = $cursor->toDateString();
-						if ($iso >= 1 && $iso <= 5 && !in_array($ds, $holidays)) $workDays++;
-						$cursor->addDay();
+						$isBusiness = $cursor->dayOfWeekIso >= 1 && $cursor->dayOfWeekIso <= 5 && !in_array($cursor->toDateString(), $holidays);
+						if ($isBusiness) {
+							$jumlahHariKerja++;
+							if ($cursor->isSameDay($start)) {
+								$endOfDay = $cursor->copy()->endOfDay();
+								$minutes = min($end->diffInMinutes($cursor), $endOfDay->diffInMinutes($cursor));
+								$businessDaysDecimal += $minutes / (24 * 60);
+							}
+							elseif ($cursor->isSameDay($end)) {
+								$startOfDay = $cursor->copy()->startOfDay();
+								$minutes = $end->diffInMinutes($startOfDay);
+								$businessDaysDecimal += $minutes / (24 * 60);
+							}
+							else {
+								$businessDaysDecimal += 1.0;
+							}
+						}
+						$cursor->addDay()->startOfDay();
 					}
+					$item->jumlah_hari_kerja = max(0, $jumlahHariKerja);
+					$item->business_days_decimal = $businessDaysDecimal > 0 ? round($businessDaysDecimal, 2) : 0;
+				} else {
+					$item->lama_proses = null;
+					$item->jumlah_hari_kerja = null;
+					$item->business_days_decimal = null;
+					$item->total_hours = null;
+					$item->total_days = null;
 				}
-
-				// subtract days covered by jenis_proses_id = 226 overlapping with [start,end]
-				$reduction = 0;
-				$steps226 = Proses::where('permohonan_izin_id', $no)
-					->where('jenis_proses_id', 226)
-					->whereNotNull('start_date')
-					->whereNotIn('start_date', $invalidDates)
-					->whereNotNull('end_date')
-					->whereNotIn('end_date', $invalidDates)
-					->get(['start_date', 'end_date']);
-
-				foreach ($steps226 as $st) {
-					try {
-						$sStart = Carbon::parse($st->start_date);
-						$sEnd = Carbon::parse($st->end_date);
-					} catch (\Throwable $e) {
-						continue;
-					}
-					if ($sEnd->lt($start) || $sStart->gt($end)) continue;
-					$is = $sStart->lt($start) ? $start->copy() : $sStart->copy();
-					$ie = $sEnd->gt($end) ? $end->copy() : $sEnd->copy();
-					if ($is->eq($ie)) {
-						continue; // same day, 0 days
-					}
-					$cursor2 = $is->copy();
-					while ($cursor2->lte($ie)) {
-						$iso2 = $cursor2->dayOfWeekIso;
-						$ds2 = $cursor2->toDateString();
-						if ($iso2 >= 1 && $iso2 <= 5 && !in_array($ds2, $holidays)) $reduction++;
-						$cursor2->addDay();
-					}
-				}
-
-				$final = max(0, $workDays - $reduction);
-				$monthly[$bulan]['jumlah_hari'] += $final;
+			} catch (\Throwable $e) {
+				$item->lama_proses = null;
+				$item->jumlah_hari_kerja = null;
+				$item->business_days_decimal = null;
+				$item->total_hours = null;
+				$item->total_days = null;
 			}
+			return $item;
+		});
 
-			// build result collection for 12 months
-			$rataRataJumlahHariPerBulan = collect(range(1,12))->map(function($m) use ($monthly, $year) {
-				$jumlah_data = $monthly[$m]['jumlah_data'] ?? 0;
-				$jumlah_hari = $monthly[$m]['jumlah_hari'] ?? 0;
-				$rata = $jumlah_data ? ($jumlah_hari / $jumlah_data) : 0;
-				return (object) ['bulan' => $m, 'tahun' => $year, 'jumlah_data' => $jumlah_data, 'jumlah_hari' => $jumlah_hari, 'rata_rata_jumlah_hari' => $rata];
-			});
+		$totalJumlahData = $items->count();
+		$totalJumlahHari = $items->sum('jumlah_hari_kerja');
+		$rataRataJumlahHari = $totalJumlahData ? $totalJumlahHari / $totalJumlahData : 0;
+		$jumlah_permohonan = $totalJumlahData;
+		$coverse = 0;
 
-			$totalJumlahData = $rataRataJumlahHariPerBulan->sum('jumlah_data');
-			$totalJumlahHari = $rataRataJumlahHariPerBulan->sum('jumlah_hari');
-			$rataRataJumlahHari = $totalJumlahData ? $totalJumlahHari / $totalJumlahData : 0;
-			$jumlah_permohonan = $totalJumlahData;
-			$coverse = 0;
-		} catch (\Throwable $e) {
-			Log::error('DashboardVprosesSicantikController::statistik failed', ['error' => $e->getMessage()]);
-			$statError = $e->getMessage();
-			$jumlah_permohonan = 0;
-			$rataRataJumlahHariPerBulan = collect(range(1,12))->map(function($m) use ($year) {
-				return (object) ['bulan' => $m, 'tahun' => $year, 'jumlah_data' => 0, 'jumlah_hari' => 0, 'rata_rata_jumlah_hari' => 0];
-			});
-			$totalJumlahData = 0;
-			$totalJumlahHari = 0;
-			$rataRataJumlahHari = 0;
-			$coverse = 0;
-		}
+		// Monthly aggregation
+		$rekapPerBulan = collect();
+		$items->groupBy(function($item) {
+			return Carbon::parse($item->end_date)->format('Y-m');
+		})->each(function($group, $bulan) use (&$rekapPerBulan) {
+			$jumlah_izin_terbit = $group->count();
+			$jumlah_lama_proses = $group->sum('lama_proses');
+			$jumlah_hari_kerja = $group->sum('jumlah_hari_kerja');
+			$rata_rata_hari_kerja = $jumlah_izin_terbit ? round($jumlah_hari_kerja / $jumlah_izin_terbit, 2) : 0;
+			$rekapPerBulan->push([
+				'bulan' => $bulan,
+				'jumlah_izin_terbit' => $jumlah_izin_terbit,
+				'jumlah_lama_proses' => $jumlah_lama_proses,
+				'jumlah_hari_kerja' => $jumlah_hari_kerja,
+				'rata_rata_hari_kerja' => $rata_rata_hari_kerja,
+			]);
+		});
 
-		return view('admin.nonberusaha.sicantik.statistik', compact('judul','jumlah_permohonan','date_start','date_end','month','year','rataRataJumlahHariPerBulan', 'rataRataJumlahHari','totalJumlahData','totalJumlahHari','coverse','statError'));
+		return view('admin.nonberusaha.sicantik.statistik', compact('judul','jumlah_permohonan','date_start','date_end','month','year','items','rataRataJumlahHari','totalJumlahData','totalJumlahHari','coverse','rekapPerBulan'));
 	}
 
 	/**
