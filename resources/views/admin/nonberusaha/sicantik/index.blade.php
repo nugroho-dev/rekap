@@ -106,9 +106,9 @@
                       <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                      <div class="table-responsive">
-                        <table class="table table-striped" id="detailModalTable">
-                          <thead class="table-dark text-center align-middle">
+                      <div class="table-responsive" style="max-height: 60vh; overflow-y: auto;">
+                        <table class="table table-striped table-bordered" id="detailModalTable" style="min-width: 900px;">
+                          <thead class="table-dark text-center align-middle sticky-top custom-header" style="position: sticky; top: 0; z-index: 2;">
                             <tr>
                               <th style="width:40px">No.</th>
                               <th>Jenis Proses ID</th>
@@ -116,31 +116,52 @@
                               <th>Mulai</th>
                               <th>Selesai</th>
                               <th>Status</th>
-                              <th>Durasi</th>
-                               <th>Durasi Jam</th>
-                               <th>Durasi Menit</th>
-                              <th>Hari Kerja</th>
+                              <th class="text-end">Durasi (Hari)</th>
+                              <th class="text-end">Durasi (Jam)</th>
+                              <th class="text-end">Durasi (Menit)</th>
+                              <th class="text-end">Hari Kerja</th>
                             </tr>
                           </thead>
                           <tbody>
-                            <!-- Pastikan render detail proses, kolom Hari Kerja ambil dari item.jumlah_hari_kerja -->
-                            <!-- Contoh:
-                            <tr>
-                              <td>1</td>
-                              <td>Nama Proses</td>
-                              <td>Mulai</td>
-                              <td>Selesai</td>
-                              <td>Status</td>
-                              <td>Durasi Hari</td>
-                              <td>Durasi Jam</td>
-                              <td></td>
-                                  <td>Durasi</td>
-                            -->
+                            <tr class="loading-row">
+                              <td colspan="10" class="text-center text-muted">
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                Memuat data...
+                              </td>
+                            </tr>
                           </tbody>
                         </table>
                       </div>
-
-                        <!-- Pagination dihapus dari modal detail -->
+                      <style>
+                        #detailModalTable thead.sticky-top {
+                          position: sticky;
+                          top: 0;
+                          background: #212529;
+                          z-index: 2;
+                        }
+                        #detailModalTable thead.custom-header th {
+                          border-bottom: 3px solid #0d6efd;
+                          border-top: none;
+                          border-left: none;
+                          border-right: none;
+                          color: #fff;
+                          background: #212529;
+                          font-weight: 600;
+                          font-size: 1.05rem;
+                        }
+                        #detailModalTable tbody tr:nth-child(even) {
+                          background-color: #f8f9fa;
+                        }
+                        #detailModalTable th, #detailModalTable td {
+                          vertical-align: middle;
+                        }
+                        #detailModalTable td.text-end {
+                          text-align: right;
+                        }
+                        #detailModalTable {
+                          font-size: 1rem;
+                        }
+                      </style>
                     </div>
                     <div class="modal-footer">
                       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
@@ -498,7 +519,8 @@
     const id = $(this).data('id');
     const tbody = $('#detailModalTable tbody');
     console.log('Detail modal AJAX id:', id); // Debug log
-    tbody.html('<tr><td colspan="8" class="text-center text-muted">Memuat data...</td></tr>');
+    // Show loading spinner row (colspan matches new table: 10)
+    tbody.html('<tr class="loading-row"><td colspan="10" class="text-center text-muted"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Memuat data...</td></tr>');
     $('#detailModalLabel').text('Detail Proses');
     // Accessibility: remove aria-hidden and inert when showing modal
     $('#detailModal').removeAttr('aria-hidden').removeAttr('inert');
@@ -517,45 +539,114 @@
         if (res && res.steps && res.steps.length > 0) {
           res.steps.forEach(function(step, idx) {
             const tr = $('<tr>');
+            // Durasi hari
+            const durasiHari = (typeof step.durasi === 'number') ? step.durasi : null;
+            // Sumber jam & menit mentah
+            let rawJam = step.durasi_jam;
+            let rawMenit = step.durasi_menit;
+            // Jika tersedia total_hours (jam akumulatif) & total_minutes (menit akumulatif) gunakan prioritas
+            if (typeof step.total_hours === 'number') {
+              rawJam = step.total_hours;
+            }
+            if (typeof step.total_minutes === 'number') {
+              rawMenit = step.total_minutes; // diasumsikan total menit, akan dinormalisasi
+            }
+            // Jika menit > 59 normalisasi ke jam + menit
+            if (typeof rawMenit === 'number' && rawMenit >= 60) {
+              const extraJam = Math.floor(rawMenit / 60);
+              rawJam = (typeof rawJam === 'number' ? rawJam : 0) + extraJam;
+              rawMenit = rawMenit % 60;
+            }
+            // Fallback: jika jam tidak ada tapi ada durasi hari, konversi (1 hari = 24 jam)
+            if ((rawJam === null || rawJam === undefined) && typeof durasiHari === 'number') {
+              rawJam = durasiHari * 24;
+            }
+            // Pastikan tipe number
+            // Jika jam berupa desimal (misal 0.2 jam) konversi ke jam utuh + menit
+            let discreteHours = null;
+            let discreteMinutes = null;
+            if (typeof rawJam === 'number' && !isNaN(rawJam)) {
+              const totalMinutesFromHours = Math.round(rawJam * 60); // pembulatan ke menit terdekat
+              discreteHours = Math.floor(totalMinutesFromHours / 60);
+              const remainderMinutes = totalMinutesFromHours % 60;
+              // Gunakan rawMenit hanya jika > 0; jika 0 dan jam memiliki pecahan, ambil remainder dari jam
+              const hasFraction = Math.abs(rawJam % 1) > 0;
+              if (typeof rawMenit === 'number' && !isNaN(rawMenit)) {
+                discreteMinutes = (rawMenit > 0) ? rawMenit : (hasFraction ? remainderMinutes : 0);
+              } else {
+                discreteMinutes = remainderMinutes;
+              }
+            } else if (typeof rawMenit === 'number' && !isNaN(rawMenit)) {
+              // Hanya menit tersedia
+              discreteHours = 0;
+              discreteMinutes = rawMenit;
+            }
+            // Normalisasi menit >= 60 lagi jika override menimbulkan >59
+            if (typeof discreteMinutes === 'number' && discreteMinutes >= 60) {
+              const extraH = Math.floor(discreteMinutes / 60);
+              discreteHours = (discreteHours || 0) + extraH;
+              discreteMinutes = discreteMinutes % 60;
+            }
+            const jamDisplay = (discreteHours !== null) ? discreteHours : '-';
+            const menitDisplay = (discreteMinutes !== null) ? String(discreteMinutes).padStart(2,'0') : '-';
+            // Tooltip info mentah
+            const tooltipJam = (typeof step.durasi_jam === 'number') ? step.durasi_jam : 'n/a';
+            const tooltipMenit = (typeof step.durasi_menit === 'number') ? step.durasi_menit : 'n/a';
+            const tooltipTotalHours = (typeof step.total_hours === 'number') ? step.total_hours : 'n/a';
+            const tooltipTotalMinutes = (typeof step.total_minutes === 'number') ? step.total_minutes : 'n/a';
             tr.append($('<td class="text-center align-middle">').text(idx+1));
             tr.append($('<td class="text-center align-middle">').text(step.jenis_proses_id || '-'));
             tr.append($('<td class="align-middle">').text(step.nama_proses));
             tr.append($('<td class="text-center align-middle">').text(step.start || '-'));
             tr.append($('<td class="text-center align-middle">').text(step.end || '-'));
             tr.append($('<td class="text-center align-middle">').text(step.status || '-'));
-            tr.append($('<td class="text-center align-middle">').html(typeof step.durasi === 'number' ? (step.durasi + ' hari<br><span class="text-info">(' + step.total_hours + ' jam, ' + step.total_days + ' hari)</span>') : '-'));
-            tr.append($('<td class="text-center align-middle">').text(Number.isInteger(step.durasi_jam) ? step.durasi_jam : (step.durasi_jam ? Math.floor(step.durasi_jam) : '-')));
-                tr.append($('<td class="text-center align-middle">').text(step.durasi_menit));
+            tr.append($('<td class="text-end align-middle">').html(durasiHari !== null ? durasiHari : '-'));
+            tr.append(
+              $('<td class="text-end align-middle" data-bs-toggle="tooltip" data-bs-title="Jam mentah: '+tooltipJam+' | total_hours(dec): '+tooltipTotalHours+'">').html(
+                jamDisplay !== '-' ? jamDisplay + ' <span class="text-muted small">jam</span>' : '-'
+              )
+            );
+            tr.append(
+              $('<td class="text-end align-middle" data-bs-toggle="tooltip" data-bs-title="Menit hasil konversi dari jam & menit mentah: '+tooltipMenit+' | total_minutes(dec): '+tooltipTotalMinutes+'">').html(
+                menitDisplay !== '-' ? menitDisplay + ' <span class="text-muted small">menit</span>' : '-'
+              )
+            );
             if (typeof step.jumlah_hari_kerja === 'number') {
               totalHariKerja += step.jumlah_hari_kerja;
             }
-            tr.append($('<td class="text-center align-middle">').html(typeof step.jumlah_hari_kerja === 'number' ? (step.jumlah_hari_kerja + ' hari kerja<br><span class="text-info">(' + step.business_days_decimal + ' hari kerja desimal)</span>') : '-'));
+            tr.append($('<td class="text-end align-middle">').html(typeof step.jumlah_hari_kerja === 'number' ? step.jumlah_hari_kerja : '-'));
             tbody.append(tr);
           });
+          // Inisialisasi tooltip Bootstrap (jika tersedia)
+          if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+            $('#detailModalTable [data-bs-toggle="tooltip"]').each(function(){
+              new bootstrap.Tooltip(this);
+            });
+          }
           // Add total row for Hari Kerja
-           const totalTr = $('<tr class="table-info fw-bold">');
-           totalTr.append($('<td colspan="11" class="text-end">').text('Total Hari Kerja'));
-           totalTr.append($('<td class="text-center">').text(totalHariKerja + ' hari kerja'));
+          const totalTr = $('<tr class="table-info fw-bold">');
+          totalTr.append($('<td colspan="9" class="text-end">').text('Total Hari Kerja'));
+          totalTr.append($('<td class="text-end">').text(totalHariKerja));
           tbody.append(totalTr);
           $('#detailModalLabel').text('Detail Proses: ' + (res.record.no_permohonan || res.record.id));
         } else {
-           tbody.html('<tr><td colspan="12" class="text-center text-danger">Data proses tidak ditemukan.</td></tr>');
+          tbody.html('<tr><td colspan="10" class="text-center text-danger">Data proses tidak ditemukan.</td></tr>');
         }
       },
       error: function(xhr, status, error) {
         console.error('AJAX error:', error);
-        tbody.html('<tr><td colspan="8" class="text-center text-danger">Gagal mengambil detail proses.</td></tr>');
+        tbody.html('<tr><td colspan="10" class="text-center text-danger">Gagal mengambil detail proses.</td></tr>');
       }
     });
   });
 
   // Reset modal saat ditutup
   $('#detailModal').on('hidden.bs.modal', function () {
-    const tbody = $('#detailModalTable tbody');
-     tbody.html('<tr><td colspan="12" class="text-center text-muted">Pilih data dan klik tombol detail untuk melihat proses.</td></tr>');
-    $('#detailModalLabel').text('Detail Proses');
-    // Accessibility: add aria-hidden and inert when hiding modal
-    $('#detailModal').attr('aria-hidden', 'true').attr('inert', '');
+  const tbody = $('#detailModalTable tbody');
+  tbody.html('<tr><td colspan="10" class="text-center text-muted">Pilih data dan klik tombol detail untuk melihat proses.</td></tr>');
+  $('#detailModalLabel').text('Detail Proses');
+  // Accessibility: add aria-hidden and inert when hiding modal
+  $('#detailModal').attr('aria-hidden', 'true').attr('inert', '');
   });
     $(document).ready(function() {
         $('.openModalDel').on('click', function() {
