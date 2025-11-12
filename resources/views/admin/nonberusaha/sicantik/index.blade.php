@@ -539,6 +539,10 @@
         if (res && res.steps && res.steps.length > 0) {
           res.steps.forEach(function(step, idx) {
             const tr = $('<tr>');
+            const isOtherJenis = Number(step.jenis_proses_id) !== 2 && Number(step.jenis_proses_id) !== 18;
+            if (isOtherJenis) {
+              tr.addClass('table-warning');
+            }
             // Durasi hari
             const durasiHari = (typeof step.durasi === 'number') ? step.durasi : null;
             // Sumber jam & menit mentah
@@ -595,8 +599,16 @@
             const tooltipTotalHours = (typeof step.total_hours === 'number') ? step.total_hours : 'n/a';
             const tooltipTotalMinutes = (typeof step.total_minutes === 'number') ? step.total_minutes : 'n/a';
             tr.append($('<td class="text-center align-middle">').text(idx+1));
-            tr.append($('<td class="text-center align-middle">').text(step.jenis_proses_id || '-'));
-            tr.append($('<td class="align-middle">').text(step.nama_proses));
+            const jenisCell = $('<td class="text-center align-middle">').text(step.jenis_proses_id || '-');
+            if (isOtherJenis) {
+              jenisCell.append(' ').append($('<span class="badge bg-warning text-dark" title="Bukan jenis proses 2/18">!</span>'));
+            }
+            tr.append(jenisCell);
+            const namaCell = $('<td class="align-middle">').text(step.nama_proses || '-');
+            if (isOtherJenis) {
+              namaCell.append(' ').append($('<span class="badge bg-warning text-dark" title="Bukan jenis proses 2/18">✱</span>'));
+            }
+            tr.append(namaCell);
             tr.append($('<td class="text-center align-middle">').text(step.start || '-'));
             tr.append($('<td class="text-center align-middle">').text(step.end || '-'));
             tr.append($('<td class="text-center align-middle">').text(step.status || '-'));
