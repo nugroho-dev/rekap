@@ -172,6 +172,122 @@ class DashboardVprosesSicantikController extends Controller
 				$item->total_hours = null;
 				$item->total_days = null;
 			}
+			// Tambahkan subtotal SLA untuk tabel index: DPMPTSP, Dinas Teknis, Gabungan
+			try {
+				// Ambil semua langkah untuk no_permohonan yang relevan statusnya
+				$steps = Proses::where('no_permohonan', $item->no_permohonan)
+					->whereNotNull('status')
+					->where(function ($q) {
+						$q->whereRaw("LOWER(TRIM(status)) IN ('proses','selesai','menunggu')")
+						  ->orWhereRaw("LOWER(status) LIKE '%nunggu%'");
+					})
+					->orderBy('id_proses_permohonan', 'ASC')
+					->get(['jenis_proses_id', 'start_date', 'end_date']);
+
+				// Tentukan rentang tanggal keseluruhan untuk efisiensi pengambilan hari libur
+				$validStepDates = $steps->filter(function ($s) {
+					return !empty($s->start_date) && !empty($s->end_date)
+						&& !in_array((string) $s->start_date, ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000'])
+						&& !in_array((string) $s->end_date, ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000']);
+				});
+
+				$minStart = $validStepDates->min('start_date');
+				$maxEnd = $validStepDates->max('end_date');
+
+				$holidaySet = [];
+				if ($minStart && $maxEnd) {
+					try {
+						$holidaySet = Dayoff::whereBetween('tanggal', [Carbon::parse($minStart)->toDateString(), Carbon::parse($maxEnd)->toDateString()])
+							->pluck('tanggal')
+							->map(function ($d) { return Carbon::parse($d)->toDateString(); })
+							->unique()
+							->values()
+							->toArray();
+					} catch (\Throwable $e) {
+						$holidaySet = [];
+					}
+				}
+
+				$nonSlaIds = [2, 13, 18, 33, 115];
+				$dinasTeknisIds = [7, 108, 185, 192, 212, 226, 234, 293, 420];
+
+				$sumDpm = 0; // SLA DPMPTSP
+				$sumDinas = 0; // SLA Dinas Teknis
+				$computedAny = false;
+
+				foreach ($steps as $s) {
+					$jp = (int) $s->jenis_proses_id;
+					// Validasi tanggal
+					if (empty($s->start_date) || empty($s->end_date)) { continue; }
+					if (in_array((string) $s->start_date, ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000'])) { continue; }
+					if (in_array((string) $s->end_date, ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000'])) { continue; }
+
+					try {
+						$start = Carbon::parse($s->start_date);
+						$end = Carbon::parse($s->end_date);
+					} catch (\Throwable $e) {
+						continue;
+					}
+
+					// 226 juga dihitung hari kerjanya (permintaan terbaru)
+
+					// Selaraskan dengan logika detail modal (show()):
+					// - Jika start dan end di hari yang sama dan durasi > 0, maka 0 hari kerja
+					// - Jika durasi <= 0, maka 0
+					// - Selain itu, hitung hari kerja seperti pada modal
+					$diffSecondsStep = $end->timestamp - $start->timestamp;
+					$jumlahHariStep = 0;
+					if ($start->isSameDay($end) && $diffSecondsStep > 0) {
+						$jumlahHariStep = 0;
+					} elseif ($diffSecondsStep <= 0) {
+						$jumlahHariStep = 0;
+					} else {
+						// Hitung jumlah_hari_kerja per langkah
+						$businessDays = [];
+						$cursor = $start->copy();
+						while ($cursor->lte($end)) {
+							$isBusiness = $cursor->dayOfWeekIso >= 1 && $cursor->dayOfWeekIso <= 5 && !in_array($cursor->toDateString(), $holidaySet);
+							if ($isBusiness) {
+								$businessDays[] = $cursor->toDateString();
+							}
+							$cursor->addDay()->startOfDay();
+						}
+						$businessDayCount = count($businessDays);
+						$durationHours = $end->diffInHours($start);
+						if ($businessDayCount === 0) { continue; }
+						if ($businessDayCount > 1 && $durationHours < ($businessDayCount * 24)) {
+							$jumlahHariStep = $businessDayCount - 1;
+						} elseif ($businessDayCount == 2 && $durationHours < 24) {
+							$jumlahHariStep = 1;
+						} else {
+							$jumlahHariStep = $businessDayCount;
+						}
+					}
+					$jumlahHariStep = max(0, (int) $jumlahHariStep);
+
+					$computedAny = true;
+					$isNonSla = in_array($jp, $nonSlaIds, true);
+					$isDinas = in_array($jp, $dinasTeknisIds, true);
+					$isDpm = (!$isNonSla && !$isDinas);
+
+					if ($isDpm) { $sumDpm += $jumlahHariStep; }
+					if ($isDinas) { $sumDinas += $jumlahHariStep; }
+				}
+
+				if ($computedAny) {
+					$item->jumlah_hari_kerja_sla_dpmptsp = $sumDpm;
+					$item->jumlah_hari_kerja_sla_dinas_teknis = $sumDinas;
+					$item->jumlah_hari_kerja_sla_gabungan = $sumDpm + $sumDinas;
+				} else {
+					$item->jumlah_hari_kerja_sla_dpmptsp = null;
+					$item->jumlah_hari_kerja_sla_dinas_teknis = null;
+					$item->jumlah_hari_kerja_sla_gabungan = null;
+				}
+			} catch (\Throwable $e) {
+				$item->jumlah_hari_kerja_sla_dpmptsp = null;
+				$item->jumlah_hari_kerja_sla_dinas_teknis = null;
+				$item->jumlah_hari_kerja_sla_gabungan = null;
+			}
 			return $item;
 		});
         
@@ -236,7 +352,7 @@ public function show(Request $request, $id)
 		})->values();
 
 		// Compute a friendly label for each step (defensive parsing)
-		$steps = $steps->transform(function ($step) {
+			$steps = $steps->transform(function ($step) {
 			$start = null;
 			if (!empty($step->start_date) && is_scalar($step->start_date)) {
 				try {
@@ -271,15 +387,12 @@ public function show(Request $request, $id)
 					$step->durasi_menit = $diffMinutesStep > 0 ? ($diffMinutesStep % 60) : 0;
 					if ($start->isSameDay($end) && $diffSecondsStep > 0) {
 						$step->durasi = 0;
-						$step->jumlah_hari_kerja = 0;
+							$step->jumlah_hari_kerja = 0;
 					} else if ($diffSecondsStep <= 0) {
 						$step->durasi = 0;
-						$step->jumlah_hari_kerja = 0;
+							$step->jumlah_hari_kerja = 0;
 					} else {
 						$step->durasi = ceil($diffSecondsStep / 86400);
-						if ((int) $step->jenis_proses_id === 226) {
-							$step->jumlah_hari_kerja = null;
-						} else {
 							try {
 								$holidays = Dayoff::whereBetween('tanggal', [$start->toDateString(), $end->toDateString()])->pluck('tanggal')->map(function ($d) {
 									return Carbon::parse($d)->toDateString();
@@ -307,7 +420,6 @@ public function show(Request $request, $id)
 								$jumlahHariKerja = $businessDayCount;
 							}
 							$step->jumlah_hari_kerja = max(0, $jumlahHariKerja);
-						}
 					}
 				} else {
 					$step->durasi = null;

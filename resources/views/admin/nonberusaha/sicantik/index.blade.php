@@ -106,25 +106,42 @@
                       <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
+                      <!-- Legend for colors and badges -->
+                      <div class="mb-2 small">
+                        <span class="me-3"><span class="badge bg-success">Selesai</span> baris selesai</span>
+                        <span class="me-3"><span class="badge bg-danger">Proses</span> baris sedang diproses</span>
+                        <span class="me-3"><span class="badge bg-warning text-dark">Menunggu</span> menunggu proses</span>
+                        <span class="me-3"><span class="badge badge-sm bg-blue text-blue-fg">sla dpmptsp</span> langkah masuk perhitungan SLA</span>
+                        <span class="me-3"><span class="badge badge-sm bg-secondary text-white">non-sla</span> jenis proses 2/13/18/33/115</span>
+                        <span class="me-3"><span class="badge badge-sm bg-info text-white">sla dinas teknis</span> jenis proses 7/108/185/192/212/226/234/293/420</span>
+                      </div>
                       <div class="table-responsive" style="max-height: 60vh; overflow-y: auto;">
-                        <table class="table table-striped table-bordered" id="detailModalTable" style="min-width: 900px;">
+                        <table class="table table-striped table-bordered table-hover align-middle" id="detailModalTable" style="min-width: 1000px;">
                           <thead class="table-dark text-center align-middle sticky-top custom-header" style="position: sticky; top: 0; z-index: 2;">
                             <tr>
-                              <th style="width:40px">No.</th>
-                              <th>Jenis Proses ID</th>
-                              <th>Nama Proses</th>
-                              <th>Mulai</th>
-                              <th>Selesai</th>
-                              <th>Status</th>
-                              <th class="text-end">Durasi (Hari)</th>
-                              <th class="text-end">Durasi (Jam)</th>
-                              <th class="text-end">Durasi (Menit)</th>
-                              <th class="text-end">Hari Kerja</th>
+                              <th rowspan="2" style="width:48px">No.</th>
+                              <th rowspan="2">Jenis Proses ID</th>
+                              <th rowspan="2">Nama Proses</th>
+                              <th rowspan="2">Mulai</th>
+                              <th rowspan="2">Selesai</th>
+                              <th rowspan="2">Status</th>
+                              <th colspan="3">Durasi</th>
+                              <th colspan="5">Hari Kerja</th>
+                            </tr>
+                            <tr>
+                              <th class="text-end">Hari</th>
+                              <th class="text-end">Jam</th>
+                              <th class="text-end">Menit</th>
+                              <th class="text-end">Total</th>
+                              <th class="text-end">SLA DPMPTSP</th>
+                              <th class="text-end">SLA Dinas Teknis</th>
+                              <th class="text-end">SLA (Gabungan)</th>
+                              <th class="text-end">Non-SLA</th>
                             </tr>
                           </thead>
                           <tbody>
                             <tr class="loading-row">
-                              <td colspan="10" class="text-center text-muted">
+                              <td colspan="14" class="text-center text-muted">
                                 <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                                 Memuat data...
                               </td>
@@ -149,6 +166,10 @@
                           font-weight: 600;
                           font-size: 1.05rem;
                         }
+                        #detailModalTable thead.custom-header tr:nth-child(2) th {
+                          font-size: 0.95rem;
+                          border-bottom-width: 2px;
+                        }
                         #detailModalTable tbody tr:nth-child(even) {
                           background-color: #f8f9fa;
                         }
@@ -160,6 +181,24 @@
                         }
                         #detailModalTable {
                           font-size: 1rem;
+                        }
+                        /* Keep critical columns from wrapping */
+                        #detailModalTable td:nth-child(4),
+                        #detailModalTable td:nth-child(5),
+                        #detailModalTable td:nth-child(7),
+                        #detailModalTable td:nth-child(8),
+                        #detailModalTable td:nth-child(9),
+                        #detailModalTable td:nth-child(10),
+                        #detailModalTable td:nth-child(11),
+                        #detailModalTable td:nth-child(12),
+                        #detailModalTable td:nth-child(13),
+                        #detailModalTable td:nth-child(14) {
+                          white-space: nowrap;
+                        }
+                        #detailModalTable td:nth-child(1),
+                        #detailModalTable td:nth-child(2) {
+                          white-space: nowrap;
+                          width: 1%;
                         }
                       </style>
                     </div>
@@ -242,6 +281,9 @@
                             <th >Tanggal Proses Akhir</th>
                             <th >Lama Proses</th>
                             <th >Jumlah Hari Kerja</th>
+                            <th >HK SLA DPMPTSP</th>
+                            <th >HK SLA Dinas Teknis</th>
+                            <th >HK SLA (Gabungan)</th>
                             <th >*</th>
                           </tr>
                         </thead>
@@ -301,6 +343,27 @@
                              
 
                            
+                          </td>
+                          <td class="text-center">
+                            @if(is_numeric($item->jumlah_hari_kerja_sla_dpmptsp ?? null))
+                              {{ $item->jumlah_hari_kerja_sla_dpmptsp }} hari kerja
+                            @else
+                              -
+                            @endif
+                          </td>
+                          <td class="text-center">
+                            @if(is_numeric($item->jumlah_hari_kerja_sla_dinas_teknis ?? null))
+                              {{ $item->jumlah_hari_kerja_sla_dinas_teknis }} hari kerja
+                            @else
+                              -
+                            @endif
+                          </td>
+                          <td class="text-center">
+                            @if(is_numeric($item->jumlah_hari_kerja_sla_gabungan ?? null))
+                              {{ $item->jumlah_hari_kerja_sla_gabungan }} hari kerja
+                            @else
+                              -
+                            @endif
                           </td>
                           <td class="text-center">
                             <div class="btn-group">
@@ -519,8 +582,8 @@
     const id = $(this).data('id');
     const tbody = $('#detailModalTable tbody');
     console.log('Detail modal AJAX id:', id); // Debug log
-    // Show loading spinner row (colspan matches new table: 10)
-    tbody.html('<tr class="loading-row"><td colspan="10" class="text-center text-muted"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Memuat data...</td></tr>');
+    // Show loading spinner row (update colspan to 14 after adding SLA Gabungan column)
+    tbody.html('<tr class="loading-row"><td colspan="14" class="text-center text-muted"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Memuat data...</td></tr>');
     $('#detailModalLabel').text('Detail Proses');
     // Accessibility: remove aria-hidden and inert when showing modal
     $('#detailModal').removeAttr('aria-hidden').removeAttr('inert');
@@ -536,18 +599,26 @@
         console.log('Detail modal response:', res); // Debug log
         tbody.empty();
         let totalHariKerja = 0;
+        let totalHariKerjaMarked = 0; // hanya untuk baris yang ditandai (other jenis)
+        let totalHariKerjaExcludeSpecific = 0; // hari kerja selain jenis proses id 2,13,18,115
+        let totalHariKerjaUnmarked = 0; // akumulasi untuk non SLA (bukan other jenis)
+        let totalHariKerjaDinasTeknis = 0; // akumulasi untuk SLA Dinas Teknis
+        let totalHariKerjaNonSla = 0; // akumulasi untuk Non-SLA spesifik
+        let totalHariKerjaSlaGabungan = 0; // akumulasi SLA DPMPTSP + Dinas Teknis
         if (res && res.steps && res.steps.length > 0) {
           res.steps.forEach(function(step, idx) {
             const tr = $('<tr>');
             const jp = Number(step.jenis_proses_id);
-            const isOtherJenis = ![2, 18, 115, 13, 7, 234].includes(jp);
+            const isOtherJenis = ![2, 18, 115, 13, 7, 33, 234, 185, 293, 212, 108, 192, 226, 420].includes(jp);
+            const isNonSlaSpecific = [2, 13, 18, 33, 115].includes(jp);
+            const isDinasTeknis = [7, 108, 185, 192, 212, 226, 234, 293, 420].includes(jp);
             // Row coloring by status
             const statusNorm = (step.status || '').toString().trim().toLowerCase();
             let rowClass = '';
             if (statusNorm === 'selesai') {
               rowClass = 'table-success'; // green
             } else if (statusNorm === 'proses') {
-              rowClass = step.end ? 'table-danger' : 'table-warning'; // red if processing with end time, yellow if waiting
+              rowClass = 'table-danger'; // always red for Proses
             } else if (statusNorm.includes('nunggu')) {
               rowClass = 'table-warning'; // yellow for any menunggu variants
             }
@@ -615,12 +686,20 @@
             tr.append($('<td class="text-center align-middle">').text(idx+1));
             const jenisCell = $('<td class="text-center align-middle">').text(step.jenis_proses_id || '-');
             if (isOtherJenis) {
-              jenisCell.append(' ').append($('<span class="badge bg-warning text-dark" title="Bukan jenis proses 2/18/115/13/7/234">!</span>'));
+              jenisCell.append(' ').append($('<span class="badge badge-sm bg-blue text-blue-fg" title="Bukan jenis proses 2/7/13/18/33/108/115/185/192/212/226/234/293/420">sla dpmptsp</span>'));
+            } else if (isNonSlaSpecific) {
+              jenisCell.append(' ').append($('<span class="badge badge-sm bg-secondary text-white" title="Non-SLA: jenis proses 2/13/18/33/115">non-sla</span>'));
+            } else if (isDinasTeknis) {
+              jenisCell.append(' ').append($('<span class="badge badge-sm bg-orange text-orange-fg" title="SLA Dinas Teknis: jenis proses 7/108/185/192/212/226/234/293/420">sla dinas teknis</span>'));
             }
             tr.append(jenisCell);
             const namaCell = $('<td class="align-middle">').text(step.nama_proses || '-');
             if (isOtherJenis) {
-              namaCell.append(' ').append($('<span class="badge bg-warning text-dark" title="Bukan jenis proses 2/18/115/13/7/234">✱</span>'));
+              namaCell.append(' ').append($('<span class="badge badge-sm bg-blue text-blue-fg" title="Bukan jenis proses 2/7/13/18/33/108/115/185/192/212/226/234/293/420">sla dpmptsp</span>'));
+            } else if (isNonSlaSpecific) {
+              namaCell.append(' ').append($('<span class="badge badge-sm bg-secondary text-white" title="Non-SLA: jenis proses 2/13/18/33/115">non-sla</span>'));
+            } else if (isDinasTeknis) {
+              namaCell.append(' ').append($('<span class="badge badge-sm bg-orange text-orange-fg" title="SLA Dinas Teknis: jenis proses 7/108/185/192/212/226/234/293/420">sla dinas teknis</span>'));
             }
             tr.append(namaCell);
             tr.append($('<td class="text-center align-middle">').text(step.start || '-'));
@@ -639,8 +718,49 @@
             );
             if (typeof step.jumlah_hari_kerja === 'number') {
               totalHariKerja += step.jumlah_hari_kerja;
+              if (isOtherJenis) {
+                totalHariKerjaMarked += step.jumlah_hari_kerja;
+              } else {
+                totalHariKerjaUnmarked += step.jumlah_hari_kerja;
+              }
+              if (isDinasTeknis) {
+                totalHariKerjaDinasTeknis += step.jumlah_hari_kerja;
+              }
+              if (isNonSlaSpecific) {
+                totalHariKerjaNonSla += step.jumlah_hari_kerja;
+              }
+              if (isOtherJenis || isDinasTeknis) {
+                totalHariKerjaSlaGabungan += step.jumlah_hari_kerja;
+              }
+              if (![2,13,18,115].includes(jp)) {
+                totalHariKerjaExcludeSpecific += step.jumlah_hari_kerja;
+              }
             }
             tr.append($('<td class="text-end align-middle">').html(typeof step.jumlah_hari_kerja === 'number' ? step.jumlah_hari_kerja : '-'));
+            // Kolom Hari Kerja (SLA DPMPTSP)
+            tr.append(
+              $('<td class="text-end align-middle">').html(
+                (isOtherJenis && typeof step.jumlah_hari_kerja === 'number') ? step.jumlah_hari_kerja : '-'
+              )
+            );
+            // Kolom Hari Kerja (SLA Dinas Teknis)
+            tr.append(
+              $('<td class="text-end align-middle">').html(
+                (isDinasTeknis && typeof step.jumlah_hari_kerja === 'number') ? step.jumlah_hari_kerja : '-'
+              )
+            );
+            // Kolom Hari Kerja (SLA Gabungan)
+            tr.append(
+              $('<td class="text-end align-middle">').html(
+                ((isOtherJenis || isDinasTeknis) && typeof step.jumlah_hari_kerja === 'number') ? step.jumlah_hari_kerja : '-'
+              )
+            );
+            // Kolom Hari Kerja (Non-SLA)
+            tr.append(
+              $('<td class="text-end align-middle">').html(
+                (!isOtherJenis && typeof step.jumlah_hari_kerja === 'number') ? step.jumlah_hari_kerja : '-'
+              )
+            );
             tbody.append(tr);
           });
           // Inisialisasi tooltip Bootstrap (jika tersedia)
@@ -649,19 +769,30 @@
               new bootstrap.Tooltip(this);
             });
           }
-          // Add total row for Hari Kerja
-          const totalTr = $('<tr class="table-info fw-bold">');
-          totalTr.append($('<td colspan="9" class="text-end">').text('Total Hari Kerja'));
-          totalTr.append($('<td class="text-end">').text(totalHariKerja));
-          tbody.append(totalTr);
+          // Summary row: totals in one line for readability
+          const summaryTr = $('<tr class="table-info fw-bold">');
+          summaryTr.append($('<td colspan="9" class="text-end">').text('Total'));
+          summaryTr.append($('<td class="text-end">').text(totalHariKerja)); // Total
+          summaryTr.append($('<td class="text-end">').text(totalHariKerjaMarked)); // SLA DPMPTSP
+          summaryTr.append($('<td class="text-end">').text(totalHariKerjaDinasTeknis)); // SLA Dinas Teknis
+          summaryTr.append($('<td class="text-end">').text(totalHariKerjaSlaGabungan)); // SLA Gabungan
+          summaryTr.append($('<td class="text-end">').text(totalHariKerjaNonSla)); // Non-SLA
+          tbody.append(summaryTr);
+          // Optional: Total Non-SLA — jika ingin menampilkan total kolom Non-SLA
+          // const totalUnmarkedTr = $('<tr class="table-light fw-bold">');
+          // totalUnmarkedTr.append($('<td colspan="9" class="text-end">').text('Total Hari Kerja (Tidak Tertandai)'));
+          // totalUnmarkedTr.append($('<td class="text-end">'));
+          // totalUnmarkedTr.append($('<td class="text-end">'));
+          // totalUnmarkedTr.append($('<td class="text-end">').text(totalHariKerjaUnmarked));
+          // tbody.append(totalUnmarkedTr);
           $('#detailModalLabel').text('Detail Proses: ' + (res.record.no_permohonan || res.record.id));
         } else {
-          tbody.html('<tr><td colspan="10" class="text-center text-danger">Data proses tidak ditemukan.</td></tr>');
+          tbody.html('<tr><td colspan="14" class="text-center text-danger">Data proses tidak ditemukan.</td></tr>');
         }
       },
       error: function(xhr, status, error) {
         console.error('AJAX error:', error);
-        tbody.html('<tr><td colspan="10" class="text-center text-danger">Gagal mengambil detail proses.</td></tr>');
+        tbody.html('<tr><td colspan="14" class="text-center text-danger">Gagal mengambil detail proses.</td></tr>');
       }
     });
   });
@@ -669,7 +800,7 @@
   // Reset modal saat ditutup
   $('#detailModal').on('hidden.bs.modal', function () {
   const tbody = $('#detailModalTable tbody');
-  tbody.html('<tr><td colspan="10" class="text-center text-muted">Pilih data dan klik tombol detail untuk melihat proses.</td></tr>');
+  tbody.html('<tr><td colspan="14" class="text-center text-muted">Pilih data dan klik tombol detail untuk melihat proses.</td></tr>');
   $('#detailModalLabel').text('Detail Proses');
   // Accessibility: add aria-hidden and inert when hiding modal
   $('#detailModal').attr('aria-hidden', 'true').attr('inert', '');
