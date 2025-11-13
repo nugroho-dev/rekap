@@ -120,13 +120,12 @@
                           <thead class="table-dark text-center align-middle sticky-top custom-header" style="position: sticky; top: 0; z-index: 2;">
                             <tr>
                               <th rowspan="2" style="width:48px">No.</th>
-                              <th rowspan="2">Jenis Proses ID</th>
                               <th rowspan="2">Nama Proses</th>
                               <th rowspan="2">Mulai</th>
                               <th rowspan="2">Selesai</th>
                               <th rowspan="2">Status</th>
                               <th colspan="3">Durasi</th>
-                              <th colspan="5">Hari Kerja</th>
+                              <th colspan="4">Hari Kerja</th>
                             </tr>
                             <tr>
                               <th class="text-end">Hari</th>
@@ -136,12 +135,11 @@
                               <th class="text-end">SLA DPMPTSP</th>
                               <th class="text-end">SLA Dinas Teknis</th>
                               <th class="text-end">SLA (Gabungan)</th>
-                              <th class="text-end">Non-SLA</th>
                             </tr>
                           </thead>
                           <tbody>
                             <tr class="loading-row">
-                              <td colspan="14" class="text-center text-muted">
+                              <td colspan="12" class="text-center text-muted">
                                 <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                                 Memuat data...
                               </td>
@@ -183,20 +181,18 @@
                           font-size: 1rem;
                         }
                         /* Keep critical columns from wrapping */
+                        #detailModalTable td:nth-child(3),
                         #detailModalTable td:nth-child(4),
-                        #detailModalTable td:nth-child(5),
+                        #detailModalTable td:nth-child(6),
                         #detailModalTable td:nth-child(7),
                         #detailModalTable td:nth-child(8),
                         #detailModalTable td:nth-child(9),
                         #detailModalTable td:nth-child(10),
                         #detailModalTable td:nth-child(11),
-                        #detailModalTable td:nth-child(12),
-                        #detailModalTable td:nth-child(13),
-                        #detailModalTable td:nth-child(14) {
+                        #detailModalTable td:nth-child(12) {
                           white-space: nowrap;
                         }
-                        #detailModalTable td:nth-child(1),
-                        #detailModalTable td:nth-child(2) {
+                        #detailModalTable td:nth-child(1) {
                           white-space: nowrap;
                           width: 1%;
                         }
@@ -582,8 +578,8 @@
     const id = $(this).data('id');
     const tbody = $('#detailModalTable tbody');
     console.log('Detail modal AJAX id:', id); // Debug log
-    // Show loading spinner row (update colspan to 14 after adding SLA Gabungan column)
-    tbody.html('<tr class="loading-row"><td colspan="14" class="text-center text-muted"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Memuat data...</td></tr>');
+    // Show loading spinner row (colspan 12 after removing two columns)
+    tbody.html('<tr class="loading-row"><td colspan="12" class="text-center text-muted"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Memuat data...</td></tr>');
     $('#detailModalLabel').text('Detail Proses');
     // Accessibility: remove aria-hidden and inert when showing modal
     $('#detailModal').removeAttr('aria-hidden').removeAttr('inert');
@@ -684,15 +680,6 @@
             const tooltipTotalHours = (typeof step.total_hours === 'number') ? step.total_hours : 'n/a';
             const tooltipTotalMinutes = (typeof step.total_minutes === 'number') ? step.total_minutes : 'n/a';
             tr.append($('<td class="text-center align-middle">').text(idx+1));
-            const jenisCell = $('<td class="text-center align-middle">').text(step.jenis_proses_id || '-');
-            if (isOtherJenis) {
-              jenisCell.append(' ').append($('<span class="badge badge-sm bg-blue text-blue-fg" title="Bukan jenis proses 2/7/13/18/33/108/115/185/192/212/226/234/293/420">sla dpmptsp</span>'));
-            } else if (isNonSlaSpecific) {
-              jenisCell.append(' ').append($('<span class="badge badge-sm bg-secondary text-white" title="Non-SLA: jenis proses 2/13/18/33/115">non-sla</span>'));
-            } else if (isDinasTeknis) {
-              jenisCell.append(' ').append($('<span class="badge badge-sm bg-orange text-orange-fg" title="SLA Dinas Teknis: jenis proses 7/108/185/192/212/226/234/293/420">sla dinas teknis</span>'));
-            }
-            tr.append(jenisCell);
             const namaCell = $('<td class="align-middle">').text(step.nama_proses || '-');
             if (isOtherJenis) {
               namaCell.append(' ').append($('<span class="badge badge-sm bg-blue text-blue-fg" title="Bukan jenis proses 2/7/13/18/33/108/115/185/192/212/226/234/293/420">sla dpmptsp</span>'));
@@ -755,12 +742,6 @@
                 ((isOtherJenis || isDinasTeknis) && typeof step.jumlah_hari_kerja === 'number') ? step.jumlah_hari_kerja : '-'
               )
             );
-            // Kolom Hari Kerja (Non-SLA)
-            tr.append(
-              $('<td class="text-end align-middle">').html(
-                (!isOtherJenis && typeof step.jumlah_hari_kerja === 'number') ? step.jumlah_hari_kerja : '-'
-              )
-            );
             tbody.append(tr);
           });
           // Inisialisasi tooltip Bootstrap (jika tersedia)
@@ -771,12 +752,11 @@
           }
           // Summary row: totals in one line for readability
           const summaryTr = $('<tr class="table-info fw-bold">');
-          summaryTr.append($('<td colspan="9" class="text-end">').text('Total'));
+          summaryTr.append($('<td colspan="8" class="text-end">').text('Total'));
           summaryTr.append($('<td class="text-end">').text(totalHariKerja)); // Total
           summaryTr.append($('<td class="text-end">').text(totalHariKerjaMarked)); // SLA DPMPTSP
           summaryTr.append($('<td class="text-end">').text(totalHariKerjaDinasTeknis)); // SLA Dinas Teknis
           summaryTr.append($('<td class="text-end">').text(totalHariKerjaSlaGabungan)); // SLA Gabungan
-          summaryTr.append($('<td class="text-end">').text(totalHariKerjaNonSla)); // Non-SLA
           tbody.append(summaryTr);
           // Optional: Total Non-SLA — jika ingin menampilkan total kolom Non-SLA
           // const totalUnmarkedTr = $('<tr class="table-light fw-bold">');
@@ -787,12 +767,12 @@
           // tbody.append(totalUnmarkedTr);
           $('#detailModalLabel').text('Detail Proses: ' + (res.record.no_permohonan || res.record.id));
         } else {
-          tbody.html('<tr><td colspan="14" class="text-center text-danger">Data proses tidak ditemukan.</td></tr>');
+          tbody.html('<tr><td colspan="12" class="text-center text-danger">Data proses tidak ditemukan.</td></tr>');
         }
       },
       error: function(xhr, status, error) {
         console.error('AJAX error:', error);
-        tbody.html('<tr><td colspan="14" class="text-center text-danger">Gagal mengambil detail proses.</td></tr>');
+        tbody.html('<tr><td colspan="12" class="text-center text-danger">Gagal mengambil detail proses.</td></tr>');
       }
     });
   });
@@ -800,7 +780,7 @@
   // Reset modal saat ditutup
   $('#detailModal').on('hidden.bs.modal', function () {
   const tbody = $('#detailModalTable tbody');
-  tbody.html('<tr><td colspan="14" class="text-center text-muted">Pilih data dan klik tombol detail untuk melihat proses.</td></tr>');
+  tbody.html('<tr><td colspan="12" class="text-center text-muted">Pilih data dan klik tombol detail untuk melihat proses.</td></tr>');
   $('#detailModalLabel').text('Detail Proses');
   // Accessibility: add aria-hidden and inert when hiding modal
   $('#detailModal').attr('aria-hidden', 'true').attr('inert', '');
