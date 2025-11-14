@@ -364,8 +364,13 @@
                           <td class="text-center">
                             <div class="btn-group">
                               <button type="button" class="btn btn-sm btn-outline-primary detailBtn" data-id="{{ $item->id_proses_permohonan ?? $item->id ?? $item->no_permohonan }}">Detail</button>
-                              <a href="{{ url('/sicantik?search='.$item->no_permohonan) }}" class="btn btn-sm btn-outline-secondary">Lihat</a>
+                              <button type="button"
+                                      class="btn btn-sm btn-outline-secondary viewPdfBtn"
+                                      data-id="{{ $item->id_proses_permohonan ?? $item->id ?? $item->no_permohonan }}"
+                                      data-file="{{ $item->file_signed_report ?? '' }}"
+                                      title="Lihat Dokumen TTE">Lihat</button>
                             </div>
+                           
                           </td>
                         </tr>
                         @endforeach
@@ -805,5 +810,95 @@
             });
         });
     });
+</script>
+<!-- Modal PDF Signed Document -->
+<div class="modal fade" id="pdfSignedModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Dokumen TTE (Signed Report)</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0" style="min-height:80vh;background:#f8f9fa;">
+        <div id="pdfSignedPlaceholder" class="w-100 h-100 d-flex align-items-center justify-content-center text-muted">
+          Memuat dokumen...
+        </div>
+        <iframe id="pdfSignedViewer" src="" style="display:none;width:100%;height:80vh;border:0;" title="PDF Signed"></iframe>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+        <a id="openPdfInNewTab" href="#" target="_blank" class="btn btn-primary" style="display:none;">Buka di Tab Baru</a>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  // Handler untuk tombol Lihat (PDF signed)
+  $(document).on('click', '.viewPdfBtn', function(){
+    const file = $(this).data('file');
+    const id = $(this).data('id');
+    const baseUrl = 'https://sicantik.go.id/api/view/webroot/files/signed/';
+    const modal = $('#pdfSignedModal');
+    const iframe = $('#pdfSignedViewer');
+    const placeholder = $('#pdfSignedPlaceholder');
+    const openNew = $('#openPdfInNewTab');
+    placeholder.show().text('Memuat dokumen...');
+    iframe.hide();
+    openNew.hide();
+    
+    // Helper to open modal with a given file path
+    function openPdfWithFile(signedFile){
+      if(!signedFile){
+        placeholder.text('File signed report tidak tersedia.');
+        modal.modal('show');
+        return;
+      }
+      const fullUrl = baseUrl + encodeURIComponent(signedFile);
+      // Pastikan event handler load tidak dobel
+      iframe.off('load').on('load', function(){
+        placeholder.hide();
+        iframe.show();
+        openNew.show();
+      });
+      iframe.attr('src', fullUrl);
+      openNew.attr('href', fullUrl);
+      modal.modal('show');
+    }
+
+    if(file){
+      // Jika sudah tersedia di row, langsung buka
+      openPdfWithFile(file);
+      return;
+    }
+
+    // Jika tidak tersedia, ambil dari langkah jenis_proses_id 40 via AJAX detail
+    if(!id){
+      placeholder.text('File signed report tidak tersedia.');
+      modal.modal('show');
+      return;
+    }
+
+    $.ajax({
+      url: `{{ url('/sicantik') }}/${id}`,
+      type: 'GET',
+      success: function(res){
+        let foundFile = '';
+        if(res && Array.isArray(res.steps)){
+          for(const step of res.steps){
+            const jp = Number(step.jenis_proses_id);
+            if(jp === 40 && step.file_signed_report){
+              foundFile = step.file_signed_report;
+              break;
+            }
+          }
+        }
+        openPdfWithFile(foundFile);
+      },
+      error: function(){
+        placeholder.text('Gagal mengambil data dokumen TTE.');
+        modal.modal('show');
+      }
+    });
+  });
 </script>
 @endsection

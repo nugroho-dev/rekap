@@ -68,7 +68,8 @@ class DashboardVprosesSicantikController extends Controller
 		$items = $query->selectRaw("proses.*,
 			(SELECT MIN(p2.end_date) FROM proses p2 WHERE p2.permohonan_izin_id = proses.permohonan_izin_id AND p2.jenis_proses_id = 2) AS start_date_awal,
 			(SELECT MAX(p3.end_date) FROM proses p3 WHERE p3.permohonan_izin_id = proses.permohonan_izin_id AND p3.jenis_proses_id = 40) AS end_date_akhir,
-			(SELECT p4.status FROM proses p4 WHERE p4.permohonan_izin_id = proses.permohonan_izin_id AND p4.jenis_proses_id = 40 ORDER BY p4.id ASC LIMIT 1) AS status_jenis_40
+			(SELECT p4.status FROM proses p4 WHERE p4.permohonan_izin_id = proses.permohonan_izin_id AND p4.jenis_proses_id = 40 ORDER BY p4.id ASC LIMIT 1) AS status_jenis_40,
+			(SELECT p5.file_signed_report FROM proses p5 WHERE p5.permohonan_izin_id = proses.permohonan_izin_id AND p5.jenis_proses_id = 40 AND p5.file_signed_report IS NOT NULL ORDER BY p5.id DESC LIMIT 1) AS file_signed_report_40
 		")
 		->orderByRaw("COALESCE(tgl_pengajuan, tgl_pengajuan_time, created_at) DESC")
 		->orderBy('no_permohonan', 'ASC')
@@ -171,6 +172,10 @@ class DashboardVprosesSicantikController extends Controller
 				$item->business_days_decimal = null;
 				$item->total_hours = null;
 				$item->total_days = null;
+			}
+			// Jika baris index tidak memiliki file_signed_report sendiri (biasanya status=Proses), gunakan hasil subquery dari langkah 40
+			if (empty($item->file_signed_report) && !empty($item->file_signed_report_40)) {
+				$item->file_signed_report = $item->file_signed_report_40;
 			}
 			// Tambahkan subtotal SLA untuk tabel index: DPMPTSP, Dinas Teknis, Gabungan
 			try {
@@ -336,7 +341,7 @@ public function show(Request $request, $id)
 				  ->orWhereRaw("LOWER(status) LIKE '%nunggu%'");
 			})
 			->orderBy('id_proses_permohonan', 'ASC')
-			->get(['id', 'id_proses_permohonan', 'no_permohonan', 'jenis_proses_id', 'nama_proses', 'start_date', 'end_date', 'status']);
+			->get(['id', 'id_proses_permohonan', 'no_permohonan', 'jenis_proses_id', 'nama_proses', 'start_date', 'end_date', 'status', 'file_signed_report']);
 
 		\Illuminate\Support\Facades\Log::info('Detail show steps', ['no_permohonan' => $record->no_permohonan, 'steps_count' => $steps->count(), 'steps' => $steps]);
 
