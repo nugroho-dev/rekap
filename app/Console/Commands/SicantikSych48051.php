@@ -8,21 +8,21 @@ use App\Models\Proses;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
-class SicantikSych extends Command
+class SicantikSych48051 extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'sych:sicantik {--date1=} {--date2=}';
+    protected $signature = 'sych:sicantik-48051 {--date1=} {--date2=}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Sikronisasi Dari API SiCantik';
+    protected $description = 'Sinkronisasi dari API SiCantik (template 48051)';
 
     /**
      * Execute the console command.
@@ -31,18 +31,18 @@ class SicantikSych extends Command
     {
         $date2 = $this->option('date2') ?: Carbon::now()->format('Y-m-d');
         $date1 = $this->option('date1') ?: Carbon::now()->subMonth()->format('Y-m-d');
-        $url = 'https://sicantik.go.id/api/TemplateData/keluaran/42611.json';
+        $url = 'https://sicantik.go.id/api/TemplateData/keluaran/48051.json';
 
-        $this->info("Fetching SiCantik 42611 from {$date1} to {$date2}...");
+        $this->info("Fetching SiCantik 48051 from {$date1} to {$date2}...");
 
         try {
-            $response = Http::retry(10, 1000)->timeout(60)->get($url, [
+            $response = Http::retry(10, 1000)->get($url, [
                 'date1' => $date1,
-                'date2' => $date2
+                'date2' => $date2,
             ]);
         } catch (\Throwable $e) {
-            Log::error('SiCantik 42611 request failed', ['error' => $e->getMessage()]);
-            $this->error('Gagal menghubungi API SiCantik 42611.');
+            Log::error('SiCantik 48051 request failed', ['error' => $e->getMessage()]);
+            $this->error('Gagal menghubungi API SiCantik 48051.');
             return self::FAILURE;
         }
 
@@ -66,12 +66,12 @@ class SicantikSych extends Command
             foreach ($chunk as $val) {
                 if (!is_array($val)) { $skipped++; continue; }
                 $payload = array_intersect_key($val, array_flip([
-                    'id_proses_permohonan','alamat', 'data_status', 'default_active', 'del', 'dibuat_oleh', 'diproses_oleh', 'diubah_oleh', 
-                    'email', 'end_date', 'file_signed_report', 'instansi_id', 'jenis_izin', 'jenis_izin_id', 
-                    'jenis_kelamin', 'jenis_permohonan', 'jenis_proses_id', 'lokasi_izin', 'nama', 'nama_proses', 
-                    'no_hp', 'no_izin', 'no_permohonan', 'no_rekomendasi', 'no_tlp', 'permohonan_izin_id', 
-                    'start_date', 'status', 'tgl_dibuat', 'tgl_diubah', 'tgl_lahir', 'tgl_penetapan', 'tgl_pengajuan', 
-                    'tgl_pengajuan_time', 'tgl_rekomendasi', 'tgl_selesai', 'tgl_selesai_time', 'tgl_signed_report'
+                    'id_proses_permohonan','alamat', 'data_status', 'default_active', 'del', 'dibuat_oleh', 'diproses_oleh', 'diubah_oleh',
+                    'email', 'end_date', 'file_signed_report', 'instansi_id', 'jenis_izin', 'jenis_izin_id',
+                    'jenis_kelamin', 'jenis_permohonan', 'jenis_proses_id', 'lokasi_izin', 'nama', 'nama_proses',
+                    'no_hp', 'no_izin', 'no_permohonan', 'no_rekomendasi', 'no_tlp', 'permohonan_izin_id',
+                    'start_date', 'status', 'tgl_dibuat', 'tgl_diubah', 'tgl_lahir', 'tgl_penetapan', 'tgl_pengajuan',
+                    'tgl_pengajuan_time', 'tgl_rekomendasi', 'tgl_selesai', 'tgl_selesai_time', 'tgl_signed_report',
                 ]));
 
                 if (empty($payload['id_proses_permohonan'])) { $skipped++; continue; }
@@ -84,7 +84,7 @@ class SicantikSych extends Command
                     $inserted++;
                 } catch (\Throwable $e) {
                     $skipped++;
-                    Log::warning('Gagal upsert Proses 42611', ['error' => $e->getMessage(), 'payload' => $payload]);
+                    Log::warning('Gagal upsert Proses 48051', ['error' => $e->getMessage(), 'payload' => $payload]);
                 }
             }
         }
