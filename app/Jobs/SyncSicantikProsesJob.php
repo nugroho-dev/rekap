@@ -42,7 +42,10 @@ class SyncSicantikProsesJob implements ShouldQueue
         $endpoint = '/api/TemplateData/keluaran/42611.json';
 
         try {
-            $response = Http::timeout(20)->retry(3, 500)->get($base . $endpoint, [
+            $response = Http::withHeaders(['Accept' => 'application/json'])
+                ->timeout(60)
+                ->retry(3, 500)
+                ->get($base . $endpoint, [
                 'date1' => $this->dateStart,
                 'date2' => $this->dateEnd,
             ]);
@@ -166,7 +169,25 @@ class SyncSicantikProsesJob implements ShouldQueue
                     if (!empty($uRow['id_proses_permohonan'])) {
                         $lookup = ['id_proses_permohonan' => $uRow['id_proses_permohonan']];
                     } elseif (!empty($uRow['no_permohonan'])) {
-                        $lookup = ['no_permohonan' => $uRow['no_permohonan']];
+                        // Build a safer composite lookup to avoid overwriting unrelated steps
+                        $composite = ['no_permohonan' => $uRow['no_permohonan']];
+                        if (!empty($uRow['jenis_proses_id'])) {
+                            $composite['jenis_proses_id'] = $uRow['jenis_proses_id'];
+                        }
+                        if (!empty($uRow['start_date'])) {
+                            $composite['start_date'] = $uRow['start_date'];
+                        }
+                        // Require at least 2 identifying fields (no_permohonan + one more)
+                        if (count($composite) >= 2) {
+                            $lookup = $composite;
+                        } else {
+                            Log::warning('SyncSicantikProsesJob: insufficient identifiers for upsert, skipping row', [
+                                'no_permohonan' => $uRow['no_permohonan'] ?? null,
+                                'jenis_proses_id' => $uRow['jenis_proses_id'] ?? null,
+                                'start_date' => $uRow['start_date'] ?? null,
+                            ]);
+                            continue;
+                        }
                     } else {
                         // shouldn't happen due to earlier guard, but skip defensively
                         continue;

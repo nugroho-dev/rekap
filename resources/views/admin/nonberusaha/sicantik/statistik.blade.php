@@ -144,24 +144,50 @@
                   </div>
                   
                   <div class="card-table table-responsive">
+                    <style>
+                      #rekap-bulan-table thead th { position: sticky; top:0; background:#e7f1ff; z-index:2; }
+                      #rekap-bulan-table td, #rekap-bulan-table th { white-space:nowrap; font-size:13px; }
+                      .sla-badge { font-size:11px; margin:0 2px; }
+                      .cell-stack { display:flex; flex-direction:column; align-items:center; gap:2px; }
+                      .small-muted { font-size:11px; color:#6c757d; }
+                    </style>
+                    <div class="mb-2 small-muted">
+                      <strong>Legends:</strong>
+                      <span class="badge bg-primary sla-badge" title="Total hari kerja semua langkah">HK Total</span>
+                      <span class="badge bg-success sla-badge" title="Subtotal hari kerja SLA DPMPTSP">DPMPTSP</span>
+                      <span class="badge bg-warning text-dark sla-badge" title="Subtotal hari kerja SLA Dinas Teknis">Dinas</span>
+                      <span class="badge bg-info sla-badge" title="Gabungan DPMPTSP + Dinas Teknis">Gabungan</span>
+                      
+                      <span class="badge bg-dark sla-badge" title="Subtotal Non-SLA (dikecualikan dari SLA)">Non-SLA</span>
+                      <span class="badge bg-danger sla-badge" title="Selisih = HK Total - (DPMPTSP + Dinas + Non-SLA)">Δ HK</span>
+                    </div>
                     <table class="table table-bordered table-striped mb-4" id="rekap-bulan-table">
                       <thead class="table-primary">
                         <tr>
                           <th>Bulan</th>
-                          <th class="text-center">Jumlah Izin Terbit</th>
-                          <th class="text-center">Jumlah Lama Proses</th>
-                          <th class="text-center">Jumlah Hari Kerja</th>
-                          <th class="text-center">Rata-rata Hari Kerja</th>
+                          <th class="text-center">Izin Terbit</th>
+                          <th class="text-center">Lama Proses (Σ)</th>
+                          <th class="text-center">HK Total</th>
+                          <th class="text-center">SLA DPMPTSP</th>
+                          <th class="text-center">SLA Dinas</th>
+                          <th class="text-center">SLA Gabungan</th>
+                          <th class="text-center">Non-SLA</th>
+                          <th class="text-center">Δ HK</th>
+                          <th class="text-center">Aksi</th>
                         </tr>
                       </thead>
                       <tbody>
                         @foreach (collect($rekapPerBulan)->sortBy('bulan') as $rekap)
                         <tr>
                           <td>{{ \Carbon\Carbon::createFromFormat('Y-m', $rekap['bulan'])->translatedFormat('F Y') }}</td>
-                          <td class="text-center">{{ $rekap['jumlah_izin_terbit'] }}</td>
-                          <td class="text-center">{{ $rekap['jumlah_lama_proses'] }}</td>
-                          <td class="text-center">{{ $rekap['jumlah_hari_kerja'] }}</td>
-                          <td class="text-center">{{ number_format($rekap['rata_rata_hari_kerja'], 2, ',', '.') }}</td>
+                          <td class="text-center">{{ number_format($rekap['jumlah_izin_terbit'],0,',','.') }}</td>
+                          <td class="text-center">{{ number_format($rekap['jumlah_lama_proses'],0,',','.') }}</td>
+                          <td class="text-center">{{ number_format($rekap['jumlah_hari_kerja'],0,',','.') }}<br><span class="small-muted">Avg {{ number_format($rekap['rata_rata_hari_kerja'],2,',','.') }}</span></td>
+                          <td class="text-center">{{ number_format($rekap['jumlah_sla_dpmptsp'] ?? 0,0,',','.') }}<br><span class="small-muted">Avg {{ number_format($rekap['rata_rata_sla_dpmptsp'] ?? 0,2,',','.') }}</span></td>
+                          <td class="text-center">{{ number_format($rekap['jumlah_sla_dinas_teknis'] ?? 0,0,',','.') }}<br><span class="small-muted">Avg {{ number_format($rekap['rata_rata_sla_dinas_teknis'] ?? 0,2,',','.') }}</span></td>
+                          <td class="text-center">{{ number_format($rekap['jumlah_sla_gabungan'] ?? 0,0,',','.') }}<br><span class="small-muted">Avg {{ number_format($rekap['rata_rata_sla_gabungan'] ?? 0,2,',','.') }}</span></td>
+                          <td class="text-center">{{ number_format($rekap['jumlah_sla_non_sla'] ?? 0,0,',','.') }}</td>
+                          <td class="text-center {{ (($rekap['selisih_hk'] ?? 0) != 0) ? 'text-danger' : '' }}">{{ number_format($rekap['selisih_hk'] ?? 0,0,',','.') }}</td>
                           <td class="text-center">
                             <button type="button" class="btn btn-sm btn-outline-primary btn-rincian-bulan" data-bulan="{{ $rekap['bulan'] }}" data-label="{{ \Carbon\Carbon::createFromFormat('Y-m', $rekap['bulan'])->translatedFormat('F Y') }}" data-bs-toggle="modal" data-bs-target="#modal-detail-bulan">Rincian</button>
                           </td>
@@ -188,6 +214,12 @@
                                     <th>Jenis Izin</th>
                                     <th class="text-center">Lama Proses (hari)</th>
                                     <th class="text-center">Jumlah Hari Kerja</th>
+                                    <th class="text-center">SLA DPMPTSP</th>
+                                    <th class="text-center">SLA Dinas</th>
+                                    <th class="text-center">SLA Gabungan</th>
+                                    <th class="text-center">Non-SLA</th>
+                                    <th class="text-center">Δ HK</th>
+                                    <th class="text-center">Detail</th>
                                   </tr>
                                 </thead>
                                 <tbody id="detail-table-body">
@@ -199,50 +231,95 @@
                       </div>
                     </div>
                     <script>
-                      const items = @json($items);
+                      function toInt(v) { const x = Number(v); return Number.isFinite(x) ? x : 0; }
+                      function fmtInt(v) { return toInt(v).toLocaleString('id-ID'); }
+                      function fmtHari(v) { return toInt(v).toLocaleString('id-ID',{minimumFractionDigits:2}); }
                       const detailTableBody = document.getElementById('detail-table-body');
+                      const modalDetailTitle = document.getElementById('modal-detail-title');
                       let modalDetail;
+                      async function fetchMonthItems(year, month) {
+                        const url = `/sicantik/statistik/detail?year=${year}&month=${month}`;
+                        const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                        if (!res.ok) throw new Error('Gagal memuat data');
+                        const data = await res.json();
+                        return Array.isArray(data.items) ? data.items : [];
+                      }
                       document.addEventListener('DOMContentLoaded', function() {
                         modalDetail = new bootstrap.Modal(document.getElementById('modal-detail-bulan'));
                       });
                       document.querySelectorAll('.btn-rincian-bulan').forEach(btn => {
-                        btn.addEventListener('click', function(e) {
+                        btn.addEventListener('click', async function(e) {
                           const bulan = this.getAttribute('data-bulan');
                           const bulanLabel = this.getAttribute('data-label');
-                          // Filter items for selected month
-                          const filtered = items.filter(item => {
-                            if (!item.end_date) return false;
-                            const d = new Date(item.end_date);
-                            const ym = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
-                            return ym === bulan;
-                          });
+                          const [yStr, mStr] = bulan.split('-');
+                          const year = parseInt(yStr, 10);
+                          const month = parseInt(mStr, 10);
                           let html = '';
-                          filtered.forEach((item, idx) => {
-                            html += `<tr>
-                              <td>${idx+1}</td>
-                              <td>${item.no_permohonan ?? '-'}</td>
-                              <td>${item.nama ?? '-'}</td>
-                              <td>${item.jenis_izin ?? '-'}</td>
-                              <td class="text-center">${item.lama_proses ?? '-'}</td>
-                              <td class="text-center">${item.jumlah_hari_kerja ?? '-'}</td>
-                            </tr>`;
-                          });
-                          if (filtered.length) {
-                            const totalHariKerja = filtered.reduce((a,b)=>a+(b.jumlah_hari_kerja||0),0);
-                            const rataRataHariKerja = totalHariKerja / filtered.length;
-                            html += `<tr class="table-warning">
-                              <td colspan="4"><strong>Total</strong></td>
-                              <td class="text-center"><strong>${filtered.length} Izin</strong></td>
-                              <td class="text-center"><strong>${totalHariKerja.toLocaleString('id-ID',{minimumFractionDigits:2})} hari</strong></td>
-                            </tr>`;
-                            html += `<tr class="table-info">
-                              <td colspan="5"><strong>Rata-rata Hari Kerja</strong></td>
-                              <td class="text-center"><strong>${rataRataHariKerja.toLocaleString('id-ID',{minimumFractionDigits:2})} hari</strong></td>
-                            </tr>`;
+                          try {
+                            detailTableBody.innerHTML = `<tr><td colspan="12" class="text-center">Memuat data...</td></tr>`;
+                            modalDetailTitle.innerText = `Rincian Izin Terbit ${bulanLabel}`;
+                            modalDetail.show();
+                            const filtered = await fetchMonthItems(year, month);
+                            detailTableBody.innerHTML = '';
+                            filtered.forEach((item, idx) => {
+                              const slaDpm = item.jumlah_hari_kerja_sla_dpmptsp ?? 0;
+                              const slaDinas = item.jumlah_hari_kerja_sla_dinas_teknis ?? 0;
+                              const slaGab = item.jumlah_hari_kerja_sla_gabungan ?? 0;
+                              const slaNon = item.jumlah_hari_kerja_sla_non_sla ?? 0;
+                              const selisih = (item.selisih_hk ?? ( (item.jumlah_hari_kerja||0) - (slaDpm+slaDinas+slaNon) ));
+                              const detailUrl = `/sicantik/proses/${encodeURIComponent(item.no_permohonan ?? '')}`;
+                              html += `<tr>
+                                <td>${idx+1}</td>
+                                <td>${item.no_permohonan ?? '-'}</td>
+                                <td>${item.nama ?? '-'}</td>
+                                <td>${item.jenis_izin ?? '-'}</td>
+                                <td class="text-center">${item.lama_proses ?? '-'}</td>
+                                <td class="text-center">${item.jumlah_hari_kerja ?? '-'}</td>
+                                <td class="text-center">${fmtInt(slaDpm)}</td>
+                                <td class="text-center">${fmtInt(slaDinas)}</td>
+                                <td class="text-center">${fmtInt(slaGab)}</td>
+                                <td class="text-center">${fmtInt(slaNon)}</td>
+                                <td class="text-center ${selisih !== 0 ? 'text-danger' : ''}">${fmtInt(selisih)}</td>
+                                <td class="text-center"><a href="${detailUrl}" class="btn btn-xs btn-outline-secondary" target="_blank">Detail</a></td>
+                              </tr>`;
+                            });
+                            if (filtered.length) {
+                              const totalHariKerja = filtered.reduce((a,b)=>a+(toInt(b.jumlah_hari_kerja)||0),0);
+                              const totalSlaDpm = filtered.reduce((a,b)=> a + toInt(b.jumlah_hari_kerja_sla_dpmptsp), 0);
+                              const totalSlaDinas = filtered.reduce((a,b)=> a + toInt(b.jumlah_hari_kerja_sla_dinas_teknis), 0);
+                              const totalSlaGab = filtered.reduce((a,b)=> a + toInt(b.jumlah_hari_kerja_sla_gabungan), 0);
+                              const totalSlaNon = filtered.reduce((a,b)=> a + toInt(b.jumlah_hari_kerja_sla_non_sla), 0);
+                              const totalSelisih = filtered.reduce((a,b)=> a + ((toInt(b.selisih_hk)) || ((toInt(b.jumlah_hari_kerja)||0) - (toInt(b.jumlah_hari_kerja_sla_dpmptsp)+toInt(b.jumlah_hari_kerja_sla_dinas_teknis)+toInt(b.jumlah_hari_kerja_sla_non_sla)))) ,0);
+                              const rataRataHariKerja = totalHariKerja / filtered.length;
+                              const rataSlaDpm = totalSlaDpm / filtered.length;
+                              const rataSlaDinas = totalSlaDinas / filtered.length;
+                              const rataSlaGab = totalSlaGab / filtered.length;
+                              html += `<tr class="table-warning">
+                                <td colspan="4"><strong>Total</strong></td>
+                                <td class="text-center"><strong>${filtered.length} Izin</strong></td>
+                                <td class="text-center"><strong>${fmtHari(totalHariKerja)} hari</strong></td>
+                                <td class="text-center"><strong>${fmtInt(totalSlaDpm)}</strong></td>
+                                <td class="text-center"><strong>${fmtInt(totalSlaDinas)}</strong></td>
+                                <td class="text-center"><strong>${fmtInt(totalSlaGab)}</strong></td>
+                                <td class="text-center"><strong>${fmtInt(totalSlaNon)}</strong></td>
+                                <td class="text-center ${totalSelisih !== 0 ? 'text-danger' : ''}"><strong>${fmtInt(totalSelisih)}</strong></td>
+                                <td></td>
+                              </tr>`;
+                              html += `<tr class="table-info">
+                                <td colspan="5"><strong>Rata-rata</strong></td>
+                                <td class="text-center"><strong>${fmtHari(rataRataHariKerja)} hari</strong></td>
+                                <td class="text-center"><strong>${fmtHari(rataSlaDpm)} hari</strong></td>
+                                <td class="text-center"><strong>${fmtHari(rataSlaDinas)} hari</strong></td>
+                                <td class="text-center"><strong>${fmtHari(rataSlaGab)} hari</strong></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                              </tr>`;
+                            }
+                            detailTableBody.innerHTML = html || `<tr><td colspan="12" class="text-center">Tidak ada data</td></tr>`;
+                          } catch(err) {
+                            detailTableBody.innerHTML = `<tr><td colspan="12" class="text-danger text-center">Gagal memuat data</td></tr>`;
                           }
-                          detailTableBody.innerHTML = html;
-                          modalDetailTitle.innerText = `Rincian Izin Terbit ${bulanLabel}`;
-                          modalDetail.show();
                         });
                       });
                     </script>

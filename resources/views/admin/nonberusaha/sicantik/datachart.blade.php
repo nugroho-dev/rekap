@@ -1,11 +1,16 @@
 	@php
 		use Carbon\Carbon;
-
+		// Safeguard: ensure $items iterable to avoid undefined variable errors when view required.
+		$items = (isset($items) && is_iterable($items)) ? $items : [];
 		$namaBulan = [];
 		$jumlahData = [];
 		foreach ($items as $data) {
-			$namaBulan[] = Carbon::createFromDate(null, $data['bulan'], 1)->translatedFormat('F');
-			$jumlahData[] = $data['jumlah_data'];
+			$bulanRaw = is_array($data) ? ($data['bulan'] ?? null) : ($data->bulan ?? null);
+			$jumlahRaw = is_array($data) ? ($data['jumlah_data'] ?? null) : ($data->jumlah_data ?? null);
+			if ($bulanRaw !== null) {
+				try { $namaBulan[] = Carbon::createFromDate(null, (int)$bulanRaw, 1)->translatedFormat('F'); } catch (\Throwable $e) { /* skip invalid month */ }
+			}
+			$jumlahData[] = (int)($jumlahRaw ?? 0);
 		}
 	@endphp
 
