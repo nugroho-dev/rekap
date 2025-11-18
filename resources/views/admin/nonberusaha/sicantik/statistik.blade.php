@@ -238,7 +238,8 @@
                       const modalDetailTitle = document.getElementById('modal-detail-title');
                       let modalDetail;
                       async function fetchMonthItems(year, month) {
-                        const url = `/sicantik/statistik/detail?year=${year}&month=${month}`;
+                        const baseUrl = `{{ url('/sicantik/statistik/detail') }}`;
+                        const url = `${baseUrl}?year=${encodeURIComponent(year)}&month=${encodeURIComponent(month)}`;
                         const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
                         if (!res.ok) throw new Error('Gagal memuat data');
                         const data = await res.json();
@@ -267,7 +268,7 @@
                               const slaGab = item.jumlah_hari_kerja_sla_gabungan ?? 0;
                               const slaNon = item.jumlah_hari_kerja_sla_non_sla ?? 0;
                               const selisih = (item.selisih_hk ?? ( (item.jumlah_hari_kerja||0) - (slaDpm+slaDinas+slaNon) ));
-                              const detailUrl = `/sicantik/proses/${encodeURIComponent(item.no_permohonan ?? '')}`;
+                              const detailUrl = `{{ url('/sicantik/proses') }}/${encodeURIComponent(item.no_permohonan ?? '')}`;
                               html += `<tr>
                                 <td>${idx+1}</td>
                                 <td>${item.no_permohonan ?? '-'}</td>
