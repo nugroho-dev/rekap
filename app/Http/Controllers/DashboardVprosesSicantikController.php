@@ -530,7 +530,8 @@ public function show(Request $request, $id)
 
 		// Bump versi cache karena refactor performa
 		$cacheKey = 'sicantik_stat_v4_'.$year.'_'.($month ?: 'all');
-		$cached = Cache::remember($cacheKey, now()->addHours(6), function () use ($year, $month) {
+		// Default TTL dipendekkan menjadi 2 jam untuk keseimbangan antara fresh data dan performa.
+		$cached = Cache::remember($cacheKey, now()->addHours(2), function () use ($year, $month) {
 			$baseQuery = Proses::query()
 				->where('jenis_proses_id', 40)
 				->whereRaw("LOWER(TRIM(status)) = 'selesai'")
@@ -801,7 +802,8 @@ public function show(Request $request, $id)
             return response()->json(['error' => 'Parameter tidak valid'], 422);
         }
 		$cacheKey = 'sicantik_stat_detail_v2_'.$year.'_'.str_pad($month,2,'0',STR_PAD_LEFT);
-        $items = Cache::remember($cacheKey, now()->addHours(6), function () use ($year, $month) {
+		// Detail per-bulan juga pakai TTL 2 jam.
+		$items = Cache::remember($cacheKey, now()->addHours(2), function () use ($year, $month) {
             $list = Proses::query()
                 ->where('jenis_proses_id', 40)
                 ->whereRaw("LOWER(TRIM(status)) = 'selesai'")
@@ -907,6 +909,30 @@ public function show(Request $request, $id)
         });
         return response()->json(['items' => $items]);
     }
+
+	/**
+	 * Clear cache statistik (summary + detail) untuk tahun tertentu, opsional bulan.
+	 * Jika bulan tidak diberikan akan membersihkan summary dan semua detail bulan tahun tsb.
+	 */
+	public function clearStatistikCache(Request $request)
+	{
+		$year = (int) $request->input('year', Carbon::now()->year);
+		$month = $request->input('month');
+		$keys = [];
+		if ($month) {
+			$keys[] = 'sicantik_stat_v4_' . $year . '_' . $month;
+			$keys[] = 'sicantik_stat_detail_v2_' . $year . '_' . str_pad($month, 2, '0', STR_PAD_LEFT);
+		} else {
+			// summary all
+			$keys[] = 'sicantik_stat_v4_' . $year . '_all';
+			// all month details
+			for ($m = 1; $m <= 12; $m++) {
+				$keys[] = 'sicantik_stat_detail_v2_' . $year . '_' . str_pad($m, 2, '0', STR_PAD_LEFT);
+			}
+		}
+		foreach ($keys as $k) { Cache::forget($k); }
+		return redirect()->back()->with('success', 'Cache statistik untuk tahun ' . $year . ($month ? (' bulan ' . $month) : '') . ' dibersihkan.');
+	}
 
 	/**
 	 * Tampilkan detail proses per langkah berdasarkan no_permohonan.

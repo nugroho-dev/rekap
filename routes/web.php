@@ -140,6 +140,8 @@ Route::middleware('auth')->group(function () {
     // Statistik routes must be registered before the parameterized detail route
     Route::get('/sicantik/statistik', [DashboardVprosesSicantikController::class, 'statistik']);
     Route::post('/sicantik/statistik', [DashboardVprosesSicantikController::class, 'statistik']);
+    // Manual clear cache statistik (summary + detail)
+    Route::post('/sicantik/statistik/clear-cache', [DashboardVprosesSicantikController::class, 'clearStatistikCache'])->name('sicantik.statistik.clearCache');
     // AJAX month detail for statistik (year & month query params)
     Route::get('/sicantik/statistik/detail', [DashboardVprosesSicantikController::class, 'statistikDetail']);
     // Proses detail by no_permohonan (for SLA breakdown per langkah)
