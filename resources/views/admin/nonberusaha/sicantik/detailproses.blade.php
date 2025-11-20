@@ -117,23 +117,40 @@
           <table class="table table-bordered table-striped mb-0 table-fixed-header" id="detailProsesTable">
             <thead class="table-primary">
               <tr>
-                <th class="nowrap">No</th>
-                <th class="nowrap">Nama Proses</th>
-                <th class="nowrap">Status</th>
-                <th class="nowrap">Start</th>
-                <th class="nowrap">End</th>
-                <th class="text-center nowrap">Hari Kerja</th>
-                <th class="text-center nowrap">Durasi</th>
-                <th class="text-center nowrap">Klasifikasi SLA</th>
+                <th class="nowrap" rowspan="2">No</th>
+                <th class="nowrap" rowspan="2">Jenis Proses ID</th>
+                <th class="nowrap" rowspan="2">Nama Proses</th>
+                <th class="nowrap" rowspan="2">Mulai</th>
+                <th class="nowrap" rowspan="2">Selesai</th>
+                <th class="nowrap" rowspan="2">Status</th>
+                <th class="text-center nowrap" colspan="3">Durasi</th>
+                <th class="text-center nowrap" colspan="4">Hari Kerja</th>
+              </tr>
+              <tr>
+                <th class="text-center nowrap">Hari</th>
+                <th class="text-center nowrap">Jam</th>
+                <th class="text-center nowrap">Menit</th>
+                <th class="text-center nowrap">Total</th>
+                <th class="text-center nowrap">SLA DPMPTSP</th>
+                <th class="text-center nowrap">SLA Dinas Teknis</th>
+                <th class="text-center nowrap">SLA (Gabungan)</th>
               </tr>
             </thead>
             <tbody>
               @forelse($mapped as $i => $r)
                 @php $zero = (is_numeric($r['lama_hari_kerja']) && (int)$r['lama_hari_kerja'] === 0); @endphp
                 <tr class="{{ $zero ? 'row-zero-hari' : '' }}">
+                  @php
+                    $isDpm = ($r['sla_klasifikasi'] === 'DPMPTSP');
+                    $isDinas = ($r['sla_klasifikasi'] === 'Dinas Teknis');
+                    $isGab = $isDpm || $isDinas;
+                    $hj = isset($r['lama_jam']) ? abs((int)$r['lama_jam']) : null;
+                    $mn = isset($r['lama_menit']) ? abs((int)$r['lama_menit']) : null;
+                    $dh = isset($r['durasi_hari']) ? (int)$r['durasi_hari'] : null;
+                  @endphp
                   <td>{{ $i+1 }}</td>
+                  <td>{{ $r['jenis_proses_id'] }}</td>
                   <td>{{ $r['nama_proses'] ?? $r['jenis_proses_id'] }}</td>
-                  <td>{{ $r['status'] }}</td>
                   <td>
                     @if(!empty($r['start_date']))
                       {{ Carbon::parse($r['start_date'])->translatedFormat('d F Y H:i') }}
@@ -148,37 +165,33 @@
                       -
                     @endif
                   </td>
+                  <td class="text-center">{{ $r['status'] }}</td>
+                  <td class="text-center">{{ $dh !== null ? $dh : '-' }}</td>
+                  <td class="text-center">{{ $hj !== null ? $hj : '-' }}</td>
+                  <td class="text-center">{{ $mn !== null ? str_pad($mn,2,'0',STR_PAD_LEFT) : '-' }}</td>
                   <td class="text-center">{{ is_numeric($r['lama_hari_kerja']) ? $r['lama_hari_kerja'] : '-' }}</td>
-                  <td class="text-center">
-                    @php
-                      $hj = isset($r['lama_jam']) ? abs((int)$r['lama_jam']) : null;
-                      $mn = isset($r['lama_menit']) ? abs((int)$r['lama_menit']) : null;
-                    @endphp
-                    @if($hj !== null)
-                      {{ $hj }}j{{ $mn !== null ? ' '.str_pad($mn,2,'0',STR_PAD_LEFT).'m' : '' }}
-                    @else
-                      -
-                    @endif
-                  </td>
-                  <td class="text-center">
-                    @php $cls = $r['sla_klasifikasi']==='DPMPTSP'?'success':($r['sla_klasifikasi']==='Dinas Teknis'?'warning':($r['sla_klasifikasi']==='Non-SLA'?'dark':'secondary')); @endphp
-                    <span class="badge bg-{{ $cls }}">{{ $r['sla_klasifikasi'] ?? '-' }}</span>
-                  </td>
+                  <td class="text-center">{{ ($isDpm && is_numeric($r['lama_hari_kerja'])) ? $r['lama_hari_kerja'] : '-' }}</td>
+                  <td class="text-center">{{ ($isDinas && is_numeric($r['lama_hari_kerja'])) ? $r['lama_hari_kerja'] : '-' }}</td>
+                  <td class="text-center">{{ ($isGab && is_numeric($r['lama_hari_kerja'])) ? $r['lama_hari_kerja'] : '-' }}</td>
                 </tr>
               @empty
                 <tr><td colspan="8" class="text-center text-muted">Tidak ada langkah</td></tr>
               @endforelse
             </tbody>
             <tfoot>
-              <tr class="table-warning">
-                <td colspan="5"><strong>Total Hari Kerja</strong></td>
-                <td class="text-center"><strong>{{ $totalHari }}</strong></td>
-                <td colspan="2"></td>
-              </tr>
               <tr class="table-info">
-                <td colspan="5"><strong>Rata-rata Hari Kerja per Langkah</strong></td>
-                <td class="text-center"><strong>{{ $rataHari }}</strong></td>
-                <td colspan="2"></td>
+                <td colspan="10" class="text-end"><strong>Total</strong></td>
+                <td class="text-center"><strong>{{ $sumDpm }}</strong></td>
+                <td class="text-center"><strong>{{ $sumDinas }}</strong></td>
+                <td class="text-center"><strong>{{ $sumGab }}</strong></td>
+              </tr>
+              <tr class="table-warning">
+                <td colspan="10"><strong>Total Hari Kerja</strong></td>
+                <td class="text-center" colspan="4"><strong>{{ $totalHari }}</strong></td>
+              </tr>
+              <tr class="table-light">
+                <td colspan="10"><strong>Rata-rata Hari Kerja per Langkah</strong></td>
+                <td class="text-center" colspan="4"><strong>{{ $rataHari }}</strong></td>
               </tr>
             </tfoot>
           </table>
@@ -202,8 +215,9 @@
             function sortHari(){
               const rows = Array.from(tbody.querySelectorAll('tr')).filter(r=>r.style.display!=='none');
               rows.sort((a,b)=>{
-                const va = parseInt(a.children[5].textContent.replace(/[^0-9]/g,''))||0;
-                const vb = parseInt(b.children[5].textContent.replace(/[^0-9]/g,''))||0;
+                // Sort by HK Total column (index 9)
+                const va = parseInt(a.children[9].textContent.replace(/[^0-9-]/g,''))||0;
+                const vb = parseInt(b.children[9].textContent.replace(/[^0-9-]/g,''))||0;
                 return asc ? (va - vb) : (vb - va);
               });
               rows.forEach(r=>tbody.appendChild(r));

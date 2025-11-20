@@ -118,14 +118,60 @@
                     <div class="d-flex align-items-baseline">
                       <div class="h1 mb-0 me-2">{{ $totalJumlahData }}</div>
                       <div class="me-auto">
-                        <span class="text-green d-inline-flex align-items-center lh-1">
-                          8% <!-- Download SVG icon from http://tabler-icons.io/i/trending-up -->
-                          <svg xmlns="http://www.w3.org/2000/svg" class="icon ms-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 17l6 -6l4 4l8 -8" /><path d="M14 7l7 0l0 7" /></svg>
-                        </span>
+                       
                       </div>
                     </div>
+                    <div id="chart-revenue" style="height:70px; width:100%;"></div>
+                    @php
+                      $chartMonthly = collect($rekapPerBulan)->sortBy('bulan')->map(function($r){
+                        return [
+                          'bulan' => $r['bulan'],
+                          'label' => \Carbon\Carbon::createFromFormat('Y-m',$r['bulan'])->translatedFormat('M'),
+                          'count' => (int)($r['jumlah_izin_terbit'] ?? 0),
+                        ];
+                      })->values();
+                    @endphp
+                    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+                    <script>
+                      document.addEventListener('DOMContentLoaded', function(){
+                        const el = document.querySelector('#chart-revenue');
+                        if(!el) return;
+                        const data = @json($chartMonthly);
+                        const categories = data.map(d=>d.label);
+                        let seriesData = data.map(d=>d.count);
+                        const maxVal = seriesData.length ? Math.max(...seriesData) : 0;
+                        const allZero = maxVal === 0;
+                        // Jika semua nilai 0, berikan nilai dummy kecil agar garis tidak menempel di border dan tetap terlihat.
+                        if(allZero){
+                          seriesData = seriesData.map(()=>0.1);
+                        }
+                        const options = {
+                          chart: { type:'bar', height:70, sparkline:{ enabled:true }, toolbar:{show:false}, animations:{ easing:'easeinout', speed:600 } },
+                          series: [{ name:'Izin Terbit', data: seriesData }],
+                          plotOptions: { bar: { columnWidth: '60%', borderRadius: 2 } },
+                          tooltip: { theme:'light', y:{ formatter: v => (allZero ? 0 : Number(v)).toLocaleString('id-ID') + ' izin' } },
+                          colors: ['#1f6fb2'],
+                          dataLabels: { enabled:false },
+                          grid: { show:false },
+                          // Pakai rentang min/max yang memberi ruang ketika semua nol
+                          yaxis: allZero ? { show:false, min:0, max:1 } : { show:false, min:0 },
+                          xaxis: { categories, labels:{ show:false }, axisTicks:{ show:false }, axisBorder:{ show:false } },
+                          noData: { text: 'Tidak ada data', align:'center', style:{ color:'#6c757d', fontSize:'13px' } },
+                          responsive: []
+                        };
+                        const chart = new ApexCharts(el, options);
+                        try { chart.render(); } catch(e){ console.warn('Gagal render chart', e); }
+                        if(allZero){
+                          const note = document.createElement('div');
+                          note.style.cssText='position:absolute;top:4px;right:6px;font-size:10px;color:#6c757d;';
+                          note.textContent='Semua bulan = 0';
+                          el.style.position='relative';
+                          el.appendChild(note);
+                        }
+                      });
+                    </script>
                   </div>
-                  <div id="chart-revenue-bg" class="chart-sm"></div>
+                </div>
                 </div>
               </div>
               @if(!empty($statError))
@@ -137,7 +183,7 @@
                 </div>
               @endif
              
-              <div class="col-lg-12 col-sm-12">
+              <div class="col-lg-12 col-sm-12 pt-2">
                 <div class="card">
                   <div class="card-header border-0">
                     <div class="card-title">Jumlah Izin Terbit SiCantik Tahun {{ $year }}</div>
@@ -158,8 +204,7 @@
                       <span class="badge bg-warning text-dark sla-badge" title="Subtotal hari kerja SLA Dinas Teknis">Dinas</span>
                       <span class="badge bg-info sla-badge" title="Gabungan DPMPTSP + Dinas Teknis">Gabungan</span>
                       
-                      <span class="badge bg-dark sla-badge" title="Subtotal Non-SLA (dikecualikan dari SLA)">Non-SLA</span>
-                      <span class="badge bg-danger sla-badge" title="Selisih = HK Total - (DPMPTSP + Dinas + Non-SLA)">Δ HK</span>
+                      <!-- Non-SLA dan Δ HK dihapus dari tabel statistik -->
                     </div>
                     <table class="table table-bordered table-striped mb-4" id="rekap-bulan-table">
                       <thead class="table-primary">
@@ -171,8 +216,6 @@
                           <th class="text-center">SLA DPMPTSP</th>
                           <th class="text-center">SLA Dinas</th>
                           <th class="text-center">SLA Gabungan</th>
-                          <th class="text-center">Non-SLA</th>
-                          <th class="text-center">Δ HK</th>
                           <th class="text-center">Aksi</th>
                         </tr>
                       </thead>
@@ -186,8 +229,6 @@
                           <td class="text-center">{{ number_format($rekap['jumlah_sla_dpmptsp'] ?? 0,0,',','.') }}<br><span class="small-muted">Avg {{ number_format($rekap['rata_rata_sla_dpmptsp'] ?? 0,2,',','.') }}</span></td>
                           <td class="text-center">{{ number_format($rekap['jumlah_sla_dinas_teknis'] ?? 0,0,',','.') }}<br><span class="small-muted">Avg {{ number_format($rekap['rata_rata_sla_dinas_teknis'] ?? 0,2,',','.') }}</span></td>
                           <td class="text-center">{{ number_format($rekap['jumlah_sla_gabungan'] ?? 0,0,',','.') }}<br><span class="small-muted">Avg {{ number_format($rekap['rata_rata_sla_gabungan'] ?? 0,2,',','.') }}</span></td>
-                          <td class="text-center">{{ number_format($rekap['jumlah_sla_non_sla'] ?? 0,0,',','.') }}</td>
-                          <td class="text-center {{ (($rekap['selisih_hk'] ?? 0) != 0) ? 'text-danger' : '' }}">{{ number_format($rekap['selisih_hk'] ?? 0,0,',','.') }}</td>
                           <td class="text-center">
                             <button type="button" class="btn btn-sm btn-outline-primary btn-rincian-bulan" data-bulan="{{ $rekap['bulan'] }}" data-label="{{ \Carbon\Carbon::createFromFormat('Y-m', $rekap['bulan'])->translatedFormat('F Y') }}" data-bs-toggle="modal" data-bs-target="#modal-detail-bulan">Rincian</button>
                           </td>
@@ -217,8 +258,6 @@
                                     <th class="text-center">SLA DPMPTSP</th>
                                     <th class="text-center">SLA Dinas</th>
                                     <th class="text-center">SLA Gabungan</th>
-                                    <th class="text-center">Non-SLA</th>
-                                    <th class="text-center">Δ HK</th>
                                     <th class="text-center">Detail</th>
                                   </tr>
                                 </thead>
@@ -257,7 +296,7 @@
                           const month = parseInt(mStr, 10);
                           let html = '';
                           try {
-                            detailTableBody.innerHTML = `<tr><td colspan="12" class="text-center">Memuat data...</td></tr>`;
+                            detailTableBody.innerHTML = `<tr><td colspan="10" class="text-center">Memuat data...</td></tr>`;
                             modalDetailTitle.innerText = `Rincian Izin Terbit ${bulanLabel}`;
                             modalDetail.show();
                             const filtered = await fetchMonthItems(year, month);
@@ -266,8 +305,6 @@
                               const slaDpm = item.jumlah_hari_kerja_sla_dpmptsp ?? 0;
                               const slaDinas = item.jumlah_hari_kerja_sla_dinas_teknis ?? 0;
                               const slaGab = item.jumlah_hari_kerja_sla_gabungan ?? 0;
-                              const slaNon = item.jumlah_hari_kerja_sla_non_sla ?? 0;
-                              const selisih = (item.selisih_hk ?? ( (item.jumlah_hari_kerja||0) - (slaDpm+slaDinas+slaNon) ));
                               const detailUrl = `{{ url('/sicantik/proses') }}/${encodeURIComponent(item.no_permohonan ?? '')}`;
                               html += `<tr>
                                 <td>${idx+1}</td>
@@ -279,8 +316,6 @@
                                 <td class="text-center">${fmtInt(slaDpm)}</td>
                                 <td class="text-center">${fmtInt(slaDinas)}</td>
                                 <td class="text-center">${fmtInt(slaGab)}</td>
-                                <td class="text-center">${fmtInt(slaNon)}</td>
-                                <td class="text-center ${selisih !== 0 ? 'text-danger' : ''}">${fmtInt(selisih)}</td>
                                 <td class="text-center"><a href="${detailUrl}" class="btn btn-xs btn-outline-secondary" target="_blank">Detail</a></td>
                               </tr>`;
                             });
@@ -289,8 +324,6 @@
                               const totalSlaDpm = filtered.reduce((a,b)=> a + toInt(b.jumlah_hari_kerja_sla_dpmptsp), 0);
                               const totalSlaDinas = filtered.reduce((a,b)=> a + toInt(b.jumlah_hari_kerja_sla_dinas_teknis), 0);
                               const totalSlaGab = filtered.reduce((a,b)=> a + toInt(b.jumlah_hari_kerja_sla_gabungan), 0);
-                              const totalSlaNon = filtered.reduce((a,b)=> a + toInt(b.jumlah_hari_kerja_sla_non_sla), 0);
-                              const totalSelisih = filtered.reduce((a,b)=> a + ((toInt(b.selisih_hk)) || ((toInt(b.jumlah_hari_kerja)||0) - (toInt(b.jumlah_hari_kerja_sla_dpmptsp)+toInt(b.jumlah_hari_kerja_sla_dinas_teknis)+toInt(b.jumlah_hari_kerja_sla_non_sla)))) ,0);
                               const rataRataHariKerja = totalHariKerja / filtered.length;
                               const rataSlaDpm = totalSlaDpm / filtered.length;
                               const rataSlaDinas = totalSlaDinas / filtered.length;
@@ -302,8 +335,6 @@
                                 <td class="text-center"><strong>${fmtInt(totalSlaDpm)}</strong></td>
                                 <td class="text-center"><strong>${fmtInt(totalSlaDinas)}</strong></td>
                                 <td class="text-center"><strong>${fmtInt(totalSlaGab)}</strong></td>
-                                <td class="text-center"><strong>${fmtInt(totalSlaNon)}</strong></td>
-                                <td class="text-center ${totalSelisih !== 0 ? 'text-danger' : ''}"><strong>${fmtInt(totalSelisih)}</strong></td>
                                 <td></td>
                               </tr>`;
                               html += `<tr class="table-info">
@@ -313,13 +344,11 @@
                                 <td class="text-center"><strong>${fmtHari(rataSlaDinas)} hari</strong></td>
                                 <td class="text-center"><strong>${fmtHari(rataSlaGab)} hari</strong></td>
                                 <td></td>
-                                <td></td>
-                                <td></td>
                               </tr>`;
                             }
-                            detailTableBody.innerHTML = html || `<tr><td colspan="12" class="text-center">Tidak ada data</td></tr>`;
+                            detailTableBody.innerHTML = html || `<tr><td colspan="10" class="text-center">Tidak ada data</td></tr>`;
                           } catch(err) {
-                            detailTableBody.innerHTML = `<tr><td colspan="12" class="text-danger text-center">Gagal memuat data</td></tr>`;
+                            detailTableBody.innerHTML = `<tr><td colspan="10" class="text-danger text-center">Gagal memuat data</td></tr>`;
                           }
                         });
                       });

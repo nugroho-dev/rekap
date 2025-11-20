@@ -271,15 +271,10 @@
                             <th >Jenis Izin</th>
                             <th >Proses</th>
                             <th >Status</th>
-                            <th >Tanggal Pengajuan</th>
-                            <th >Tanggal Penetapan</th>
-                            <th >Tanggal Proses Awal</th>
-                            <th >Tanggal Proses Akhir</th>
-                            <th >Lama Proses</th>
-                            <th >Jumlah Hari Kerja</th>
-                            <th >HK SLA DPMPTSP</th>
-                            <th >HK SLA Dinas Teknis</th>
-                            <th >HK SLA (Gabungan)</th>
+                            <th >Tanggal (Pengajuan / Penetapan)</th>
+                            <th >Tanggal Proses (Awal → Akhir)</th>
+                            <th >Durasi (Hari / HK)</th>
+                            <th >HK SLA (DPMPTSP / Dinas / Gabungan)</th>
                             <th >*</th>
                           </tr>
                         </thead>
@@ -306,57 +301,62 @@
                               {{ is_null($item->end_date_akhir) ? 'Proses' : (Carbon\Carbon::parse($item->end_date_akhir)->translatedFormat('Y')==0001?'Proses':'Terbit') }}
                             @endif
                           </td>
-                          <td class="text-center">{{ Carbon\Carbon::parse($item->tgl_pengajuan)->translatedFormat('d F Y') }}</td>
-                          <td class="text-center">{{  is_null($item->tgl_penetapan) ? 'Proses' : Carbon\Carbon::parse($item->tgl_penetapan)->translatedFormat('d F Y')}}</td>
-                          <td class="text-center">{!! is_null($item->start_date_awal) ? '<span class="text-warning">Waktu SLA Belum Jalankan <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="currentColor"  class="icon icon-tabler icons-tabler-filled icon-tabler-alert-triangle"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 1.67c.955 0 1.845 .467 2.39 1.247l.105 .16l8.114 13.548a2.914 2.914 0 0 1 -2.307 4.363l-.195 .008h-16.225a2.914 2.914 0 0 1 -2.582 -4.2l.099 -.185l8.11 -13.538a2.914 2.914 0 0 1 2.491 -1.403zm.01 13.33l-.127 .007a1 1 0 0 0 0 1.986l.117 .007l.127 -.007a1 1 0 0 0 0 -1.986l-.117 -.007zm-.01 -7a1 1 0 0 0 -.993 .883l-.007 .117v4l.007 .117a1 1 0 0 0 1.986 0l.007 -.117v-4l-.007 -.117a1 1 0 0 0 -.993 -.883z" /></svg></span>' : (Carbon\Carbon::parse($item->start_date_awal)->translatedFormat('Y')==0001?'<span class="text-warning">Waktu SLA Belum Jalankan <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="currentColor"  class="icon icon-tabler icons-tabler-filled icon-tabler-alert-triangle"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 1.67c.955 0 1.845 .467 2.39 1.247l.105 .16l8.114 13.548a2.914 2.914 0 0 1 -2.307 4.363l-.195 .008h-16.225a2.914 2.914 0 0 1 -2.582 -4.2l.099 -.185l8.11 -13.538a2.914 2.914 0 0 1 2.491 -1.403zm.01 13.33l-.127 .007a1 1 0 0 0 0 1.986l.117 .007l.127 -.007a1 1 0 0 0 0 -1.986l-.117 -.007zm-.01 -7a1 1 0 0 0 -.993 .883l-.007 .117v4l.007 .117a1 1 0 0 0 1.986 0l.007 -.117v-4l-.007 -.117a1 1 0 0 0 -.993 -.883z" /></svg></span>': Carbon\Carbon::parse($item->start_date_awal)->translatedFormat('d F Y h:i a')) !!}</td>
-                          <td class="text-center">
-                            @if(is_null($item->end_date_akhir))
-                              Proses
-                            @else
-                              @php $rawEnd = (string) $item->end_date_akhir; @endphp
-                              @if(in_array($rawEnd, ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000']))
-                                menunggu proses
+                          <td class="text-start">
+                            <div>
+                              <span class="text-muted">Pengajuan:</span>
+                              {{ Carbon\Carbon::parse($item->tgl_pengajuan)->translatedFormat('d F Y') }}
+                            </div>
+                            <div>
+                              <span class="text-muted">Penetapan:</span>
+                              {{  is_null($item->tgl_penetapan) ? 'Proses' : Carbon\Carbon::parse($item->tgl_penetapan)->translatedFormat('d F Y')}}
+                            </div>
+                          </td>
+                          <td class="text-start">
+                            <div>
+                              <strong>Awal:</strong>
+                              {!! is_null($item->start_date_awal)
+                                  ? '<span class="text-warning">Waktu SLA Belum Jalankan <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="icon icon-tabler icons-tabler-filled icon-tabler-alert-triangle"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 1.67c.955 0 1.845 .467 2.39 1.247l.105 .16l8.114 13.548a2.914 2.914 0 0 1 -2.307 4.363l-.195 .008h-16.225a2.914 2.914 0 0 1 -2.582 -4.2l.099 -.185l8.11 -13.538a2.914 2.914 0 0 1 2.491 -1.403zm.01 13.33l-.127 .007a1 1 0 0 0 0 1.986l.117 .007l.127 -.007a1 1 0 0 0 0 -1.986l-.117 -.007zm-.01 -7a1 1 0 0 0 -.993 .883l-.007 .117v4l.007 .117a1 1 0 0 0 1.986 0l.007 -.117v-4l-.007 -.117a1 1 0 0 0 -.993 -.883z"/></svg></span>'
+                                  : (Carbon\Carbon::parse($item->start_date_awal)->translatedFormat('Y')==0001
+                                      ? '<span class="text-warning">Waktu SLA Belum Jalankan <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="icon icon-tabler icons-tabler-filled icon-tabler-alert-triangle"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 1.67c.955 0 1.845 .467 2.39 1.247l.105 .16l8.114 13.548a2.914 2.914 0 0 1 -2.307 4.363l-.195 .008h-16.225a2.914 2.914 0 0 1 -2.582 -4.2l.099 -.185l8.11 -13.538a2.914 2.914 0 0 1 2.491 -1.403zm.01 13.33l-.127 .007a1 1 0 0 0 0 1.986l.117 .007l.127 -.007a1 1 0 0 0 0 -1.986l-.117 -.007zm-.01 -7a1 1 0 0 0 -.993 .883l-.007 .117v4l.007 .117a1 1 0 0 0 1.986 0l.007 -.117v-4l-.007 -.117a1 1 0 0 0 -.993 -.883z"/></svg></span>'
+                                      : e(Carbon\Carbon::parse($item->start_date_awal)->translatedFormat('d F Y h:i a')) )
+                              !!}
+                            </div>
+                            <div>
+                              <strong>Akhir:</strong>
+                              @if(is_null($item->end_date_akhir))
+                                Proses
                               @else
-                                {{ Carbon\Carbon::parse($rawEnd)->translatedFormat('d F Y H:i') }}
+                                @php $rawEnd = (string) $item->end_date_akhir; @endphp
+                                @if(in_array($rawEnd, ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000']))
+                                  menunggu proses
+                                @else
+                                  {{ Carbon\Carbon::parse($rawEnd)->translatedFormat('d F Y H:i') }}
+                                @endif
                               @endif
-                            @endif
+                            </div>
                           </td>
                           <td class="text-center">
-                            @if(is_numeric($item->lama_proses))
-                              {{ $item->lama_proses }} hari
-                              
+                            @php
+                              $vKal = is_numeric($item->lama_proses) ? (int) $item->lama_proses : null;
+                              $vHK = is_numeric($item->jumlah_hari_kerja) ? (int) $item->jumlah_hari_kerja : null;
+                            @endphp
+                            @if(!is_null($vKal) || !is_null($vHK))
+                              {{ is_null($vKal) ? '-' : $vKal }} h | {{ is_null($vHK) ? '-' : $vHK }} HK
                             @else
                               -
                             @endif
                           </td>
-                          <td class="text-center">
-                            
-                            @if(is_numeric($item->jumlah_hari_kerja))
-                              {{ $item->jumlah_hari_kerja }} hari kerja
-                            @else
-                              - 
-                            @endif
-                             
-
-                           
-                          </td>
-                          <td class="text-center">
-                            @if(is_numeric($item->jumlah_hari_kerja_sla_dpmptsp ?? null))
-                              {{ $item->jumlah_hari_kerja_sla_dpmptsp }} hari kerja
-                            @else
-                              -
-                            @endif
-                          </td>
-                          <td class="text-center">
-                            @if(is_numeric($item->jumlah_hari_kerja_sla_dinas_teknis ?? null))
-                              {{ $item->jumlah_hari_kerja_sla_dinas_teknis }} hari kerja
-                            @else
-                              -
-                            @endif
-                          </td>
-                          <td class="text-center">
-                            @if(is_numeric($item->jumlah_hari_kerja_sla_gabungan ?? null))
-                              {{ $item->jumlah_hari_kerja_sla_gabungan }} hari kerja
+                          <td class="text-start">
+                            @php
+                              $vDpm = is_numeric($item->jumlah_hari_kerja_sla_dpmptsp ?? null) ? (int) $item->jumlah_hari_kerja_sla_dpmptsp : null;
+                              $vDin = is_numeric($item->jumlah_hari_kerja_sla_dinas_teknis ?? null) ? (int) $item->jumlah_hari_kerja_sla_dinas_teknis : null;
+                              $vGbg = is_numeric($item->jumlah_hari_kerja_sla_gabungan ?? null) ? (int) $item->jumlah_hari_kerja_sla_gabungan : null;
+                              $hasAny = !is_null($vDpm) || !is_null($vDin) || !is_null($vGbg);
+                            @endphp
+                            @if($hasAny)
+                              <div><span class="text-muted">DPMPTSP:</span> {{ is_null($vDpm) ? '-' : $vDpm }} <span class="text-muted">HK</span></div>
+                              <div><span class="text-muted">Dinas:</span> {{ is_null($vDin) ? '-' : $vDin }} <span class="text-muted">HK</span></div>
+                              <div><span class="text-muted">Gabungan:</span> {{ is_null($vGbg) ? '-' : $vGbg }} <span class="text-muted">HK</span></div>
                             @else
                               -
                             @endif
@@ -600,7 +600,7 @@
         console.log('Detail modal response:', res); // Debug log
         tbody.empty();
         let totalHariKerja = 0;
-        let totalHariKerjaMarked = 0; // hanya untuk baris yang ditandai (other jenis)
+        let totalHariKerjaMarked = 0; // hanya untuk SLA DPMPTSP
         let totalHariKerjaExcludeSpecific = 0; // hari kerja selain jenis proses id 2,13,18,115
         let totalHariKerjaUnmarked = 0; // akumulasi untuk non SLA (bukan other jenis)
         let totalHariKerjaDinasTeknis = 0; // akumulasi untuk SLA Dinas Teknis
@@ -610,9 +610,12 @@
           res.steps.forEach(function(step, idx) {
             const tr = $('<tr>');
             const jp = Number(step.jenis_proses_id);
-            const isOtherJenis = ![2, 18, 115, 13, 7, 33, 234, 185, 293, 212, 108, 192, 226, 420].includes(jp);
-            const isNonSlaSpecific = [2, 13, 18, 33, 115].includes(jp);
-            const isDinasTeknis = [7, 108, 185, 192, 212, 226, 234, 293, 420].includes(jp);
+            const forceDpmIds = [14, 403];
+            const nonSlaIds = [2, 13, 18, 33, 115];
+            const dinasIds = [7, 108, 185, 192, 212, 226, 234, 293, 420];
+            const isNonSlaSpecific = nonSlaIds.includes(jp);
+            const isDinasTeknis = dinasIds.includes(jp);
+            const isDpmptsp = forceDpmIds.includes(jp) || (!isNonSlaSpecific && !isDinasTeknis);
             // Row coloring by status
             const statusNorm = (step.status || '').toString().trim().toLowerCase();
             let rowClass = '';
@@ -625,8 +628,8 @@
             }
             if (rowClass) {
               tr.addClass(rowClass);
-            } else if (isOtherJenis) {
-              // fallback highlight for other jenis only if no status color applied
+            } else if (isDpmptsp) {
+              // fallback highlight for DPMPTSP only if no status color applied
               tr.addClass('table-warning');
             }
             // Durasi hari
@@ -686,8 +689,8 @@
             const tooltipTotalMinutes = (typeof step.total_minutes === 'number') ? step.total_minutes : 'n/a';
             tr.append($('<td class="text-center align-middle">').text(idx+1));
             const namaCell = $('<td class="align-middle">').text(step.nama_proses || '-');
-            if (isOtherJenis) {
-              namaCell.append(' ').append($('<span class="badge badge-sm bg-blue text-blue-fg" title="Bukan jenis proses 2/7/13/18/33/108/115/185/192/212/226/234/293/420">sla dpmptsp</span>'));
+            if (isDpmptsp) {
+              namaCell.append(' ').append($('<span class="badge badge-sm bg-blue text-blue-fg" title="SLA DPMPTSP (termasuk jenis 14 & 403)">sla dpmptsp</span>'));
             } else if (isNonSlaSpecific) {
               namaCell.append(' ').append($('<span class="badge badge-sm bg-secondary text-white" title="Non-SLA: jenis proses 2/13/18/33/115">non-sla</span>'));
             } else if (isDinasTeknis) {
@@ -710,7 +713,7 @@
             );
             if (typeof step.jumlah_hari_kerja === 'number') {
               totalHariKerja += step.jumlah_hari_kerja;
-              if (isOtherJenis) {
+              if (isDpmptsp) {
                 totalHariKerjaMarked += step.jumlah_hari_kerja;
               } else {
                 totalHariKerjaUnmarked += step.jumlah_hari_kerja;
@@ -721,7 +724,7 @@
               if (isNonSlaSpecific) {
                 totalHariKerjaNonSla += step.jumlah_hari_kerja;
               }
-              if (isOtherJenis || isDinasTeknis) {
+              if (isDpmptsp || isDinasTeknis) {
                 totalHariKerjaSlaGabungan += step.jumlah_hari_kerja;
               }
               if (![2,13,18,115].includes(jp)) {
@@ -732,7 +735,7 @@
             // Kolom Hari Kerja (SLA DPMPTSP)
             tr.append(
               $('<td class="text-end align-middle">').html(
-                (isOtherJenis && typeof step.jumlah_hari_kerja === 'number') ? step.jumlah_hari_kerja : '-'
+                (isDpmptsp && typeof step.jumlah_hari_kerja === 'number') ? step.jumlah_hari_kerja : '-'
               )
             );
             // Kolom Hari Kerja (SLA Dinas Teknis)
@@ -744,7 +747,7 @@
             // Kolom Hari Kerja (SLA Gabungan)
             tr.append(
               $('<td class="text-end align-middle">').html(
-                ((isOtherJenis || isDinasTeknis) && typeof step.jumlah_hari_kerja === 'number') ? step.jumlah_hari_kerja : '-'
+                ((isDpmptsp || isDinasTeknis) && typeof step.jumlah_hari_kerja === 'number') ? step.jumlah_hari_kerja : '-'
               )
             );
             tbody.append(tr);

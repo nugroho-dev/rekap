@@ -65,9 +65,9 @@ class DashboardVprosesSicantikController extends Controller
 
 		// Grouped toggle: when grouped, we may want to show one row per no_permohonan
 		$grouped = $request->boolean('group');
-		// Add a computed column start_date_awal: earliest end_date for jenis_proses_id = 2 per no_permohonan
+		// Add a computed column start_date_awal: earliest end_date for jenis_proses_id in (2,14) per no_permohonan
 		$items = $query->selectRaw("proses.*,
-			(SELECT MIN(p2.end_date) FROM proses p2 WHERE p2.permohonan_izin_id = proses.permohonan_izin_id AND p2.jenis_proses_id = 2) AS start_date_awal,
+			(SELECT MIN(p2.end_date) FROM proses p2 WHERE p2.permohonan_izin_id = proses.permohonan_izin_id AND p2.jenis_proses_id IN (2,14)) AS start_date_awal,
 			(SELECT MAX(p3.end_date) FROM proses p3 WHERE p3.permohonan_izin_id = proses.permohonan_izin_id AND p3.jenis_proses_id = 40) AS end_date_akhir,
 			(SELECT p4.status FROM proses p4 WHERE p4.permohonan_izin_id = proses.permohonan_izin_id AND p4.jenis_proses_id = 40 ORDER BY p4.id ASC LIMIT 1) AS status_jenis_40,
 			(SELECT p5.file_signed_report FROM proses p5 WHERE p5.permohonan_izin_id = proses.permohonan_izin_id AND p5.jenis_proses_id = 40 AND p5.file_signed_report IS NOT NULL ORDER BY p5.id DESC LIMIT 1) AS file_signed_report_40
@@ -84,7 +84,7 @@ class DashboardVprosesSicantikController extends Controller
 				$no = $item->permohonan_izin_id;
 				$invalidDates = ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000'];
 				$startDate = Proses::where('permohonan_izin_id', $no)
-					->where('jenis_proses_id', 2)
+					->whereIn('jenis_proses_id', [2,14])
 					->whereNotNull('end_date')
 					->whereNotIn('end_date', $invalidDates)
 					->min('end_date');
@@ -180,15 +180,15 @@ class DashboardVprosesSicantikController extends Controller
 			}
 			// Tambahkan subtotal SLA untuk tabel index: DPMPTSP, Dinas Teknis, Gabungan
 			try {
-				// Ambil semua langkah untuk no_permohonan yang relevan statusnya
-				$steps = Proses::where('no_permohonan', $item->no_permohonan)
-					->whereNotNull('status')
-					->where(function ($q) {
-						$q->whereRaw("LOWER(TRIM(status)) IN ('proses','selesai','menunggu')")
-						  ->orWhereRaw("LOWER(status) LIKE '%nunggu%'");
-					})
-					->orderBy('id_proses_permohonan', 'ASC')
-					->get(['jenis_proses_id', 'start_date', 'end_date']);
+					// Ambil semua langkah untuk no_permohonan yang relevan statusnya (ditambah status tambahan)
+					$steps = Proses::where('no_permohonan', $item->no_permohonan)
+						->whereNotNull('status')
+						->where(function ($q) {
+							$q->whereRaw("LOWER(TRIM(status)) IN ('proses','selesai','menunggu','verifikasi','validasi','upload','tte','terbit','diterbitkan')")
+							  ->orWhereRaw("LOWER(status) LIKE '%nunggu%'");
+						})
+						->orderBy('id_proses_permohonan', 'ASC')
+						->get(['jenis_proses_id', 'start_date', 'end_date']);
 
 				// Tentukan rentang tanggal keseluruhan untuk efisiensi pengambilan hari libur
 				$validStepDates = $steps->filter(function ($s) {
@@ -222,6 +222,9 @@ class DashboardVprosesSicantikController extends Controller
 				$computedAny = false;
 
 				foreach ($steps as $s) {
+					if (empty($s->start_date) && !empty($s->end_date) && !in_array((string)$s->end_date, $invalidDates)) {
+						$s->start_date = $s->end_date; // fallback same-day
+					}
 					$jp = (int) $s->jenis_proses_id;
 					// Validasi tanggal
 					if (empty($s->start_date) || empty($s->end_date)) { continue; }
@@ -334,11 +337,10 @@ public function show(Request $request, $id)
 		}
 
 		// Get all steps for the same no_permohonan ordered by id_proses_permohonan ASC
-		// Filter statuses to include 'Proses', 'Selesai', and 'Menunggu' (case-insensitive, including variants like 'menunggu proses')
 		$steps = Proses::where('no_permohonan', $record->no_permohonan)
 			->whereNotNull('status')
 			->where(function ($q) {
-				$q->whereRaw("LOWER(TRIM(status)) IN ('proses','selesai','menunggu')")
+				$q->whereRaw("LOWER(TRIM(status)) IN ('proses','selesai','menunggu','verifikasi','validasi','upload','tte','terbit','diterbitkan')")
 				  ->orWhereRaw("LOWER(status) LIKE '%nunggu%'");
 			})
 			->orderBy('id_proses_permohonan', 'ASC')
@@ -360,6 +362,9 @@ public function show(Request $request, $id)
 		// Compute a friendly label for each step (defensive parsing)
 			$steps = $steps->transform(function ($step) {
 			$start = null;
+			if (empty($step->start_date) && !empty($step->end_date) && !in_array($step->end_date, ['0001-01-01 00:00:00','0001-01-01 00:00:00.000'])) {
+				$step->start_date = $step->end_date; // fallback
+			}
 			if (!empty($step->start_date) && is_scalar($step->start_date)) {
 				try {
 					if (!in_array($step->start_date, ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000'])) {
@@ -443,6 +448,20 @@ public function show(Request $request, $id)
 				$step->durasi_jam = null;
 				$step->durasi_menit = null;
 			}
+			// SLA classification: force jenis_proses_id 14 into DPMPTSP per request
+			$nonSlaIds = [2,13,18,33,115];
+			$dinasTeknisIds = [7,108,185,192,212,226,234,293,420];
+			$forceDpmIds = [14,403]; // explicit override
+			$jp = (int) $step->jenis_proses_id;
+			if (in_array($jp, $forceDpmIds, true)) {
+				$step->sla_klasifikasi = 'DPMPTSP';
+			} elseif (in_array($jp, $nonSlaIds, true)) {
+				$step->sla_klasifikasi = 'Non-SLA';
+			} elseif (in_array($jp, $dinasTeknisIds, true)) {
+				$step->sla_klasifikasi = 'Dinas Teknis';
+			} else {
+				$step->sla_klasifikasi = 'DPMPTSP';
+			}
 			return $step;
 		});
 
@@ -509,165 +528,189 @@ public function show(Request $request, $id)
 		$date_start = $request->input('date_start') ?? null;
 		$date_end = $request->input('date_end') ?? null;
 
-		$cacheKey = 'sicantik_stat_v2_'.$year.'_'.($month ?: 'all');
+		// Bump versi cache karena refactor performa
+		$cacheKey = 'sicantik_stat_v4_'.$year.'_'.($month ?: 'all');
 		$cached = Cache::remember($cacheKey, now()->addHours(6), function () use ($year, $month) {
-			$query = Proses::query();
-			$query->where('jenis_proses_id', 40)
+			$baseQuery = Proses::query()
+				->where('jenis_proses_id', 40)
 				->whereRaw("LOWER(TRIM(status)) = 'selesai'")
 				->whereNotNull('end_date')
 				->whereYear('end_date', $year);
-			if ($month) {
-				$query->whereMonth('end_date', $month);
-			}
-			$items = $query->get();
-
+			if ($month) { $baseQuery->whereMonth('end_date', $month); }
+			$items = $baseQuery->get();
 			$invalidDates = ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000'];
-			$items = $items->map(function ($item) use ($invalidDates) {
+
+			// Ambil semua permohonan id & no_permohonan dari items
+			$permIds = $items->pluck('permohonan_izin_id')->filter()->unique()->values();
+			$noPerms = $items->pluck('no_permohonan')->filter()->unique()->values();
+
+			// Preload semua proses terkait untuk window dan SLA (minimalkan N+1)
+			$allRelated = Proses::query()
+				->whereIn('permohonan_izin_id', $permIds)
+				->where(function($q){ $q->whereNotNull('start_date')->orWhereNotNull('end_date'); })
+				->get(['permohonan_izin_id','no_permohonan','jenis_proses_id','start_date','end_date','status','id_proses_permohonan']);
+
+			$relatedByPerm = $allRelated->groupBy('permohonan_izin_id');
+			$relatedByNoPerm = $allRelated->groupBy('no_permohonan');
+
+			// Hitung window (start earliest jenis 2/14, end latest end_date) untuk tiap item
+			$windows = [];
+			foreach ($items as $it) {
+				$pid = $it->permohonan_izin_id;
+				$group = $relatedByPerm->get($pid, collect());
+				// Ambil startDate utama dari start_date proses jenis 2/14
+				$startDate = $group->filter(function($p) use ($invalidDates){
+					return in_array($p->jenis_proses_id, [2,14], true)
+						&& !empty($p->start_date)
+						&& !in_array((string)$p->start_date, $invalidDates);
+				})->min('start_date');
+				// Fallback: bila tidak ada start_date valid, gunakan end_date paling awal dari jenis 2/14
+				if (!$startDate) {
+					$startDate = $group->filter(function($p) use ($invalidDates){
+						return in_array($p->jenis_proses_id, [2,14], true)
+							&& !empty($p->end_date)
+							&& !in_array((string)$p->end_date, $invalidDates);
+					})->min('end_date');
+				}
+				// Fallback kedua: jika masih null, ambil start_date paling awal dari SEMUA proses permohonan
+				if (!$startDate) {
+					$startDate = $group->filter(function($p) use ($invalidDates){
+						return !empty($p->start_date) && !in_array((string)$p->start_date, $invalidDates);
+					})->min('start_date');
+				}
+				// Ambil endDate terakhir dari semua end_date valid
+				$endDate = $group->filter(function($p) use ($invalidDates){
+					return !empty($p->end_date) && !in_array((string)$p->end_date, $invalidDates);
+				})->max('end_date');
+				// Jika startDate masih kosong namun endDate ada, set startDate=endDate (konsisten fallback step)
+				if (!$startDate && $endDate) { $startDate = $endDate; }
+				if ($startDate && $endDate) {
+					$windows[$pid] = [Carbon::parse($startDate), Carbon::parse($endDate)];
+				}
+			}
+
+			// Holiday global range sekali (optimisasi) lalu nanti difilter per window
+			$globalStart = collect($windows)->map(fn($w)=>$w[0])->min();
+			$globalEnd = collect($windows)->map(fn($w)=>$w[1])->max();
+			$holidayGlobal = [];
+			if ($globalStart && $globalEnd) {
 				try {
-					$no = $item->permohonan_izin_id;
-					$startDate = Proses::where('permohonan_izin_id', $no)
-						->where('jenis_proses_id', 2)
-						->whereNotNull('end_date')
-						->whereNotIn('end_date', $invalidDates)
-						->min('end_date');
-					$endDate40 = $item->end_date;
-					if ($startDate && $endDate40) {
-						$start = Carbon::parse($startDate);
-						$end = Carbon::parse($endDate40);
-						$diffSeconds = $end->timestamp - $start->timestamp;
-						$item->total_hours = round($diffSeconds / 3600, 2);
-						$item->total_days = round($item->total_hours / 24, 2);
-						if ($start->isSameDay($end) && $diffSeconds > 0) {
-							$item->lama_proses = 0;
-							$item->durasi_jam = round($diffSeconds / 3600, 2);
-						} else if ($diffSeconds <= 0) {
-							$item->lama_proses = 0;
-							$item->durasi_jam = 0;
+					$holidayGlobal = Dayoff::whereBetween('tanggal', [$globalStart->toDateString(), $globalEnd->toDateString()])
+						->pluck('tanggal')
+						->map(fn($d)=>Carbon::parse($d)->toDateString())
+						->unique()->values()->toArray();
+				} catch (\Throwable $e) { $holidayGlobal = []; }
+			}
+
+			// Helper perhitungan business day sama seperti logika lama
+			$calcBusinessDays = function(Carbon $start, Carbon $end, array $holidays){
+				$businessDaysDecimal = 0.0; $businessDates = []; $cursor = $start->copy();
+				while ($cursor->lte($end)) {
+					$isBusiness = $cursor->dayOfWeekIso >= 1 && $cursor->dayOfWeekIso <= 5 && !in_array($cursor->toDateString(), $holidays);
+					if ($isBusiness) {
+						$businessDates[] = $cursor->toDateString();
+						if ($cursor->isSameDay($start)) {
+							$endOfDay = $cursor->copy()->endOfDay();
+							$minutes = min($end->diffInMinutes($cursor), $endOfDay->diffInMinutes($cursor));
+							$businessDaysDecimal += $minutes / (24*60);
+						} elseif ($cursor->isSameDay($end)) {
+							$startOfDay = $cursor->copy()->startOfDay();
+							$minutes = $end->diffInMinutes($startOfDay);
+							$businessDaysDecimal += $minutes / (24*60);
 						} else {
-							$item->lama_proses = ceil($diffSeconds / 86400);
-							$item->durasi_jam = null;
+							$businessDaysDecimal += 1.0;
 						}
-						try {
-							$holidays = Dayoff::whereBetween('tanggal', [$start->toDateString(), $end->toDateString()])->pluck('tanggal')->map(function ($d) {
-								return Carbon::parse($d)->toDateString();
-							})->unique()->toArray();
-						} catch (\Throwable $e) {
-							$holidays = [];
-						}
-						$businessDaysDecimal = 0.0;
-						$businessDays = [];
-						$cursor = $start->copy();
-						while ($cursor->lte($end)) {
-							$isBusiness = $cursor->dayOfWeekIso >= 1 && $cursor->dayOfWeekIso <= 5 && !in_array($cursor->toDateString(), $holidays);
-							if ($isBusiness) {
-								$businessDays[] = $cursor->toDateString();
-								if ($cursor->isSameDay($start)) {
-									$endOfDay = $cursor->copy()->endOfDay();
-									$minutes = min($end->diffInMinutes($cursor), $endOfDay->diffInMinutes($cursor));
-									$businessDaysDecimal += $minutes / (24 * 60);
-								} elseif ($cursor->isSameDay($end)) {
-									$startOfDay = $cursor->copy()->startOfDay();
-									$minutes = $end->diffInMinutes($startOfDay);
-									$businessDaysDecimal += $minutes / (24 * 60);
-								} else {
-									$businessDaysDecimal += 1.0;
-								}
-							}
-							$cursor->addDay()->startOfDay();
-						}
-						$businessDayCount = count($businessDays);
-						$durationHours = $end->diffInHours($start);
-						if ($businessDayCount > 1 && $durationHours < ($businessDayCount * 24)) {
-							$jumlahHariKerja = $businessDayCount - 1;
-						} elseif ($businessDayCount == 2 && $durationHours < 24) {
-							$jumlahHariKerja = 1;
-						} else {
-							$jumlahHariKerja = $businessDayCount;
-						}
-						$item->jumlah_hari_kerja = max(0, $jumlahHariKerja);
-						$item->business_days_decimal = $businessDaysDecimal > 0 ? round($businessDaysDecimal, 2) : 0;
+					}
+					$cursor->addDay()->startOfDay();
+				}
+				$bizCount = count($businessDates); $durHours = $end->diffInHours($start);
+				if ($bizCount > 1 && $durHours < ($bizCount * 24)) { $jumlahHariKerja = $bizCount - 1; }
+				elseif ($bizCount == 2 && $durHours < 24) { $jumlahHariKerja = 1; }
+				else { $jumlahHariKerja = $bizCount; }
+				return [max(0,$jumlahHariKerja), $businessDaysDecimal > 0 ? round($businessDaysDecimal,2) : 0];
+			};
 
-						// SLA subtotals within process window using unified holidays
-						try {
-							$steps = Proses::where('no_permohonan', $item->no_permohonan)
-								->whereNotNull('status')
-								->where(function ($q) {
-									$q->whereRaw("LOWER(TRIM(status)) IN ('proses','selesai','menunggu')")
-									  ->orWhereRaw("LOWER(status) LIKE '%nunggu%'");
-								})
-								->orderBy('id_proses_permohonan', 'ASC')
-								->get(['jenis_proses_id', 'start_date', 'end_date']);
+			$nonSlaIds = [2, 13, 18, 33, 115];
+			$dinasTeknisIds = [7, 108, 185, 192, 212, 226, 234, 293, 420];
+			$forceDpmIds = [14, 403];
 
-							$steps = $steps->unique(function ($s) {
-								return implode('|', [
-									(string) $s->jenis_proses_id,
-									(string) ($s->start_date ?? ''),
-									(string) ($s->end_date ?? ''),
-								]);
-							})->values();
-
-							try {
-								$holidaySet = Dayoff::whereBetween('tanggal', [$start->toDateString(), $end->toDateString()])
-									->pluck('tanggal')
-									->map(function ($d) { return Carbon::parse($d)->toDateString(); })
-									->unique()->values()->toArray();
-							} catch (\Throwable $e) { $holidaySet = []; }
-
-							$nonSlaIds = [2, 13, 18, 33, 115];
-							$dinasTeknisIds = [7, 108, 185, 192, 212, 226, 234, 293, 420];
-							$sumDpm = 0; $sumDinas = 0; $sumNon = 0; $computedAny = false;
-							foreach ($steps as $s) {
-								$jp = (int) $s->jenis_proses_id;
-								if (empty($s->start_date) || empty($s->end_date)) { continue; }
-								if (in_array((string) $s->start_date, $invalidDates) || in_array((string) $s->end_date, $invalidDates)) { continue; }
-								try { $st = Carbon::parse($s->start_date); $ed = Carbon::parse($s->end_date); } catch (\Throwable $e) { continue; }
-								if ($st->lt($start)) { $st = $start->copy(); }
-								if ($ed->gt($end)) { $ed = $end->copy(); }
-								$diffSecondsStep = $ed->timestamp - $st->timestamp; $jumlahHariStep = 0;
-								if ($st->isSameDay($ed) && $diffSecondsStep > 0) { $jumlahHariStep = 0; }
-								elseif ($diffSecondsStep <= 0) { $jumlahHariStep = 0; }
-								else {
-									$businessDays = []; $cur = $st->copy();
-									while ($cur->lte($ed)) { $isBiz = $cur->dayOfWeekIso >= 1 && $cur->dayOfWeekIso <= 5 && !in_array($cur->toDateString(), $holidaySet); if ($isBiz) { $businessDays[] = $cur->toDateString(); } $cur->addDay()->startOfDay(); }
-									$bizCount = count($businessDays); $durHours = $ed->diffInHours($st);
-									if ($bizCount === 0) { continue; }
-									if ($bizCount > 1 && $durHours < ($bizCount * 24)) { $jumlahHariStep = $bizCount - 1; }
-									elseif ($bizCount == 2 && $durHours < 24) { $jumlahHariStep = 1; }
-									else { $jumlahHariStep = $bizCount; }
-								}
-								$jumlahHariStep = max(0, (int) $jumlahHariStep);
-								$computedAny = true;
-								$isNonSla = in_array($jp, $nonSlaIds, true); $isDinas = in_array($jp, $dinasTeknisIds, true); $isDpm = (!$isNonSla && !$isDinas);
-								if ($isDpm) { $sumDpm += $jumlahHariStep; }
-								if ($isDinas) { $sumDinas += $jumlahHariStep; }
-								if ($isNonSla) { $sumNon += $jumlahHariStep; }
-							}
-							if ($computedAny) {
-								$item->jumlah_hari_kerja_sla_dpmptsp = $sumDpm;
-								$item->jumlah_hari_kerja_sla_dinas_teknis = $sumDinas;
-								$item->jumlah_hari_kerja_sla_gabungan = $sumDpm + $sumDinas;
-								$item->jumlah_hari_kerja_sla_non_sla = $sumNon;
-								$item->jumlah_hari_kerja_sla_selisih = ($item->jumlah_hari_kerja ?? 0) - (($sumDpm + $sumDinas + $sumNon));
-							} else {
-								$item->jumlah_hari_kerja_sla_dpmptsp = null;
-								$item->jumlah_hari_kerja_sla_dinas_teknis = null;
-								$item->jumlah_hari_kerja_sla_gabungan = null;
-								$item->jumlah_hari_kerja_sla_non_sla = null;
-								$item->jumlah_hari_kerja_sla_selisih = null;
-							}
-						} catch (\Throwable $e) {
-							$item->jumlah_hari_kerja_sla_dpmptsp = null;
-							$item->jumlah_hari_kerja_sla_dinas_teknis = null;
-							$item->jumlah_hari_kerja_sla_gabungan = null;
-							$item->jumlah_hari_kerja_sla_non_sla = null;
-							$item->jumlah_hari_kerja_sla_selisih = null;
-						}
-					} else {
+			// Proses setiap item memakai data yang sudah dipreload
+			foreach ($items as $item) {
+				try {
+					$pid = $item->permohonan_izin_id;
+					if (!isset($windows[$pid])) {
 						$item->lama_proses = null;
 						$item->jumlah_hari_kerja = null;
 						$item->business_days_decimal = null;
 						$item->total_hours = null;
 						$item->total_days = null;
+						continue;
+					}
+					[$start,$end] = $windows[$pid];
+					$diffSeconds = $end->timestamp - $start->timestamp;
+					$item->total_hours = round($diffSeconds / 3600, 2);
+					$item->total_days = round($item->total_hours / 24, 2);
+					if ($start->isSameDay($end) && $diffSeconds > 0) {
+						$item->lama_proses = 0; $item->durasi_jam = round($diffSeconds/3600,2);
+					} elseif ($diffSeconds <= 0) {
+						$item->lama_proses = 0; $item->durasi_jam = 0;
+					} else {
+						$item->lama_proses = ceil($diffSeconds / 86400); $item->durasi_jam = null;
+					}
+					// Filter holiday untuk window ini
+					$holidays = array_values(array_filter($holidayGlobal, function($h) use ($start,$end){ return $h >= $start->toDateString() && $h <= $end->toDateString(); }));
+					list($jumlahHariKerja,$businessDaysDecimal) = $calcBusinessDays($start,$end,$holidays);
+					$item->jumlah_hari_kerja = $jumlahHariKerja;
+					$item->business_days_decimal = $businessDaysDecimal;
+
+					// Hitung SLA per langkah (replikasi logika lama)
+					$steps = $relatedByNoPerm->get($item->no_permohonan, collect())->filter(function($s){ return !empty($s->status); });
+					$steps = $steps->unique(function ($s) {
+						return implode('|', [ (string)$s->jenis_proses_id, (string)($s->start_date ?? ''), (string)($s->end_date ?? '') ]);
+					})->values();
+					$holidaySet = $holidays; // gunakan holiday window yang sama
+					$sumDpm=0; $sumDinas=0; $sumNon=0; $computedAny=false;
+					foreach ($steps as $s) {
+						if (empty($s->start_date) && !empty($s->end_date) && !in_array((string)$s->end_date,$invalidDates)) { $s->start_date = $s->end_date; }
+						$jp = (int)$s->jenis_proses_id;
+						if (empty($s->start_date) || empty($s->end_date)) { continue; }
+						if (in_array((string)$s->start_date,$invalidDates) || in_array((string)$s->end_date,$invalidDates)) { continue; }
+						try { $st = Carbon::parse($s->start_date); $ed = Carbon::parse($s->end_date); } catch (\Throwable $e) { continue; }
+						if ($st->lt($start)) { $st = $start->copy(); }
+						if ($ed->gt($end)) { $ed = $end->copy(); }
+						$diffSecStep = $ed->timestamp - $st->timestamp; $jumlahHariStep = 0;
+						if ($st->isSameDay($ed) && $diffSecStep > 0) { $jumlahHariStep = 0; }
+						elseif ($diffSecStep <= 0) { $jumlahHariStep = 0; }
+						else {
+							$businessDays = []; $cur = $st->copy();
+							while ($cur->lte($ed)) { $isBiz = $cur->dayOfWeekIso >=1 && $cur->dayOfWeekIso <=5 && !in_array($cur->toDateString(), $holidaySet); if ($isBiz) { $businessDays[] = $cur->toDateString(); } $cur->addDay()->startOfDay(); }
+							$bizCount = count($businessDays); $durHours = $ed->diffInHours($st);
+							if ($bizCount === 0) { continue; }
+							if ($bizCount > 1 && $durHours < ($bizCount*24)) { $jumlahHariStep = $bizCount - 1; }
+							elseif ($bizCount == 2 && $durHours < 24) { $jumlahHariStep = 1; }
+							else { $jumlahHariStep = $bizCount; }
+						}
+						$jumlahHariStep = max(0,(int)$jumlahHariStep); $computedAny = true;
+						if (in_array($jp,$forceDpmIds,true)) { $sumDpm += $jumlahHariStep; }
+						else {
+							$isNon = in_array($jp,$nonSlaIds,true); $isDinas = in_array($jp,$dinasTeknisIds,true); $isDpm = (!$isNon && !$isDinas);
+							if ($isDpm) { $sumDpm += $jumlahHariStep; }
+							if ($isDinas) { $sumDinas += $jumlahHariStep; }
+							if ($isNon) { $sumNon += $jumlahHariStep; }
+						}
+					}
+					if ($computedAny) {
+						$item->jumlah_hari_kerja_sla_dpmptsp = $sumDpm;
+						$item->jumlah_hari_kerja_sla_dinas_teknis = $sumDinas;
+						$item->jumlah_hari_kerja_sla_gabungan = $sumDpm + $sumDinas;
+						$item->jumlah_hari_kerja_sla_non_sla = $sumNon;
+						$item->jumlah_hari_kerja_sla_selisih = ($item->jumlah_hari_kerja ?? 0) - ($sumDpm + $sumDinas + $sumNon);
+					} else {
+						$item->jumlah_hari_kerja_sla_dpmptsp = null;
+						$item->jumlah_hari_kerja_sla_dinas_teknis = null;
+						$item->jumlah_hari_kerja_sla_gabungan = null;
+						$item->jumlah_hari_kerja_sla_non_sla = null;
+						$item->jumlah_hari_kerja_sla_selisih = null;
 					}
 				} catch (\Throwable $e) {
 					$item->lama_proses = null;
@@ -675,17 +718,36 @@ public function show(Request $request, $id)
 					$item->business_days_decimal = null;
 					$item->total_hours = null;
 					$item->total_days = null;
+					$item->jumlah_hari_kerja_sla_dpmptsp = null;
+					$item->jumlah_hari_kerja_sla_dinas_teknis = null;
+					$item->jumlah_hari_kerja_sla_gabungan = null;
+					$item->jumlah_hari_kerja_sla_non_sla = null;
+					$item->jumlah_hari_kerja_sla_selisih = null;
 				}
-				return $item;
-			});
+			}
 
-			$totalJumlahData = $items->count();
+			$totalJumlahData = $items->count(); // jumlah izin terbit (selesai)
 			$totalJumlahHari = $items->sum('jumlah_hari_kerja');
 			$rataRataJumlahHari = $totalJumlahData ? $totalJumlahHari / $totalJumlahData : 0;
-			$jumlah_permohonan = $totalJumlahData; $coverse = 0;
+			// Jumlah pengajuan = semua permohonan (jenis proses 2/14) yang mulai (start_date) atau fallback end_date di tahun (dan bulan jika dipilih)
+			$pengajuanQuery = Proses::query()->whereIn('jenis_proses_id',[2,14])
+				->where(function($q) use ($year,$month){
+					$q->whereYear('start_date',$year);
+					if($month){ $q->whereMonth('start_date',$month); }
+				});
+			// Fallback tambahan: jika start_date null, pakai end_date di tahun/bulan
+			$pengajuanQuery->orWhere(function($q) use ($year,$month){
+				$q->whereIn('jenis_proses_id',[2,14])
+				  ->whereNull('start_date')
+				  ->whereYear('end_date',$year);
+				if($month){ $q->whereMonth('end_date',$month); }
+			});
+			$jumlah_permohonan = $pengajuanQuery->distinct()->count('permohonan_izin_id');
+			$coverse = $jumlah_permohonan ? round(($totalJumlahData / $jumlah_permohonan)*100,2) : 0;
+
 			$rekapPerBulan = collect();
-			$items->groupBy(function($item) { return Carbon::parse($item->end_date)->format('Y-m'); })
-				->each(function($group, $bulan) use (&$rekapPerBulan) {
+			$items->groupBy(function($item){ return Carbon::parse($item->end_date)->format('Y-m'); })
+				->each(function($group,$bulan) use (&$rekapPerBulan){
 					$jumlah_izin_terbit = $group->count();
 					$jumlah_lama_proses = $group->sum('lama_proses');
 					$jumlah_hari_kerja = $group->sum('jumlah_hari_kerja');
@@ -738,7 +800,7 @@ public function show(Request $request, $id)
         if ($year <= 0 || $month <= 0 || $month > 12) {
             return response()->json(['error' => 'Parameter tidak valid'], 422);
         }
-        $cacheKey = 'sicantik_stat_detail_v1_'.$year.'_'.str_pad($month,2,'0',STR_PAD_LEFT);
+		$cacheKey = 'sicantik_stat_detail_v2_'.$year.'_'.str_pad($month,2,'0',STR_PAD_LEFT);
         $items = Cache::remember($cacheKey, now()->addHours(6), function () use ($year, $month) {
             $list = Proses::query()
                 ->where('jenis_proses_id', 40)
@@ -756,13 +818,19 @@ public function show(Request $request, $id)
                     'end_date' => $item->end_date,
                 ];
                 try {
-                    $startDate = Proses::where('permohonan_izin_id', $item->permohonan_izin_id)
-                        ->where('jenis_proses_id', 2)
-                        ->whereNotNull('end_date')
-                        ->whereNotIn('end_date', $invalid)
-                        ->min('end_date');
-                    if ($startDate && $item->end_date) {
-                        $start = Carbon::parse($startDate); $end = Carbon::parse($item->end_date);
+					// Window start: earliest valid start_date of step in (2,14)
+					$startDate = Proses::where('permohonan_izin_id', $item->permohonan_izin_id)
+						->whereIn('jenis_proses_id', [2,14])
+						->whereNotNull('start_date')
+						->whereNotIn('start_date', $invalid)
+						->min('start_date');
+					// Window end: latest end_date across all steps for that permohonan
+					$latestEnd = Proses::where('permohonan_izin_id', $item->permohonan_izin_id)
+						->whereNotNull('end_date')
+						->whereNotIn('end_date', $invalid)
+						->max('end_date');
+					if ($startDate && $latestEnd) {
+						$start = Carbon::parse($startDate); $end = Carbon::parse($latestEnd);
                         $diffSeconds = $end->timestamp - $start->timestamp;
                         if ($start->isSameDay($end) && $diffSeconds > 0) { $row['lama_proses'] = 0; }
                         elseif ($diffSeconds <= 0) { $row['lama_proses'] = 0; }
@@ -778,19 +846,24 @@ public function show(Request $request, $id)
                         else { $row['jumlah_hari_kerja'] = $bizCount; }
 
                         // SLA subtotals
-                        $steps = Proses::where('no_permohonan', $item->no_permohonan)
-                            ->whereNotNull('status')
-                            ->where(function ($q) {
-                                $q->whereRaw("LOWER(TRIM(status)) IN ('proses','selesai','menunggu')")
-                                  ->orWhereRaw("LOWER(status) LIKE '%nunggu%'");
-                            })
-                            ->orderBy('id_proses_permohonan', 'ASC')
-                            ->get(['jenis_proses_id', 'start_date', 'end_date']);
+						$steps = Proses::where('no_permohonan', $item->no_permohonan)
+							->whereNotNull('status')
+							->where(function ($q) {
+								$q->whereRaw("LOWER(TRIM(status)) IN ('proses','selesai','menunggu','verifikasi','validasi','upload','tte','terbit','diterbitkan')")
+								  ->orWhereRaw("LOWER(status) LIKE '%nunggu%'");
+							})
+							->orderBy('id_proses_permohonan', 'ASC')
+							->get(['jenis_proses_id', 'start_date', 'end_date']);
                         $steps = $steps->unique(function ($s) { return implode('|', [(string)$s->jenis_proses_id,(string)($s->start_date ?? ''),(string)($s->end_date ?? '')]); })->values();
-                        $holidaySet = $holidays; // reuse unified set for window
-                        $nonSlaIds = [2, 13, 18, 33, 115]; $dinasIds = [7,108,185,192,212,226,234,293,420];
+						$holidaySet = $holidays; // reuse unified set for window
+						$nonSlaIds = [2, 13, 18, 33, 115];
+						$dinasIds = [7,108,185,192,212,226,234,293,420];
+						$forceDpmIds = [14,403]; // explicitly count as DPMPTSP per request
                         $sumDpm=0; $sumDinas=0; $sumNon=0;
 						foreach ($steps as $s) {
+							if (empty($s->start_date) && !empty($s->end_date) && !in_array((string)$s->end_date, $invalid)) {
+								$s->start_date = $s->end_date;
+							}
                             if (empty($s->start_date) || empty($s->end_date)) { continue; }
                             if (in_array((string)$s->start_date,$invalid) || in_array((string)$s->end_date,$invalid)) { continue; }
                             try { $st = Carbon::parse($s->start_date); $ed = Carbon::parse($s->end_date); } catch (\Throwable $e) { continue; }
@@ -809,8 +882,17 @@ public function show(Request $request, $id)
 								if($n===0){continue;}
 								$val=($n>1&&$hrs<($n*24))?($n-1):(($n==2&&$hrs<24)?1:$n);
 							}
-                            $jp=(int)$s->jenis_proses_id; $isNon=in_array($jp,$nonSlaIds,true); $isDin=in_array($jp,$dinasIds,true); $isDpm=(!$isNon&&!$isDin);
-                            if($isDpm){$sumDpm+=$val;} if($isDin){$sumDinas+=$val;} if($isNon){$sumNon+=$val;}
+							$jp=(int)$s->jenis_proses_id;
+							if (in_array($jp, $forceDpmIds, true)) {
+								$sumDpm += $val;
+							} else {
+								$isNon=in_array($jp,$nonSlaIds,true);
+								$isDin=in_array($jp,$dinasIds,true);
+								$isDpm=(!$isNon&&!$isDin);
+								if($isDpm){$sumDpm+=$val;}
+								if($isDin){$sumDinas+=$val;}
+								if($isNon){$sumNon+=$val;}
+							}
                         }
                         $row['jumlah_hari_kerja_sla_dpmptsp'] = $sumDpm;
                         $row['jumlah_hari_kerja_sla_dinas_teknis'] = $sumDinas;
@@ -843,14 +925,15 @@ public function show(Request $request, $id)
 		if ($steps->isEmpty()) {
 			return view('admin.nonberusaha.sicantik.detailproses', compact('judul','no_permohonan'))->with('detailError','Data proses tidak ditemukan');
 		}
-		// Tentukan window keseluruhan (start earliest valid jenis_proses_id=2 end latest end_date dari jenis_proses_id=40 kalau ada)
+		// Tentukan window keseluruhan:
+		// - Start: earliest valid start_date untuk langkah jenis_proses_id=2 (Entri Data)
+		// - End: latest valid end_date dari SEMUA langkah pada permohonan (agar langkah pasca-40 tetap terhitung)
 		$overallStart = Proses::where('no_permohonan',$no_permohonan)
-			->where('jenis_proses_id',2)
-			->whereNotNull('end_date')
-			->whereNotIn('end_date',$invalid)
-			->min('end_date');
+			->whereIn('jenis_proses_id',[2,14])
+			->whereNotNull('start_date')
+			->whereNotIn('start_date',$invalid)
+			->min('start_date');
 		$overallEnd = Proses::where('no_permohonan',$no_permohonan)
-			->where('jenis_proses_id',40)
 			->whereNotNull('end_date')
 			->whereNotIn('end_date',$invalid)
 			->max('end_date');
@@ -875,16 +958,33 @@ public function show(Request $request, $id)
 				'status' => $s->status,
 				'start_date' => $s->start_date,
 				'end_date' => $s->end_date,
+				'durasi_hari' => null,
 				'sla_klasifikasi' => null,
 				'lama_hari_kerja' => null,
 				'lama_jam' => null,
 			];
-			if (empty($s->start_date) || empty($s->end_date)) { return $row; }
+			if (empty($s->start_date) && !empty($s->end_date) && !in_array((string)$s->end_date,$invalid)) {
+				$s->start_date = $s->end_date; // fallback same-day
+				$row['start_date'] = $s->start_date;
+			}
+			if (empty($s->end_date)) { return $row; }
+			if (empty($s->start_date)) { return $row; }
 			if (in_array((string)$s->start_date,$invalid) || in_array((string)$s->end_date,$invalid)) { return $row; }
 			try { $st = Carbon::parse($s->start_date); $ed = Carbon::parse($s->end_date); } catch(\Throwable $e){ return $row; }
 			if ($overallStartCarbon && $st->lt($overallStartCarbon)) { $st = $overallStartCarbon->copy(); }
 			if ($overallEndCarbon && $ed->gt($overallEndCarbon)) { $ed = $overallEndCarbon->copy(); }
-			$diff = $ed->timestamp - $st->timestamp; if ($diff <= 0) { return $row; }
+			$diff = $ed->timestamp - $st->timestamp; if ($diff <= 0) {
+				// Non-positive duration: normalize to zeros instead of leaving blanks
+				$row['lama_jam'] = 0;
+				$row['lama_menit'] = 0;
+				$row['durasi_hari'] = 0;
+				$row['lama_hari_kerja'] = 0;
+				$jp = (int)$s->jenis_proses_id;
+				if (in_array($jp,$nonSlaIds,true)) { $row['sla_klasifikasi'] = 'Non-SLA'; }
+				elseif (in_array($jp,$dinasIds,true)) { $row['sla_klasifikasi'] = 'Dinas Teknis'; }
+				else { $row['sla_klasifikasi'] = 'DPMPTSP'; }
+				return $row;
+			}
 			// Robust duration in minutes to prevent negative values
 			$totalMinutes = $ed->greaterThan($st) ? $ed->diffInMinutes($st) : 0;
 			$hours = intdiv($totalMinutes, 60);
@@ -893,6 +993,7 @@ public function show(Request $request, $id)
 			$row['lama_menit'] = $minutes;
 			if ($st->isSameDay($ed) && $diff > 0) {
 				$val = 0; // Same-day dianggap 0 hari kerja (logika konsisten)
+				$row['durasi_hari'] = 0;
 			} else {
 				$days=[]; $cur=$st->copy();
 				while($cur->lte($ed)){
@@ -903,6 +1004,8 @@ public function show(Request $request, $id)
 				$n=count($days); $hrs=$ed->diffInHours($st);
 				if($n===0){ $val=null; }
 				else { $val=($n>1&&$hrs<($n*24))?($n-1):(($n==2&&$hrs<24)?1:$n); }
+				// durasi hari kalender (bukan hari kerja)
+				$row['durasi_hari'] = ($ed->greaterThan($st)) ? (int) ceil(($ed->timestamp - $st->timestamp)/86400) : 0;
 			}
 			$row['lama_hari_kerja'] = $val;
 			$jp = (int)$s->jenis_proses_id;
