@@ -118,7 +118,6 @@
             <thead class="table-primary">
               <tr>
                 <th class="nowrap" rowspan="2">No</th>
-                <th class="nowrap" rowspan="2">Jenis Proses ID</th>
                 <th class="nowrap" rowspan="2">Nama Proses</th>
                 <th class="nowrap" rowspan="2">Mulai</th>
                 <th class="nowrap" rowspan="2">Selesai</th>
@@ -149,7 +148,6 @@
                     $dh = isset($r['durasi_hari']) ? (int)$r['durasi_hari'] : null;
                   @endphp
                   <td>{{ $i+1 }}</td>
-                  <td>{{ $r['jenis_proses_id'] }}</td>
                   <td>{{ $r['nama_proses'] ?? $r['jenis_proses_id'] }}</td>
                   <td>
                     @if(!empty($r['start_date']))
@@ -175,23 +173,23 @@
                   <td class="text-center">{{ ($isGab && is_numeric($r['lama_hari_kerja'])) ? $r['lama_hari_kerja'] : '-' }}</td>
                 </tr>
               @empty
-                <tr><td colspan="8" class="text-center text-muted">Tidak ada langkah</td></tr>
+                <tr><td colspan="12" class="text-center text-muted">Tidak ada langkah</td></tr>
               @endforelse
             </tbody>
             <tfoot>
               <tr class="table-info">
-                <td colspan="10" class="text-end"><strong>Total</strong></td>
+                <td colspan="9" class="text-end"><strong>Total</strong></td>
                 <td class="text-center"><strong>{{ $sumDpm }}</strong></td>
                 <td class="text-center"><strong>{{ $sumDinas }}</strong></td>
                 <td class="text-center"><strong>{{ $sumGab }}</strong></td>
               </tr>
               <tr class="table-warning">
-                <td colspan="10"><strong>Total Hari Kerja</strong></td>
-                <td class="text-center" colspan="4"><strong>{{ $totalHari }}</strong></td>
+                <td colspan="9"><strong>Total Hari Kerja</strong></td>
+                <td class="text-center" colspan="3"><strong>{{ $totalHari }}</strong></td>
               </tr>
               <tr class="table-light">
-                <td colspan="10"><strong>Rata-rata Hari Kerja per Langkah</strong></td>
-                <td class="text-center" colspan="4"><strong>{{ $rataHari }}</strong></td>
+                <td colspan="9"><strong>Rata-rata Hari Kerja per Langkah</strong></td>
+                <td class="text-center" colspan="3"><strong>{{ $rataHari }}</strong></td>
               </tr>
             </tfoot>
           </table>
@@ -216,8 +214,9 @@
               const rows = Array.from(tbody.querySelectorAll('tr')).filter(r=>r.style.display!=='none');
               rows.sort((a,b)=>{
                 // Sort by HK Total column (index 9)
-                const va = parseInt(a.children[9].textContent.replace(/[^0-9-]/g,''))||0;
-                const vb = parseInt(b.children[9].textContent.replace(/[^0-9-]/g,''))||0;
+                // Setelah penghapusan kolom Jenis Proses ID, indeks kolom 'Total Hari Kerja' bergeser ke children[8]
+                const va = parseInt(a.children[8].textContent.replace(/[^0-9-]/g,''))||0;
+                const vb = parseInt(b.children[8].textContent.replace(/[^0-9-]/g,''))||0;
                 return asc ? (va - vb) : (vb - va);
               });
               rows.forEach(r=>tbody.appendChild(r));
