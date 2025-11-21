@@ -186,6 +186,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/pbg', [DashboardPbgController::class, 'index']);
     Route::post('/pbgsort', [DashboardPbgController::class, 'index']);
     Route::post('/pbg/import_excel', [DashboardPbgController::class, 'import_excel']);
+    Route::post('/pbg', [DashboardPbgController::class, 'store']);
+    // Statistik PBG (register before parameterized /pbg/{pbg})
+    Route::get('/pbg/statistik', [DashboardPbgController::class, 'statistik']);
+    Route::post('/pbg/statistik', [DashboardPbgController::class, 'statistik']);
+    Route::post('/pbg/{pbg}/file/delete', [DashboardPbgController::class, 'deleteFile']);
+    // Detail harus sebelum /edit agar tidak ketimpa
+    Route::get('/pbg/{pbg}', [DashboardPbgController::class, 'show']);
+    Route::get('/pbg/{pbg}/edit', [DashboardPbgController::class, 'edit']);
+    Route::put('/pbg/{pbg}', [DashboardPbgController::class, 'update']);
+    Route::delete('/pbg/{pbg}', [DashboardPbgController::class, 'destroy']);
 
     // Role / Permission helpers (protected)
     Route::get('/createrolepermission', function(){

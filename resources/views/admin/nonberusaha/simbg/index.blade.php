@@ -2,6 +2,18 @@
 @section('content')
               <div class="page-header d-print-none">
                 <div class="container-xl">
+                    @if(session('success'))
+                      <div class="alert alert-success alert-dismissible" role="alert">
+                        {{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                      </div>
+                    @endif
+                    @if(session('error'))
+                      <div class="alert alert-danger alert-dismissible" role="alert">
+                        {{ session('error') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                      </div>
+                    @endif
                     <div class="row g-2 align-items-center">
                         <div class="col">
                         <!-- Page pre-title -->
@@ -18,12 +30,12 @@
                           <span class="d-none d-sm-inline">
                           
                           </span>
-                          <a href="{{ url('/mppd/statistik')}}" class="btn btn-info d-none d-sm-inline-block">
+                          <a href="{{ url('/pbg/statistik')}}" class="btn btn-info d-none d-sm-inline-block">
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-chart-infographic"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M7 3v4h4" /><path d="M9 17l0 4" /><path d="M17 14l0 7" /><path d="M13 13l0 8" /><path d="M21 12l0 9" /></svg>
                             Statistik
                           </a>
-                          <a href="{{ url('/berusaha/statistik')}}" class="btn btn-info d-sm-none btn-icon">
+                          <a href="{{ url('/pbg/statistik')}}" class="btn btn-info d-sm-none btn-icon">
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-chart-infographic"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M7 3v4h4" /><path d="M9 17l0 4" /><path d="M17 14l0 7" /><path d="M13 13l0 8" /><path d="M21 12l0 9" /></svg>
                           </a>
@@ -47,17 +59,19 @@
                       </div>
                       <div class="col-auto ms-auto d-print-none">
                         <div class="btn-list">
-                          <span class="d-none d-sm-inline">
-                          
-                          </span>
-                          <a href="#" class="btn btn-primary d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#modal-team">
-                            <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
+                          <a href="#" class="btn btn-primary d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#modal-import">
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-table-import"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 21h-7a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v8" /><path d="M3 10h18" /><path d="M10 3v18" /><path d="M19 22v-6" /><path d="M22 19l-3 -3l-3 3" /></svg>
                             Import Data
                           </a>
-                          <a href="#" class="btn btn-primary d-sm-none btn-icon" data-bs-toggle="modal" data-bs-target="#modal-team">
-                            <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
+                          <a href="#" class="btn btn-primary d-sm-none btn-icon" data-bs-toggle="modal" data-bs-target="#modal-import">
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-table-import"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 21h-7a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v8" /><path d="M3 10h18" /><path d="M10 3v18" /><path d="M19 22v-6" /><path d="M22 19l-3 -3l-3 3" /></svg>
+                          </a>
+                          <a href="#" class="btn btn-success d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#modal-create">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-plus"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg>
+                            Tambah Data
+                          </a>
+                          <a href="#" class="btn btn-success d-sm-none btn-icon" data-bs-toggle="modal" data-bs-target="#modal-create">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-plus"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg>
                           </a>
                         </div>
                       </div>
@@ -110,11 +124,12 @@
                     <table class="table card-table table-vcenter text-nowrap  table-striped ">
                       <thead class="text-center">
                         <tr>
-                          <th >No.</th>
-                          <th >Permohonan </th>
-                          <th >Status</th>
-                          <th >Fungsi</th>
-                          <th >Nilai Retribusi</th>
+                          <th>No.</th>
+                          <th>Identitas</th>
+                          <th>Bangunan</th>
+                          <th>Lokasi & Tanah</th>
+                          <th>Retribusi</th>
+                          <th>Aksi</th>
                         </tr>
                         
                       </thead>
@@ -124,33 +139,70 @@
                           
                         @endphp
                         @foreach ($items as $index => $item)
-                        @php
-                            $dates= Carbon\Carbon::now()->diff($item->start_date);
-                            $pengajuan= Carbon\Carbon::now()->diff($item->tgl_pengajuan_time);
-                        @endphp
                         <tr>
                           <td>{{ $loop->iteration + $items->firstItem()-1 }}</td>
                           <td>
-                            <div>{{ $item->nama_pemilik }}</div>
-                            <div class="text-secondary">{{ $item->jenis_permohonan }}</div>
-                            <div class="text-secondary">{{ $item->nomor_dokumen }}</div>
-                            <div class="text-secondary">{{ $item->nomor_registrasi }}</div>
-                            <div class="text-secondary">{{ Carbon\Carbon::parse($item->tanggal)->translatedFormat('d F Y h:i a') }}</div>
+                            <div class="fw-bold"><a href="{{ url('/pbg/'.$item->id) }}" class="text-decoration-none">{{ $item->nomor }}</a></div>
+                            <div class="text-secondary">Pemohon: {{ $item->nama_pemohon }}</div>
+                            <div class="text-secondary text-wrap">Alamat: {{ Str::limit($item->alamat,60) }}</div>
+                            <div class="text-secondary">Terbit: {{ $item->tgl_terbit ? Carbon\Carbon::parse($item->tgl_terbit)->translatedFormat('d F Y') : '-' }}</div>
                           </td>
                           <td>
-                            <div>{{ $item->status }}</div>
-                            <div class="text-secondary">{{ $item->status_slf }}</div>
-                            <div class="text-secondary text-wrap">Kel. {{ $item->kelurahan_bangunan }}, Kec. {{ $item->kecamatan_bangunan }}, {{ $item->kota_kabupaten_bangunan }}</div>
+                            <div>{{ $item->nama_bangunan }}</div>
+                            <div class="text-secondary">Peruntukan: {{ $item->peruntukan }}</div>
+                            <div class="text-secondary">Fungsi: {{ $item->fungsi }} @if($item->sub_fungsi) / {{ $item->sub_fungsi }} @endif</div>
+                            <div class="text-secondary">Klasifikasi: {{ $item->klasifikasi }}</div>
+                            <div class="text-secondary">Luas: {{ $item->luas_bangunan }} m²</div>
                           </td>
                           <td>
-                            <div>{{ $item->fungsi }}</div>
-                            <div class="text-secondary text-wrap">{{ $item->tipe_konsultasi }}</div>
+                            <div class="text-secondary">Lokasi: {{ Str::limit($item->lokasi,50) }}</div>
+                            @if($item->tanah && $item->tanah->count())
+                              <div class="mt-1 small">
+                                @foreach($item->tanah as $t)
+                                  <div>Tanah: {{ $t->hak_tanah }} | {{ $t->luas_tanah }} m² | {{ $t->pemilik_tanah }}</div>
+                                @endforeach
+                              </div>
+                            @else
+                              <div class="text-muted small">Tanah: -</div>
+                            @endif
                           </td>
-                          <td >
-                            <div>Rp.@currency($item->nilai_retribusi)</div>
-                            
+                          <td>
+                            <div>Rp.@currency($item->retribusi)</div>
                           </td>
-                          
+                          <td class="text-nowrap">
+                            <div class="dropdown">
+                              <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Aksi
+                              </button>
+                              <div class="dropdown-menu">
+                                <a class="dropdown-item" href="{{ url('/pbg/'.$item->id.'/edit') }}">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icon-tabler-pencil me-1"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 20h4l10.5 -10.5a1.5 1.5 0 0 0 -4 -4l-10.5 10.5v4" /><path d="M13.5 6.5l4 4" /></svg>
+                                  Edit
+                                </a>
+                                @if($item->file_pbg)
+                                <button type="button" class="dropdown-item view-pdf" data-pdf="{{ asset('storage/'.$item->file_pbg) }}" data-bs-toggle="modal" data-bs-target="#modal-pbg-view">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icon-tabler-file-text me-1"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M12 20h-7a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h7l5 5v9a2 2 0 0 1 -2 2h-3" /><path d="M9 9h1" /><path d="M9 13h6" /><path d="M9 17h6" /></svg>
+                                  Lihat PDF
+                                </button>
+                                <form action="{{ url('/pbg/'.$item->id.'/file/delete') }}" method="POST" onsubmit="return confirm('Hapus file PBG ini?')">
+                                  @csrf
+                                  <button type="submit" class="dropdown-item text-danger">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icon-tabler-file-minus me-1"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M12 12h-6" /><path d="M12 20h-7a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h7l5 5v3" /></svg>
+                                    Hapus File
+                                  </button>
+                                </form>
+                                @endif
+                                <form action="{{ url('/pbg/'.$item->id) }}" method="POST" onsubmit="return confirm('Yakin hapus data ini?')">
+                                  @csrf
+                                  @method('DELETE')
+                                  <button type="submit" class="dropdown-item text-danger">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icon-tabler-trash me-1"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7h16" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3h6v3" /></svg>
+                                    Hapus
+                                  </button>
+                                </form>
+                              </div>
+                            </div>
+                          </td>
                         </tr>
                         @endforeach
                         @if($items->count() == 0)
@@ -177,7 +229,7 @@
               $startYear = 2018;
               $currentYear = date('Y'); // Tahun sekarang
               @endphp
-              <div class="modal  fade" id="modal-team" tabindex="-1" role="dialog" aria-hidden="true">
+              <div class="modal  fade" id="modal-import" tabindex="-1" role="dialog" aria-hidden="true">
                 <form method="post" action="{{ url('/pbg/import_excel')}}" enctype="multipart/form-data">
                   {{ csrf_field() }}
                 <div class="modal-dialog modal-dialog-centered" role="document">
@@ -198,6 +250,100 @@
                     </div>
                   </div>
                 </div>
+                </form>
+              </div>
+              <div class="modal fade" id="modal-create" tabindex="-1" role="dialog" aria-hidden="true">
+                <form method="post" action="{{ url('/pbg') }}" enctype="multipart/form-data">
+                  @csrf
+                  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title">Tambah Data PBG</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body">
+                        <div class="row g-3">
+                          <div class="col-md-4">
+                            <label class="form-label">Nomor</label>
+                            <input type="text" name="nomor" class="form-control" />
+                          </div>
+                          <div class="col-md-8">
+                            <label class="form-label">Nama Pemohon</label>
+                            <input type="text" name="nama_pemohon" class="form-control" />
+                          </div>
+                          <div class="col-12">
+                            <label class="form-label">Alamat Pemohon</label>
+                            <textarea name="alamat" class="form-control" rows="2"></textarea>
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label">Peruntukan</label>
+                            <input type="text" name="peruntukan" class="form-control" />
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label">Nama Bangunan</label>
+                            <input type="text" name="nama_bangunan" class="form-control" />
+                          </div>
+                          <div class="col-md-4">
+                            <label class="form-label">Fungsi</label>
+                            <input type="text" name="fungsi" class="form-control" />
+                          </div>
+                          <div class="col-md-4">
+                            <label class="form-label">Sub Fungsi</label>
+                            <input type="text" name="sub_fungsi" class="form-control" />
+                          </div>
+                          <div class="col-md-4">
+                            <label class="form-label">Klasifikasi</label>
+                            <input type="text" name="klasifikasi" class="form-control" />
+                          </div>
+                          <div class="col-md-4">
+                            <label class="form-label">Luas Bangunan (m²)</label>
+                            <input type="number" step="0.01" name="luas_bangunan" class="form-control" />
+                          </div>
+                          <div class="col-md-4">
+                            <label class="form-label">Retribusi (Rp)</label>
+                            <input type="number" step="0.01" name="retribusi" class="form-control" />
+                          </div>
+                          <div class="col-md-4">
+                            <label class="form-label">Tanggal Terbit</label>
+                            <input type="date" name="tgl_terbit" class="form-control" />
+                          </div>
+                          <div class="col-12">
+                            <label class="form-label">Lokasi</label>
+                            <textarea name="lokasi" class="form-control" rows="2"></textarea>
+                          </div>
+                          <div class="col-12 border-top pt-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                              <h6 class="mb-2">Data Tanah (Bisa lebih dari satu)</h6>
+                              <button type="button" class="btn btn-sm btn-outline-primary" id="addTanahBtn">Tambah Tanah</button>
+                            </div>
+                            <div id="tanahRepeater" class="row g-2">
+                              <div class="tanah-item border rounded p-2 position-relative">
+                                <button type="button" class="btn btn-sm btn-link text-danger position-absolute top-0 end-0 remove-tanah" style="display:none">Hapus</button>
+                                <div class="row g-2">
+                                  <div class="col-md-4">
+                                    <label class="form-label">Hak Tanah</label>
+                                    <input type="text" name="hak_tanah[]" class="form-control" />
+                                  </div>
+                                  <div class="col-md-4">
+                                    <label class="form-label">Luas Tanah (m²)</label>
+                                    <input type="number" step="0.01" name="luas_tanah[]" class="form-control" />
+                                  </div>
+                                  <div class="col-md-4">
+                                    <label class="form-label">Pemilik Tanah</label>
+                                    <input type="text" name="pemilik_tanah[]" class="form-control" />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn" data-bs-dismiss="modal">Tutup</button>
+                        <button type="submit" class="btn btn-success">Simpan</button>
+                      </div>
+                    </div>
+                  </div>
                 </form>
               </div>
               <div class="modal  fade" id="modal-team-stat" tabindex="-1" role="dialog" aria-hidden="true">
@@ -299,3 +445,63 @@
                 </div>
               </div>
 @endsection
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const addBtn = document.getElementById('addTanahBtn');
+  const container = document.getElementById('tanahRepeater');
+  addBtn.addEventListener('click', () => {
+    const first = container.querySelector('.tanah-item');
+    const clone = first.cloneNode(true);
+    // reset values
+    clone.querySelectorAll('input').forEach(i => i.value='');
+    // show remove button
+    clone.querySelector('.remove-tanah').style.display='block';
+    container.appendChild(clone);
+    refreshRemoveButtons();
+  });
+  function refreshRemoveButtons(){
+    const items = container.querySelectorAll('.tanah-item');
+    items.forEach((item, idx) => {
+      const removeBtn = item.querySelector('.remove-tanah');
+      removeBtn.onclick = () => { item.remove(); refreshRemoveButtons(); };
+      if(idx === 0){ removeBtn.style.display='none'; } else { removeBtn.style.display='block'; }
+    });
+  }
+  refreshRemoveButtons();
+
+  // PDF viewer logic
+  const pdfButtons = document.querySelectorAll('.view-pdf');
+  const pdfFrame = document.getElementById('pbgPdfFrame');
+  pdfButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const url = btn.getAttribute('data-pdf');
+      if(pdfFrame){ pdfFrame.src = url; }
+    });
+  });
+  const pdfModal = document.getElementById('modal-pbg-view');
+  if(pdfModal){
+    pdfModal.addEventListener('hidden.bs.modal', () => { if(pdfFrame){ pdfFrame.src = ''; } });
+  }
+});
+</script>
+@endpush
+
+@push('scripts')
+<div class="modal fade" id="modal-pbg-view" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-fullscreen">
+    <div class="modal-content" style="height:100vh;display:flex;flex-direction:column;">
+      <div class="modal-header">
+        <h5 class="modal-title">File PBG (PDF)</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0" style="flex:1 1 auto;display:flex;">
+        <iframe id="pbgPdfFrame" src="" style="width:100%;height:100%;border:0;" title="PBG PDF"></iframe>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+@endpush

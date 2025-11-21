@@ -7,16 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
-class Pbg extends Model
+class Tanah extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'pbg';
+    protected $table = 'tanah';
     protected $guarded = ['id'];
 
-    // Allow mass assignment for new schema columns
     protected $fillable = [
-        'uuid','nomor','nama_pemohon','alamat','peruntukan','nama_bangunan','fungsi','sub_fungsi','klasifikasi','luas_bangunan','lokasi','retribusi','tgl_terbit','file_pbg'
+        'uuid','pbg_id','hak_tanah','luas_tanah','pemilik_tanah'
     ];
 
     protected static function boot()
@@ -29,8 +28,8 @@ class Pbg extends Model
         });
     }
 
-    public function tanah()
+    public function pbg()
     {
-        return $this->hasMany(Tanah::class, 'pbg_id');
+        return $this->belongsTo(Pbg::class, 'pbg_id');
     }
 }
