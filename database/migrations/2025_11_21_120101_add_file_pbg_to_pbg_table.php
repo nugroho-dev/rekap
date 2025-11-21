@@ -10,7 +10,8 @@ return new class extends Migration {
         // Tabel sebelumnya bernama 'pbg' sesuai model
         Schema::table('pbg', function (Blueprint $table) {
             if (!Schema::hasColumn('pbg','file_pbg')) {
-                $table->string('file_pbg')->nullable()->after('tgl_terbit');
+                // Removed after('tgl_terbit') to avoid dependency on column order when running before restructure
+                $table->string('file_pbg')->nullable();
             }
         });
     }
