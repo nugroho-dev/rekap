@@ -96,122 +96,148 @@
                     </div>
                 </div>
               </div>  
-              <div class="col-sm-6 col-lg-6">
-                <div class="card">
-                  <div class="card-body">
-                    <div class="d-flex align-items-center">
-                      <div class="subheader">Pengajuan Izin</div>
-                      <div class="ms-auto lh-1">
-                        <div class="dropdown">
-                          <a class="dropdown-toggle text-muted" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Lihat Data</a>
-                          <div class="dropdown-menu dropdown-menu-end">
-                            <a class="dropdown-item active" href="#">Lihat Data</a>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="h1 mb-3">{{ $jumlah_permohonan }}</div>
-                    <div class="d-flex mb-2">
-                      <div>Conversion rate</div>
-                      <div class="ms-auto">
-                        <span class="text-green d-inline-flex align-items-center lh-1">
-                            {{ $coverse }}% <!-- Download SVG icon from http://tabler-icons.io/i/trending-up -->
-                          <svg xmlns="http://www.w3.org/2000/svg" class="icon ms-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 17l6 -6l4 4l8 -8" /><path d="M14 7l7 0l0 7" /></svg>
-                        </span>
-                      </div>
-                    </div>
-                    <div class="progress progress-sm">
-                      <div class="progress-bar bg-primary" style="width: {{ $coverse }}%" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" aria-label="75% Complete">
-                        <span class="visually-hidden">75% Complete</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="col-sm-6 col-lg-6">
-                <div class="card">
-                  <div class="card-body">
-                    <div class="d-flex align-items-center">
-                      <div class="subheader">Penerbitan Izin</div>
-                      <div class="ms-auto lh-1">
-                        <div class="dropdown">
-                          <a class="dropdown-toggle text-muted" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Lihat Data</a>
-                          <div class="dropdown-menu dropdown-menu-end">
-                            <a class="dropdown-item active" href="#">Lihat Data</a>
-                            
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="d-flex align-items-baseline">
-                      <div class="h1 mb-0 me-2">{{ $totalJumlahData }}</div>
-                      <div class="me-auto">
-                       
-                      </div>
-                    </div>
-                    <div id="chart-revenue" style="height:70px; width:100%;"></div>
-                    @php
-                      $chartMonthly = collect($rekapPerBulan)->sortBy('bulan')->map(function($r){
-                        return [
-                          'bulan' => $r['bulan'],
-                          'label' => \Carbon\Carbon::createFromFormat('Y-m',$r['bulan'])->translatedFormat('M'),
-                          'count' => (int)($r['jumlah_izin_terbit'] ?? 0),
-                        ];
-                      })->values();
-                    @endphp
-                    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-                    <script>
-                      document.addEventListener('DOMContentLoaded', function(){
-                        const el = document.querySelector('#chart-revenue');
-                        if(!el) return;
-                        const data = @json($chartMonthly);
-                        const categories = data.map(d=>d.label);
-                        let seriesData = data.map(d=>d.count);
-                        const maxVal = seriesData.length ? Math.max(...seriesData) : 0;
-                        const allZero = maxVal === 0;
-                        // Jika semua nilai 0, berikan nilai dummy kecil agar garis tidak menempel di border dan tetap terlihat.
-                        if(allZero){
-                          seriesData = seriesData.map(()=>0.1);
-                        }
-                        const options = {
-                          chart: { type:'bar', height:70, sparkline:{ enabled:true }, toolbar:{show:false}, animations:{ easing:'easeinout', speed:600 } },
-                          series: [{ name:'Izin Terbit', data: seriesData }],
-                          plotOptions: { bar: { columnWidth: '60%', borderRadius: 2 } },
-                          tooltip: { theme:'light', y:{ formatter: v => (allZero ? 0 : Number(v)).toLocaleString('id-ID') + ' izin' } },
-                          colors: ['#1f6fb2'],
-                          dataLabels: { enabled:false },
-                          grid: { show:false },
-                          // Pakai rentang min/max yang memberi ruang ketika semua nol
-                          yaxis: allZero ? { show:false, min:0, max:1 } : { show:false, min:0 },
-                          xaxis: { categories, labels:{ show:false }, axisTicks:{ show:false }, axisBorder:{ show:false } },
-                          noData: { text: 'Tidak ada data', align:'center', style:{ color:'#6c757d', fontSize:'13px' } },
-                          responsive: []
-                        };
-                        const chart = new ApexCharts(el, options);
-                        try { chart.render(); } catch(e){ console.warn('Gagal render chart', e); }
-                        if(allZero){
-                          const note = document.createElement('div');
-                          note.style.cssText='position:absolute;top:4px;right:6px;font-size:10px;color:#6c757d;';
-                          note.textContent='Semua bulan = 0';
-                          el.style.position='relative';
-                          el.appendChild(note);
-                        }
-                      });
-                    </script>
-                  </div>
-                </div>
-                </div>
-              </div>
-              @if(!empty($statError))
-                <div class="col-12 mt-3">
-                  <div class="alert alert-danger">
-                    <strong>Terjadi kesalahan saat memuat statistik:</strong>
-                    <div>{{ $statError }}</div>
-                  </div>
-                </div>
-              @endif
-             
-              <div class="col-lg-12 col-sm-12 pt-2">
+@php
+  // Derive extended aggregate metrics for enhanced cards
+  $sortedMonthly = collect($rekapPerBulan)->sortBy('bulan');
+  $totalIzinTerbit = (int) ($totalJumlahData ?? 0);
+  $totalHariKerja = (int) $sortedMonthly->sum('jumlah_hari_kerja');
+  $totalSlaDpmptsp = (int) $sortedMonthly->sum('jumlah_sla_dpmptsp');
+  $totalSlaDinas = (int) $sortedMonthly->sum('jumlah_sla_dinas_teknis');
+  $totalSlaGabungan = (int) $sortedMonthly->sum('jumlah_sla_gabungan');
+  $avgHariKerjaGlobal = $totalIzinTerbit ? $totalHariKerja / $totalIzinTerbit : 0;
+  $avgSlaGabunganGlobal = $totalIzinTerbit ? $totalSlaGabungan / $totalIzinTerbit : 0;
+  $avgSlaDpmptspGlobal = $totalIzinTerbit ? $totalSlaDpmptsp / $totalIzinTerbit : 0;
+  $avgSlaDinasGlobal = $totalIzinTerbit ? $totalSlaDinas / $totalIzinTerbit : 0;
+  $monthlyChartData = $sortedMonthly->map(function($r){
+      return [
+        'bulan' => $r['bulan'],
+        'label' => \Carbon\Carbon::createFromFormat('Y-m',$r['bulan'])->translatedFormat('M'),
+        'count' => (int)($r['jumlah_izin_terbit'] ?? 0),
+        'avgHK' => (float)($r['rata_rata_hari_kerja'] ?? 0),
+        'avgGab' => (float)($r['rata_rata_sla_gabungan'] ?? 0),
+      ];
+  })->values();
+@endphp
+<div class="row g-3 mb-3">
+  <div class="col-sm-6 col-md-4 col-xl-2">
+    <div class="card card-sm shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-1">
+          <div class="me-2 text-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="28" height="28" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 21v-13l9 -4l9 4v13" /><path d="M13 13h4v8h-10v-6h6v-2z" /></svg>
+          </div>
+          <div class="subheader">Pengajuan</div>
+        </div>
+        <div class="h2 mb-0">{{ number_format($jumlah_permohonan,0,',','.') }}</div>
+        <div class="text-muted">Total permohonan</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-md-4 col-xl-2">
+    <div class="card card-sm shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-1">
+          <div class="me-2 text-success">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="28" height="28" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10" /></svg>
+          </div>
+          <div class="subheader">Terbit</div>
+        </div>
+        <div class="h2 mb-0">{{ number_format($totalJumlahData,0,',','.') }}</div>
+        <div class="text-muted">Izin diterbitkan</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-md-4 col-xl-2">
+    <div class="card card-sm shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-1">
+          <div class="me-2 text-indigo">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="28" height="28" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12h6l3 -8l3 16l3 -8h6" /></svg>
+          </div>
+          <div class="subheader">Conversion</div>
+        </div>
+        <div class="d-flex align-items-center mb-1">
+          <div class="h2 mb-0 me-2">{{ number_format($coverse,2,',','.') }}%</div>
+          <span class="badge bg-primary">CR</span>
+        </div>
+        <div class="progress progress-xs">
+          <div class="progress-bar" style="width: {{ $coverse }}%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-md-4 col-xl-2">
+    <div class="card card-sm shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-1">
+          <div class="me-2 text-warning">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="28" height="28" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 17h2v-6h4" /><path d="M13 6v6h4l3 7" /></svg>
+          </div>
+          <div class="subheader">Avg HK / Izin</div>
+        </div>
+        <div class="h2 mb-0">{{ number_format($avgHariKerjaGlobal,2,',','.') }}</div>
+        <div class="text-muted">Rata-rata hari kerja total</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-md-4 col-xl-2">
+    <div class="card card-sm shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-1">
+          <div class="me-2 text-cyan">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="28" height="28" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4h6v8h-6z" /><path d="M4 14h6v6h-6z" /><path d="M14 4h6v6h-6z" /><path d="M14 12h6v8h-6z" /></svg>
+          </div>
+          <div class="subheader">Avg SLA Gab.</div>
+        </div>
+        <div class="h2 mb-0">{{ number_format($avgSlaGabunganGlobal,2,',','.') }}</div>
+        <div class="text-muted">Gabungan / izin (hari)</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-md-4 col-xl-2">
+    <div class="card card-sm shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-1">
+          <div class="me-2 text-danger">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="28" height="28" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 6v6l4 2" /><path d="M12 22a10 10 0 1 0 0 -20a10 10 0 0 0 0 20z" /></svg>
+          </div>
+          <div class="subheader">Σ HK Tahun</div>
+        </div>
+        <div class="h2 mb-0">{{ number_format($totalHariKerja,0,',','.') }}</div>
+        <div class="text-muted">Akumulasi hari kerja</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="col-12">
+  <div class="card mb-3 shadow-sm">
+    <div class="card-header border-0">
+      <div class="card-title">Distribusi Bulanan & SLA ({{ $year }})</div>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-8">
+          <canvas id="chartIzinTerbit" style="height:320px"></canvas>
+        </div>
+        <div class="col-md-4">
+          <canvas id="chartAvgHariKerja" style="height:320px"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+@if(!empty($statError))
+  <div class="col-12 mt-3">
+    <div class="alert alert-danger">
+      <strong>Terjadi kesalahan saat memuat statistik:</strong>
+      <div>{{ $statError }}</div>
+    </div>
+  </div>
+@endif
+
+<div class="col-lg-12 col-sm-12 pt-2">
                 <div class="card">
                   <div class="card-header border-0">
                     <div class="card-title">Jumlah Izin Terbit SiCantik Tahun {{ $year }}</div>
@@ -468,6 +494,153 @@
                 </div>
             
  @endsection
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const monthly = @json($monthlyChartData);
+  
+  if(!monthly || monthly.length === 0){
+    console.warn('No chart data available');
+    return;
+  }
+  
+  const labels = monthly.map(m => m.label);
+  const counts = monthly.map(m => m.count);
+  const avgHK = monthly.map(m => m.avgHK);
+  const avgGab = monthly.map(m => m.avgGab);
+  const totalCount = counts.reduce((a,b)=>a+b,0) || 1;
+  
+  function makeGradient(ctx, area, base){
+    const g = ctx.createLinearGradient(0, area.bottom, 0, area.top);
+    g.addColorStop(0, base + '22');
+    g.addColorStop(0.5, base + '66');
+    g.addColorStop(1, base + 'dd');
+    return g;
+  }
+  
+  const barCtx = document.getElementById('chartIzinTerbit');
+  const lineCtx = document.getElementById('chartAvgHariKerja');
+  
+  if(!barCtx || !lineCtx){
+    console.error('Chart canvas elements not found');
+    return;
+  }
+  
+  // Bar Chart - Izin Terbit
+  let barGrad;
+  new Chart(barCtx.getContext('2d'), {
+    type: 'bar',
+    data: { 
+      labels, 
+      datasets: [{
+        label: 'Izin Terbit',
+        data: counts,
+        borderRadius: 6,
+        backgroundColor: ctx => {
+          const {chart} = ctx;
+          if(!barGrad && chart.chartArea){
+            barGrad = makeGradient(chart.ctx, chart.chartArea, '#1f6fb2');
+          }
+          return barGrad || '#1f6fb2';
+        }
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: {
+          display: true,
+          text: 'Izin Terbit Per Bulan'
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const val = ctx.parsed.y || 0;
+              const pct = ((val/totalCount)*100).toFixed(1);
+              return `${val.toLocaleString('id-ID')} izin (${pct}%)`;
+            }
+          }
+        },
+        legend: { display: false }
+      },
+      scales: {
+        x: { 
+          grid: { display: false },
+          ticks: { font: { size: 11 } }
+        },
+        y: { 
+          beginAtZero: true, 
+          ticks: { callback: v => v.toLocaleString('id-ID') }
+        }
+      }
+    }
+  });
+  
+  // Line Chart - Avg Hari Kerja
+  new Chart(lineCtx.getContext('2d'), {
+    type: 'line',
+    data: { 
+      labels, 
+      datasets: [
+        {
+          label: 'Avg Hari Kerja',
+          data: avgHK,
+          tension: 0.35,
+          borderColor: '#ff9800',
+          backgroundColor: '#ff980022',
+          fill: true,
+          pointRadius: 4,
+          pointBackgroundColor: '#ff9800',
+          borderWidth: 2
+        },
+        {
+          label: 'Avg SLA Gabungan',
+          data: avgGab,
+          tension: 0.35,
+          borderColor: '#0ca678',
+          backgroundColor: '#0ca67822',
+          fill: true,
+          pointRadius: 4,
+          pointBackgroundColor: '#0ca678',
+          borderWidth: 2
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: {
+          display: true,
+          text: 'Rata-rata Hari Kerja'
+        },
+        tooltip: { 
+          callbacks: { 
+            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('id-ID', {minimumFractionDigits: 2})} hari` 
+          } 
+        },
+        legend: {
+          display: true,
+          position: 'bottom'
+        }
+      },
+      scales: {
+        x: { 
+          grid: { display: false },
+          ticks: { font: { size: 11 } }
+        },
+        y: { 
+          beginAtZero: true, 
+          ticks: { callback: v => v.toLocaleString('id-ID', {minimumFractionDigits: 1}) }
+        }
+      }
+    }
+  });
+});
+</script>
+@endpush
 
 

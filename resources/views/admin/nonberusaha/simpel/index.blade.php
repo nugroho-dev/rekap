@@ -131,6 +131,7 @@
                           <th >Makam</th>
                           <th >Izin</th>
                           <th >Proses</th>
+                          <th >Aksi</th>
                         </tr>
                         
                       </thead>
@@ -211,11 +212,93 @@
                             </tr>
                             </table>
                           </td>
+                          <td class="text-center">
+                            @if($item->ijin)
+                              <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modal-view-izin-{{ $item->token }}" title="Lihat Izin">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-eye"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" /></svg>
+                                Lihat
+                              </button>
+                            @else
+                              <span class="text-muted">-</span>
+                            @endif
+                          </td>
                         </tr>
+                        
+                        @if($item->ijin)
+                        <!-- Modal View Izin -->
+                        <div class="modal fade modal-blur" id="modal-view-izin-{{ $item->token }}" tabindex="-1" role="dialog" aria-hidden="true">
+                          <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-file-certificate"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M5 8v-3a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2h-5" /><path d="M6 14m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M4.5 17l-1.5 5l3 -1.5l3 1.5l-1.5 -5" /></svg>
+                                  Izin Pemakaman - {{ $item->nama }}
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                              </div>
+                              <div class="modal-body">
+                                <div class="card mb-3">
+                                  <div class="card-body bg-light">
+                                    <div class="row">
+                                      <div class="col-md-6">
+                                        <strong>Pemohon:</strong> {{ $item->pemohon }}
+                                      </div>
+                                      <div class="col-md-6">
+                                        <strong>Token:</strong> {{ $item->token }}
+                                      </div>
+                                      <div class="col-md-6">
+                                        <strong>Nama Makam:</strong> {{ $item->nama }}
+                                      </div>
+                                      <div class="col-md-6">
+                                        <strong>Jenis Izin:</strong> {{ $item->jasa }}
+                                      </div>
+                                      <div class="col-md-6">
+                                        <strong>Tanggal Wafat:</strong> {{ $item->wafat=="0000-00-00" ? '-' : Carbon\Carbon::parse($item->wafat)->translatedFormat('d F Y') }}
+                                      </div>
+                                      <div class="col-md-6">
+                                        <strong>Status:</strong> <span class="badge bg-success">{{ $item->status }}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                @php
+                                  $fileUrl = $item->ijin;
+                                  $fileExt = strtolower(pathinfo($fileUrl, PATHINFO_EXTENSION));
+                                @endphp
+                                
+                                <div class="text-center">
+                                  @if(in_array($fileExt, ['jpg', 'jpeg', 'png', 'gif', 'webp']))
+                                    <img src="{{ $fileUrl }}" alt="Izin Pemakaman" class="img-fluid rounded shadow" style="max-height: 70vh;">
+                                  @elseif($fileExt == 'pdf')
+                                    <iframe src="{{ $fileUrl }}" style="width: 100%; height: 70vh; border: none;" class="rounded shadow"></iframe>
+                                  @else
+                                    <div class="alert alert-info">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-info-circle"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 9h.01" /><path d="M11 12h1v4h1" /></svg>
+                                      File tidak dapat ditampilkan secara langsung. Silakan unduh file untuk melihatnya.
+                                    </div>
+                                  @endif
+                                </div>
+                              </div>
+                              <div class="modal-footer">
+                                <a href="{{ $item->ijin }}" class="btn btn-success" download>
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-download"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg>
+                                  Unduh
+                                </a>
+                                <a href="{{ $item->ijin }}" target="_blank" class="btn btn-info">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-external-link"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 6h-6a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-6" /><path d="M11 13l9 -9" /><path d="M15 4h5v5" /></svg>
+                                  Buka di Tab Baru
+                                </a>
+                                <button type="button" class="btn" data-bs-dismiss="modal">Tutup</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        @endif
                         @endforeach
                         @if($items->count() == 0)
                         <tr >
-                          <td class="h3 text-capitalize" colspan='18'>tidak ada informasi yang ditampilkan <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-mood-puzzled"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14.986 3.51a9 9 0 1 0 1.514 16.284c2.489 -1.437 4.181 -3.978 4.5 -6.794" /><path d="M10 10h.01" /><path d="M14 8h.01" /><path d="M12 15c1 -1.333 2 -2 3 -2" /><path d="M20 9v.01" /><path d="M20 6a2.003 2.003 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483" /></svg> tidak ada informasi yang ditampilkan</td>
+                          <td class="h3 text-capitalize" colspan='6'>tidak ada informasi yang ditampilkan <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-mood-puzzled"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14.986 3.51a9 9 0 1 0 1.514 16.284c2.489 -1.437 4.181 -3.978 4.5 -6.794" /><path d="M10 10h.01" /><path d="M14 8h.01" /><path d="M12 15c1 -1.333 2 -2 3 -2" /><path d="M20 9v.01" /><path d="M20 6a2.003 2.003 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483" /></svg> tidak ada informasi yang ditampilkan</td>
                         </tr>
                         @endif
                       </tbody>
