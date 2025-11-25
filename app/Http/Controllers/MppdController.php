@@ -7,10 +7,12 @@ use App\Http\Requests\StoreMppdRequest;
 use App\Http\Requests\UpdateMppdRequest;
 use Illuminate\Http\Request;
 use App\Imports\MppdImport;
+use App\Exports\MppdExport;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
-use PhpOffice\PhpSpreadsheet\Shared\Date;
 use Carbon\Carbon;
 
 
@@ -43,7 +45,7 @@ class MppdController extends Controller
 
 		if ($date_start && $date_end) {
 			if ($date_start > $date_end) {
-			return redirect('/mppdsort')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda');
+			return redirect('/mppd')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda');
 			}
 			$query->whereBetween('tanggal_sip', [$date_start, $date_end]);
 		}
@@ -65,48 +67,55 @@ class MppdController extends Controller
 	public function statistik(Request $request)
     {
 		$judul = 'Statistik Izin MPP Digital';
-		$query = Mppd::query();
 		$date_start = $request->input('date_start');
 		$date_end = $request->input('date_end');
 		$month = $request->input('month');
 		$now = Carbon::now();
-		$year = $request->input('year');
+		$year = $request->input('year', $now->year);
 
-		if ($request->has('year')) {
-			$year = $request->input('year');
-			$jumlah_permohonan = Mppd::where('nomor_register', 'LIKE', "%{$year}%")->count();
-			$terbit = DB::table('mppd')
-				->selectRaw('month(tanggal_sip) AS bulan, year(tanggal_sip) AS tahun, count(tanggal_sip) as jumlah_data')
-				->whereYear('tanggal_sip', $year)
-				->groupByRaw('month(tanggal_sip)')
-				->orderBy('bulan', 'asc')
-				->get();
+		$jumlah_permohonan = Mppd::where('nomor_register', 'LIKE', "%{$year}%")->count();
 
-			$totalJumlahData = $terbit->sum('jumlah_data');
-			$rataRataJumlahHariPerBulan = $terbit->map(function ($item) {
-				$item->rata_rata_jumlah_hari = $item->jumlah_data;
-				return $item;
-			});
-			$coverse = $jumlah_permohonan ? number_format($totalJumlahData / $jumlah_permohonan * 100, 2) : 0;
-		} else {
-			$year = $now->year;
-			$jumlah_permohonan = Mppd::where('nomor_register', 'LIKE', "%{$year}%")->count();
-			$terbit = DB::table('mppd')
-				->selectRaw('month(tanggal_sip) AS bulan, year(tanggal_sip) AS tahun, count(tanggal_sip) as jumlah_data')
-				->whereYear('tanggal_sip', $year)
-				->groupByRaw('month(tanggal_sip)')
-				->orderBy('bulan', 'asc')
-				->get();
-
-			$totalJumlahData = $terbit->sum('jumlah_data');
-			$rataRataJumlahHariPerBulan = $terbit->map(function ($item) {
-				$item->rata_rata_jumlah_hari = $item->jumlah_data;
-				return $item;
-			});
-			$coverse = $jumlah_permohonan ? number_format($totalJumlahData / $jumlah_permohonan * 100, 2) : 0;
+		// Monthly aggregation (1..12) for selected year
+		$monthlyRaw = Mppd::selectRaw('MONTH(tanggal_sip) as bulan, COUNT(*) as jumlah')
+			->whereYear('tanggal_sip', $year)
+			->groupByRaw('MONTH(tanggal_sip)')
+			->get();
+		$monthlyCounts = array_fill(1, 12, 0);
+		foreach($monthlyRaw as $mr){
+			$monthlyCounts[(int)$mr->bulan] = $mr->jumlah;
 		}
+		
+		$totalJumlahData = array_sum($monthlyCounts);
+		$coverse = $jumlah_permohonan ? number_format($totalJumlahData / $jumlah_permohonan * 100, 2) : 0;
 
-		return view('admin.nonberusaha.mppd.statistik', compact('judul', 'jumlah_permohonan', 'date_start', 'date_end', 'month', 'year', 'rataRataJumlahHariPerBulan', 'totalJumlahData', 'coverse'));
+		$monthlyLabels = [];
+		for($i=1;$i<=12;$i++){
+			$monthlyLabels[] = Carbon::createFromDate(null,$i,1)->translatedFormat('F');
+		}
+		
+		// Build complete 12-month data for table display
+		$rataRataJumlahHariPerBulan = collect();
+		for($i=1;$i<=12;$i++){
+			$rataRataJumlahHariPerBulan->push((object)[
+				'bulan' => $i,
+				'tahun' => $year,
+				'jumlah_data' => $monthlyCounts[$i],
+				'rata_rata_jumlah_hari' => $monthlyCounts[$i]
+			]);
+		}
+		
+		// Profession totals for selected year (top 15 for readability)
+		$professionTotals = Mppd::selectRaw('profesi, COUNT(*) as jumlah')
+			->whereYear('tanggal_sip', $year)
+			->groupBy('profesi')
+			->orderByDesc('jumlah')
+			->limit(15)
+			->get();
+			
+		return view('admin.nonberusaha.mppd.statistik', compact(
+			'judul', 'jumlah_permohonan', 'date_start', 'date_end', 'month', 'year', 'rataRataJumlahHariPerBulan', 'totalJumlahData', 'coverse',
+			'monthlyCounts','monthlyLabels','professionTotals'
+		));
 	 
 	}
 	public function rincian(Request $request)
@@ -182,34 +191,150 @@ class MppdController extends Controller
     {
         //
     }
-    public function export_excel()
-	{
-		//return Excel::download(new SiswaExport, 'siswa.xlsx');
-	}
+    // Removed legacy empty export_excel() to avoid duplicate method
  
 	public function import_excel(Request $request) 
 	{
-		// validasi
-		$this->validate($request, [
-			'file' => 'required|mimes:csv,xls,xlsx'
+		$request->validate([
+			'file' => 'required|file|mimes:csv,xlsx,xls|max:20480'
 		]);
- 
-		// menangkap file excel
 		$file = $request->file('file');
-        
-		// membuat nama file unik
-		$nama_file = rand().$file->getClientOriginalName();
+		$original = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+		$ext = $file->getClientOriginalExtension();
+		$storedName = now()->format('Ymd_His') . '_' . Str::uuid() . '_' . Str::slug($original) . '.' . $ext;
+		$path = $file->storeAs('file_mppd', $storedName, 'public');
+		$import = new MppdImport();
+		try {
+			Excel::import($import, Storage::disk('public')->path($path));
+		} catch(\Throwable $e) {
+			report($e);
+			return back()->with('error','Import gagal: '.$e->getMessage());
+		}
+		$inserted = $import->getInsertedCount();
+		$updated = $import->getUpdatedCount();
+		$total = $import->getRowCount();
+		$aliasesUsed = $import->getUsedAliases();
+		// Collect validation failures (limit output for session)
+		$failures = method_exists($import,'failures') ? $import->failures() : collect();
+		$failureCount = $failures->count();
+		$failurePreview = $failures->take(20)->map(function($f){
+			return [
+				'row' => $f->row(),
+				'attribute' => $f->attribute(),
+				'errors' => $f->errors(),
+				'values' => $f->values(),
+			];
+		})->toArray();
+		try {
+			DB::table('mppd_audits')->insert([
+				'user_id' => Auth::id(),
+				'action' => 'import',
+				'filename' => $storedName,
+				'inserted' => $inserted,
+				'updated' => $updated,
+				'total' => $total,
+				'filters' => json_encode([
+					'failure_count' => $failureCount,
+					'aliases_used' => count($aliasesUsed),
+					'alias_map' => $aliasesUsed,
+				]),
+				'created_at' => now(),
+				'updated_at' => now(),
+			]);
+		} catch(\Throwable $e) {
+			// silent audit failure
+		}
+		$successMsg = "Import selesai: $inserted baru, $updated diperbarui, total diproses $total.";
+		if(count($aliasesUsed)) {
+			$successMsg .= " Menggunakan ".count($aliasesUsed)." alias header.";
+		}
+		if($failureCount){
+			$successMsg .= " Ada $failureCount baris gagal diverifikasi (menampilkan maksimal 20).";
+		}
+		return redirect('/mppd')
+			->with('success', $successMsg)
+			->with('import_failures', $failurePreview)
+			->with('import_failure_count', $failureCount)
+			->with('import_aliases_used', $aliasesUsed);
+	}
 
-		// upload ke folder file_siswa di dalam folder public
-		$file->move(base_path('storage/app/public/file_mppd'), $nama_file);
+	public function export_excel(Request $request)
+	{
+		$filters = $request->only(['search','date_start','date_end','month','year']);
+		$export = new MppdExport($filters);
+		$filename = 'mppd_export_'.now()->format('Ymd_His').'.xlsx';
+		// Log audit (without counts; counts derive from query size after download via separate pass)
+		try {
+			$count = $export->query()->count();
+			DB::table('mppd_audits')->insert([
+				'user_id' => Auth::id(),
+				'action' => 'export',
+				'filename' => $filename,
+				'inserted' => 0,
+				'updated' => 0,
+				'total' => $count,
+				'filters' => json_encode($filters),
+				'created_at' => now(),
+				'updated_at' => now(),
+			]);
+		} catch(\Throwable $e) {
+			// silent
+		}
+		return Excel::download($export, $filename);
+	}
 
-		// import data
-		Excel::import(new MppdImport, base_path('storage/app/public/file_mppd/' . $nama_file));
-        
-		// notifikasi dengan session
-		//Session::flash('sukses','Data  Berhasil Diimport!');
- 
-		// alihkan halaman kembali
-		return redirect('/mppd')->with('success', 'Data Berhasil Diimport !');
+	public function audits(Request $request)
+	{
+		$judul = 'Audit Import / Export MPPD';
+		$entries = DB::table('mppd_audits')->orderByDesc('id')->limit(500)->get()->map(function($row){
+			$filters = [];
+			try { $filters = $row->filters ? json_decode($row->filters, true) ?: [] : []; } catch(\Throwable $e) { $filters = []; }
+			$row->failure_count = $filters['failure_count'] ?? null;
+			$row->aliases_used = $filters['aliases_used'] ?? null;
+			return $row;
+		});
+		return view('admin.nonberusaha.mppd.audits', compact('judul','entries'));
+	}
+
+	public function upload_file(Request $request)
+	{
+		$request->validate([
+			'id' => 'required|exists:mppd,id',
+			'file_izin' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120'
+		]);
+
+		$mppd = Mppd::findOrFail($request->id);
+		
+		// Delete old file if exists
+		if($mppd->file_izin && Storage::disk('public')->exists($mppd->file_izin)){
+			Storage::disk('public')->delete($mppd->file_izin);
+		}
+
+		$file = $request->file('file_izin');
+		$original = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+		$ext = $file->getClientOriginalExtension();
+		$fileName = 'izin_' . $mppd->id . '_' . now()->format('YmdHis') . '_' . Str::slug($original) . '.' . $ext;
+		$path = $file->storeAs('file_izin_mppd', $fileName, 'public');
+
+		$mppd->update(['file_izin' => $path]);
+
+		return redirect('/mppd')->with('success', 'File izin berhasil diupload untuk ' . $mppd->nama);
+	}
+
+	public function delete_file(Request $request)
+	{
+		$request->validate([
+			'id' => 'required|exists:mppd,id'
+		]);
+
+		$mppd = Mppd::findOrFail($request->id);
+		
+		if($mppd->file_izin && Storage::disk('public')->exists($mppd->file_izin)){
+			Storage::disk('public')->delete($mppd->file_izin);
+		}
+
+		$mppd->update(['file_izin' => null]);
+
+		return redirect('/mppd')->with('success', 'File izin berhasil dihapus untuk ' . $mppd->nama);
 	}
 }

@@ -796,6 +796,7 @@
 		});
 		// @formatter:on
 	  </script>
-	 @include('admin.nonberusaha.sicantik.datachart') 
+	 @include('admin.nonberusaha.sicantik.datachart')
+	 @stack('scripts')
   </body>
 </html>

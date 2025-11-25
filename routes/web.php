@@ -160,10 +160,17 @@ Route::middleware('auth')->group(function () {
     // MPPD
     Route::match(['get','post'], '/mppd', [MppdController::class, 'index']);
     Route::post('/mppd/import_excel', [MppdController::class, 'import_excel']);
+    // Alias legacy /mppdigital/import_excel ke import handler yang benar
+    Route::post('/mppdigital/import_excel', [MppdController::class, 'import_excel']);
+    Route::get('/mppdigital/import_excel', function(){ return redirect('/mppd'); });
+    Route::get('/mppd/export_excel', [MppdController::class, 'export_excel']);
+    Route::get('/mppd/audits', [MppdController::class, 'audits']);
     Route::get('/mppd/statistik', [MppdController::class, 'statistik']);
     Route::post('/mppd/statistik', [MppdController::class, 'statistik']);
     Route::post('/mppd/rincian', [MppdController::class, 'rincian']);
-    Route::resource('/mppd', MppdController::class);
+    Route::post('/mppd/upload_file', [MppdController::class, 'upload_file']);
+    Route::post('/mppd/delete_file', [MppdController::class, 'delete_file']);
+    Route::resource('/mppd', MppdController::class)->except(['index','store']);
 
     // Simpel
     Route::match(['get','post'], '/simpel', [DashboradSimpelController::class, 'index']);
