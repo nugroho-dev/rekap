@@ -121,6 +121,11 @@
              </tr>
              <tr style="height:70px;">
                  <td></td>
+                 <td></td>
+                 <td style="height:70px;"></td>
+                 <td></td>
+                 <td></td>
+                 <td></td>
                  <td class="text-center italic"></td>
              </tr>
              <tr>
