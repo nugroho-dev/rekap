@@ -102,14 +102,7 @@
             <div class="summary">
                 <h3>Ringkasan</h3>
                 <p><strong>Total Izin Terbit:</strong> {{ $issuedCount }}</p>
-                @if($groupJenis->count())
-                    <p><strong>Distribusi Jenis Izin:</strong></p>
-                    <ul style="margin:4px 0 0 14px; padding:0;">
-                        @foreach($groupJenis as $j=>$c)
-                            <li style="margin:0;">{{ $j ?: 'Tanpa Jenis' }}: {{ $c }}</li>
-                        @endforeach
-                    </ul>
-                @endif
+               
             </div>
         </div>
         <div class="footer">Dicetak pada: {{ date('d-m-Y H:i:s') }} | Halaman laporan internal</div>
