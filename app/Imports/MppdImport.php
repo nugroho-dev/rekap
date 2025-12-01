@@ -97,13 +97,78 @@ class MppdImport implements ToModel, WithHeadingRow, WithValidation, WithBatchIn
     public function chunkSize(): int { return 500; }
     protected function convertExcelDate($value): ?string
     {
-        if($value===null || $value===''){ return null; }
+        if ($value === null || $value === '') {
+            return null;
+        }
         try {
-            if(is_numeric($value)) {
+            // Already a numeric Excel serial
+            if (is_numeric($value)) {
                 return Carbon::instance(Date::excelToDateTimeObject($value))->toDateString();
             }
-            return Carbon::parse($value)->toDateString();
-        } catch(\Throwable $e) {
+
+            // Already a DateTimeInterface
+            if ($value instanceof \DateTimeInterface) {
+                return Carbon::instance($value)->toDateString();
+            }
+
+            // Normalize string
+            $str = trim((string) $value);
+            if ($str === '') {
+                return null;
+            }
+
+            // First try Carbon's parser for common formats (ISO, English months, etc.)
+            try {
+                return Carbon::parse($str)->toDateString();
+            } catch (\Throwable $e) {
+                // fall through to Indonesian month handling
+            }
+
+            // Handle Indonesian month names like "02 Oktober 2025" (with optional leading zeros)
+            $bulan = [
+                'januari' => 1, 'jan' => 1,
+                'pebruari' => 2, 'peb' => 2,
+                'februari' => 2, 'feb' => 2,
+                'maret' => 3, 'mar' => 3,
+                'april' => 4, 'apr' => 4,
+                'mei' => 5,
+                'juni' => 6, 'jun' => 6,
+                'juli' => 7, 'jul' => 7,
+                'agustus' => 8, 'agu' => 8, 'ags' => 8,
+                'september' => 9, 'sep' => 9, 'sept' => 9,
+                'oktober' => 10, 'okt' => 10,
+                'november' => 11, 'nov' => 11,
+                'desember' => 12, 'des' => 12,
+            ];
+
+            // Pattern: d{1,2} <bulan> yyyy (case-insensitive)
+            if (preg_match('/^(\d{1,2})\s+([\p{L}\.]+)\s+(\d{2,4})$/ui', $str, $m)) {
+                $d = (int) $m[1];
+                $monthKey = mb_strtolower(rtrim($m[2], '.'));
+                $y = (int) $m[3];
+                if ($y < 100) { // normalize 2-digit years if encountered
+                    $y += ($y >= 70 ? 1900 : 2000);
+                }
+                if (isset($bulan[$monthKey])) {
+                    $mm = (int) $bulan[$monthKey];
+                    return sprintf('%04d-%02d-%02d', $y, $mm, $d);
+                }
+            }
+
+            // Pattern: dd-mm-yyyy or dd/mm/yyyy
+            if (preg_match('/^(\d{1,2})[\-\/.](\d{1,2})[\-\/.](\d{2,4})$/', $str, $m)) {
+                $d = (int) $m[1];
+                $mm = (int) $m[2];
+                $y = (int) $m[3];
+                if ($y < 100) { $y += ($y >= 70 ? 1900 : 2000); }
+                if ($mm >= 1 && $mm <= 12 && $d >= 1 && $d <= 31) {
+                    return sprintf('%04d-%02d-%02d', $y, $mm, $d);
+                }
+            }
+
+            // If all parsing strategies fail, return null
+            return null;
+        } catch (\Throwable $e) {
             return null;
         }
     }

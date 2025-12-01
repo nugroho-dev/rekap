@@ -50,6 +50,15 @@ return [
         'tanggal akhir sip' => 'tanggal_akhir_sip',
         'tgl akhir sip' => 'tanggal_akhir_sip',
         'tanggal_akhir_sip' => 'tanggal_akhir_sip',
+        // Additional common variants for end date (Indonesian headers)
+        'masa berlaku sip' => 'tanggal_akhir_sip',
+        'berlaku sampai' => 'tanggal_akhir_sip',
+        'berlaku s/d' => 'tanggal_akhir_sip',
+        'berlaku s d' => 'tanggal_akhir_sip',
+        'berlaku sd' => 'tanggal_akhir_sip',
+        'tanggal berakhir sip' => 'tanggal_akhir_sip',
+        'berlaku sampai dengan' => 'tanggal_akhir_sip',
+        'masa berlaku sampai' => 'tanggal_akhir_sip',
         // Keterangan
         'keterangan' => 'keterangan',
     ],
