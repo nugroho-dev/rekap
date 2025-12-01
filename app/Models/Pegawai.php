@@ -19,6 +19,7 @@ class Pegawai extends Model
     // automatically cast uuid as string (optional)
     protected $casts = [
         'uuid' => 'string',
+        'ttd' => 'boolean',
     ];
 
     // generate uuid on creating

@@ -152,6 +152,7 @@ Route::middleware('auth')->group(function () {
     // New route: accept correct spelling '/sync' in addition to legacy '/sych'
     Route::post('/sicantik/sync', [DashboardVprosesSicantikController::class, 'sync']);
     Route::post('/sicantik/rincian', [DashboardVprosesSicantikController::class, 'rincian']);
+    Route::get('/sicantik/rincian/print', [DashboardVprosesSicantikController::class, 'printRincian'])->name('sicantik.rincian.print');
 
     // Dayoff
     Route::match(['get','post'], '/dayoff/sync', [DayOffDashboardController::class, 'handle']);
@@ -239,6 +240,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/realisasi/verifikasi/form', [ProyekVerificationController::class, 'form'])->name('proyek.verification.form');
         Route::post('/realisasi/verifikasi', [ProyekVerificationController::class, 'store'])->name('proyek.verification.store');
     Route::post('/realisasi/verifikasi/apply-recommendations', [ProyekVerificationController::class, 'applyRecommendations'])->name('proyek.verification.applyRecommendations');
+        // import verification from excel
+        Route::post('/realisasi/verifikasi/import', [ProyekVerificationController::class, 'importVerifiedExcel'])->name('proyek.verification.import');
+        // download template for excel import
+        Route::get('/realisasi/verifikasi/template', [ProyekVerificationController::class, 'downloadImportTemplate'])->name('proyek.verification.template');
         Route::post('/realisasi/verifikasi/{proyekVerification}/status', [ProyekVerificationController::class, 'updateStatus'])->name('proyek.verification.updateStatus');
         Route::delete('/realisasi/verifikasi/{proyekVerification}', [ProyekVerificationController::class, 'destroy'])->name('proyek.verification.destroy');
         // export verified list (xlsx | pdf)

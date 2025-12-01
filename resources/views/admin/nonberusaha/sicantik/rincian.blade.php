@@ -1,4 +1,4 @@
-@extends('layouts.tableradmin')
+@extends('layouts.tableradminsicantikstatistik')
 @section('content')
 <div class="page-header d-print-none">
   <div class="container-xl">
@@ -9,6 +9,17 @@
       </div>
       <div class="col-auto ms-auto d-print-none">
         <div class="btn-list">
+          <a href="{{ url('/sicantik/rincian/print') }}?year={{ (int)$year }}&month={{ (int)$month }}" target="_blank" class="btn btn-secondary d-none d-sm-inline-block">
+            Cetak PDF
+          </a>
+          <a href="{{ url('/sicantik/rincian/print') }}?year={{ (int)$year }}&month={{ (int)$month }}" target="_blank" class="btn btn-secondary d-sm-none btn-icon" title="Cetak PDF">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icon-tabler-printer">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+              <path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2" />
+              <path d="M17 9v-4h-10v4" />
+              <path d="M7 13h10v8h-10z" />
+            </svg>
+          </a>
           <a href="{{ url('/sicantik/statistik') }}" class="btn btn-info d-none d-sm-inline-block">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-chart-infographic">
               <path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -98,7 +109,9 @@
             <th>Jenis Izin</th>
             <th class="text-center">Jumlah Izin Terbit</th>
             <th class="text-center">Jumlah Waktu Proses</th>
-            <th class="text-center">Rata Rata Waktu Proses Penerbitan</th>
+            <th class="text-center">SLA DPMPTSP</th>
+            <th class="text-center">SLA Dinas</th>
+            <th class="text-center">SLA Gabungan</th>
             <th class="text-center">*</th>
           </tr>
         </thead>
@@ -106,16 +119,33 @@
           @foreach ($rataRataJumlahHariPerJenisIzin as $data)
           <tr>
             <td>{{ $data->jenis_izin }}</td>
-            <td class="text-center">{{ $data->jumlah_izin }} Izin</td>
-            <td class="text-center">{{ $data->jumlah_hari }} Hari</td>
-            <td class="text-center">{{ number_format($data->rata_rata_jumlah_hari, 2) }} Hari</td>
+            <td class="text-center">{{ number_format($data->jumlah_izin, 0, ',', '.') }} Izin</td>
+            <td class="text-center">
+              {{ number_format($data->jumlah_hari, 0, ',', '.') }} Hari
+              <div class="small text-muted">Avg {{ number_format($data->rata_rata_jumlah_hari ?? 0, 2, ',', '.') }}</div>
+            </td>
+            <td class="text-center">
+              {{ number_format($data->jumlah_sla_dpmptsp ?? 0, 0, ',', '.') }} Hari
+              @php $avgDpm = ($data->jumlah_izin ?? 0) ? (($data->jumlah_sla_dpmptsp ?? 0) / max(1,$data->jumlah_izin)) : 0; @endphp
+              <div class="small text-muted">Avg {{ number_format($avgDpm, 2, ',', '.') }}</div>
+            </td>
+            <td class="text-center">
+              {{ number_format($data->jumlah_sla_dinas_teknis ?? 0, 0, ',', '.') }} Hari
+              @php $avgDinas = ($data->jumlah_izin ?? 0) ? (($data->jumlah_sla_dinas_teknis ?? 0) / max(1,$data->jumlah_izin)) : 0; @endphp
+              <div class="small text-muted">Avg {{ number_format($avgDinas, 2, ',', '.') }}</div>
+            </td>
+            <td class="text-center">
+              {{ number_format(($data->jumlah_sla_gabungan ?? (($data->jumlah_sla_dpmptsp ?? 0)+($data->jumlah_sla_dinas_teknis ?? 0))), 0, ',', '.') }} Hari
+              @php $gab = ($data->jumlah_sla_gabungan ?? (($data->jumlah_sla_dpmptsp ?? 0)+($data->jumlah_sla_dinas_teknis ?? 0))); $avgGab = ($data->jumlah_izin ?? 0) ? ($gab / max(1,$data->jumlah_izin)) : 0; @endphp
+              <div class="small text-muted">Avg {{ number_format($avgGab, 2, ',', '.') }}</div>
+            </td>
             <td><span class="dropdown">
                 
               <button class="btn dropdown-toggle align-text-top" data-bs-boundary="viewport" data-bs-toggle="dropdown">Action</button>
               <div class="dropdown-menu dropdown-menu-end">
                 <form method="get" action="{{ url('/sicantik')}}" enctype="multipart/form-data">
                   
-                <input type="hidden" name="month" value="{{ $data->bulan }}">
+                <input type="hidden" name="month" value="{{ $month }}">
                 <input type="hidden" name="year" value="{{ $year }}">
                 <input type="hidden" name="search" value="{{ $data->jenis_izin }}">
                 <button type="submit" class="dropdown-item">
@@ -123,9 +153,12 @@
                 </button>
                 </form>
                 
-                  <a href="{{ url('/sicantik/print?month='.$month.'&year='.$year.'&search='.$data->jenis_izin.'')}}" target="_blank" class="dropdown-item">
-                    Cetak Rincian Izin Terbit
-                  </a>
+                  <form method="get" action="{{ url('/sicantik/print') }}" target="_blank">
+                    <input type="hidden" name="month" value="{{ $month }}">
+                    <input type="hidden" name="year" value="{{ $year }}">
+                    <input type="hidden" name="search" value="{{ $data->jenis_izin }}">
+                    <button type="submit" class="dropdown-item">Cetak Rincian Izin Terbit</button>
+                  </form>
                  
               </div>
             </span>
@@ -135,8 +168,25 @@
             <tr>
             <td><strong>Total</strong></td>
             <td class="text-center"><strong>{{ $total_izin }}</strong></td>
-            <td class="text-center"><strong>{{ $totalJumlahHari }}</strong></td>
-            <td class="text-center"><strong>{{ number_format($rataRataJumlahHari, 2)  }}</strong></td>
+            <td class="text-center">
+              <strong>{{ number_format($totalJumlahHari,0, ',', '.') }}</strong>
+              <div class="small text-muted">Avg {{ number_format($rataRataJumlahHari ?? 0, 2, ',', '.') }}</div>
+            </td>
+            <td class="text-center">
+              <strong>{{ number_format($totalSlaDpm ?? 0, 0, ',', '.') }}</strong>
+              @php $avgTotalDpm = ($total_izin ?? 0) ? (($totalSlaDpm ?? 0) / max(1,$total_izin)) : 0; @endphp
+              <div class="small text-muted">Avg {{ number_format($avgTotalDpm, 2, ',', '.') }}</div>
+            </td>
+            <td class="text-center">
+              <strong>{{ number_format($totalSlaDinas ?? 0, 0, ',', '.') }}</strong>
+              @php $avgTotalDinas = ($total_izin ?? 0) ? (($totalSlaDinas ?? 0) / max(1,$total_izin)) : 0; @endphp
+              <div class="small text-muted">Avg {{ number_format($avgTotalDinas, 2, ',', '.') }}</div>
+            </td>
+            <td class="text-center">
+              <strong>{{ number_format($totalSlaGab ?? 0, 0, ',', '.') }}</strong>
+              @php $avgTotalGab = ($total_izin ?? 0) ? (($totalSlaGab ?? 0) / max(1,$total_izin)) : 0; @endphp
+              <div class="small text-muted">Avg {{ number_format($avgTotalGab, 2, ',', '.') }}</div>
+            </td>
             <td>
               
             </td>

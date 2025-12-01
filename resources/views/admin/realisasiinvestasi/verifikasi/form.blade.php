@@ -148,11 +148,15 @@
 
                 <div class="mb-3">
                   <label class="form-label">Status Investasi (KBLI)</label>
+                  @php
+                    $skbli = old('status_kbli', $verification->status_kbli ?? ($kbliPreviousExists ? 'penambahan' : 'baru'));
+                  @endphp
                   <select name="status_kbli" class="form-select">
-                    <option value="baru" {{ ($kbliPreviousExists ? '' : 'selected') }}>Investasi Baru</option>
-                    <option value="lama" {{ ($kbliPreviousExists ? 'selected' : '') }}>Penambahan Investasi</option>
+                    <option value="baru" {{ $skbli==='baru' ? 'selected' : '' }}>Investasi Baru</option>
+                    <option value="penambahan" {{ $skbli==='penambahan' ? 'selected' : '' }}>Penambahan KBLI</option>
+                    <option value="lama" {{ $skbli==='lama' ? 'selected' : '' }}>Penambahan Investasi</option>
                   </select>
-                  <div class="form-text">Jika KBLI ini sudah ada pada tahun sebelumnya untuk perusahaan ini, pilih "Penambahan Investasi".</div>
+                  <div class="form-text">"Penambahan KBLI" akan disimpan sebagai "lama" di database untuk kompatibilitas.</div>
                 </div>
 
                 <div class="mb-3">

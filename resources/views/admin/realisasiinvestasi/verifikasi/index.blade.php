@@ -26,6 +26,7 @@
           <h3 class="card-title">Proyek ({{ $items->total() }})</h3>
           <div class="card-actions">
             <button id="applyRecsBtn" class="btn btn-sm btn-primary">Terapkan Rekomendasi</button>
+            <button id="importExcelBtn" class="btn btn-sm btn-success ms-2" data-bs-toggle="modal" data-bs-target="#importExcelModal">Impor Verifikasi</button>
           </div>
         </div>
 
@@ -48,6 +49,36 @@
                 <button type="button" id="applyRecsCancel" class="btn btn-secondary btn-sm">Batal</button>
                 <button type="button" id="applyRecsConfirm" class="btn btn-primary btn-sm">Terapkan</button>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal: import verification from Excel -->
+        <div class="modal" id="importExcelModal" tabindex="-1" style="display:none;">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Impor Verifikasi dari Excel</h5>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <form method="post" action="{{ route('proyek.verification.import') }}" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-body">
+                  <div class="mb-2">
+                    <label class="form-label">Pilih File (.xlsx/.xls/.csv)</label>
+                    <input type="file" name="file" class="form-control" accept=".xlsx,.xls,.csv" required>
+                    <div class="form-text">Kolom: id_proyek, status, status_perusahaan, status_kbli, tambahan_investasi, verified_at, keterangan.</div>
+                    <div class="mt-2">
+                      <a href="{{ route('proyek.verification.template') }}" class="btn btn-sm btn-outline-secondary">Download Template</a>
+                      <span class="small text-muted ms-1">Berisi contoh 2 baris data.</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Batal</button>
+                  <button type="submit" class="btn btn-primary btn-sm">Impor</button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

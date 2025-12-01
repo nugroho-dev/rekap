@@ -10,6 +10,8 @@ use App\Models\Pegawai;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class PegawaiController extends Controller
 {
@@ -179,17 +181,47 @@ class PegawaiController extends Controller
         return redirect()->back()->with('success', 'Pegawai dihapus permanen.');
     }
 
-    public function checkTtd(Request $request)
+    public function checkTtd(Request $request, $slug = null)
     {
-        Pegawai::where('ttd', 1)->update(['ttd' => 0]);
+        // Ambil identifier dari route {pegawai} (uuid/id) atau slug dari input
+        $identifier = $slug
+            ?? $request->route('pegawai')
+            ?? $request->route('slug')
+            ?? $request->input('pegawai')
+            ?? $request->input('slug');
 
-        $pegawai = Pegawai::where('slug', $request->slug)->first();
-        if ($pegawai) {
-            $pegawai->update(['ttd' => 1]);
-            return redirect('/konfigurasi/pegawai')->with('success', 'Set Penanda Tangan Berhasil di Tambahkan!');
+        if (!$identifier) {
+            return redirect('/konfigurasi/pegawai')->with('error', 'Parameter pegawai tidak diberikan.');
         }
 
-        return redirect('/konfigurasi/pegawai')->with('error', 'Pegawai tidak ditemukan!');
+        // Pastikan kolom ttd sudah ada (hindari error sebelum migrate)
+        if (!Schema::hasColumn('pegawai', 'ttd')) {
+            return redirect('/konfigurasi/pegawai')->with('error', 'Kolom ttd belum tersedia. Jalankan migrasi database terlebih dahulu.');
+        }
+
+        try {
+            DB::transaction(function () use ($identifier) {
+                // Nonaktifkan penanda tangan sebelumnya (hanya data aktif)
+                Pegawai::where('del', 0)
+                    ->whereNull('deleted_at')
+                    ->where('ttd', 1)
+                    ->update(['ttd' => 0]);
+
+                // Aktifkan penanda tangan terpilih
+                $pegawai = Pegawai::where('slug', $identifier)
+                    ->orWhere('uuid', $identifier)
+                    ->orWhere('id', $identifier)
+                    ->firstOrFail();
+                $pegawai->update(['ttd' => 1]);
+            });
+        } catch (\Throwable $e) {
+            return redirect('/konfigurasi/pegawai')->with('error', 'Pegawai tidak ditemukan atau gagal mengatur penanda tangan.');
+        }
+
+        // Opsional: kosongkan cache terkait pegawai jika ada
+        // Cache::forget('pegawai_ttd');
+
+        return redirect('/konfigurasi/pegawai')->with('success', 'Penanda tangan berhasil ditetapkan.');
     }
     public function checkSlug(Request $request)
     {

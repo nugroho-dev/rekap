@@ -37,10 +37,6 @@ class Instansi extends Model
         return $this->hasMany(\App\Models\Pegawai::class, 'id_instansi', 'id');
     }
 
-    public function getRouteKeyName()
-    {
-        return 'uuid';
-    }
 
     public function sluggable(): array
     {
@@ -50,5 +46,10 @@ class Instansi extends Model
                 'source' => 'nama_instansi'
             ]
         ];
+    }
+    // Use UUID for route model binding
+    public function getRouteKeyName()
+    {
+        return 'uuid';
     }
 }

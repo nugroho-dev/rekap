@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 
@@ -469,53 +470,91 @@ public function show(Request $request, $id)
 	}
 	public function print(Request $request)
 	{
-		
+
 		$judul = 'Data Izin SiCantik';
-		$query = Vproses::query();
+		// Legacy view/table 'sicantik_proses' (Vproses) no longer available; switch to core 'proses' data
+		// Use finalized steps (jenis_proses_id=40, status selesai) as issued permits for print report
+		$query = Proses::query()
+			->where('jenis_proses_id', 40)
+			->whereRaw("LOWER(TRIM(status)) = 'selesai'")
+			->whereNotNull('end_date');
 		$instansi = Instansi::where('slug', '=', 'dinas-penanaman-modal-dan-pelayanan-terpadu-satu-pintu-kota-magelang')->first();
-		$pegawai = Pegawai::where('ttd', 1)->first();
-		$nama = $pegawai->nama;
-		$nip = $pegawai->nip;
+		// Safely resolve penandatangan without assuming a 'ttd' column exists
+		$pegawai = null;
+		try {
+			$table = (new Pegawai)->getTable();
+			if (Schema::hasColumn($table, 'ttd')) {
+				$pegawai = Pegawai::where('ttd', 1)->first();
+			}
+		} catch (\Throwable $e) {
+			$pegawai = null;
+		}
+		if (!$pegawai) {
+			$pegawai = Pegawai::first();
+		}
+		$nama = $pegawai->nama ?? '';
+		$nip = $pegawai->nip ?? '';
+		$hasSigner = (trim((string)$nama) !== '' || trim((string)$nip) !== '');
 		$search = $request->input('search');
 		$date_start = $request->input('date_start');
 		$date_end = $request->input('date_end');
 		$month = $request->input('month');
 		$year = $request->input('year');
 		$jenis_izin = $request->input('jenis_izin');
-		$logo = $instansi->logo;
+		$logo = $instansi->logo ?? null;
 		
 		if ($search) {
 			$query->where(function ($q) use ($search) {
-			$q->where('no_permohonan', 'LIKE', "%{$search}%")
-			  ->orWhere('nama', 'LIKE', "%{$search}%")
-			  ->orWhere('jenis_izin', 'LIKE', "%{$search}%");
+				$q->where('no_permohonan', 'LIKE', "%{$search}%")
+				  ->orWhere('nama', 'LIKE', "%{$search}%")
+				  ->orWhere('jenis_izin', 'LIKE', "%{$search}%")
+				  ->orWhere('no_izin', 'LIKE', "%{$search}%");
 			});
 		}
 
 		if ($date_start && $date_end) {
 			if ($date_start > $date_end) {
-			return redirect('/sicantik')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda');
+				return redirect('/sicantik')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda');
 			}
-			$query->whereBetween('tgl_penetapan', [$date_start, $date_end]);
+			// Prefer tgl_penetapan range; fallback to end_date if tgl_penetapan null
+			$query->where(function($q) use ($date_start,$date_end){
+				$q->whereBetween('tgl_penetapan', [$date_start, $date_end])
+				  ->orWhere(function($qq) use ($date_start,$date_end){
+					  $qq->whereNull('tgl_penetapan')->whereBetween('end_date', [$date_start, $date_end]);
+				  });
+			});
 		}
 
 		if ($jenis_izin && $month && $year) {
 			$query->where('jenis_izin', $jenis_izin)
-			  ->whereMonth('tgl_penetapan', $month)
-			  ->whereYear('tgl_penetapan', $year);
+				->where(function($q) use ($month,$year){
+					$q->whereMonth('tgl_penetapan', $month)->whereYear('tgl_penetapan',$year)
+					  ->orWhere(function($qq) use ($month,$year){
+						  $qq->whereNull('tgl_penetapan')->whereMonth('end_date',$month)->whereYear('end_date',$year);
+					  });
+				});
 		} elseif ($month && $year) {
-			$query->whereMonth('tgl_penetapan', $month)
-			  ->whereYear('tgl_penetapan', $year);
+			$query->where(function($q) use ($month,$year){
+				$q->whereMonth('tgl_penetapan',$month)->whereYear('tgl_penetapan',$year)
+				  ->orWhere(function($qq) use ($month,$year){
+					  $qq->whereNull('tgl_penetapan')->whereMonth('end_date',$month)->whereYear('end_date',$year);
+				  });
+			});
 		} elseif ($year) {
-			$query->whereYear('tgl_penetapan', $year);
+			$query->where(function($q) use ($year){
+				$q->whereYear('tgl_penetapan',$year)
+				  ->orWhere(function($qq) use ($year){
+					  $qq->whereNull('tgl_penetapan')->whereYear('end_date',$year);
+				  });
+			});
 		}
 
 		$perPage = $request->input('perPage', 111);
-	$items = $query->orderByRaw("COALESCE(tgl_pengajuan, tgl_pengajuan_time, created_at) ASC")
+	$items = $query->orderByRaw("COALESCE(tgl_penetapan, end_date, created_at) ASC")
 		   ->orderBy('no_permohonan', 'ASC')
 		   ->paginate($perPage);
 		$items->withPath(url('/sicantik'));
-		return Pdf::loadView('admin.nonberusaha.sicantik.print.print', compact('items','search','logo', 'month', 'year','nama','nip'))
+		return Pdf::loadView('admin.nonberusaha.sicantik.print.print', compact('items','search','logo', 'month', 'year','nama','nip','hasSigner'))
 			->setPaper('A4', 'landscape')
 			->stream('sicantik.pdf');
 	}
@@ -1082,32 +1121,271 @@ public function show(Request $request, $id)
 
 		return redirect('/sicantik')->with('success', 'Data berhasil ditambahkan');
 	}
-    public function rincian(Request $request)
-    {
-        $judul='Statistik Izin SiCantik';
-        if ($request->has('year') && $request->has('month')) {
-            $year = $request->input('year');
-            $month = $request->input('month');
-            $rincianterbit = DB::table('sicantik.sicantik_proses_statistik')
-            ->selectRaw('month(tgl_penetapan) AS bulan, year(tgl_penetapan) AS tahun, jenis_izin, jenis_izin_id, count(jenis_izin) as jumlah_izin, sum(jumlah_hari_kerja) - COALESCE(sum(jumlah_rekom),0) - COALESCE(sum(jumlah_cetak_rekom),0) - COALESCE(sum(jumlah_tte_rekom),0) - COALESCE(sum(jumlah_verif_rekom),0) - COALESCE(sum(jumlah_proses_bayar),0) as jumlah_hari')
-            ->whereNotNull('tgl_penetapan')
-            ->whereYear('tgl_penetapan', $year)
-            ->whereMonth('tgl_penetapan', $month)
-            ->groupBy('jenis_izin')
-            ->orderBy('jumlah_izin', 'desc')
-            ->get();
+	public function rincian(Request $request)
+	{
+		$judul = 'Statistik Izin SiCantik';
+		$year = (int) $request->input('year', \Carbon\Carbon::now()->year);
+		$month = (int) $request->input('month', \Carbon\Carbon::now()->month);
+		if ($year <= 0) { $year = (int) \Carbon\Carbon::now()->year; }
+		if ($month < 1 || $month > 12) { $month = (int) \Carbon\Carbon::now()->month; }
 
-            $totalJumlahHari = $rincianterbit->sum('jumlah_hari');
-            $total_izin = $rincianterbit->sum('jumlah_izin');
-            $rataRataJumlahHari = $total_izin ? $totalJumlahHari / $total_izin : 0;
+		$invalid = ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000'];
+		$base = Proses::query()
+			->where('jenis_proses_id', 40)
+			->whereRaw("LOWER(TRIM(status)) = 'selesai'")
+			->whereNotNull('end_date')
+			->whereYear('end_date', $year)
+			->whereMonth('end_date', $month)
+			->get(['permohonan_izin_id','no_permohonan','jenis_izin','end_date']);
 
-            $rataRataJumlahHariPerJenisIzin = $rincianterbit->map(function ($item) {
-                $item->rata_rata_jumlah_hari = $item->jumlah_hari / $item->jumlah_izin;
-                return $item;
-            });
-        }
-		return view('admin.nonberusaha.sicantik.rincian',compact('judul','month','year','rataRataJumlahHariPerJenisIzin', 'rataRataJumlahHari','total_izin','totalJumlahHari'));
-    }
+		$mapped = $base->map(function($item) use ($invalid) {
+			$row = (object) [
+				'jenis_izin' => $item->jenis_izin,
+				'jumlah_hari_kerja' => 0,
+				'sla_dpmptsp' => 0,
+				'sla_dinas_teknis' => 0,
+				'sla_gabungan' => 0,
+			];
+			try {
+				$startDate = Proses::where('permohonan_izin_id', $item->permohonan_izin_id)
+					->whereIn('jenis_proses_id', [2,14])
+					->whereNotNull('start_date')
+					->whereNotIn('start_date', $invalid)
+					->min('start_date');
+				$latestEnd = Proses::where('permohonan_izin_id', $item->permohonan_izin_id)
+					->whereNotNull('end_date')
+					->whereNotIn('end_date', $invalid)
+					->max('end_date');
+				if ($startDate && $latestEnd) {
+					$start = \Carbon\Carbon::parse($startDate); $end = \Carbon\Carbon::parse($latestEnd);
+					try {
+						$holidays = Dayoff::whereBetween('tanggal', [$start->toDateString(), $end->toDateString()])
+							->pluck('tanggal')->map(fn($d)=>\Carbon\Carbon::parse($d)->toDateString())->unique()->toArray();
+					} catch (\Throwable $e) { $holidays = []; }
+					$businessDays = []; $cursor = $start->copy();
+					while ($cursor->lte($end)) {
+						$isBiz = $cursor->dayOfWeekIso >= 1 && $cursor->dayOfWeekIso <= 5 && !in_array($cursor->toDateString(), $holidays);
+						if ($isBiz) { $businessDays[] = $cursor->toDateString(); }
+						$cursor->addDay()->startOfDay();
+					}
+					$bizCount = count($businessDays); $durHours = $end->diffInHours($start);
+					if ($bizCount > 1 && $durHours < ($bizCount * 24)) { $row->jumlah_hari_kerja = $bizCount - 1; }
+					elseif ($bizCount == 2 && $durHours < 24) { $row->jumlah_hari_kerja = 1; }
+					else { $row->jumlah_hari_kerja = $bizCount; }
+
+					// SLA subtotals per permohonan
+					$steps = Proses::where('no_permohonan', $item->no_permohonan)
+						->whereNotNull('status')
+						->where(function ($q) {
+							$q->whereRaw("LOWER(TRIM(status)) IN ('proses','selesai','menunggu','verifikasi','validasi','upload','tte','terbit','diterbitkan')")
+							  ->orWhereRaw("LOWER(status) LIKE '%nunggu%'");
+						})
+						->orderBy('id_proses_permohonan', 'ASC')
+						->get(['jenis_proses_id','start_date','end_date']);
+					$steps = $steps->unique(function ($s) { return implode('|', [(string)$s->jenis_proses_id,(string)($s->start_date ?? ''),(string)($s->end_date ?? '')]); })->values();
+					$nonSlaIds = [2, 13, 18, 33, 115];
+					$dinasIds = [7,108,185,192,212,226,234,293,420];
+					$forceDpmIds = [14,403];
+					$sumDpm=0; $sumDinas=0;
+					foreach ($steps as $s) {
+						if (empty($s->start_date) && !empty($s->end_date) && !in_array((string)$s->end_date, $invalid)) {
+							$s->start_date = $s->end_date; // fallback same-day
+						}
+						if (empty($s->start_date) || empty($s->end_date)) { continue; }
+						if (in_array((string)$s->start_date,$invalid) || in_array((string)$s->end_date,$invalid)) { continue; }
+						try { $st = \Carbon\Carbon::parse($s->start_date); $ed = \Carbon\Carbon::parse($s->end_date); } catch (\Throwable $e) { continue; }
+						if ($st->lt($start)) { $st=$start->copy(); } if ($ed->gt($end)) { $ed=$end->copy(); }
+						$diff = $ed->timestamp - $st->timestamp; if ($diff <= 0) { continue; }
+						$val = 0;
+						if ($st->isSameDay($ed) && $diff > 0) { $val = 0; }
+						else {
+							$days = []; $cur = $st->copy();
+							while ($cur->lte($ed)) {
+								$isBiz = $cur->dayOfWeekIso >= 1 && $cur->dayOfWeekIso <= 5 && !in_array($cur->toDateString(), $holidays);
+								if ($isBiz) { $days[] = $cur->toDateString(); }
+								$cur->addDay()->startOfDay();
+							}
+							$n = count($days); $hrs = $ed->diffInHours($st);
+							if ($n > 1 && $hrs < ($n*24)) { $val = $n - 1; }
+							elseif ($n == 2 && $hrs < 24) { $val = 1; }
+							else { $val = $n; }
+						}
+						$jp=(int)$s->jenis_proses_id;
+						if (in_array($jp, $forceDpmIds, true)) { $sumDpm += $val; }
+						else if (in_array($jp, $nonSlaIds, true)) { /* exclude from SLA subtotals */ }
+						else if (in_array($jp, $dinasIds, true)) { $sumDinas += $val; }
+						else { $sumDpm += $val; }
+					}
+					$row->sla_dpmptsp = $sumDpm;
+					$row->sla_dinas_teknis = $sumDinas;
+					$row->sla_gabungan = $sumDpm + $sumDinas;
+				}
+			} catch (\Throwable $e) { /* ignore per item */ }
+			return $row;
+		})->values();
+
+		$grouped = $mapped->groupBy(function($r){ return (string) ($r->jenis_izin ?? ''); });
+		$rincianterbit = $grouped->map(function($grp, $jenis){
+			$jumlah_izin = $grp->count();
+			$jumlah_hari = $grp->sum('jumlah_hari_kerja');
+			$jumlah_sla_dpm = $grp->sum('sla_dpmptsp');
+			$jumlah_sla_dinas = $grp->sum('sla_dinas_teknis');
+			$avg = $jumlah_izin ? round($jumlah_hari / $jumlah_izin, 2) : 0;
+			return (object) [
+				'jenis_izin' => $jenis,
+				'jumlah_izin' => $jumlah_izin,
+				'jumlah_hari' => $jumlah_hari,
+				'jumlah_sla_dpmptsp' => $jumlah_sla_dpm,
+				'jumlah_sla_dinas_teknis' => $jumlah_sla_dinas,
+				'jumlah_sla_gabungan' => $jumlah_sla_dpm + $jumlah_sla_dinas,
+				'rata_rata_jumlah_hari' => $avg,
+			];
+		})->sortByDesc('jumlah_izin')->values();
+
+		$totalJumlahHari = (int) $rincianterbit->sum('jumlah_hari');
+		$total_izin = (int) $rincianterbit->sum('jumlah_izin');
+		$rataRataJumlahHari = $total_izin ? round($totalJumlahHari / $total_izin, 2) : 0;
+		$totalSlaDpm = (int) $rincianterbit->sum('jumlah_sla_dpmptsp');
+		$totalSlaDinas = (int) $rincianterbit->sum('jumlah_sla_dinas_teknis');
+		$totalSlaGab = (int) $rincianterbit->sum('jumlah_sla_gabungan');
+
+		$rataRataJumlahHariPerJenisIzin = $rincianterbit; // already contains per-jenis metrics
+
+		return view(
+			'admin.nonberusaha.sicantik.rincian',
+			compact('judul', 'month', 'year', 'rataRataJumlahHariPerJenisIzin', 'rataRataJumlahHari', 'total_izin', 'totalJumlahHari', 'totalSlaDpm', 'totalSlaDinas', 'totalSlaGab')
+		);
+	}
+
+	public function printRincian(Request $request)
+	{
+		$judul = 'Rincian Izin SiCantik';
+		$year = (int) $request->input('year', \Carbon\Carbon::now()->year);
+		$month = (int) $request->input('month', \Carbon\Carbon::now()->month);
+		if ($year <= 0) { $year = (int) \Carbon\Carbon::now()->year; }
+		if ($month < 1 || $month > 12) { $month = (int) \Carbon\Carbon::now()->month; }
+
+		$invalid = ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000'];
+		$base = Proses::query()
+			->where('jenis_proses_id', 40)
+			->whereRaw("LOWER(TRIM(status)) = 'selesai'")
+			->whereNotNull('end_date')
+			->whereYear('end_date', $year)
+			->whereMonth('end_date', $month)
+			->get(['permohonan_izin_id','no_permohonan','jenis_izin','end_date']);
+
+		$mapped = $base->map(function($item) use ($invalid) {
+			$row = (object) [
+				'jenis_izin' => $item->jenis_izin,
+				'jumlah_hari_kerja' => 0,
+				'sla_dpmptsp' => 0,
+				'sla_dinas_teknis' => 0,
+				'sla_gabungan' => 0,
+			];
+			try {
+				$startDate = Proses::where('permohonan_izin_id', $item->permohonan_izin_id)
+					->whereIn('jenis_proses_id', [2,14])
+					->whereNotNull('start_date')
+					->whereNotIn('start_date', $invalid)
+					->min('start_date');
+				$latestEnd = Proses::where('permohonan_izin_id', $item->permohonan_izin_id)
+					->whereNotNull('end_date')
+					->whereNotIn('end_date', $invalid)
+					->max('end_date');
+				if ($startDate && $latestEnd) {
+					$start = \Carbon\Carbon::parse($startDate); $end = \Carbon\Carbon::parse($latestEnd);
+					try {
+						$holidays = Dayoff::whereBetween('tanggal', [$start->toDateString(), $end->toDateString()])
+							->pluck('tanggal')->map(fn($d)=>\Carbon\Carbon::parse($d)->toDateString())->unique()->toArray();
+					} catch (\Throwable $e) { $holidays = []; }
+					$businessDays = []; $cursor = $start->copy();
+					while ($cursor->lte($end)) {
+						$isBiz = $cursor->dayOfWeekIso >= 1 && $cursor->dayOfWeekIso <= 5 && !in_array($cursor->toDateString(), $holidays);
+						if ($isBiz) { $businessDays[] = $cursor->toDateString(); }
+						$cursor->addDay()->startOfDay();
+					}
+					$bizCount = count($businessDays); $durHours = $end->diffInHours($start);
+					if ($bizCount > 1 && $durHours < ($bizCount * 24)) { $row->jumlah_hari_kerja = $bizCount - 1; }
+					elseif ($bizCount == 2 && $durHours < 24) { $row->jumlah_hari_kerja = 1; }
+					else { $row->jumlah_hari_kerja = $bizCount; }
+
+					$steps = Proses::where('no_permohonan', $item->no_permohonan)
+						->whereNotNull('status')
+						->where(function ($q) {
+							$q->whereRaw("LOWER(TRIM(status)) IN ('proses','selesai','menunggu','verifikasi','validasi','upload','tte','terbit','diterbitkan')")
+							  ->orWhereRaw("LOWER(status) LIKE '%nunggu%'");
+						})
+						->orderBy('id_proses_permohonan', 'ASC')
+						->get(['jenis_proses_id','start_date','end_date']);
+					$steps = $steps->unique(function ($s) { return implode('|', [(string)$s->jenis_proses_id,(string)($s->start_date ?? ''),(string)($s->end_date ?? '')]); })->values();
+					$nonSlaIds = [2, 13, 18, 33, 115]; $dinasIds = [7,108,185,192,212,226,234,293,420]; $forceDpmIds = [14,403];
+					$sumDpm=0; $sumDinas=0;
+					foreach ($steps as $s) {
+						if (empty($s->start_date) && !empty($s->end_date) && !in_array((string)$s->end_date, $invalid)) { $s->start_date = $s->end_date; }
+						if (empty($s->start_date) || empty($s->end_date)) { continue; }
+						if (in_array((string)$s->start_date,$invalid) || in_array((string)$s->end_date,$invalid)) { continue; }
+						try { $st = \Carbon\Carbon::parse($s->start_date); $ed = \Carbon\Carbon::parse($s->end_date); } catch (\Throwable $e) { continue; }
+						if ($st->lt($start)) { $st=$start->copy(); } if ($ed->gt($end)) { $ed=$end->copy(); }
+						$diff = $ed->timestamp - $st->timestamp; if ($diff <= 0) { continue; }
+						$val = 0;
+						if ($st->isSameDay($ed) && $diff > 0) { $val = 0; }
+						else {
+							$days = []; $cur = $st->copy();
+							while ($cur->lte($ed)) {
+								$isBiz = $cur->dayOfWeekIso >= 1 && $cur->dayOfWeekIso <= 5 && !in_array($cur->toDateString(), $holidays);
+								if ($isBiz) { $days[] = $cur->toDateString(); }
+								$cur->addDay()->startOfDay();
+							}
+							$n = count($days); $hrs = $ed->diffInHours($st);
+							if ($n > 1 && $hrs < ($n*24)) { $val = $n - 1; }
+							elseif ($n == 2 && $hrs < 24) { $val = 1; }
+							else { $val = $n; }
+						}
+						$jp=(int)$s->jenis_proses_id;
+						if (in_array($jp, $forceDpmIds, true)) { $sumDpm += $val; }
+						else if (in_array($jp, $nonSlaIds, true)) { /* exclude */ }
+						else if (in_array($jp, $dinasIds, true)) { $sumDinas += $val; }
+						else { $sumDpm += $val; }
+					}
+					$row->sla_dpmptsp = $sumDpm; $row->sla_dinas_teknis = $sumDinas; $row->sla_gabungan = $sumDpm + $sumDinas;
+				}
+			} catch (\Throwable $e) { /* ignore per item */ }
+			return $row;
+		})->values();
+
+		$grouped = $mapped->groupBy(function($r){ return (string) ($r->jenis_izin ?? ''); });
+		$rincianterbit = $grouped->map(function($grp, $jenis){
+			$jumlah_izin = $grp->count();
+			$jumlah_hari = $grp->sum('jumlah_hari_kerja');
+			$jumlah_sla_dpm = $grp->sum('sla_dpmptsp');
+			$jumlah_sla_dinas = $grp->sum('sla_dinas_teknis');
+			$avg = $jumlah_izin ? round($jumlah_hari / $jumlah_izin, 2) : 0;
+			return (object) [
+				'jenis_izin' => $jenis,
+				'jumlah_izin' => $jumlah_izin,
+				'jumlah_hari' => $jumlah_hari,
+				'jumlah_sla_dpmptsp' => $jumlah_sla_dpm,
+				'jumlah_sla_dinas_teknis' => $jumlah_sla_dinas,
+				'jumlah_sla_gabungan' => $jumlah_sla_dpm + $jumlah_sla_dinas,
+				'rata_rata_jumlah_hari' => $avg,
+			];
+		})->sortByDesc('jumlah_izin')->values();
+
+		$totalJumlahHari = (int) $rincianterbit->sum('jumlah_hari');
+		$total_izin = (int) $rincianterbit->sum('jumlah_izin');
+		$rataRataJumlahHari = $total_izin ? round($totalJumlahHari / $total_izin, 2) : 0;
+		$totalSlaDpm = (int) $rincianterbit->sum('jumlah_sla_dpmptsp');
+		$totalSlaDinas = (int) $rincianterbit->sum('jumlah_sla_dinas_teknis');
+		$totalSlaGab = (int) $rincianterbit->sum('jumlah_sla_gabungan');
+
+		$rataRataJumlahHariPerJenisIzin = $rincianterbit;
+
+		return Pdf::loadView('admin.nonberusaha.sicantik.print.rincian', compact(
+			'judul','year','month','rataRataJumlahHariPerJenisIzin','rataRataJumlahHari','total_izin','totalJumlahHari','totalSlaDpm','totalSlaDinas','totalSlaGab'
+		))
+		->setPaper('A4','landscape')
+		->stream('sicantik-rincian-'.str_pad((string)$year,4,'0',STR_PAD_LEFT).'-'.str_pad((string)$month,2,'0',STR_PAD_LEFT).'.pdf');
+	}
 	public function sync(Request $request)
 	{
 		$request->validate([

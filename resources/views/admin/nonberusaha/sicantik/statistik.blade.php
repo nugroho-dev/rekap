@@ -284,7 +284,15 @@
                           <td class="text-center">{{ number_format($rekap['jumlah_sla_dinas_teknis'] ?? 0,0,',','.') }}<br><span class="small-muted">Avg {{ number_format($rekap['rata_rata_sla_dinas_teknis'] ?? 0,2,',','.') }}</span></td>
                           <td class="text-center">{{ number_format($rekap['jumlah_sla_gabungan'] ?? 0,0,',','.') }}<br><span class="small-muted">Avg {{ number_format($rekap['rata_rata_sla_gabungan'] ?? 0,2,',','.') }}</span></td>
                           <td class="text-center">
-                            <button type="button" class="btn btn-sm btn-outline-primary btn-rincian-bulan" data-bulan="{{ $rekap['bulan'] }}" data-label="{{ \Carbon\Carbon::createFromFormat('Y-m', $rekap['bulan'])->translatedFormat('F Y') }}" data-bs-toggle="modal" data-bs-target="#modal-detail-bulan">Rincian</button>
+                            <div class="d-flex justify-content-center gap-2">
+                              <button type="button" class="btn btn-sm btn-outline-primary btn-rincian-bulan" data-bulan="{{ $rekap['bulan'] }}" data-label="{{ \Carbon\Carbon::createFromFormat('Y-m', $rekap['bulan'])->translatedFormat('F Y') }}" data-bs-toggle="modal" data-bs-target="#modal-detail-bulan">Rincian</button>
+                              <form method="post" action="{{ url('/sicantik/rincian') }}" class="d-inline">
+                                @csrf
+                                <input type="hidden" name="year" value="{{ \Carbon\Carbon::createFromFormat('Y-m', $rekap['bulan'])->year }}">
+                                <input type="hidden" name="month" value="{{ \Carbon\Carbon::createFromFormat('Y-m', $rekap['bulan'])->month }}">
+                                <button type="submit" class="btn btn-sm btn-outline-success" title="Lihat jumlah izin per jenis izin">Jumlah per Izin</button>
+                              </form>
+                            </div>
                           </td>
                         </tr>
                         @endforeach

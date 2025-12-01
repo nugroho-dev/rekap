@@ -76,9 +76,9 @@
                     <span class="dropdown">
                       <button class="btn dropdown-toggle align-text-top" data-bs-boundary="viewport" data-bs-toggle="dropdown">Actions</button>
                       <div class="dropdown-menu dropdown-menu-end">
-                        <a class="dropdown-item" href="{{ route('konfigurasi.instansi.edit', $item->uuid) }}">Edit</a>
+                        <a class="dropdown-item" href="{{ route('konfigurasi.instansi.edit', $item->uuid ?? $item->id) }}">Edit</a>
 
-                        <form method="post" action="{{ route('konfigurasi.instansi.destroy', $item->uuid) }}" onsubmit="return confirm('Hapus instansi ini?')">
+                        <form method="post" action="{{ route('konfigurasi.instansi.destroy',  $item->uuid ?? $item->id) }}" onsubmit="return confirm('Hapus instansi ini?')">
                           @method('delete')
                           @csrf
                           <button class="dropdown-item text-danger">Hapus</button>

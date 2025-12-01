@@ -74,10 +74,31 @@
 
   @if(!empty($summary))
   <div class="row g-3 mb-3">
-    <div class="col-md-6">
+    <div class="col-md-3">
       <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <div class="d-flex align-items-center">
+            <div class="me-3 rounded-3 p-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg text-white" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"></path>
+                <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                <path d="M21 21v-2a4 4 0 0 0 -3 -3.85"></path>
+              </svg>
+            </div>
+            <div class="flex-fill">
+              <div class="text-muted small fw-semibold text-uppercase mb-1">Perusahaan</div>
+              <div class="h2 mb-0 fw-bold" style="color: #667eea;">{{ number_format(($summary['unique_companies'] ?? 0), 0, ',', '.') }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 h-100">
         <div class="card-status-start bg-success" style="width: 4px;"></div>
-        <div class="card-body py-2">
+        <div class="card-body">
           @php
             $pma_total = (float)($summary['sum_pma'] ?? 0);
             $pma_baru = (float)($summary['sum_pma_investasi_baru'] ?? 0);
@@ -87,34 +108,22 @@
             $pma_pct_kbli = $pma_total > 0 ? round($pma_kbli / $pma_total * 100) : 0;
             $pma_pct_invest = max(0, 100 - ($pma_pct_baru + $pma_pct_kbli));
           @endphp
-          <div class="d-flex align-items-start mb-2">
+          <div class="d-flex align-items-start mb-3">
             <div class="me-3 rounded-circle d-flex align-items-center justify-content-center" style="width:48px;height:48px;background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);color:#fff;font-weight:700;font-size:1.25rem;box-shadow: 0 4px 12px rgba(17,153,142,0.3);">P</div>
             <div class="flex-fill">
-              <div class="text-muted small fw-semibold text-uppercase mb-1">PMA</div>
+              <div class="text-muted small fw-semibold text-uppercase mb-1">PMA Total</div>
               <div class="h3 mb-1 fw-bold text-success">Rp {{ number_format($pma_total, 2, ',', '.') }}</div>
-              <div class="d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm text-muted me-1" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                    <path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"></path>
-                    <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                    <path d="M21 21v-2a4 4 0 0 0 -3 -3.85"></path>
-                  </svg>
-                  <span class="text-muted small">{{ number_format(($summary['unique_companies_pma'] ?? 0), 0, ',', '.') }} Perusahaan</span>
-                </div>
-                <div class="d-flex align-items-center ms-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm text-muted me-1" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                    <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"></path>
-                    <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path>
-                  </svg>
-                  <span class="text-muted small">{{ number_format(($summary['sum_tki_pma'] ?? 0), 0, ',', '.') }} TKI</span>
-                </div>
+              <div class="d-flex align-items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm text-muted me-1" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                  <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"></path>
+                  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path>
+                </svg>
+                <span class="text-muted small">{{ number_format(($summary['sum_tki_pma'] ?? 0), 0, ',', '.') }} TKI</span>
               </div>
             </div>
           </div>
-          <div class="progress progress-sm mb-2" style="height: 4px;">
+          <div class="progress progress-sm mb-2" style="height: 6px;">
             <div class="progress-bar" style="width: {{ $pma_pct_baru }}%; background: linear-gradient(90deg, #11998e 0%, #38ef7d 100%);" title="Investasi Baru {{ $pma_pct_baru }}%"></div>
             <div class="progress-bar" style="width: {{ $pma_pct_kbli }}%; background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);" title="Penambahan KBLI {{ $pma_pct_kbli }}%"></div>
             <div class="progress-bar" style="width: {{ $pma_pct_invest }}%; background: linear-gradient(90deg, #fa709a 0%, #fee140 100%);" title="Penambahan Investasi {{ $pma_pct_invest }}%"></div>
@@ -136,10 +145,10 @@
         </div>
       </div>
     </div>
-    <div class="col-md-6">
-      <div class="card shadow-sm border-0">
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 h-100">
         <div class="card-status-start bg-primary" style="width: 4px;"></div>
-        <div class="card-body py-2">
+        <div class="card-body">
           @php
             $pmdn_total = (float)($summary['sum_pmdn'] ?? 0);
             $pmdn_baru = (float)($summary['sum_pmdn_investasi_baru'] ?? 0);
@@ -149,34 +158,22 @@
             $pmdn_pct_kbli = $pmdn_total > 0 ? round($pmdn_kbli / $pmdn_total * 100) : 0;
             $pmdn_pct_invest = max(0, 100 - ($pmdn_pct_baru + $pmdn_pct_kbli));
           @endphp
-          <div class="d-flex align-items-start mb-2">
+          <div class="d-flex align-items-start mb-3">
             <div class="me-3 rounded-circle d-flex align-items-center justify-content-center" style="width:48px;height:48px;background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);color:#fff;font-weight:700;font-size:1.25rem;box-shadow: 0 4px 12px rgba(33,147,176,0.3);">D</div>
             <div class="flex-fill">
-              <div class="text-muted small fw-semibold text-uppercase mb-1">PMDN</div>
+              <div class="text-muted small fw-semibold text-uppercase mb-1">PMDN Total</div>
               <div class="h3 mb-1 fw-bold text-primary">Rp {{ number_format($pmdn_total, 2, ',', '.') }}</div>
-              <div class="d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm text-muted me-1" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                    <path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"></path>
-                    <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                    <path d="M21 21v-2a4 4 0 0 0 -3 -3.85"></path>
-                  </svg>
-                  <span class="text-muted small">{{ number_format(($summary['unique_companies_pmdn'] ?? 0), 0, ',', '.') }} Perusahaan</span>
-                </div>
-                <div class="d-flex align-items-center ms-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm text-muted me-1" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                    <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"></path>
-                    <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path>
-                  </svg>
-                  <span class="text-muted small">{{ number_format(($summary['sum_tki_pmdn'] ?? 0), 0, ',', '.') }} TKI</span>
-                </div>
+              <div class="d-flex align-items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm text-muted me-1" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                  <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"></path>
+                  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path>
+                </svg>
+                <span class="text-muted small">{{ number_format(($summary['sum_tki_pmdn'] ?? 0), 0, ',', '.') }} TKI</span>
               </div>
             </div>
           </div>
-          <div class="progress progress-sm mb-2" style="height: 4px;">
+          <div class="progress progress-sm mb-2" style="height: 6px;">
             <div class="progress-bar" style="width: {{ $pmdn_pct_baru }}%; background: linear-gradient(90deg, #11998e 0%, #38ef7d 100%);" title="Investasi Baru {{ $pmdn_pct_baru }}%"></div>
             <div class="progress-bar" style="width: {{ $pmdn_pct_kbli }}%; background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);" title="Penambahan KBLI {{ $pmdn_pct_kbli }}%"></div>
             <div class="progress-bar" style="width: {{ $pmdn_pct_invest }}%; background: linear-gradient(90deg, #fa709a 0%, #fee140 100%);" title="Penambahan Investasi {{ $pmdn_pct_invest }}%"></div>
@@ -198,47 +195,20 @@
         </div>
       </div>
     </div>
-  </div>
-  <div class="row g-3 mb-3">
-    <div class="col-md-6">
+    <div class="col-md-3">
       <div class="card shadow-sm border-0">
-        <div class="card-body py-2">
+        <div class="card-body">
           <div class="d-flex align-items-center">
-            <div class="me-3">
-              <div class="rounded-3 d-inline-flex p-2" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon text-white" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                  <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                  <path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"></path>
-                  <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                  <path d="M21 21v-2a4 4 0 0 0 -3 -3.85"></path>
-                </svg>
-              </div>
-            </div>
-            <div class="flex-fill">
-              <div class="text-muted small fw-semibold text-uppercase mb-1">Total Perusahaan</div>
-              <div class="h4 mb-0 fw-bold" style="color: #667eea;">{{ number_format(($summary['unique_companies'] ?? 0), 0, ',', '.') }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-6">
-      <div class="card shadow-sm border-0">
-        <div class="card-body py-2">
-          <div class="d-flex align-items-center">
-            <div class="me-3">
-              <div class="rounded-3 d-inline-flex p-2" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon text-white" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                  <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                  <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"></path>
-                  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path>
-                </svg>
-              </div>
+            <div class="me-3 rounded-3 p-3" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg text-white" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"></path>
+                <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path>
+              </svg>
             </div>
             <div class="flex-fill">
               <div class="text-muted small fw-semibold text-uppercase mb-1">Total TKI</div>
-              <div class="h4 mb-0 fw-bold" style="color: #f5576c;">{{ number_format((int)($summary['total_tki'] ?? 0), 0, ',', '.') }}</div>
+              <div class="h2 mb-0 fw-bold" style="color: #f5576c;">{{ number_format((int)($summary['total_tki'] ?? 0), 0, ',', '.') }}</div>
             </div>
           </div>
         </div>

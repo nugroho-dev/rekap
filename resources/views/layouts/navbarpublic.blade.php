@@ -129,7 +129,7 @@
               <span class="avatar avatar-sm" style="background-image: url({{ url(Storage::url(auth()->user()->pegawai->foto)) }})"></span>
               <div class="d-none d-xl-block ps-2">
                 <div class="text-capitalize">{{ auth()->user()->pegawai->nama}}</div>
-                <div class="mt-1 small text-muted text-wrap">{{ auth()->user()->pegawai->instansi->alias }}</div>
+                <div class="mt-1 small text-muted text-wrap">{{ optional(auth()->user()->pegawai->instansi)->alias ?? '-' }}</div>
               </div>
             </a>
             <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
