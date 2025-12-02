@@ -186,6 +186,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/berusaha/proyek/import_excel', [ProyekController::class, 'import_excel']);
     Route::get('/berusaha/proyek/statistik', [ProyekController::class, 'statistik']);
     Route::post('/berusaha/proyek/statistik', [ProyekController::class, 'statistik']);
+    // Proyek export
+    Route::get('/berusaha/proyek/export/excel', [ProyekController::class, 'exportExcel'])->name('proyek.export.excel');
+    Route::get('/berusaha/proyek/export/pdf', [ProyekController::class, 'exportPdf'])->name('proyek.export.pdf');
 
     Route::get('/proyek/detail', [ProyekController::class, 'detail']);
     Route::post('/proyek/detail', [ProyekController::class, 'detail']);

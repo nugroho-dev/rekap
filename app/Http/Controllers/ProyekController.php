@@ -10,6 +10,8 @@ use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use App\Models\Proses;
 use Illuminate\Support\Facades\Log;
+use App\Exports\ProyekListExport;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 use function PHPUnit\Framework\isNull;
 
@@ -168,8 +170,109 @@ class ProyekController extends Controller
     }
     public function export_excel()
 	{
-		//return Excel::download(new SiswaExport, 'siswa.xlsx');
+		// kept for backward compatibility; route to new export
+		return redirect()->route('proyek.export.excel');
 	}
+
+    protected function buildFilteredQuery(Request $request)
+    {
+        $query = Proyek::query();
+        $query->select([
+            'id_proyek','nib','nama_perusahaan','kbli','judul_kbli',
+            'nama_proyek','uraian_jenis_proyek','uraian_risiko_proyek',
+            'kl_sektor_pembina','day_of_tanggal_pengajuan_proyek',
+            'tanggal_terbit_oss','jumlah_investasi','tki',
+            'nama_user','email','nomor_telp','alamat_usaha',
+            'kelurahan_usaha','kecamatan_usaha','kab_kota_usaha',
+            'longitude','latitude','uraian_skala_usaha'
+        ]);
+
+        $search = $request->input('search');
+        $date_start = $request->input('date_start');
+        $date_end = $request->input('date_end');
+        $month = $request->input('month');
+        $year = $request->input('year');
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('nib', 'LIKE', "%{$search}%")
+                  ->orWhere('kbli', 'LIKE', "%{$search}%")
+                  ->orWhere('nama_perusahaan', 'LIKE', "%{$search}%");
+            });
+        }
+
+        if ($date_start && $date_end) {
+            $query->whereBetween('day_of_tanggal_pengajuan_proyek', [$date_start, $date_end]);
+        }
+
+        if ($month && $year) {
+            $query->whereMonth('day_of_tanggal_pengajuan_proyek', $month)
+                  ->whereYear('day_of_tanggal_pengajuan_proyek', $year);
+        } elseif ($year) {
+            $query->whereYear('day_of_tanggal_pengajuan_proyek', $year);
+        }
+
+        return $query->orderBy('day_of_tanggal_pengajuan_proyek', 'asc');
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $query = $this->buildFilteredQuery($request);
+        $rows = $query->get()->values();
+
+        // Map to flat rows with No and formatted dates
+        $data = $rows->map(function ($r, $idx) {
+            return [
+                $idx + 1,
+                $r->id_proyek,
+                (string) $r->nib,
+                $r->nama_perusahaan,
+                $r->nama_proyek,
+                $r->kbli,
+                $r->judul_kbli,
+                $r->uraian_jenis_proyek,
+                $r->uraian_risiko_proyek,
+                optional(Carbon::parse($r->day_of_tanggal_pengajuan_proyek))->toDateString(),
+                optional(Carbon::parse($r->tanggal_terbit_oss))->toDateString(),
+                (float) ($r->jumlah_investasi ?? 0),
+                (int) ($r->tki ?? 0),
+                $r->nama_user,
+                $r->email,
+                $r->nomor_telp,
+                $r->alamat_usaha,
+                $r->kelurahan_usaha,
+                $r->kecamatan_usaha,
+                $r->kab_kota_usaha,
+                $r->longitude,
+                $r->latitude,
+                $r->uraian_skala_usaha,
+                $r->kl_sektor_pembina,
+            ];
+        });
+
+        $filename = 'proyek_berusaha_' . now()->format('Ymd_His') . '.xlsx';
+        return Excel::download(new ProyekListExport(collect($data)), $filename);
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $query = $this->buildFilteredQuery($request);
+        $items = $query->get();
+
+        $judul = 'Data Proyek Berusaha';
+        $filters = [
+            'search' => $request->input('search'),
+            'date_start' => $request->input('date_start'),
+            'date_end' => $request->input('date_end'),
+            'month' => $request->input('month'),
+            'year' => $request->input('year'),
+        ];
+
+        $pdf = Pdf::loadView('admin.proyek.print.index', compact('judul', 'items', 'filters'))
+            ->setPaper('a4', 'landscape');
+        $filename = 'proyek_berusaha_' . now()->format('Ymd_His') . '.pdf';
+        return $pdf->stream($filename);
+    }
  
 	public function import_excel(Request $request) 
 	{

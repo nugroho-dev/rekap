@@ -50,6 +50,20 @@
                           <span class="d-none d-sm-inline">
                           
                           </span>
+                          <a href="{{ route('proyek.export.excel', ['search' => $search, 'date_start' => $date_start, 'date_end' => $date_end, 'month' => $month, 'year' => $year]) }}" class="btn btn-success d-none d-sm-inline-block">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4h16v16H4z"/><path d="M4 10h16"/><path d="M10 4v16"/><path d="M7 7l-2 3l2 3"/><path d="M13 13l2 3l2 -3"/></svg>
+                            Export Excel
+                          </a>
+                          <a href="{{ route('proyek.export.pdf', ['search' => $search, 'date_start' => $date_start, 'date_end' => $date_end, 'month' => $month, 'year' => $year]) }}" target="_blank" class="btn btn-secondary d-none d-sm-inline-block">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M5 12v-5a2 2 0 0 1 2 -2h7l5 5v7a2 2 0 0 1 -2 2h-6"/><path d="M3 21l6 -7"/><path d="M9 21h-6v-6"/></svg>
+                            Export PDF
+                          </a>
+                          <a href="{{ route('proyek.export.excel', ['search' => $search, 'date_start' => $date_start, 'date_end' => $date_end, 'month' => $month, 'year' => $year]) }}" class="btn btn-success d-sm-none btn-icon" aria-label="Export Excel">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4h16v16H4z"/><path d="M4 10h16"/><path d="M10 4v16"/><path d="M7 7l-2 3l2 3"/><path d="M13 13l2 3l2 -3"/></svg>
+                          </a>
+                          <a href="{{ route('proyek.export.pdf', ['search' => $search, 'date_start' => $date_start, 'date_end' => $date_end, 'month' => $month, 'year' => $year]) }}" target="_blank" class="btn btn-secondary d-sm-none btn-icon" aria-label="Export PDF">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M5 12v-5a2 2 0 0 1 2 -2h7l5 5v7a2 2 0 0 1 -2 2h-6"/><path d="M3 21l6 -7"/><path d="M9 21h-6v-6"/></svg>
+                          </a>
                           <a href="#" class="btn btn-primary d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#modal-team">
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-table-import"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 21h-7a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v8" /><path d="M3 10h18" /><path d="M10 3v18" /><path d="M19 22v-6" /><path d="M22 19l-3 -3l-3 3" /></svg>
