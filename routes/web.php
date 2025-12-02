@@ -43,6 +43,7 @@ use App\Http\Controllers\VerifikasiRealisasiInvestasiController;
 use App\Models\Instansi;
 use Illuminate\Http\Request;
 use App\Http\Controllers\ProyekVerificationController;
+use App\Http\Controllers\NibController;
 
 /*
 |--------------------------------------------------------------------------
@@ -207,6 +208,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/pbg/{pbg}/edit', [DashboardPbgController::class, 'edit']);
     Route::put('/pbg/{pbg}', [DashboardPbgController::class, 'update']);
     Route::delete('/pbg/{pbg}', [DashboardPbgController::class, 'destroy']);
+
+    // NIB listing and import
+    Route::get('/nib', [NibController::class, 'index'])->name('nib.index');
+    Route::post('/nib/import', [NibController::class, 'import'])->name('nib.import');
+    // Alternate path under /berusaha
+    Route::get('/berusaha/nib', [NibController::class, 'index'])->name('nib.index.berusaha');
+    Route::post('/berusaha/nib/import', [NibController::class, 'import'])->name('nib.import.berusaha');
+    // NIB statistik
+    Route::get('/nib/statistik', [NibController::class, 'statistik'])->name('nib.statistik');
+    Route::get('/berusaha/nib/statistik', [NibController::class, 'statistik'])->name('nib.statistik.berusaha');
 
     // Role / Permission helpers (protected)
     Route::get('/createrolepermission', function(){
