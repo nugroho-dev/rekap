@@ -44,6 +44,7 @@ use App\Models\Instansi;
 use Illuminate\Http\Request;
 use App\Http\Controllers\ProyekVerificationController;
 use App\Http\Controllers\NibController;
+use App\Http\Controllers\IzinController;
 
 /*
 |--------------------------------------------------------------------------
@@ -218,6 +219,18 @@ Route::middleware('auth')->group(function () {
     // NIB statistik
     Route::get('/nib/statistik', [NibController::class, 'statistik'])->name('nib.statistik');
     Route::get('/berusaha/nib/statistik', [NibController::class, 'statistik'])->name('nib.statistik.berusaha');
+
+    // Izin listing and import
+    Route::get('/izin', [IzinController::class, 'index'])->name('izin.index');
+    Route::post('/izin/import', [IzinController::class, 'import'])->name('izin.import');
+    // Alternate path under /berusaha
+    Route::get('/berusaha/izin', [IzinController::class, 'index'])->name('izin.index.berusaha');
+    Route::post('/berusaha/izin/import', [IzinController::class, 'import'])->name('izin.import.berusaha');
+    // Izin export
+    Route::get('/izin/export/excel', [IzinController::class, 'exportExcel'])->name('izin.export.excel');
+    Route::get('/izin/export/pdf', [IzinController::class, 'exportPdf'])->name('izin.export.pdf');
+    // Izin statistik
+    Route::get('/izin/statistik', [IzinController::class, 'statistik'])->name('izin.statistik');
 
     // Role / Permission helpers (protected)
     Route::get('/createrolepermission', function(){
