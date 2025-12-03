@@ -381,7 +381,10 @@
                                 <div class="p-3">
                                   @php
                                     $fileExt = pathinfo($item->file_izin, PATHINFO_EXTENSION);
-                                    $fileUrl = Storage::url($item->file_izin);
+                                    // Ensure subdirectory prefix for hosted path (e.g., /datahub)
+                                    $rawUrl = Storage::url($item->file_izin); // e.g., /storage/file_izin_mppd/...
+                                    $prefix = '/datahub';
+                                    $fileUrl = url(rtrim($prefix, '/').$rawUrl);
                                   @endphp
                                   @if(in_array(strtolower($fileExt), ['jpg', 'jpeg', 'png']))
                                     <!-- Image Preview -->

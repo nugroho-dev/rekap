@@ -61,7 +61,10 @@
 
                     <div class="mb-3">
                         <label for="image" class="form-label">Logo</label>
-                        @php $logoUrl = $instansi->logo ? Storage::url($instansi->logo) : null; @endphp
+                        @php 
+                            $logoUrlRaw = $instansi->logo ? Storage::url($instansi->logo) : null; 
+                            $logoUrl = $logoUrlRaw ? url('/datahub'.$logoUrlRaw) : null; 
+                        @endphp
                         <img src="{{ $logoUrl }}" class="img-preview img-fluid mb-3 col-5 rounded mx-auto d-block" @if(!$logoUrl) style="display:none" @endif>
                         <input class="form-control @error('logo') is-invalid @enderror" type="file" id="image" name="logo" onchange="priviewImage()">
                         @error('logo') <small class="form-hint text-danger">{{ $message }}</small> @enderror
