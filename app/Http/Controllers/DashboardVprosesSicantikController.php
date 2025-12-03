@@ -895,13 +895,16 @@ public function show(Request $request, $id)
 		$cacheKey = 'sicantik_stat_detail_v2_'.$year.'_'.str_pad($month,2,'0',STR_PAD_LEFT);
 		// Detail per-bulan juga pakai TTL 2 jam.
 		$items = Cache::remember($cacheKey, now()->addHours(2), function () use ($year, $month) {
-            $list = Proses::query()
-                ->where('jenis_proses_id', 40)
-                ->whereRaw("LOWER(TRIM(status)) = 'selesai'")
-                ->whereNotNull('end_date')
-                ->whereYear('end_date', $year)
-                ->whereMonth('end_date', $month)
-                ->get();
+			$list = Proses::query()
+				->where('jenis_proses_id', 40)
+				->whereRaw("LOWER(TRIM(status)) = 'selesai'")
+				->where(function($q){
+					// effective_end = MIN(end_date, tgl_signed_report) for jenis 40
+					$q->whereNotNull('end_date')->orWhereNotNull('tgl_signed_report');
+				})
+				->whereRaw("YEAR(LEAST(IFNULL(end_date, '9999-12-31'), IFNULL(tgl_signed_report, '9999-12-31'))) = ?", [$year])
+				->whereRaw("MONTH(LEAST(IFNULL(end_date, '9999-12-31'), IFNULL(tgl_signed_report, '9999-12-31'))) = ?", [$month])
+				->get();
             $invalid = ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000'];
             return $list->map(function ($item) use ($invalid) {
                 $row = [
@@ -1212,9 +1215,9 @@ public function show(Request $request, $id)
 		$base = Proses::query()
 			->where('jenis_proses_id', 40)
 			->whereRaw("LOWER(TRIM(status)) = 'selesai'")
-			->whereNotNull('end_date')
-			->whereYear('end_date', $year)
-			->whereMonth('end_date', $month)
+			->where(function($q){ $q->whereNotNull('end_date')->orWhereNotNull('tgl_signed_report'); })
+			->whereRaw("YEAR(LEAST(IFNULL(end_date, '9999-12-31'), IFNULL(tgl_signed_report, '9999-12-31'))) = ?", [$year])
+			->whereRaw("MONTH(LEAST(IFNULL(end_date, '9999-12-31'), IFNULL(tgl_signed_report, '9999-12-31'))) = ?", [$month])
 			->get(['permohonan_izin_id','no_permohonan','jenis_izin','end_date','tgl_signed_report','jenis_proses_id']);
 
 		$mapped = $base->map(function($item) use ($invalid) {
@@ -1370,9 +1373,9 @@ public function show(Request $request, $id)
 		$base = Proses::query()
 			->where('jenis_proses_id', 40)
 			->whereRaw("LOWER(TRIM(status)) = 'selesai'")
-			->whereNotNull('end_date')
-			->whereYear('end_date', $year)
-			->whereMonth('end_date', $month)
+			->where(function($q){ $q->whereNotNull('end_date')->orWhereNotNull('tgl_signed_report'); })
+			->whereRaw("YEAR(LEAST(IFNULL(end_date, '9999-12-31'), IFNULL(tgl_signed_report, '9999-12-31'))) = ?", [$year])
+			->whereRaw("MONTH(LEAST(IFNULL(end_date, '9999-12-31'), IFNULL(tgl_signed_report, '9999-12-31'))) = ?", [$month])
 			->get(['permohonan_izin_id','no_permohonan','jenis_izin','end_date','tgl_signed_report','jenis_proses_id']);
 
 		$mapped = $base->map(function($item) use ($invalid) {
