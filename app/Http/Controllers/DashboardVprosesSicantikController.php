@@ -1215,7 +1215,7 @@ public function show(Request $request, $id)
 			->whereNotNull('end_date')
 			->whereYear('end_date', $year)
 			->whereMonth('end_date', $month)
-			->get(['permohonan_izin_id','no_permohonan','jenis_izin','end_date']);
+			->get(['permohonan_izin_id','no_permohonan','jenis_izin','end_date','tgl_signed_report','jenis_proses_id']);
 
 		$mapped = $base->map(function($item) use ($invalid) {
 			$row = (object) [
@@ -1226,15 +1226,33 @@ public function show(Request $request, $id)
 				'sla_gabungan' => 0,
 			];
 			try {
+				// Window start: earliest valid start_date of step in (2,14)
 				$startDate = Proses::where('permohonan_izin_id', $item->permohonan_izin_id)
 					->whereIn('jenis_proses_id', [2,14])
 					->whereNotNull('start_date')
 					->whereNotIn('start_date', $invalid)
 					->min('start_date');
-				$latestEnd = Proses::where('permohonan_izin_id', $item->permohonan_izin_id)
-					->whereNotNull('end_date')
-					->whereNotIn('end_date', $invalid)
-					->max('end_date');
+				// Window end: latest effective end across all steps (jenis 40 uses min(end_date, tgl_signed_report))
+				$stepsForWindow = Proses::where('permohonan_izin_id', $item->permohonan_izin_id)
+					->where(function($q){ $q->whereNotNull('end_date')->orWhereNotNull('tgl_signed_report'); })
+					->get(['jenis_proses_id','end_date','tgl_signed_report']);
+				$effectiveEnds = $stepsForWindow->map(function($p) use ($invalid){
+					$end = null;
+					$eValid = !empty($p->end_date) && !in_array((string)$p->end_date, $invalid);
+					$sValid = !empty($p->tgl_signed_report) && !in_array((string)$p->tgl_signed_report, $invalid);
+					if ((int)$p->jenis_proses_id === 40) {
+						if ($eValid && $sValid) {
+							try { $end = (\Carbon\Carbon::parse($p->end_date)->lt(\Carbon\Carbon::parse($p->tgl_signed_report))) ? $p->end_date : $p->tgl_signed_report; } catch (\Throwable $ex) { $end = $p->end_date; }
+						} elseif ($eValid) { $end = $p->end_date; }
+						elseif ($sValid) { $end = $p->tgl_signed_report; }
+					} else {
+						if ($eValid) { $end = $p->end_date; }
+					}
+					return $end;
+				})->filter()->values();
+				$latestEnd = $effectiveEnds->max();
+				// Fallback: if no start but has end, set start=end
+				if (!$startDate && $latestEnd) { $startDate = $latestEnd; }
 				if ($startDate && $latestEnd) {
 					$start = \Carbon\Carbon::parse($startDate); $end = \Carbon\Carbon::parse($latestEnd);
 					try {
@@ -1260,7 +1278,7 @@ public function show(Request $request, $id)
 							  ->orWhereRaw("LOWER(status) LIKE '%nunggu%'");
 						})
 						->orderBy('id_proses_permohonan', 'ASC')
-						->get(['jenis_proses_id','start_date','end_date']);
+						->get(['jenis_proses_id','start_date','end_date','tgl_signed_report']);
 					$steps = $steps->unique(function ($s) { return implode('|', [(string)$s->jenis_proses_id,(string)($s->start_date ?? ''),(string)($s->end_date ?? '')]); })->values();
 					$nonSlaIds = [2, 13, 18, 33, 115];
 					$dinasIds = [7,108,185,192,212,226,234,293,420];
@@ -1270,6 +1288,10 @@ public function show(Request $request, $id)
 						if (empty($s->start_date) && !empty($s->end_date) && !in_array((string)$s->end_date, $invalid)) {
 							$s->start_date = $s->end_date; // fallback same-day
 						}
+                        // Jenis 40: gunakan end_date efektif = min(end_date, tgl_signed_report)
+                        if ((int)$s->jenis_proses_id === 40 && !empty($s->tgl_signed_report) && !in_array((string)$s->tgl_signed_report,$invalid) && !empty($s->end_date) && !in_array((string)$s->end_date,$invalid)) {
+                            try { $ed = \Carbon\Carbon::parse($s->end_date); $sr = \Carbon\Carbon::parse($s->tgl_signed_report); if ($ed->gt($sr)) { $s->end_date = $sr->toDateTimeString(); } } catch (\Throwable $e) {}
+                        }
 						if (empty($s->start_date) || empty($s->end_date)) { continue; }
 						if (in_array((string)$s->start_date,$invalid) || in_array((string)$s->end_date,$invalid)) { continue; }
 						try { $st = \Carbon\Carbon::parse($s->start_date); $ed = \Carbon\Carbon::parse($s->end_date); } catch (\Throwable $e) { continue; }
@@ -1351,7 +1373,7 @@ public function show(Request $request, $id)
 			->whereNotNull('end_date')
 			->whereYear('end_date', $year)
 			->whereMonth('end_date', $month)
-			->get(['permohonan_izin_id','no_permohonan','jenis_izin','end_date']);
+			->get(['permohonan_izin_id','no_permohonan','jenis_izin','end_date','tgl_signed_report','jenis_proses_id']);
 
 		$mapped = $base->map(function($item) use ($invalid) {
 			$row = (object) [
@@ -1367,10 +1389,25 @@ public function show(Request $request, $id)
 					->whereNotNull('start_date')
 					->whereNotIn('start_date', $invalid)
 					->min('start_date');
-				$latestEnd = Proses::where('permohonan_izin_id', $item->permohonan_izin_id)
-					->whereNotNull('end_date')
-					->whereNotIn('end_date', $invalid)
-					->max('end_date');
+				$stepsForWindow = Proses::where('permohonan_izin_id', $item->permohonan_izin_id)
+					->where(function($q){ $q->whereNotNull('end_date')->orWhereNotNull('tgl_signed_report'); })
+					->get(['jenis_proses_id','end_date','tgl_signed_report']);
+				$effectiveEnds = $stepsForWindow->map(function($p) use ($invalid){
+					$end = null;
+					$eValid = !empty($p->end_date) && !in_array((string)$p->end_date, $invalid);
+					$sValid = !empty($p->tgl_signed_report) && !in_array((string)$p->tgl_signed_report, $invalid);
+					if ((int)$p->jenis_proses_id === 40) {
+						if ($eValid && $sValid) {
+							try { $end = (\Carbon\Carbon::parse($p->end_date)->lt(\Carbon\Carbon::parse($p->tgl_signed_report))) ? $p->end_date : $p->tgl_signed_report; } catch (\Throwable $ex) { $end = $p->end_date; }
+						} elseif ($eValid) { $end = $p->end_date; }
+						elseif ($sValid) { $end = $p->tgl_signed_report; }
+					} else {
+						if ($eValid) { $end = $p->end_date; }
+					}
+					return $end;
+				})->filter()->values();
+				$latestEnd = $effectiveEnds->max();
+				if (!$startDate && $latestEnd) { $startDate = $latestEnd; }
 				if ($startDate && $latestEnd) {
 					$start = \Carbon\Carbon::parse($startDate); $end = \Carbon\Carbon::parse($latestEnd);
 					try {
@@ -1395,12 +1432,16 @@ public function show(Request $request, $id)
 							  ->orWhereRaw("LOWER(status) LIKE '%nunggu%'");
 						})
 						->orderBy('id_proses_permohonan', 'ASC')
-						->get(['jenis_proses_id','start_date','end_date']);
+							->get(['jenis_proses_id','start_date','end_date','tgl_signed_report']);
 					$steps = $steps->unique(function ($s) { return implode('|', [(string)$s->jenis_proses_id,(string)($s->start_date ?? ''),(string)($s->end_date ?? '')]); })->values();
 					$nonSlaIds = [2, 13, 18, 33, 115]; $dinasIds = [7,108,185,192,212,226,234,293,420]; $forceDpmIds = [14,403];
 					$sumDpm=0; $sumDinas=0;
 					foreach ($steps as $s) {
 						if (empty($s->start_date) && !empty($s->end_date) && !in_array((string)$s->end_date, $invalid)) { $s->start_date = $s->end_date; }
+						// Jenis 40: gunakan end_date efektif = min(end_date, tgl_signed_report)
+						if ((int)$s->jenis_proses_id === 40 && !empty($s->tgl_signed_report) && !in_array((string)$s->tgl_signed_report,$invalid) && !empty($s->end_date) && !in_array((string)$s->end_date,$invalid)) {
+							try { $ed = \Carbon\Carbon::parse($s->end_date); $sr = \Carbon\Carbon::parse($s->tgl_signed_report); if ($ed->gt($sr)) { $s->end_date = $sr->toDateTimeString(); } } catch (\Throwable $e) {}
+						}
 						if (empty($s->start_date) || empty($s->end_date)) { continue; }
 						if (in_array((string)$s->start_date,$invalid) || in_array((string)$s->end_date,$invalid)) { continue; }
 						try { $st = \Carbon\Carbon::parse($s->start_date); $ed = \Carbon\Carbon::parse($s->end_date); } catch (\Throwable $e) { continue; }
