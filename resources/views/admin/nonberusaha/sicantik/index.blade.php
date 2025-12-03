@@ -438,14 +438,13 @@
                           <div class="tab-content">
                             <div class="tab-pane fade active show" id="tabs-home-8" role="tabpanel">
                               <h4>Pilih Tanggal :</h4>
-                              <form method="post" action="{{ url('/sicantik')}}" enctype="multipart/form-data">
-                                @csrf
+                              <form method="GET" action="{{ url('/sicantik')}}">
                               <div class="input-group mb-2">
-                                <input type="date" class="form-control" name="date_start" autocomplete="off">
+                                <input type="date" class="form-control" name="date_start" value="{{ $date_start ?? '' }}" autocomplete="off">
                                 <span class="input-group-text">
                                   s/d
                                 </span>
-                                <input type="date" class="form-control" name="date_end" autocomplete="off">
+                                <input type="date" class="form-control" name="date_end" value="{{ $date_end ?? '' }}" autocomplete="off">
                                 <button type="submit" class="btn btn-primary">Tampilkan</button>
                               </div>
                               </form>
@@ -453,22 +452,21 @@
                             <div class="tab-pane fade" id="tabs-profile-8" role="tabpanel">
                               <h4>Pilih Bulan :</h4>
                               <div>
-                                <form method="post" action="{{ url('/sicantik')}}" enctype="multipart/form-data">
-                                  @csrf
+                                <form method="GET" action="{{ url('/sicantik')}}">
                                 <div class="row g-2">
                                   <div class="col-4">
                                     <select name="month" class="form-select">
                                       <option value="">Bulan</option>
                                       @foreach ($namaBulan as $index => $bulan)
-                                      <option value="{{ $index + 1 }}"> {{ $bulan }}</option>
+                                      <option value="{{ $index + 1 }}" {{ ($month ?? '') == ($index + 1) ? 'selected' : '' }}> {{ $bulan }}</option>
                                       @endforeach
                                     </select>
                                   </div>
                                   <div class="col-4">
                                     <select name="year" class="form-select">
                                       <option value="">Tahun</option>
-                                      @for ($year = $startYear; $year <= $currentYear; $year++)
-                                      <option value="{{ $year }}">{{ $year }}</option>
+                                      @for ($yearOpt = $startYear; $yearOpt <= $currentYear; $yearOpt++)
+                                      <option value="{{ $yearOpt }}" {{ ($year ?? '') == $yearOpt ? 'selected' : '' }}>{{ $yearOpt }}</option>
                                       @endfor
                                     </select>
                                   </div>
@@ -482,14 +480,13 @@
                             <div class="tab-pane fade" id="tabs-activity-8" role="tabpanel">
                               <h4>Pilih Tahun :</h4>
                               <div>
-                                <form method="post" action="{{ url('/sicantik')}}" enctype="multipart/form-data">
-                                  @csrf
+                                <form method="GET" action="{{ url('/sicantik')}}">
                                 <div class="row g-2">
                                   <div class="col-4">
                                     <select name="year" class="form-select">
                                       <option value="">Tahun</option>
-                                      @for ($year = $startYear; $year <= $currentYear; $year++)
-                                      <option value="{{ $year }}">{{ $year }}</option>
+                                      @for ($yearOpt = $startYear; $yearOpt <= $currentYear; $yearOpt++)
+                                      <option value="{{ $yearOpt }}" {{ ($year ?? '') == $yearOpt ? 'selected' : '' }}>{{ $yearOpt }}</option>
                                       @endfor
                                     </select>
                                   </div>
