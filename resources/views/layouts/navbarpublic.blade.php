@@ -126,7 +126,15 @@
           <div class="nav-item dropdown">
            
             <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Open user menu">
-              <span class="avatar avatar-sm" style="background-image: url({{ url(Storage::url(auth()->user()->pegawai->foto)) }})"></span>
+              @php
+                $fotoRaw = auth()->user()->pegawai->foto ?? null;
+                $fotoUrlRaw = $fotoRaw ? Storage::url($fotoRaw) : null;
+                if ($fotoUrlRaw) {
+                  $needsPrefix = !str_contains(config('app.url'), '/datahub');
+                  $fotoUrl = $needsPrefix ? url('/datahub'.$fotoUrlRaw) : url($fotoUrlRaw);
+                } else { $fotoUrl = asset('img/default-avatar.png'); }
+              @endphp
+              <span class="avatar avatar-sm" style="background-image: url({{ $fotoUrl }})"></span>
               <div class="d-none d-xl-block ps-2">
                 <div class="text-capitalize">{{ auth()->user()->pegawai->nama}}</div>
                 <div class="mt-1 small text-muted text-wrap">{{ optional(auth()->user()->pegawai->instansi)->alias ?? '-' }}</div>

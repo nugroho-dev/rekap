@@ -67,7 +67,16 @@
                   <td><span class="text-muted">{{ $loop->iteration + $items->firstItem() - 1 }}</span></td>
                   <td>
                     <div class="d-flex py-1 align-items-center">
-                      <span class="avatar me-2" style="background-image: url('{{ $item->logo ? Storage::url($item->logo) : asset('img/default-avatar.png') }}')"></span>
+                      @php
+                        $logoRaw = $item->logo ? Storage::url($item->logo) : null;
+                        if ($logoRaw) {
+                          $needsPrefix = !str_contains(config('app.url'), '/datahub');
+                          $logoUrl = $needsPrefix ? url('/datahub'.$logoRaw) : url($logoRaw);
+                        } else {
+                          $logoUrl = asset('img/default-avatar.png');
+                        }
+                      @endphp
+                      <span class="avatar me-2" style="background-image: url('{{ $logoUrl }}')"></span>
                     </div>
                   </td>
                   <td>{{ $item->nama_instansi }}</td>

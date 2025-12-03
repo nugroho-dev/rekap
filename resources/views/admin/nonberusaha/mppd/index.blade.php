@@ -317,7 +317,12 @@
                                   @if($item->file_izin)
                                   <div class="alert alert-info">
                                     <strong>File Saat Ini:</strong>
-                                    <a href="{{ Storage::url($item->file_izin) }}" target="_blank" class="alert-link">Lihat File</a>
+                                    @php
+                                      $rawUrl = Storage::url($item->file_izin);
+                                      $needsPrefix = !str_contains(config('app.url'), '/datahub');
+                                      $prefUrl = $needsPrefix ? url('/datahub'.$rawUrl) : url($rawUrl);
+                                    @endphp
+                                    <a href="{{ $prefUrl }}" target="_blank" class="alert-link">Lihat File</a>
                                   </div>
                                   @endif
                                   <div>
@@ -381,10 +386,9 @@
                                 <div class="p-3">
                                   @php
                                     $fileExt = pathinfo($item->file_izin, PATHINFO_EXTENSION);
-                                    // Ensure subdirectory prefix for hosted path (e.g., /datahub)
                                     $rawUrl = Storage::url($item->file_izin); // e.g., /storage/file_izin_mppd/...
-                                    $prefix = '/datahub';
-                                    $fileUrl = url(rtrim($prefix, '/').$rawUrl);
+                                    $needsPrefix = !str_contains(config('app.url'), '/datahub');
+                                    $fileUrl = $needsPrefix ? url('/datahub'.$rawUrl) : url($rawUrl);
                                   @endphp
                                   @if(in_array(strtolower($fileExt), ['jpg', 'jpeg', 'png']))
                                     <!-- Image Preview -->

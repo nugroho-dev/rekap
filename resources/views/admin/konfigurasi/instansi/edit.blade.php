@@ -63,7 +63,10 @@
                         <label for="image" class="form-label">Logo</label>
                         @php 
                             $logoUrlRaw = $instansi->logo ? Storage::url($instansi->logo) : null; 
-                            $logoUrl = $logoUrlRaw ? url('/datahub'.$logoUrlRaw) : null; 
+                            if ($logoUrlRaw) {
+                                $needsPrefix = !str_contains(config('app.url'), '/datahub');
+                                $logoUrl = $needsPrefix ? url('/datahub'.$logoUrlRaw) : url($logoUrlRaw);
+                            } else { $logoUrl = null; }
                         @endphp
                         <img src="{{ $logoUrl }}" class="img-preview img-fluid mb-3 col-5 rounded mx-auto d-block" @if(!$logoUrl) style="display:none" @endif>
                         <input class="form-control @error('logo') is-invalid @enderror" type="file" id="image" name="logo" onchange="priviewImage()">
