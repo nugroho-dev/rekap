@@ -45,12 +45,16 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\ProyekVerificationController;
 use App\Http\Controllers\NibController;
 use App\Http\Controllers\IzinController;
+use App\Http\Controllers\FileController;
 
 /*
 |--------------------------------------------------------------------------
 | Public routes
 |--------------------------------------------------------------------------
 */
+// Storage file access (workaround for servers without symlink support)
+Route::get('/storage/{path}', [FileController::class, 'show'])->where('path', '.*')->name('storage.file');
+
 Route::get('/apicek/{no_permohonan}/{email}', [ApiCekSicantikController::class, 'index']);
 Route::get('/unduh/{no_permohonan}/{email}', [TteController::class, 'index']);
 
@@ -283,15 +287,3 @@ Route::middleware('auth')->group(function () {
         ->middleware('auth');
 });
 
-// Temporary route to create storage link (remove after running once)
-Route::get('/setup-storage-link', function () {
-    if (!file_exists(public_path('storage'))) {
-        try {
-            Illuminate\Support\Facades\Artisan::call('storage:link');
-            return 'Storage link created successfully! You can now remove this route.';
-        } catch (\Exception $e) {
-            return 'Error creating storage link: ' . $e->getMessage();
-        }
-    }
-    return 'Storage link already exists.';
-});
