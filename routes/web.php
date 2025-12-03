@@ -282,3 +282,16 @@ Route::middleware('auth')->group(function () {
         ->name('proyek.verification.list')
         ->middleware('auth');
 });
+
+// Temporary route to create storage link (remove after running once)
+Route::get('/setup-storage-link', function () {
+    if (!file_exists(public_path('storage'))) {
+        try {
+            Illuminate\Support\Facades\Artisan::call('storage:link');
+            return 'Storage link created successfully! You can now remove this route.';
+        } catch (\Exception $e) {
+            return 'Error creating storage link: ' . $e->getMessage();
+        }
+    }
+    return 'Storage link already exists.';
+});
