@@ -316,9 +316,9 @@ class ProyekController extends Controller
 		$month = $request->input('month');
 		$now = Carbon::now();
 		$year = $request->input('year');
-		if ($request->has('year')) {
+        if ($request->has('year')) {
             $year = $request->input('year');
-            $proyek = DB::table('sicantik.proyek')
+            $proyek = DB::table('proyek')
                 ->selectRaw('month(day_of_tanggal_pengajuan_proyek) as bulan, COUNT(DISTINCT nib) AS jumlah_nib, COUNT(*) AS jumlah_proyek, SUM(jumlah_investasi) AS total_investasi, SUM(tki) AS total_tenaga_kerja')
                 ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
                 ->groupByRaw('month(day_of_tanggal_pengajuan_proyek)')
@@ -326,18 +326,16 @@ class ProyekController extends Controller
                 ->get();
 
             // Hitung total NIB unique di seluruh tahun (bukan sum per bulan)
-            $totalJumlahData = DB::table('sicantik.proyek')
+            $totalJumlahData = DB::table('proyek')
                 ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
                 ->distinct('nib')
-                ->count('nib');
-            
-            $totalJumlahProyek = $proyek->sum('jumlah_proyek');
+                ->count('nib');            $totalJumlahProyek = $proyek->sum('jumlah_proyek');
             $totalJumlahInvestasi = $proyek->sum('total_investasi');
             $totalJumlahTki = $proyek->sum('total_tenaga_kerja');
             
 		} else {
 			$year = $now->year;
-            $proyek = DB::table('sicantik.proyek')
+            $proyek = DB::table('proyek')
                 ->selectRaw('month(day_of_tanggal_pengajuan_proyek) as bulan, COUNT(DISTINCT nib) AS jumlah_nib, COUNT(*) AS jumlah_proyek, SUM(jumlah_investasi) AS total_investasi, SUM(tki) AS total_tenaga_kerja')
                 ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
                 ->groupByRaw('month(day_of_tanggal_pengajuan_proyek)')
@@ -345,7 +343,7 @@ class ProyekController extends Controller
                 ->get();
 
             // Hitung total NIB unique di seluruh tahun (bukan sum per bulan)
-            $totalJumlahData = DB::table('sicantik.proyek')
+            $totalJumlahData = DB::table('proyek')
                 ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
                 ->distinct('nib')
                 ->count('nib');
@@ -434,7 +432,7 @@ class ProyekController extends Controller
         $judul = 'Statistik Proyek Berdasarkan Risiko';
         $year = $request->input('year', Carbon::now()->year);
         
-        $risiko = DB::table('sicantik.proyek')
+        $risiko = DB::table('proyek')
             ->selectRaw('uraian_risiko_proyek, COUNT(*) AS jumlah_proyek, SUM(jumlah_investasi) AS total_investasi, SUM(tki) AS total_tenaga_kerja')
             ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
             ->whereNotNull('uraian_risiko_proyek')
@@ -467,7 +465,7 @@ class ProyekController extends Controller
         $perPage = $request->input('perPage', 50);
         $search = $request->input('search');
         
-        $query = DB::table('sicantik.proyek')
+        $query = DB::table('proyek')
             ->selectRaw('kbli, judul_kbli, COUNT(*) AS jumlah_proyek, SUM(jumlah_investasi) AS total_investasi, SUM(tki) AS total_tenaga_kerja')
             ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
             ->whereNotNull('kbli')
@@ -484,7 +482,7 @@ class ProyekController extends Controller
             ->orderBy('jumlah_proyek', 'desc')
             ->paginate($perPage);
 
-        $totals = DB::table('sicantik.proyek')
+        $totals = DB::table('proyek')
             ->selectRaw('COUNT(*) AS jumlah_proyek, SUM(jumlah_investasi) AS total_investasi, SUM(tki) AS total_tenaga_kerja')
             ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
             ->whereNotNull('kbli')
@@ -513,7 +511,7 @@ class ProyekController extends Controller
         $judul = 'Statistik Proyek Berdasarkan Kecamatan';
         $year = $request->input('year', Carbon::now()->year);
         
-        $kecamatan = DB::table('sicantik.proyek')
+        $kecamatan = DB::table('proyek')
             ->selectRaw('kecamatan_usaha, COUNT(*) AS jumlah_proyek, SUM(jumlah_investasi) AS total_investasi, SUM(tki) AS total_tenaga_kerja')
             ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
             ->whereNotNull('kecamatan_usaha')
@@ -546,7 +544,7 @@ class ProyekController extends Controller
         $perPage = $request->input('perPage', 50);
         $search = $request->input('search');
         
-        $query = DB::table('sicantik.proyek')
+        $query = DB::table('proyek')
             ->selectRaw('kelurahan_usaha, kecamatan_usaha, COUNT(*) AS jumlah_proyek, SUM(jumlah_investasi) AS total_investasi, SUM(tki) AS total_tenaga_kerja')
             ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
             ->whereNotNull('kelurahan_usaha')
@@ -563,7 +561,7 @@ class ProyekController extends Controller
             ->orderBy('jumlah_proyek', 'desc')
             ->paginate($perPage);
 
-        $totals = DB::table('sicantik.proyek')
+        $totals = DB::table('proyek')
             ->selectRaw('COUNT(*) AS jumlah_proyek, SUM(jumlah_investasi) AS total_investasi, SUM(tki) AS total_tenaga_kerja')
             ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
             ->whereNotNull('kelurahan_usaha')
@@ -594,7 +592,7 @@ class ProyekController extends Controller
         
         // Menghitung berdasarkan 1 NIB (COUNT DISTINCT)
         // Data sudah konsisten: 1 NIB hanya punya 1 skala usaha
-        $skalaUsaha = DB::table('sicantik.proyek')
+        $skalaUsaha = DB::table('proyek')
             ->selectRaw('uraian_skala_usaha, COUNT(DISTINCT nib) AS jumlah_nib')
             ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
             ->whereNotNull('uraian_skala_usaha')

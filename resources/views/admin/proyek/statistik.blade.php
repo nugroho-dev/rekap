@@ -130,7 +130,7 @@
                         @foreach ($proyek as $data) 
                         @php
                         // Hitung akumulasi NIB unik dari Januari sampai bulan ini
-                        $akumulasiCount = DB::table('sicantik.proyek')
+                        $akumulasiCount = DB::table('proyek')
                             ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
                             ->whereRaw('MONTH(day_of_tanggal_pengajuan_proyek) <= ?', [$data->bulan])
                             ->distinct('nib')

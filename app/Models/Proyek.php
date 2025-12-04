@@ -10,7 +10,7 @@ class Proyek extends Model
 {
     use HasFactory;
     protected $guarded = ['id'];
-    public $table = "sicantik.proyek";
+    public $table = "proyek";
 
     // relasi ke tabel verifikasi (one-to-one)
     public function verification()
