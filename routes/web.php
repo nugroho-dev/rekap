@@ -188,6 +188,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/berusaha/proyek/import_excel', [ProyekController::class, 'import_excel']);
     Route::get('/berusaha/proyek/statistik', [ProyekController::class, 'statistik']);
     Route::post('/berusaha/proyek/statistik', [ProyekController::class, 'statistik']);
+    // Proyek statistik berdasarkan kategori
+    Route::match(['get','post'], '/berusaha/proyek/statistik/risiko', [ProyekController::class, 'statistikRisiko'])->name('proyek.statistik.risiko');
+    Route::match(['get','post'], '/berusaha/proyek/statistik/kbli', [ProyekController::class, 'statistikKbli'])->name('proyek.statistik.kbli');
+    Route::match(['get','post'], '/berusaha/proyek/statistik/skala-usaha', [ProyekController::class, 'statistikSkalaUsaha'])->name('proyek.statistik.skala-usaha');
+    Route::match(['get','post'], '/berusaha/proyek/statistik/kecamatan', [ProyekController::class, 'statistikKecamatan'])->name('proyek.statistik.kecamatan');
+    Route::match(['get','post'], '/berusaha/proyek/statistik/kelurahan', [ProyekController::class, 'statistikKelurahan'])->name('proyek.statistik.kelurahan');
     // Proyek export
     Route::get('/berusaha/proyek/export/excel', [ProyekController::class, 'exportExcel'])->name('proyek.export.excel');
     Route::get('/berusaha/proyek/export/pdf', [ProyekController::class, 'exportPdf'])->name('proyek.export.pdf');

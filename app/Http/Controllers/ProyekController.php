@@ -319,32 +319,44 @@ class ProyekController extends Controller
 		if ($request->has('year')) {
             $year = $request->input('year');
             $proyek = DB::table('sicantik.proyek')
-                ->selectRaw('month(day_of_tanggal_pengajuan_proyek) as bulan, COUNT(DISTINCT nib) AS jumlah_nib, SUM(jumlah_investasi) AS total_investasi, SUM(tki) AS total_tenaga_kerja')
+                ->selectRaw('month(day_of_tanggal_pengajuan_proyek) as bulan, COUNT(DISTINCT nib) AS jumlah_nib, COUNT(*) AS jumlah_proyek, SUM(jumlah_investasi) AS total_investasi, SUM(tki) AS total_tenaga_kerja')
                 ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
                 ->groupByRaw('month(day_of_tanggal_pengajuan_proyek)')
                 ->orderBy('bulan', 'asc')
                 ->get();
 
-            $totalJumlahData = $proyek->sum('jumlah_nib');
+            // Hitung total NIB unique di seluruh tahun (bukan sum per bulan)
+            $totalJumlahData = DB::table('sicantik.proyek')
+                ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
+                ->distinct('nib')
+                ->count('nib');
+            
+            $totalJumlahProyek = $proyek->sum('jumlah_proyek');
             $totalJumlahInvestasi = $proyek->sum('total_investasi');
             $totalJumlahTki = $proyek->sum('total_tenaga_kerja');
             
 		} else {
 			$year = $now->year;
             $proyek = DB::table('sicantik.proyek')
-                ->selectRaw('month(day_of_tanggal_pengajuan_proyek) as bulan, COUNT(DISTINCT nib) AS jumlah_nib, SUM(jumlah_investasi) AS total_investasi, SUM(tki) AS total_tenaga_kerja')
+                ->selectRaw('month(day_of_tanggal_pengajuan_proyek) as bulan, COUNT(DISTINCT nib) AS jumlah_nib, COUNT(*) AS jumlah_proyek, SUM(jumlah_investasi) AS total_investasi, SUM(tki) AS total_tenaga_kerja')
                 ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
                 ->groupByRaw('month(day_of_tanggal_pengajuan_proyek)')
                 ->orderBy('bulan', 'asc')
                 ->get();
 
-            $totalJumlahData = $proyek->sum('jumlah_nib');
+            // Hitung total NIB unique di seluruh tahun (bukan sum per bulan)
+            $totalJumlahData = DB::table('sicantik.proyek')
+                ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
+                ->distinct('nib')
+                ->count('nib');
+            
+            $totalJumlahProyek = $proyek->sum('jumlah_proyek');
             $totalJumlahInvestasi = $proyek->sum('total_investasi');
             $totalJumlahTki = $proyek->sum('total_tenaga_kerja');
 			
 		};
 		
-		return view('admin.investor.statistik',compact('judul','date_start','date_end','month','year','proyek','totalJumlahData','totalJumlahInvestasi','totalJumlahTki'));
+		return view('admin.proyek.statistik',compact('judul','date_start','date_end','month','year','proyek','totalJumlahData','totalJumlahProyek','totalJumlahInvestasi','totalJumlahTki'));
 	}
     public function detail(Request $request)
     {
@@ -415,6 +427,193 @@ class ProyekController extends Controller
         $profil = $query->first();
         $items->withPath(url('proyek/verifikasi'));
         return view('admin.investor.verifikasi',compact('judul','month','year','items','search','perPage','nib','profil'));
+    }
+
+    public function statistikRisiko(Request $request)
+    {
+        $judul = 'Statistik Proyek Berdasarkan Risiko';
+        $year = $request->input('year', Carbon::now()->year);
+        
+        $risiko = DB::table('sicantik.proyek')
+            ->selectRaw('uraian_risiko_proyek, COUNT(*) AS jumlah_proyek, SUM(jumlah_investasi) AS total_investasi, SUM(tki) AS total_tenaga_kerja')
+            ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
+            ->whereNotNull('uraian_risiko_proyek')
+            ->where('uraian_risiko_proyek', '!=', '')
+            ->groupBy('uraian_risiko_proyek')
+            ->orderBy('jumlah_proyek', 'desc')
+            ->get();
+
+        $totalJumlahData = $risiko->sum('jumlah_proyek');
+        $totalJumlahInvestasi = $risiko->sum('total_investasi');
+        $totalJumlahTki = $risiko->sum('total_tenaga_kerja');
+
+        // Return JSON for AJAX request
+        if ($request->input('ajax')) {
+            return response()->json([
+                'risiko' => $risiko,
+                'totalJumlahData' => $totalJumlahData,
+                'totalJumlahInvestasi' => $totalJumlahInvestasi,
+                'totalJumlahTki' => $totalJumlahTki
+            ]);
+        }
+
+        return view('admin.proyek.statistik_risiko', compact('judul', 'year', 'risiko', 'totalJumlahData', 'totalJumlahInvestasi', 'totalJumlahTki'));
+    }
+
+    public function statistikKbli(Request $request)
+    {
+        $judul = 'Statistik Proyek Berdasarkan KBLI';
+        $year = $request->input('year', Carbon::now()->year);
+        $perPage = $request->input('perPage', 50);
+        $search = $request->input('search');
+        
+        $query = DB::table('sicantik.proyek')
+            ->selectRaw('kbli, judul_kbli, COUNT(*) AS jumlah_proyek, SUM(jumlah_investasi) AS total_investasi, SUM(tki) AS total_tenaga_kerja')
+            ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
+            ->whereNotNull('kbli')
+            ->where('kbli', '!=', '');
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('kbli', 'LIKE', "%{$search}%")
+                  ->orWhere('judul_kbli', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $kbli = $query->groupBy('kbli', 'judul_kbli')
+            ->orderBy('jumlah_proyek', 'desc')
+            ->paginate($perPage);
+
+        $totals = DB::table('sicantik.proyek')
+            ->selectRaw('COUNT(*) AS jumlah_proyek, SUM(jumlah_investasi) AS total_investasi, SUM(tki) AS total_tenaga_kerja')
+            ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
+            ->whereNotNull('kbli')
+            ->where('kbli', '!=', '')
+            ->first();
+
+        // Return JSON for AJAX request
+        if ($request->input('ajax')) {
+            return response()->json([
+                'kbli' => $kbli->items(),
+                'totals' => $totals,
+                'pagination' => [
+                    'current_page' => $kbli->currentPage(),
+                    'last_page' => $kbli->lastPage(),
+                    'per_page' => $kbli->perPage(),
+                    'total' => $kbli->total()
+                ]
+            ]);
+        }
+
+        return view('admin.proyek.statistik_kbli', compact('judul', 'year', 'kbli', 'totals', 'perPage', 'search'));
+    }
+
+    public function statistikKecamatan(Request $request)
+    {
+        $judul = 'Statistik Proyek Berdasarkan Kecamatan';
+        $year = $request->input('year', Carbon::now()->year);
+        
+        $kecamatan = DB::table('sicantik.proyek')
+            ->selectRaw('kecamatan_usaha, COUNT(*) AS jumlah_proyek, SUM(jumlah_investasi) AS total_investasi, SUM(tki) AS total_tenaga_kerja')
+            ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
+            ->whereNotNull('kecamatan_usaha')
+            ->where('kecamatan_usaha', '!=', '')
+            ->groupBy('kecamatan_usaha')
+            ->orderBy('jumlah_proyek', 'desc')
+            ->get();
+
+        $totalJumlahData = $kecamatan->sum('jumlah_proyek');
+        $totalJumlahInvestasi = $kecamatan->sum('total_investasi');
+        $totalJumlahTki = $kecamatan->sum('total_tenaga_kerja');
+
+        // Return JSON for AJAX request
+        if ($request->input('ajax')) {
+            return response()->json([
+                'kecamatan' => $kecamatan,
+                'totalJumlahData' => $totalJumlahData,
+                'totalJumlahInvestasi' => $totalJumlahInvestasi,
+                'totalJumlahTki' => $totalJumlahTki
+            ]);
+        }
+
+        return view('admin.proyek.statistik_kecamatan', compact('judul', 'year', 'kecamatan', 'totalJumlahData', 'totalJumlahInvestasi', 'totalJumlahTki'));
+    }
+
+    public function statistikKelurahan(Request $request)
+    {
+        $judul = 'Statistik Proyek Berdasarkan Kelurahan';
+        $year = $request->input('year', Carbon::now()->year);
+        $perPage = $request->input('perPage', 50);
+        $search = $request->input('search');
+        
+        $query = DB::table('sicantik.proyek')
+            ->selectRaw('kelurahan_usaha, kecamatan_usaha, COUNT(*) AS jumlah_proyek, SUM(jumlah_investasi) AS total_investasi, SUM(tki) AS total_tenaga_kerja')
+            ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
+            ->whereNotNull('kelurahan_usaha')
+            ->where('kelurahan_usaha', '!=', '');
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('kelurahan_usaha', 'LIKE', "%{$search}%")
+                  ->orWhere('kecamatan_usaha', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $kelurahan = $query->groupBy('kelurahan_usaha', 'kecamatan_usaha')
+            ->orderBy('jumlah_proyek', 'desc')
+            ->paginate($perPage);
+
+        $totals = DB::table('sicantik.proyek')
+            ->selectRaw('COUNT(*) AS jumlah_proyek, SUM(jumlah_investasi) AS total_investasi, SUM(tki) AS total_tenaga_kerja')
+            ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
+            ->whereNotNull('kelurahan_usaha')
+            ->where('kelurahan_usaha', '!=', '')
+            ->first();
+
+        // Return JSON for AJAX request
+        if ($request->input('ajax')) {
+            return response()->json([
+                'kelurahan' => $kelurahan->items(),
+                'totals' => $totals,
+                'pagination' => [
+                    'current_page' => $kelurahan->currentPage(),
+                    'last_page' => $kelurahan->lastPage(),
+                    'per_page' => $kelurahan->perPage(),
+                    'total' => $kelurahan->total()
+                ]
+            ]);
+        }
+
+        return view('admin.proyek.statistik_kelurahan', compact('judul', 'year', 'kelurahan', 'totals', 'perPage', 'search'));
+    }
+
+    public function statistikSkalaUsaha(Request $request)
+    {
+        $judul = 'Statistik Perusahaan Berdasarkan Skala Usaha';
+        $year = $request->input('year', Carbon::now()->year);
+        
+        // Menghitung berdasarkan 1 NIB (COUNT DISTINCT)
+        // Data sudah konsisten: 1 NIB hanya punya 1 skala usaha
+        $skalaUsaha = DB::table('sicantik.proyek')
+            ->selectRaw('uraian_skala_usaha, COUNT(DISTINCT nib) AS jumlah_nib')
+            ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
+            ->whereNotNull('uraian_skala_usaha')
+            ->where('uraian_skala_usaha', '!=', '')
+            ->groupBy('uraian_skala_usaha')
+            ->orderBy('jumlah_nib', 'desc')
+            ->get();
+
+        $totalJumlahNib = $skalaUsaha->sum('jumlah_nib');
+
+        // Return JSON for AJAX request
+        if ($request->input('ajax')) {
+            return response()->json([
+                'skalaUsaha' => $skalaUsaha,
+                'totalJumlahNib' => $totalJumlahNib
+            ]);
+        }
+
+        return view('admin.proyek.statistik_skala_usaha', compact('judul', 'year', 'skalaUsaha', 'totalJumlahNib'));
     }
 }
 
