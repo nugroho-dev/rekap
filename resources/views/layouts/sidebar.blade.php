@@ -149,7 +149,7 @@
                   </span>
                 </a>
               </li>             
-              <li class="nav-item {{ Request::is('realiasi*')?'active':'' }} {{ Request::is('pengawasan*')?'active':'' }} dropdown">
+              <li class="nav-item {{ Request::is('realiasi*')?'active':'' }} {{ Request::is('lkpm*')?'active':'' }} {{ Request::is('pengawasan*')?'active':'' }} dropdown">
                 <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="true" >
                   <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chart-histogram" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 3v18h18" /><path d="M20 18v3" /><path d="M16 16v5" /><path d="M12 13v8" /><path d="M8 16v5" /><path d="M3 11c6 0 5 -5 9 -5s3 5 9 5" /></svg>
@@ -158,12 +158,12 @@
                    Investasi
                   </span>
                 </a>
-                <div class="dropdown-menu {{ Request::is('realiasi*')?'show':'close' }} {{ Request::is('pengawasan*')?'show':'close' }}">
+                <div class="dropdown-menu {{ Request::is('realiasi*')?'show':'close' }}  {{ Request::is('lkpm*')?'show':'close' }} {{ Request::is('pengawasan*')?'show':'close' }}">
                   <div class="dropdown-menu-columns">
                       <a class="dropdown-item" href="{{ route('proyek.verification.index') }}">
                         Verifikasi Proyek
                       </a>
-                       <a class="dropdown-item" href="{{ url('/maintenance') }}">
+                       <a class="dropdown-item" href="{{ route('lkpm.index') }}">
                         Realisasi Investasi (LKPM)
                       </a>
                       <a class="dropdown-item" href="{{ url('/pengawasan/sigumilang') }}">

@@ -238,6 +238,14 @@ Route::middleware('auth')->group(function () {
     // Izin statistik
     Route::get('/izin/statistik', [IzinController::class, 'statistik'])->name('izin.statistik');
 
+    // LKPM (Laporan Kegiatan Penanaman Modal)
+    Route::get('/lkpm', [App\Http\Controllers\LkpmController::class, 'index'])->name('lkpm.index');
+    Route::get('/lkpm/statistik', [App\Http\Controllers\LkpmController::class, 'statistik'])->name('lkpm.statistik');
+    Route::post('/lkpm/import-umk', [App\Http\Controllers\LkpmController::class, 'importUmk'])->name('lkpm.import.umk');
+    Route::post('/lkpm/import-non-umk', [App\Http\Controllers\LkpmController::class, 'importNonUmk'])->name('lkpm.import.non-umk');
+    Route::delete('/lkpm/umk/{id}', [App\Http\Controllers\LkpmController::class, 'destroyUmk'])->name('lkpm.destroy.umk');
+    Route::delete('/lkpm/non-umk/{id}', [App\Http\Controllers\LkpmController::class, 'destroyNonUmk'])->name('lkpm.destroy.non-umk');
+
     // Role / Permission helpers (protected)
     Route::get('/createrolepermission', function(){
         try{
