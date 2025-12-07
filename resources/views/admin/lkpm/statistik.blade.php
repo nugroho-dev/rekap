@@ -369,6 +369,29 @@
                 <h3 class="card-title">Tren per Periode</h3>
               </div>
               <div class="card-body">
+                @if($tab === 'umk')
+                  @php
+                    $sumMk = collect($byPeriode)->sum('total_modal_kerja');
+                    $sumMt = collect($byPeriode)->sum('total_modal_tetap');
+                    $sumTotalModal = ($sumMk ?? 0) + ($sumMt ?? 0);
+                  @endphp
+                  <div class="d-flex flex-wrap gap-2 small mb-2">
+                    <span class="badge bg-success-lt">Total: Rp {{ number_format($sumTotalModal, 0, ',', '.') }}</span>
+                    <span class="badge bg-green-lt">Kerja: Rp {{ number_format($sumMk ?? 0, 0, ',', '.') }}</span>
+                    <span class="badge bg-info-lt">Tetap: Rp {{ number_format($sumMt ?? 0, 0, ',', '.') }}</span>
+                  </div>
+                @else
+                  @php
+                    $sumRencana = collect($byPeriode)->sum('total_rencana');
+                    $sumRealisasi = collect($byPeriode)->sum('total_realisasi');
+                    $sumTotalInv = ($sumRencana ?? 0) + ($sumRealisasi ?? 0);
+                  @endphp
+                  <div class="d-flex flex-wrap gap-2 small mb-2">
+                    <span class="badge bg-primary-lt">Total (R+R): Rp {{ number_format($sumTotalInv, 0, ',', '.') }}</span>
+                    <span class="badge bg-blue-lt">Rencana: Rp {{ number_format($sumRencana ?? 0, 0, ',', '.') }}</span>
+                    <span class="badge bg-success-lt">Realisasi: Rp {{ number_format($sumRealisasi ?? 0, 0, ',', '.') }}</span>
+                  </div>
+                @endif
                 <div id="chart-periode"></div>
               </div>
             </div>
@@ -415,6 +438,28 @@
                     @endforelse
                   </tbody>
                 </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tren per Tahun -->
+          <div class="col-lg-12 mb-4">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Tren per Tahun</h3>
+              </div>
+              <div class="card-body">
+                @php
+                  $sumTahunKerja = collect($byTahun)->sum('total_modal_kerja');
+                  $sumTahunTetap = collect($byTahun)->sum('total_modal_tetap');
+                  $sumTahunTotal = ($sumTahunKerja ?? 0) + ($sumTahunTetap ?? 0);
+                @endphp
+                <div class="d-flex flex-wrap gap-2 small mb-2">
+                  <span class="badge bg-success-lt">Total: Rp {{ number_format($sumTahunTotal, 0, ',', '.') }}</span>
+                  <span class="badge bg-green-lt">Kerja: Rp {{ number_format($sumTahunKerja ?? 0, 0, ',', '.') }}</span>
+                  <span class="badge bg-info-lt">Tetap: Rp {{ number_format($sumTahunTetap ?? 0, 0, ',', '.') }}</span>
+                </div>
+                <div id="chart-tahun"></div>
               </div>
             </div>
           </div>
@@ -491,8 +536,11 @@ document.addEventListener('DOMContentLoaded', function() {
   
   if (tab === 'umk') {
     const categories = byPeriode.map(item => `${item.periode_laporan} ${item.tahun_laporan}`);
-    const modalKerjaData = byPeriode.map(item => (item.total_modal_kerja / 1000000).toFixed(2));
-    const modalTetapData = byPeriode.map(item => (item.total_modal_tetap / 1000000).toFixed(2));
+    const mkRaw = byPeriode.map(item => (item.total_modal_kerja || 0) / 1000000);
+    const mtRaw = byPeriode.map(item => (item.total_modal_tetap || 0) / 1000000);
+    const modalKerjaData = mkRaw.map(v => v.toFixed(2));
+    const modalTetapData = mtRaw.map(v => v.toFixed(2));
+    const totalModalData = mkRaw.map((v, i) => (v + mtRaw[i]).toFixed(2));
     
     const options = {
       chart: {
@@ -502,7 +550,8 @@ document.addEventListener('DOMContentLoaded', function() {
       },
       series: [
         { name: 'Modal Kerja', data: modalKerjaData },
-        { name: 'Modal Tetap', data: modalTetapData }
+        { name: 'Modal Tetap', data: modalTetapData },
+        { name: 'Total Modal', data: totalModalData }
       ],
       xaxis: {
         categories: categories,
@@ -517,17 +566,49 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       },
       stroke: { curve: 'smooth', width: 3 },
-      colors: ['#2fb344', '#206bc4'],
+      colors: ['#2fb344', '#206bc4', '#845ef7'],
       legend: { position: 'top' },
       dataLabels: { enabled: false }
     };
     
     const chart = new ApexCharts(document.querySelector("#chart-periode"), options);
     chart.render();
+
+    // Chart per Tahun (UMK only)
+    const byTahun = {!! json_encode($byTahun) !!};
+    const tahunCats = byTahun.map(item => item.tahun_laporan);
+    const tahunMkRaw = byTahun.map(item => (item.total_modal_kerja || 0) / 1000000);
+    const tahunMtRaw = byTahun.map(item => (item.total_modal_tetap || 0) / 1000000);
+    const tahunMk = tahunMkRaw.map(v => v.toFixed(2));
+    const tahunMt = tahunMtRaw.map(v => v.toFixed(2));
+    const tahunTotal = tahunMkRaw.map((v, i) => (v + tahunMtRaw[i]).toFixed(2));
+
+    const optionsTahun = {
+      chart: { type: 'line', height: 300, toolbar: { show: false } },
+      series: [
+        { name: 'Modal Kerja', data: tahunMk },
+        { name: 'Modal Tetap', data: tahunMt },
+        { name: 'Total Modal', data: tahunTotal }
+      ],
+      xaxis: { categories: tahunCats, labels: { rotate: -45 } },
+      yaxis: {
+        title: { text: 'Jutaan Rupiah' },
+        labels: { formatter: function(val){ return val.toLocaleString('id-ID'); } }
+      },
+      stroke: { curve: 'smooth', width: 3 },
+      colors: ['#2fb344', '#206bc4', '#845ef7'],
+      legend: { position: 'top' },
+      dataLabels: { enabled: false }
+    };
+    const chartTahun = new ApexCharts(document.querySelector('#chart-tahun'), optionsTahun);
+    chartTahun.render();
   } else {
     const categories = byPeriode.map(item => `${item.periode_laporan} ${item.tahun_laporan}`);
-    const rencanaData = byPeriode.map(item => (item.total_rencana / 1000000).toFixed(2));
-    const realisasiData = byPeriode.map(item => (item.total_realisasi / 1000000).toFixed(2));
+    const rRaw = byPeriode.map(item => (item.total_rencana || 0) / 1000000);
+    const reRaw = byPeriode.map(item => (item.total_realisasi || 0) / 1000000);
+    const rencanaData = rRaw.map(v => v.toFixed(2));
+    const realisasiData = reRaw.map(v => v.toFixed(2));
+    const totalRRData = rRaw.map((v, i) => (v + reRaw[i]).toFixed(2));
     
     const options = {
       chart: {
@@ -537,7 +618,8 @@ document.addEventListener('DOMContentLoaded', function() {
       },
       series: [
         { name: 'Rencana', data: rencanaData },
-        { name: 'Realisasi', data: realisasiData }
+        { name: 'Realisasi', data: realisasiData },
+        { name: 'Total (R+R)', data: totalRRData }
       ],
       xaxis: {
         categories: categories,
@@ -554,7 +636,7 @@ document.addEventListener('DOMContentLoaded', function() {
       plotOptions: {
         bar: { columnWidth: '60%', dataLabels: { position: 'top' } }
       },
-      colors: ['#206bc4', '#2fb344'],
+      colors: ['#206bc4', '#2fb344', '#fa5252'],
       legend: { position: 'top' },
       dataLabels: { enabled: false }
     };

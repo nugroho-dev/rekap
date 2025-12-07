@@ -160,25 +160,25 @@ class LkpmController extends Controller
             if (!empty($tahunArr)) { $statusCardBaseNonUmk->whereIn('tahun_laporan', $tahunArr); }
             if (!empty($periodeArr)) { $statusCardBaseNonUmk->whereIn('periode_laporan', $periodeArr); }
 
-            // totals for current filtered set
+            // totals for current filtered set (Non-UMK does not have 'tambahan_modal_kerja_realisasi')
             $sumQuery = clone $query;
-            $totalModalKerja = (int)$sumQuery->sum('tambahan_modal_kerja_realisasi');
+            $totalModalKerja = 0; // not available in Non-UMK schema
             $sumQuery2 = clone $query;
             $totalModalTetap = (int)$sumQuery2->sum('tambahan_modal_tetap_realisasi');
             $sumQuery3 = clone $query;
-            $totalTenagaKerjaLaki = (int)$sumQuery3->sum('tki_realisasi');
+            $totalTenagaKerjaLaki = (int)$sumQuery3->sum('jumlah_realisasi_tki');
             $sumQuery4 = clone $query;
-            $totalTenagaKerjaPerempuan = (int)$sumQuery4->sum('tka_realisasi');
+            $totalTenagaKerjaPerempuan = (int)$sumQuery4->sum('jumlah_realisasi_tka');
             $totalTenagaKerja = $totalTenagaKerjaLaki + $totalTenagaKerjaPerempuan;
 
             // status-based totals for Non-UMK
             $approvedStatuses = ['DISETUJUI','SUDAH DIPERBAIKI'];
             $approvedQuery = (clone $statusCardBaseNonUmk)->whereIn('status_laporan', $approvedStatuses);
-            $approvedMk = (int)$approvedQuery->sum('tambahan_modal_kerja_realisasi');
+            $approvedMk = 0; // not available in Non-UMK schema
             $approvedMt = (int)$approvedQuery->sum('tambahan_modal_tetap_realisasi');
             $totalModalApprovedFixed = $approvedMk + $approvedMt;
             $needFixQuery = (clone $statusCardBaseNonUmk)->where('status_laporan','PERLU PERBAIKAN');
-            $needFixMk = (int)$needFixQuery->sum('tambahan_modal_kerja_realisasi');
+            $needFixMk = 0; // not available in Non-UMK schema
             $needFixMt = (int)$needFixQuery->sum('tambahan_modal_tetap_realisasi');
             $totalModalNeedFix = $needFixMk + $needFixMt;
 
@@ -208,16 +208,16 @@ class LkpmController extends Controller
                 ->count('no_kode_proyek');
 
             // status-based tenaga kerja totals (Non-UMK)
-            $approvedTkL = (int)(clone $approvedQuery)->sum('tki_realisasi');
-            $approvedTkP = (int)(clone $approvedQuery)->sum('tka_realisasi');
-            $needFixTkL = (int)(clone $needFixQuery)->sum('tki_realisasi');
-            $needFixTkP = (int)(clone $needFixQuery)->sum('tka_realisasi');
+            $approvedTkL = (int)(clone $approvedQuery)->sum('jumlah_realisasi_tki');
+            $approvedTkP = (int)(clone $approvedQuery)->sum('jumlah_realisasi_tka');
+            $needFixTkL = (int)(clone $needFixQuery)->sum('jumlah_realisasi_tki');
+            $needFixTkP = (int)(clone $needFixQuery)->sum('jumlah_realisasi_tka');
 
             $sortable = [
                 'tanggal_laporan','tahun_laporan','periode_laporan',
                 'no_kode_proyek','nama_pelaku_usaha','kbli',
-                'no_laporan','nilai_total_investasi_realisasi',
-                'tki_realisasi','tka_realisasi','status_laporan'
+                'no_laporan','nilai_total_investasi_rencana','total_tambahan_investasi',
+                'jumlah_realisasi_tki','jumlah_realisasi_tka','status_laporan'
             ];
             if (!in_array($sort, $sortable)) { $sort = 'tanggal_laporan'; }
             if ($sort2 && in_array($sort2, $sortable)) {
