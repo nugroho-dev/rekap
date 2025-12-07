@@ -132,7 +132,7 @@ class LkpmController extends Controller
             $data = $query->paginate($perPage)->withQueryString();
             $totalData = LkpmUmk::count();
             $years = LkpmUmk::selectRaw('DISTINCT tahun_laporan')->whereNotNull('tahun_laporan')->pluck('tahun_laporan')->sort()->values();
-        } else {
+        } else if ($tab === 'non-umk') {
             $query = LkpmNonUmk::query();
             if ($q !== '') {
                 $query->where(function($qb) use ($q) {
@@ -228,6 +228,77 @@ class LkpmController extends Controller
             $data = $query->paginate($perPage)->withQueryString();
             $totalData = LkpmNonUmk::count();
             $years = LkpmNonUmk::selectRaw('DISTINCT tahun_laporan')->whereNotNull('tahun_laporan')->pluck('tahun_laporan')->sort()->values();
+        } else {
+            // Gabungan
+            $queryUmk = LkpmUmk::query()
+                ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
+                ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun));
+            $queryNon = LkpmNonUmk::query()
+                ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
+                ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun));
+
+            $totalProyekFilteredUmk = $queryUmk->distinct('no_kode_proyek')->count('no_kode_proyek');
+            $totalPerusahaanUmk = (clone $queryUmk)
+                ->whereNotNull('nomor_induk_berusaha')
+                ->distinct('nomor_induk_berusaha')
+                ->count('nomor_induk_berusaha');
+            $totalLaporanUmk = $queryUmk->count();
+
+            $totalProyekFilteredNon = $queryNon->distinct('no_kode_proyek')->count('no_kode_proyek');
+            $totalPerusahaanNon = (clone $queryNon)
+                ->distinct('nama_pelaku_usaha')
+                ->count('nama_pelaku_usaha');
+            $totalLaporanNon = $queryNon->count();
+            $totalLaporanGabungan = $totalLaporanUmk + $totalLaporanNon;
+
+            // Modal totals: UMK uses pelaporan components; Non-UMK uses realisasi total
+            $totalModalUmk = LkpmUmk::query()
+                ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
+                ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
+                ->sum('modal_kerja_periode_pelaporan')
+                + LkpmUmk::query()
+                ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
+                ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
+                ->sum('modal_tetap_periode_pelaporan');
+            $totalModalNon = LkpmNonUmk::query()
+                ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
+                ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
+                ->sum('total_tambahan_investasi');
+
+            // Tenaga kerja
+            $tenagaKerjaUmk = [
+                'laki' => LkpmUmk::query()->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))->sum('tambahan_tenaga_kerja_laki_laki'),
+                'wanita' => LkpmUmk::query()->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))->sum('tambahan_tenaga_kerja_wanita'),
+            ];
+            $tenagaKerjaUmk['total'] = $tenagaKerjaUmk['laki'] + $tenagaKerjaUmk['wanita'];
+            $tenagaKerjaNon = [
+                'tki_realisasi' => LkpmNonUmk::query()->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))->sum('jumlah_realisasi_tki'),
+                'tka_realisasi' => LkpmNonUmk::query()->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))->sum('jumlah_realisasi_tka'),
+            ];
+
+            // Yearly combined datasets
+            $byTahunUmk = LkpmUmk::selectRaw('tahun_laporan, SUM(modal_kerja_periode_pelaporan) as total_modal_kerja, SUM(modal_tetap_periode_pelaporan) as total_modal_tetap')
+                ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
+                ->groupBy('tahun_laporan')
+                ->orderBy('tahun_laporan', 'asc')
+                ->get();
+            $byTahunNon = LkpmNonUmk::selectRaw('tahun_laporan, SUM(total_tambahan_investasi) as total_realisasi')
+                ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
+                ->groupBy('tahun_laporan')
+                ->orderBy('tahun_laporan', 'asc')
+                ->get();
+
+            $years = collect(array_unique(array_merge(
+                $byTahunUmk->pluck('tahun_laporan')->all(),
+                $byTahunNon->pluck('tahun_laporan')->all()
+            )))->sort()->values();
+
+            return view('admin.lkpm.statistik', compact(
+                'judul', 'tab', 'tahun', 'periode',
+                'totalProyekFilteredUmk', 'totalProyekFilteredNon', 'totalPerusahaanUmk', 'totalPerusahaanNon', 'totalLaporanGabungan',
+                'totalModalUmk', 'totalModalNon', 'tenagaKerjaUmk', 'tenagaKerjaNon',
+                'years', 'byTahunUmk', 'byTahunNon'
+            ));
         }
 
         return view('admin.lkpm.index', compact('judul', 'tab', 'data', 'totalData', 'years', 'q', 'status', 'tahun', 'periode', 'sort', 'dir', 'sort2', 'dir2', 'perPage', 'totalModalKerja', 'totalModalTetap', 'totalTenagaKerja', 'totalTenagaKerjaLaki', 'totalTenagaKerjaPerempuan', 'totalModalApprovedFixed', 'totalModalNeedFix', 'totalPerusahaan', 'totalProyek', 'approvedCompanies', 'approvedProjects', 'needFixCompanies', 'needFixProjects', 'approvedMk', 'approvedMt', 'needFixMk', 'needFixMt', 'approvedTkL', 'approvedTkP', 'needFixTkL', 'needFixTkP'));

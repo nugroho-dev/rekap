@@ -37,6 +37,12 @@
               LKPM Non-UMK
             </a>
           </li>
+          <li class="nav-item" role="presentation">
+            <a href="{{ route('lkpm.statistik', ['tab' => 'gabungan']) }}" class="nav-link {{ $tab === 'gabungan' ? 'active' : '' }}">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-2"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 9m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M17 9m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M7 15a7 7 0 0 0 14 0" /></svg>
+              Gabungan
+            </a>
+          </li>
         </ul>
       </div>
 
@@ -170,7 +176,7 @@
               </div>
             </div>
           </div>
-          @else
+          @elseif($tab === 'non-umk')
           <div class="col-md-6 col-lg-3">
             <div class="card">
               <div class="card-body">
@@ -214,6 +220,68 @@
                     TKI: {{ number_format($tenagaKerja['tki_realisasi'], 0, ',', '.') }} / 
                     TKA: {{ number_format($tenagaKerja['tka_realisasi'], 0, ',', '.') }}
                   </small>
+                </div>
+              </div>
+            </div>
+          </div>
+          @else
+          <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm">
+              <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                  <div class="d-flex align-items-center">
+                    <span class="avatar bg-primary-lt me-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 21l18 0" /><path d="M9 8l1 0" /><path d="M9 12l1 0" /><path d="M9 16l1 0" /><path d="M14 8l1 0" /><path d="M14 12l1 0" /><path d="M14 16l1 0" /><path d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16" /></svg>
+                    </span>
+                    <div class="subheader">Total Proyek</div>
+                  </div>
+                  <span class="badge bg-secondary-lt">Gabungan</span>
+                </div>
+                <div class="h1 mb-1">{{ number_format(($totalProyekFilteredUmk ?? 0) + ($totalProyekFilteredNon ?? 0), 0, ',', '.') }}</div>
+                <div class="d-flex flex-wrap gap-2 small mt-2">
+                  <span class="badge bg-blue-lt">{{ number_format(($totalLaporanGabungan ?? 0), 0, ',', '.') }} laporan</span>
+                  <span class="badge bg-teal-lt">Perusahaan: {{ number_format(($totalPerusahaanUmk ?? 0) + ($totalPerusahaanNon ?? 0), 0, ',', '.') }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm">
+              <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                  <div class="d-flex align-items-center">
+                    <span class="avatar bg-success-lt me-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 20l9 -4l-9 -4l-9 4l9 4" /><path d="M12 4l9 4l-9 4l-9 -4l9 -4" /></svg>
+                    </span>
+                    <div class="subheader">Total Modal</div>
+                  </div>
+                  <span class="badge bg-success-lt">Gabungan</span>
+                </div>
+                <div class="h1 mb-1 text-success">Rp {{ number_format(($totalModalUmk ?? 0) + ($totalModalNon ?? 0), 0, ',', '.') }}</div>
+                <div class="small text-muted">UMK (Pelaporan) + Non-UMK (Realisasi)</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm">
+              <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                  <div class="d-flex align-items-center">
+                    <span class="avatar bg-indigo-lt me-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /><path d="M16 11h6m-3 -3v6" /></svg>
+                    </span>
+                    <div class="subheader">Total Tenaga Kerja</div>
+                  </div>
+                  <span class="badge bg-indigo-lt">Gabungan</span>
+                </div>
+                <div class="h1 mb-1">{{ number_format((($tenagaKerjaUmk['total'] ?? 0) + (($tenagaKerjaNon['tki_realisasi'] ?? 0) + ($tenagaKerjaNon['tka_realisasi'] ?? 0))), 0, ',', '.') }}</div>
+                <div class="d-flex flex-wrap gap-2 small mt-2">
+                  <span class="badge bg-blue-lt">UMK L: {{ number_format($tenagaKerjaUmk['laki'] ?? 0, 0, ',', '.') }}</span>
+                  <span class="badge bg-pink-lt">UMK P: {{ number_format($tenagaKerjaUmk['wanita'] ?? 0, 0, ',', '.') }}</span>
+                  <span class="badge bg-teal-lt">Non TKI: {{ number_format($tenagaKerjaNon['tki_realisasi'] ?? 0, 0, ',', '.') }}</span>
+                  <span class="badge bg-orange-lt">Non TKA: {{ number_format($tenagaKerjaNon['tka_realisasi'] ?? 0, 0, ',', '.') }}</span>
                 </div>
               </div>
             </div>
@@ -325,7 +393,7 @@
               </div>
             </div>
           </div>
-          @else
+          @elseif($tab === 'non-umk')
           <!-- Non-UMK Breakdown by Status -->
           <div class="col-lg-6 mb-4">
             <div class="card">
@@ -357,6 +425,28 @@
                     @endforelse
                   </tbody>
                 </table>
+              </div>
+            </div>
+          </div>
+          @else
+          <!-- Tren Gabungan per Tahun -->
+          <div class="col-lg-12 mb-4">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Tren Gabungan per Tahun</h3>
+              </div>
+              <div class="card-body">
+                @php
+                  $sumGUmk = collect($byTahunUmk ?? [])->sum('total_modal_kerja') + collect($byTahunUmk ?? [])->sum('total_modal_tetap');
+                  $sumGNon = collect($byTahunNon ?? [])->sum('total_realisasi');
+                  $sumGTotal = ($sumGUmk ?? 0) + ($sumGNon ?? 0);
+                @endphp
+                <div class="d-flex flex-wrap gap-2 small mb-2">
+                  <span class="badge bg-success-lt">Total: Rp {{ number_format($sumGTotal, 0, ',', '.') }}</span>
+                  <span class="badge bg-green-lt">UMK: Rp {{ number_format($sumGUmk ?? 0, 0, ',', '.') }}</span>
+                  <span class="badge bg-info-lt">Non-UMK: Rp {{ number_format($sumGNon ?? 0, 0, ',', '.') }}</span>
+                </div>
+                <div id="chart-gabungan"></div>
               </div>
             </div>
           </div>
@@ -641,8 +731,40 @@ document.addEventListener('DOMContentLoaded', function() {
       dataLabels: { enabled: false }
     };
     
-    const chart = new ApexCharts(document.querySelector("#chart-periode"), options);
-    chart.render();
+    if (tab === 'non-umk') {
+      const chart = new ApexCharts(document.querySelector("#chart-periode"), options);
+      chart.render();
+    } else {
+      // Gabungan: render yearly combined chart
+      const byTahunUmk = {!! json_encode($byTahunUmk ?? []) !!};
+      const byTahunNon = {!! json_encode($byTahunNon ?? []) !!};
+      const tahunCats = Array.from(new Set([
+        ...byTahunUmk.map(it => it.tahun_laporan),
+        ...byTahunNon.map(it => it.tahun_laporan)
+      ])).sort();
+      const mapUmk = new Map(byTahunUmk.map(it => [it.tahun_laporan, ((it.total_modal_kerja || 0) + (it.total_modal_tetap || 0)) / 1000000]));
+      const mapNon = new Map(byTahunNon.map(it => [it.tahun_laporan, (it.total_realisasi || 0) / 1000000]));
+      const sUmk = tahunCats.map(y => (mapUmk.get(y) || 0).toFixed(2));
+      const sNon = tahunCats.map(y => (mapNon.get(y) || 0).toFixed(2));
+      const sTotal = tahunCats.map((_, i) => (parseFloat(sUmk[i]) + parseFloat(sNon[i])).toFixed(2));
+
+      const optionsGab = {
+        chart: { type: 'line', height: 300, toolbar: { show: false } },
+        series: [
+          { name: 'UMK (Total Modal)', data: sUmk },
+          { name: 'Non-UMK (Realisasi)', data: sNon },
+          { name: 'Gabungan', data: sTotal }
+        ],
+        xaxis: { categories: tahunCats, labels: { rotate: -45 } },
+        yaxis: { title: { text: 'Jutaan Rupiah' }, labels: { formatter: function(val){ return val.toLocaleString('id-ID'); } } },
+        stroke: { curve: 'smooth', width: 3 },
+        colors: ['#2fb344', '#206bc4', '#845ef7'],
+        legend: { position: 'top' },
+        dataLabels: { enabled: false }
+      };
+      const chartGab = new ApexCharts(document.querySelector('#chart-gabungan'), optionsGab);
+      chartGab.render();
+    }
   }
 });
 </script>
