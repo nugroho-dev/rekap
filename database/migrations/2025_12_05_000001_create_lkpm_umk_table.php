@@ -22,12 +22,12 @@ return new class extends Migration
             $table->string('tahun_laporan')->nullable()->index();
             $table->string('nama_pelaku_usaha')->nullable();
             $table->string('nomor_induk_berusaha')->nullable()->index();
-            $table->decimal('modal_kerja_periode_sebelum', 20, 2)->nullable();
-            $table->decimal('modal_tetap_periode_sebelum', 20, 2)->nullable();
-            $table->decimal('modal_tetap_periode_pelaporan', 20, 2)->nullable();
-            $table->decimal('modal_kerja_periode_pelaporan', 20, 2)->nullable();
-            $table->decimal('akumulasi_modal_kerja', 20, 2)->nullable();
-            $table->decimal('akumulasi_modal_tetap', 20, 2)->nullable();
+            $table->decimal('modal_kerja_periode_sebelum', 20, 0)->nullable();
+            $table->decimal('modal_tetap_periode_sebelum', 20, 0)->nullable();
+            $table->decimal('modal_tetap_periode_pelaporan', 20, 0)->nullable();
+            $table->decimal('modal_kerja_periode_pelaporan', 20, 0)->nullable();
+            $table->decimal('akumulasi_modal_kerja', 20, 0)->nullable();
+            $table->decimal('akumulasi_modal_tetap', 20, 0)->nullable();
             $table->integer('tambahan_tenaga_kerja_laki_laki')->nullable();
             $table->integer('tambahan_tenaga_kerja_wanita')->nullable();
             $table->text('alamat')->nullable();

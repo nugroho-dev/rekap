@@ -43,12 +43,21 @@ class ProyekController extends Controller
         $year = $request->input('year');
 
         if ($search) {
-            // prefer indexable columns first (nib, kbli) then text search on nama_perusahaan
-            $query->where(function($q) use ($search) {
-                $q->where('nib', 'LIKE', "%{$search}%")
-                  ->orWhere('kbli', 'LIKE', "%{$search}%")
-                  ->orWhere('nama_perusahaan', 'LIKE', "%{$search}%");
-            });
+            // support single string or array of tags
+            $terms = is_array($search) ? $search : [$search];
+            $terms = array_filter(array_map(function($t){ return trim((string)$t); }, $terms));
+            if (!empty($terms)) {
+                $query->where(function($q) use ($terms) {
+                    foreach ($terms as $term) {
+                        $q->orWhere(function($qq) use ($term) {
+                            $qq->where('nib', 'LIKE', "%{$term}%")
+                               ->orWhere('kbli', 'LIKE', "%{$term}%")
+                               ->orWhere('nama_perusahaan', 'LIKE', "%{$term}%")
+                               ->orWhere('nama_proyek', 'LIKE', "%{$term}%");
+                        });
+                    }
+                });
+            }
         }
 
         if ($date_start && $date_end) {
@@ -272,6 +281,42 @@ class ProyekController extends Controller
             ->setPaper('a4', 'landscape');
         $filename = 'proyek_berusaha_' . now()->format('Ymd_His') . '.pdf';
         return $pdf->stream($filename);
+    }
+
+    /**
+     * Suggest options for Tom Select dropdown (kbli, nama_perusahaan, nama_proyek)
+     */
+    public function suggest(Request $request)
+    {
+        $q = trim((string) $request->query('q', ''));
+        if ($q === '') {
+            return response()->json([]);
+        }
+
+        $rows = Proyek::query()
+            ->select(['kbli','nama_perusahaan','nama_proyek'])
+            ->where(function($w) use ($q){
+                $w->where('kbli','LIKE',"%{$q}%")
+                  ->orWhere('nama_perusahaan','LIKE',"%{$q}%")
+                  ->orWhere('nama_proyek','LIKE',"%{$q}%");
+            })
+            ->limit(20)
+            ->get();
+
+        $options = [];
+        foreach ($rows as $r) {
+            foreach (['kbli','nama_perusahaan','nama_proyek'] as $field) {
+                $val = (string) ($r->{$field} ?? '');
+                if ($val !== '' && stripos($val, $q) !== false) {
+                    $options[$val] = [
+                        'value' => $val,
+                        'label' => $val,
+                    ];
+                }
+            }
+        }
+
+        return response()->json(array_values($options));
     }
  
 	public function import_excel(Request $request) 

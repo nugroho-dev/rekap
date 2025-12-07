@@ -3,41 +3,52 @@
     <thead>
       <tr>
         <th>No</th>
-        <th>No Kode Proyek</th>
-        <th>Nama Pelaku Usaha</th>
-        <th>KBLI</th>
+        @php
+          $params = request()->all();
+          $nlSort = function($col, $label) use ($params) {
+            $isCurrent = ($params['sort'] ?? null) === $col;
+            $dir = $isCurrent ? (($params['dir'] ?? 'desc') === 'asc' ? 'desc' : 'asc') : 'asc';
+            if (!$isCurrent && !empty($params['sort'])) {
+              $params['sort2'] = $params['sort'];
+              $params['dir2'] = $params['dir'] ?? 'desc';
+            }
+            $params['sort'] = $col; $params['dir'] = $dir;
+            $url = route('lkpm.index', $params);
+            $arrow = $isCurrent ? (($params['dir'] ?? 'desc') === 'asc' ? '▲' : '▼') : '';
+            return '<a href="'.$url.'" class="text-decoration-none">'.e($label).' '.$arrow.'</a>';
+          };
+        @endphp
+        <th>{!! $nlSort('no_kode_proyek','No Kode Proyek') !!}</th>
+        <th>{!! $nlSort('nama_pelaku_usaha','Nama Pelaku Usaha') !!}</th>
+        <th>{!! $nlSort('kbli','KBLI') !!}</th>
         <th>Status PM</th>
-        <th>No Laporan</th>
-        <th>Tanggal</th>
-        <th>Periode</th>
-        <th>Tahun</th>
+        <th>{!! $nlSort('no_laporan','No Laporan') !!}</th>
+        <th>{!! $nlSort('tanggal_laporan','Tanggal') !!}</th>
+        <th>{!! $nlSort('periode_laporan','Periode') !!}</th>
+        <th>{!! $nlSort('tahun_laporan','Tahun') !!}</th>
         <th>Tahap</th>
-        <th>Nilai Investasi (Rp)</th>
-        <th>TKI</th>
-        <th>TKA</th>
-        <th>Status</th>
+        <th>{!! $nlSort('nilai_total_investasi_realisasi','Nilai Investasi (Rp)') !!}</th>
+        <th>{!! $nlSort('tki_realisasi','TKI') !!}</th>
+        <th>{!! $nlSort('tka_realisasi','TKA') !!}</th>
+        <th>{!! $nlSort('status_laporan','Status') !!}</th>
         <th class="w-1">Aksi</th>
       </tr>
     </thead>
     <tbody>
-      @php 
-        $no = ($data->currentPage() - 1) * $data->perPage() + 1;
-      @endphp
-      @forelse($groupedData as $kodeProyek => $items)
-        @foreach($items as $index => $item)
+      @php $no = ($data->firstItem() ?? 1); @endphp
+      @forelse($data as $item)
         <tr>
-          @if($index === 0)
-          <td rowspan="{{ $items->count() }}" class="align-middle text-center bg-light"><strong>{{ $no++ }}</strong></td>
-          <td rowspan="{{ $items->count() }}" class="align-middle bg-light">
-            <strong>{{ $kodeProyek ?? '-' }}</strong>
+          <td class="align-middle text-center bg-light"><strong>{{ $no++ }}</strong></td>
+          <td class="align-middle bg-light">
+            <strong>{{ $item->no_kode_proyek ?? '-' }}</strong>
           </td>
-          <td rowspan="{{ $items->count() }}" class="align-middle bg-light">
+          <td class="align-middle bg-light">
             <div class="text-truncate" style="max-width: 200px;" title="{{ $item->nama_pelaku_usaha }}">
               {{ $item->nama_pelaku_usaha }}
             </div>
           </td>
-          <td rowspan="{{ $items->count() }}" class="align-middle bg-light">{{ $item->kbli }}</td>
-          <td rowspan="{{ $items->count() }}" class="align-middle bg-light">
+          <td class="align-middle bg-light">{{ $item->kbli }}</td>
+          <td class="align-middle bg-light">
             @if($item->status_penanaman_modal === 'PMDN')
               <span class="badge bg-blue">{{ $item->status_penanaman_modal }}</span>
             @elseif($item->status_penanaman_modal === 'PMA')
@@ -46,7 +57,6 @@
               <span class="badge bg-secondary">{{ $item->status_penanaman_modal ?? '-' }}</span>
             @endif
           </td>
-          @endif
           <td><strong>{{ $item->no_laporan }}</strong></td>
           <td>{{ $item->tanggal_laporan ? $item->tanggal_laporan->format('d/m/Y') : '-' }}</td>
           <td>{{ $item->periode_laporan }}</td>
@@ -252,7 +262,6 @@
           </div>
         </div>
       </div>
-      @endforeach
       @empty
       <tr>
         <td colspan="15" class="text-center text-muted py-4">

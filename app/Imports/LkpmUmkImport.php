@@ -11,6 +11,11 @@ use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class LkpmUmkImport implements ToModel, WithHeadingRow, WithUpserts
 {
+    private int $successCount = 0;
+    private array $failedRows = [];
+    private array $seenIds = [];
+    private array $duplicates = [];
+
     /**
      * Unique identifier for upserts
      */
@@ -61,98 +66,128 @@ class LkpmUmkImport implements ToModel, WithHeadingRow, WithUpserts
      */
     public function model(array $row)
     {
-        return new LkpmUmk([
-            'id_laporan' => $this->getValue($row, ['id_laporan', 'id laporan']),
-            'no_kode_proyek' => $this->getValue($row, ['no_kode_proyek', 'no kode proyek', 'kode_proyek', 'kode proyek']),
-            'skala_risiko' => $this->getValue($row, ['skala_risiko', 'skala risiko']),
-            'kbli' => $this->getValue($row, ['kbli']),
-            'tanggal_laporan' => $this->parseTanggal($this->getValue($row, ['tanggal_laporan', 'tanggal laporan'])),
-            'periode_laporan' => $this->getValue($row, ['periode_laporan', 'periode laporan', 'periode']),
-            'tahun_laporan' => $this->getValue($row, ['tahun_laporan', 'tahun laporan', 'tahun']),
-            'nama_pelaku_usaha' => $this->getValue($row, ['nama_pelaku_usaha', 'nama pelaku usaha', 'nama_perusahaan', 'nama perusahaan']),
-            'nomor_induk_berusaha' => $this->getValue($row, ['nomor_induk_berusaha', 'nomor induk berusaha', 'nib']),
-            'modal_kerja_periode_sebelum' => $this->parseDecimal($this->getValue($row, [
-                'modal_kerja_periode_sebelum', 
-                'modal kerja periode sebelum',
-                'modal_kerja_triwulan_lalu',
-                'modal kerja triwulan lalu'
-            ])),
-            'modal_tetap_periode_sebelum' => $this->parseDecimal($this->getValue($row, [
-                'modal_tetap_periode_sebelum',
-                'modal tetap periode sebelum',
-                'modal_tetap_triwulan_lalu',
-                'modal tetap triwulan lalu'
-            ])),
-            'modal_tetap_periode_pelaporan' => $this->parseDecimal($this->getValue($row, [
-                'modal_tetap_periode_pelaporan',
-                'modal tetap periode pelaporan',
-                'modal_tetap_triwulan_ini',
-                'modal tetap triwulan ini'
-            ])),
-            'modal_kerja_periode_pelaporan' => $this->parseDecimal($this->getValue($row, [
-                'modal_kerja_periode_pelaporan',
-                'modal kerja periode pelaporan',
-                'modal_kerja_triwulan_ini',
-                'modal kerja triwulan ini'
-            ])),
-            'akumulasi_modal_kerja' => $this->parseDecimal($this->getValue($row, [
-                'akumulasi_modal_kerja',
-                'akumulasi modal kerja',
-                'modal_kerja_akumulasi',
-                'modal kerja akumulasi'
-            ])),
-            'akumulasi_modal_tetap' => $this->parseDecimal($this->getValue($row, [
-                'akumulasi_modal_tetap',
-                'akumulasi modal tetap',
-                'modal_tetap_akumulasi',
-                'modal tetap akumulasi'
-            ])),
-            'tambahan_tenaga_kerja_laki_laki' => $this->parseInt($this->getValue($row, [
-                'tambahan_tenaga_kerja_laki_laki',
-                'tambahan tenaga kerja laki laki',
-                'tambahan_tenaga_kerja_l',
-                'tambahan tenaga kerja l',
-                'tk_laki_laki',
-                'tk laki laki',
-                'tk_l',
-                'tk l'
-            ])),
-            'tambahan_tenaga_kerja_wanita' => $this->parseInt($this->getValue($row, [
-                'tambahan_tenaga_kerja_wanita',
-                'tambahan tenaga kerja wanita',
-                'tambahan_tenaga_kerja_p',
-                'tambahan tenaga kerja p',
-                'tambahan_tenaga_kerja_perempuan',
-                'tambahan tenaga kerja perempuan',
-                'tk_wanita',
-                'tk wanita',
-                'tk_p',
-                'tk p'
-            ])),
-            'alamat' => $this->getValue($row, ['alamat']),
-            'kecamatan' => $this->getValue($row, ['kecamatan']),
-            'kelurahan' => $this->getValue($row, ['kelurahan', 'desa']),
-            'kab_kota' => $this->getValue($row, ['kab_kota', 'kab kota', 'kabupaten_kota', 'kabupaten kota']),
-            'provinsi' => $this->getValue($row, ['provinsi']),
-            'status_laporan' => $this->getValue($row, ['status_laporan', 'status laporan', 'status']),
-            'catatan_permasalahan_perusahaan' => $this->getValue($row, [
-                'catatan_permasalahan_perusahaan',
-                'catatan permasalahan perusahaan',
-                'catatan_permasalahan',
-                'catatan permasalahan'
-            ]),
-            'nama_petugas' => $this->getValue($row, ['nama_petugas', 'nama petugas']),
-            'jabatan_petugas' => $this->getValue($row, ['jabatan_petugas', 'jabatan petugas']),
-            'no_telp_hp_petugas' => $this->getValue($row, [
-                'no_telp_hp_petugas',
-                'no telp hp petugas',
-                'telp_petugas',
-                'telp petugas',
-                'no_hp_petugas',
-                'no hp petugas'
-            ]),
-            'email_petugas' => $this->getValue($row, ['email_petugas', 'email petugas']),
-        ]);
+        try {
+            $currentId = $this->getValue($row, ['id_laporan', 'id laporan']);
+            if ($currentId) {
+                if (isset($this->seenIds[$currentId])) {
+                    $this->duplicates[] = [
+                        'id' => $currentId,
+                        'reason' => 'Duplikat di file impor',
+                    ];
+                } else {
+                    $this->seenIds[$currentId] = true;
+                }
+            }
+            $model = new LkpmUmk([
+                'id_laporan' => $currentId,
+                'no_kode_proyek' => $this->getValue($row, ['no_kode_proyek', 'no kode proyek', 'kode_proyek', 'kode proyek']),
+                'skala_risiko' => $this->getValue($row, ['skala_risiko', 'skala risiko']),
+                'kbli' => $this->getValue($row, ['kbli']),
+                'tanggal_laporan' => $this->parseTanggal($this->getValue($row, ['tanggal_laporan', 'tanggal laporan'])),
+                'periode_laporan' => $this->getValue($row, ['periode_laporan', 'periode laporan', 'periode']),
+                'tahun_laporan' => $this->getValue($row, ['tahun_laporan', 'tahun laporan', 'tahun']),
+                'nama_pelaku_usaha' => $this->getValue($row, ['nama_pelaku_usaha', 'nama pelaku usaha', 'nama_perusahaan', 'nama perusahaan']),
+                'nomor_induk_berusaha' => $this->getValue($row, ['nomor_induk_berusaha', 'nomor induk berusaha', 'nib']),
+                'modal_kerja_periode_sebelum' => $this->parseDecimal($this->getValue($row, [
+                    'modal_kerja_periode_sebelum', 
+                    'modal kerja periode sebelum',
+                    'modal_kerja_triwulan_lalu',
+                    'modal kerja triwulan lalu'
+                ])),
+                'modal_tetap_periode_sebelum' => $this->parseDecimal($this->getValue($row, [
+                    'modal_tetap_periode_sebelum',
+                    'modal tetap periode sebelum',
+                    'modal_tetap_triwulan_lalu',
+                    'modal tetap triwulan lalu'
+                ])),
+                'modal_tetap_periode_pelaporan' => $this->parseDecimal($this->getValue($row, [
+                    'modal_tetap_periode_pelaporan',
+                    'modal tetap periode pelaporan',
+                    'modal_tetap_triwulan_ini',
+                    'modal tetap triwulan ini'
+                ])),
+                'modal_kerja_periode_pelaporan' => $this->parseDecimal($this->getValue($row, [
+                    'modal_kerja_periode_pelaporan',
+                    'modal kerja periode pelaporan',
+                    'modal_kerja_triwulan_ini',
+                    'modal kerja triwulan ini'
+                ])),
+                'akumulasi_modal_kerja' => $this->parseDecimal($this->getValue($row, [
+                    'akumulasi_modal_kerja',
+                    'akumulasi modal kerja',
+                    'modal_kerja_akumulasi',
+                    'modal kerja akumulasi'
+                ])),
+                'akumulasi_modal_tetap' => $this->parseDecimal($this->getValue($row, [
+                    'akumulasi_modal_tetap',
+                    'akumulasi modal tetap',
+                    'modal_tetap_akumulasi',
+                    'modal tetap akumulasi'
+                ])),
+                'tambahan_tenaga_kerja_laki_laki' => $this->parseInt($this->getValue($row, [
+                    'tambahan_tenaga_kerja_laki_laki',
+                    'tambahan tenaga kerja laki laki',
+                    'tambahan_tenaga_kerja_l',
+                    'tambahan tenaga kerja l',
+                    'tk_laki_laki',
+                    'tk laki laki',
+                    'tk_l',
+                    'tk l'
+                ])),
+                'tambahan_tenaga_kerja_wanita' => $this->parseInt($this->getValue($row, [
+                    'tambahan_tenaga_kerja_wanita',
+                    'tambahan tenaga kerja wanita',
+                    'tambahan_tenaga_kerja_p',
+                    'tambahan tenaga kerja p',
+                    'tambahan_tenaga_kerja_perempuan',
+                    'tambahan tenaga kerja perempuan',
+                    'tk_wanita',
+                    'tk wanita',
+                    'tk_p',
+                    'tk p'
+                ])),
+                'alamat' => $this->getValue($row, ['alamat']),
+                'kecamatan' => $this->getValue($row, ['kecamatan']),
+                'kelurahan' => $this->getValue($row, ['kelurahan', 'desa']),
+                'kab_kota' => $this->getValue($row, ['kab_kota', 'kab kota', 'kabupaten_kota', 'kabupaten kota']),
+                'provinsi' => $this->getValue($row, ['provinsi']),
+                'status_laporan' => $this->getValue($row, ['status_laporan', 'status laporan', 'status']),
+                'catatan_permasalahan_perusahaan' => $this->getValue($row, [
+                    'catatan_permasalahan_perusahaan',
+                    'catatan permasalahan perusahaan',
+                    'catatan_permasalahan',
+                    'catatan permasalahan'
+                ]),
+                'nama_petugas' => $this->getValue($row, ['nama_petugas', 'nama petugas']),
+                'jabatan_petugas' => $this->getValue($row, ['jabatan_petugas', 'jabatan petugas']),
+                'no_telp_hp_petugas' => $this->getValue($row, [
+                    'no_telp_hp_petugas',
+                    'no telp hp petugas',
+                    'telp_petugas',
+                    'telp petugas',
+                    'no_hp_petugas',
+                    'no hp petugas'
+                ]),
+                'email_petugas' => $this->getValue($row, ['email_petugas', 'email petugas']),
+            ]);
+            $this->successCount++;
+            return $model;
+        } catch (\Throwable $e) {
+            $this->failedRows[] = [
+                'id' => $row['id_laporan'] ?? $this->getValue($row, ['id_laporan', 'id laporan']) ?? null,
+                'error' => $e->getMessage(),
+            ];
+            return null;
+        }
+    }
+
+    public function summary(): array
+    {
+        return [
+            'success' => $this->successCount,
+            'failed' => $this->failedRows,
+            'duplicates' => $this->duplicates,
+        ];
     }
 
     /**

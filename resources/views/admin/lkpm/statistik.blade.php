@@ -67,16 +67,7 @@
                 @endif
               </select>
             </div>
-            @if($tab === 'umk')
-            <div class="col-md-3">
-              <select name="skala_risiko" class="form-select">
-                <option value="">Semua Skala Risiko</option>
-                @foreach($skalaRisikoList as $risiko)
-                  <option value="{{ $risiko }}" {{ $skalaRisiko == $risiko ? 'selected' : '' }}>{{ $risiko }}</option>
-                @endforeach
-              </select>
-            </div>
-            @endif
+            
             <div class="col-md-3">
               <div class="btn-group w-100">
                 <button type="submit" class="btn btn-primary">
@@ -91,61 +82,90 @@
 
         <!-- KPI Cards -->
         <div class="row row-deck mb-4">
-          <div class="col-md-6 col-lg-3">
-            <div class="card">
+          <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm">
               <div class="card-body">
-                <div class="d-flex align-items-center">
-                  <div class="subheader">Total Proyek</div>
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                  <div class="d-flex align-items-center">
+                    <span class="avatar bg-primary-lt me-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 21l18 0" /><path d="M9 8l1 0" /><path d="M9 12l1 0" /><path d="M9 16l1 0" /><path d="M14 8l1 0" /><path d="M14 12l1 0" /><path d="M14 16l1 0" /><path d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16" /></svg>
+                    </span>
+                    <div class="subheader">Total Proyek</div>
+                  </div>
+                  <span class="badge bg-secondary-lt">{{ $tahun ?: 'Semua Tahun' }}</span>
                 </div>
-                <div class="h1 mb-0">{{ number_format($totalProyek, 0, ',', '.') }}</div>
-                <div class="text-muted mt-2">
-                  <small>{{ number_format($totalLaporan, 0, ',', '.') }} laporan</small>
+                <div class="h1 mb-1">{{ number_format($totalProyekFiltered ?? 0, 0, ',', '.') }}</div>
+                <div class="d-flex flex-wrap gap-2 small mt-2">
+                  <span class="badge bg-blue-lt">{{ number_format($totalLaporan, 0, ',', '.') }} laporan</span>
+                  <span class="badge bg-teal-lt">Perusahaan: {{ number_format($totalPerusahaanFiltered ?? 0, 0, ',', '.') }}</span>
+                  @if(($tab ?? 'umk') === 'umk')
+                    <span class="badge bg-secondary-lt">Keseluruhan: {{ number_format($totalProyekAll ?? 0, 0, ',', '.') }}</span>
+                  @endif
                 </div>
               </div>
             </div>
           </div>
 
           @if($tab === 'umk')
-          <div class="col-md-6 col-lg-3">
-            <div class="card">
+          <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm">
               <div class="card-body">
-                <div class="d-flex align-items-center">
-                  <div class="subheader">Total Modal Kerja</div>
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                  <div class="d-flex align-items-center">
+                    <span class="avatar bg-success-lt me-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 20l9 -4l-9 -4l-9 4l9 4" /><path d="M12 4l9 4l-9 4l-9 -4l9 -4" /></svg>
+                    </span>
+                    <div class="subheader">Total Modal (Pelaporan)</div>
+                  </div>
+                  <span class="badge bg-success-lt">Pelaporan</span>
                 </div>
-                <div class="h1 mb-0 text-success">{{ number_format($modalKerjaStats['pelaporan'] / 1000000000, 2) }}M</div>
-                <div class="text-muted mt-2">
-                  <small>Periode Pelaporan</small>
+                <div class="h1 mb-1 text-success">Rp {{ number_format($modalComponents['total_pelaporan'] ?? 0, 0, ',', '.') }}</div>
+                <div class="mt-2">
+                  @php
+                    $totalPel = $modalComponents['total_pelaporan'] ?? 0;
+                    $mkPel = $modalComponents['kerja_pelaporan'] ?? 0;
+                    $mtPel = $modalComponents['tetap_pelaporan'] ?? 0;
+                    $mkPct = $totalPel > 0 ? round(($mkPel / max(1, $totalPel)) * 100) : 0;
+                    $mtPct = $totalPel > 0 ? round(($mtPel / max(1, $totalPel)) * 100) : 0;
+                  @endphp
+                  <div class="d-flex justify-content-between small mb-1">
+                    <span class="text-muted">Modal Kerja</span>
+                    <span class="text-muted">Rp {{ number_format($mkPel, 0, ',', '.') }}</span>
+                  </div>
+                  <div class="progress progress-sm mb-2">
+                    <div class="progress-bar bg-success" style="width: {{ $mkPct }}%" role="progressbar" aria-valuenow="{{ $mkPct }}" aria-valuemin="0" aria-valuemax="100"></div>
+                  </div>
+                  <div class="d-flex justify-content-between small mb-1">
+                    <span class="text-muted">Modal Tetap</span>
+                    <span class="text-muted">Rp {{ number_format($mtPel, 0, ',', '.') }}</span>
+                  </div>
+                  <div class="progress progress-sm">
+                    <div class="progress-bar bg-info" style="width: {{ $mtPct }}%" role="progressbar" aria-valuenow="{{ $mtPct }}" aria-valuemin="0" aria-valuemax="100"></div>
+                  </div>
+                  <div class="small text-muted mt-2">Bagian dari total modal pelaporan</div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="col-md-6 col-lg-3">
-            <div class="card">
-              <div class="card-body">
-                <div class="d-flex align-items-center">
-                  <div class="subheader">Total Modal Tetap</div>
-                </div>
-                <div class="h1 mb-0 text-info">{{ number_format($modalTetapStats['pelaporan'] / 1000000000, 2) }}M</div>
-                <div class="text-muted mt-2">
-                  <small>Periode Pelaporan</small>
-                </div>
-              </div>
-            </div>
-          </div>
+          
 
-          <div class="col-md-6 col-lg-3">
-            <div class="card">
+          <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm">
               <div class="card-body">
-                <div class="d-flex align-items-center">
-                  <div class="subheader">Total Tenaga Kerja</div>
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                  <div class="d-flex align-items-center">
+                    <span class="avatar bg-indigo-lt me-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /><path d="M16 11h6m-3 -3v6" /></svg>
+                    </span>
+                    <div class="subheader">Total Tenaga Kerja</div>
+                  </div>
+                  <span class="badge bg-indigo-lt">TK</span>
                 </div>
-                <div class="h1 mb-0">{{ number_format($tenagaKerja['total'], 0, ',', '.') }}</div>
-                <div class="text-muted mt-2">
-                  <small>
-                    <span class="text-blue">{{ number_format($tenagaKerja['laki'], 0, ',', '.') }} L</span> / 
-                    <span class="text-pink">{{ number_format($tenagaKerja['wanita'], 0, ',', '.') }} P</span>
-                  </small>
+                <div class="h1 mb-1">{{ number_format($tenagaKerja['total'], 0, ',', '.') }}</div>
+                <div class="d-flex flex-wrap gap-2 small mt-2">
+                  <span class="badge bg-blue-lt">L: {{ number_format($tenagaKerja['laki'], 0, ',', '.') }}</span>
+                  <span class="badge bg-pink-lt">P: {{ number_format($tenagaKerja['wanita'], 0, ',', '.') }}</span>
                 </div>
               </div>
             </div>
@@ -157,9 +177,9 @@
                 <div class="d-flex align-items-center">
                   <div class="subheader">Rencana Investasi</div>
                 </div>
-                <div class="h1 mb-0 text-primary">{{ number_format($investasiStats['rencana'] / 1000000000, 2) }}M</div>
+                <div class="h1 mb-0 text-primary">Rp {{ number_format($investasiStats['rencana'], 0, ',', '.') }}</div>
                 <div class="text-muted mt-2">
-                  <small>Miliar Rupiah</small>
+                  <small>Nilai penuh</small>
                 </div>
               </div>
             </div>
@@ -171,7 +191,7 @@
                 <div class="d-flex align-items-center">
                   <div class="subheader">Realisasi Investasi</div>
                 </div>
-                <div class="h1 mb-0 text-success">{{ number_format($investasiStats['realisasi'] / 1000000000, 2) }}M</div>
+                <div class="h1 mb-0 text-success">Rp {{ number_format($investasiStats['realisasi'], 0, ',', '.') }}</div>
                 <div class="text-muted mt-2">
                   @php
                     $persentase = $investasiStats['rencana'] > 0 ? ($investasiStats['realisasi'] / $investasiStats['rencana']) * 100 : 0;
@@ -221,10 +241,18 @@
                     <div class="h3 text-muted">Rp {{ number_format($modalKerjaStats['akumulasi'], 0, ',', '.') }}</div>
                   </div>
                 </div>
-                <div class="progress mb-2">
-                  <div class="progress-bar bg-success" style="width: 100%"></div>
+                @php
+                  $kerjaPel = $modalKerjaStats['pelaporan'] ?? 0;
+                  $totalPelaporanAll = $modalComponents['total_pelaporan'] ?? 0;
+                  $kerjaPct = $totalPelaporanAll > 0 ? min(100, round(($kerjaPel / max(1, $totalPelaporanAll)) * 100)) : 0;
+                @endphp
+                <div class="progress mb-1">
+                  <div class="progress-bar bg-success" style="width: {{ $kerjaPct }}%" role="progressbar" aria-valuenow="{{ $kerjaPct }}" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
-                <small class="text-muted">Periode Sebelum: Rp {{ number_format($modalKerjaStats['sebelum'], 0, ',', '.') }}</small>
+                <div class="d-flex justify-content-between small text-muted">
+                  <span>Periode Sebelum: Rp {{ number_format($modalKerjaStats['sebelum'], 0, ',', '.') }}</span>
+                  <span>{{ $kerjaPct }}% dari total modal</span>
+                </div>
               </div>
             </div>
           </div>
@@ -245,63 +273,26 @@
                     <div class="h3 text-muted">Rp {{ number_format($modalTetapStats['akumulasi'], 0, ',', '.') }}</div>
                   </div>
                 </div>
-                <div class="progress mb-2">
-                  <div class="progress-bar bg-info" style="width: 100%"></div>
+                @php
+                  $tetapPel = $modalTetapStats['pelaporan'] ?? 0;
+                  $totalPelaporanAll = $modalComponents['total_pelaporan'] ?? 0;
+                  $tetapPct = $totalPelaporanAll > 0 ? min(100, round(($tetapPel / max(1, $totalPelaporanAll)) * 100)) : 0;
+                @endphp
+                <div class="progress mb-1">
+                  <div class="progress-bar bg-info" style="width: {{ $tetapPct }}%" role="progressbar" aria-valuenow="{{ $tetapPct }}" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
-                <small class="text-muted">Periode Sebelum: Rp {{ number_format($modalTetapStats['sebelum'], 0, ',', '.') }}</small>
+                <div class="d-flex justify-content-between small text-muted">
+                  <span>Periode Sebelum: Rp {{ number_format($modalTetapStats['sebelum'], 0, ',', '.') }}</span>
+                  <span>{{ $tetapPct }}% dari total modal</span>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Breakdown by Skala Risiko -->
-          <div class="col-lg-6 mb-4">
-            <div class="card">
-              <div class="card-header">
-                <h3 class="card-title">Breakdown per Skala Risiko</h3>
-              </div>
-              <div class="table-responsive">
-                <table class="table table-vcenter card-table table-hover">
-                  <thead>
-                    <tr>
-                      <th>Skala Risiko</th>
-                      <th class="text-center">Proyek</th>
-                      <th class="text-end">Modal Kerja</th>
-                      <th class="text-end">Modal Tetap</th>
-                      <th class="text-center">TK</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @forelse($bySkalaRisiko as $item)
-                    <tr>
-                      <td>
-                        @if($item->skala_risiko === 'Rendah')
-                          <span class="badge bg-success-lt">{{ $item->skala_risiko }}</span>
-                        @elseif($item->skala_risiko === 'Menengah')
-                          <span class="badge bg-warning-lt">{{ $item->skala_risiko }}</span>
-                        @elseif($item->skala_risiko === 'Tinggi')
-                          <span class="badge bg-danger-lt">{{ $item->skala_risiko }}</span>
-                        @else
-                          <span class="badge bg-secondary">{{ $item->skala_risiko }}</span>
-                        @endif
-                      </td>
-                      <td class="text-center">{{ number_format($item->jumlah_proyek, 0, ',', '.') }}</td>
-                      <td class="text-end">{{ number_format($item->total_modal_kerja / 1000000, 0, ',', '.') }} jt</td>
-                      <td class="text-end">{{ number_format($item->total_modal_tetap / 1000000, 0, ',', '.') }} jt</td>
-                      <td class="text-center">{{ number_format($item->total_tk_laki + $item->total_tk_wanita, 0, ',', '.') }}</td>
-                    </tr>
-                    @empty
-                    <tr>
-                      <td colspan="5" class="text-center text-muted">Tidak ada data</td>
-                    </tr>
-                    @endforelse
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
+          
 
           <!-- Top 10 KBLI -->
-          <div class="col-lg-6 mb-4">
+          <div class="col-lg-12 mb-4">
             <div class="card">
               <div class="card-header">
                 <h3 class="card-title">Top 10 KBLI (Investasi Tertinggi)</h3>
@@ -319,7 +310,7 @@
                     @forelse($topKbli as $item)
                     <tr>
                       <td>
-                        <div class="text-truncate" style="max-width: 200px;">{{ $item->kbli }}</div>
+                        <div >{{ $item->kbli }}</div>
                       </td>
                       <td class="text-center">{{ number_format($item->jumlah_proyek, 0, ',', '.') }}</td>
                       <td class="text-end fw-bold">{{ number_format($item->total_investasi / 1000000, 0, ',', '.') }} jt</td>
@@ -382,6 +373,109 @@
               </div>
             </div>
           </div>
+
+          @if($tab === 'umk')
+          <!-- Yearly Totals -->
+          <div class="col-lg-12 mb-4">
+            <div class="card">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="card-title">Total per Tahun</h3>
+                <span class="text-muted small">Aggregat dengan batas outlier</span>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-vcenter card-table table-hover">
+                  <thead>
+                    <tr>
+                      <th>Tahun</th>
+                      <th class="text-center">Proyek</th>
+                      <th class="text-end">Modal Kerja</th>
+                      <th class="text-end">Modal Tetap</th>
+                      <th class="text-end">Total Modal</th>
+                      <th class="text-center">TK Laki-laki</th>
+                      <th class="text-center">TK Perempuan</th>
+                      <th class="text-center">TK Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @forelse($byTahun as $row)
+                    <tr>
+                      <td>{{ $row->tahun_laporan }}</td>
+                      <td class="text-center">{{ number_format($row->jumlah_proyek, 0, ',', '.') }}</td>
+                      <td class="text-end">Rp {{ number_format($row->total_modal_kerja, 0, ',', '.') }}</td>
+                      <td class="text-end">Rp {{ number_format($row->total_modal_tetap, 0, ',', '.') }}</td>
+                      <td class="text-end fw-bold">Rp {{ number_format(($row->total_modal_kerja + $row->total_modal_tetap), 0, ',', '.') }}</td>
+                      <td class="text-center">{{ number_format($row->total_tk_laki, 0, ',', '.') }}</td>
+                      <td class="text-center">{{ number_format($row->total_tk_wanita, 0, ',', '.') }}</td>
+                      <td class="text-center fw-bold">{{ number_format(($row->total_tk_laki + $row->total_tk_wanita), 0, ',', '.') }}</td>
+                    </tr>
+                    @empty
+                    <tr>
+                      <td colspan="8" class="text-center text-muted">Tidak ada data</td>
+                    </tr>
+                    @endforelse
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rincian Modal per Periode -->
+          <div class="col-lg-12 mb-4">
+            <div class="card">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="card-title">Rincian Modal Kerja & Tetap per Periode</h3>
+                <span class="text-muted small">Nilai penuh (dibatasi outlier)</span>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-vcenter card-table table-hover">
+                  <thead>
+                    <tr>
+                      <th>Periode</th>
+                      <th class="text-center">Tahun</th>
+                      <th class="text-center">Proyek</th>
+                      <th class="text-end">Modal Kerja</th>
+                      <th class="text-end">Modal Tetap</th>
+                      <th class="text-end">Total Modal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @php
+                      $grandKerja = 0; $grandTetap = 0; $grandTotal = 0;
+                    @endphp
+                    @forelse($byPeriode as $row)
+                      @php
+                        $total = ($row->total_modal_kerja ?? 0) + ($row->total_modal_tetap ?? 0);
+                        $grandKerja += ($row->total_modal_kerja ?? 0);
+                        $grandTetap += ($row->total_modal_tetap ?? 0);
+                        $grandTotal += $total;
+                      @endphp
+                      <tr>
+                        <td><span class="badge bg-secondary-lt">{{ $row->periode_laporan }}</span></td>
+                        <td class="text-center">{{ $row->tahun_laporan }}</td>
+                        <td class="text-center">{{ number_format($row->jumlah_proyek ?? 0, 0, ',', '.') }}</td>
+                        <td class="text-end">Rp {{ number_format($row->total_modal_kerja ?? 0, 0, ',', '.') }}</td>
+                        <td class="text-end">Rp {{ number_format($row->total_modal_tetap ?? 0, 0, ',', '.') }}</td>
+                        <td class="text-end fw-bold">Rp {{ number_format($total, 0, ',', '.') }}</td>
+                      </tr>
+                    @empty
+                      <tr>
+                        <td colspan="6" class="text-center text-muted">Tidak ada data</td>
+                      </tr>
+                    @endforelse
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <th colspan="3" class="text-end">Grand Total</th>
+                      <th class="text-end">Rp {{ number_format($grandKerja, 0, ',', '.') }}</th>
+                      <th class="text-end">Rp {{ number_format($grandTetap, 0, ',', '.') }}</th>
+                      <th class="text-end fw-bold">Rp {{ number_format($grandTotal, 0, ',', '.') }}</th>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          </div>
+          @endif
         </div>
       </div>
     </div>

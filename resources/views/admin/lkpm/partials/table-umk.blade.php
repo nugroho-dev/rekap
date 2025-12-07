@@ -3,28 +3,40 @@
     <thead>
       <tr class="bg-primary text-white">
         <th class="text-center" width="50">No</th>
-        <th width="280">Proyek / Pelaku Usaha</th>
-        <th class="text-center" width="180">Skala Risiko / KBLI / Status</th>
-        <th class="text-center" width="130">Tanggal / Periode</th>
-        <th class="text-end" width="180">Modal Kerja (Rp)</th>
-        <th class="text-end" width="180">Modal Tetap (Rp)</th>
-        <th class="text-center" width="80">TK L</th>
-        <th class="text-center" width="80">TK P</th>
+        @php
+          $params = request()->all();
+          $makeSort = function($col, $label, $align = 'left') use ($params) {
+            $isCurrent = ($params['sort'] ?? null) === $col;
+            $dir = $isCurrent ? (($params['dir'] ?? 'desc') === 'asc' ? 'desc' : 'asc') : 'asc';
+            if (!$isCurrent && !empty($params['sort'])) {
+              $params['sort2'] = $params['sort'];
+              $params['dir2'] = $params['dir'] ?? 'desc';
+            }
+            $params['sort'] = $col; $params['dir'] = $dir;
+            $url = route('lkpm.index', $params);
+            $arrow = $isCurrent ? (($params['dir'] ?? 'desc') === 'asc' ? '▲' : '▼') : '';
+            $class = $align === 'right' ? 'text-end' : ($align === 'center' ? 'text-center' : '');
+            return '<a href="'.$url.'" class="text-decoration-none '.$class.'">'.e($label).' '.$arrow.'</a>';
+          };
+        @endphp
+        <th width="280">{!! $makeSort('no_kode_proyek','Proyek / Pelaku Usaha') !!}</th>
+        <th class="text-center" width="180">{!! $makeSort('kbli','Skala Risiko / KBLI / Status','center') !!}</th>
+        <th class="text-center" width="130">{!! $makeSort('tanggal_laporan','Tanggal / Periode','center') !!}</th>
+        <th class="text-end" width="180">{!! $makeSort('modal_kerja_periode_pelaporan','Modal Kerja (Rp)','right') !!}</th>
+        <th class="text-end" width="180">{!! $makeSort('modal_tetap_periode_pelaporan','Modal Tetap (Rp)','right') !!}</th>
+        <th class="text-center" width="80">{!! $makeSort('tambahan_tenaga_kerja_laki_laki','TK L','center') !!}</th>
+        <th class="text-center" width="80">{!! $makeSort('tambahan_tenaga_kerja_wanita','TK P','center') !!}</th>
         <th class="text-center" width="80">Aksi</th>
       </tr>
     </thead>
     <tbody>
-      @php 
-        $no = ($data->currentPage() - 1) * $data->perPage() + 1;
-      @endphp
-      @forelse($groupedData as $kodeProyek => $items)
-        @foreach($items as $index => $item)
+      @php $no = ($data->firstItem() ?? 1); @endphp
+      @forelse($data as $item)
         <tr>
-          @if($index === 0)
-          <td rowspan="{{ $items->count() }}" class="align-middle text-center bg-light fw-bold border-end">{{ $no++ }}</td>
-          <td rowspan="{{ $items->count() }}" class="align-middle bg-light border-end">
+          <td class="align-middle text-center bg-light fw-bold border-end">{{ $no++ }}</td>
+          <td class="align-middle bg-light border-end">
             <div class="mb-2">
-              <strong class="text-primary d-block mb-1">{{ $kodeProyek ?? '-' }}</strong>
+              <strong class="text-primary d-block mb-1">{{ $item->no_kode_proyek ?? '-' }}</strong>
               <span class="text-dark">{{ $item->nama_pelaku_usaha }}</span>
             </div>
             <div class="text-muted small">
@@ -32,7 +44,7 @@
               {{ $item->nomor_induk_berusaha ?? '-' }}
             </div>
           </td>
-          <td rowspan="{{ $items->count() }}" class="align-middle text-center bg-light border-end">
+          <td class="align-middle text-center bg-light border-end">
             <div class="mb-2">
               @if($item->skala_risiko === 'Rendah')
                 <span class="badge bg-success-lt text-success fw-bold">{{ $item->skala_risiko }}</span>
@@ -69,7 +81,6 @@
               {{ $item->kbli }}
             </div>
           </td>
-          @endif
           
           <td class="align-middle">
             
@@ -254,7 +265,6 @@
           </div>
         </div>
       </div>
-      @endforeach
       @empty
       <tr>
         <td colspan="9" class="text-center text-muted py-4">

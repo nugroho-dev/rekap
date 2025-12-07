@@ -18,79 +18,220 @@ class LkpmController extends Controller
     {
         $judul = 'LKPM (Laporan Kegiatan Penanaman Modal)';
         $tab = $request->get('tab', 'umk'); // Default to UMK tab
-
-        // Search and filters
-        $search = $request->get('search');
-        $tahun = $request->get('tahun');
-        $periode = $request->get('periode');
-        $perPage = $request->get('per_page', 20); // Default 20 items per page
+        $q = trim($request->get('q', ''));
+        $status = $request->get('status'); // can be array
+        $tahun = $request->get('tahun');   // can be array
+        $periode = $request->get('periode'); // can be array
+        $sort = $request->get('sort', 'tanggal_laporan');
+        $dir = strtolower($request->get('dir', 'desc')) === 'asc' ? 'asc' : 'desc';
+        $sort2 = $request->get('sort2');
+        $dir2 = strtolower($request->get('dir2', 'asc')) === 'desc' ? 'desc' : 'asc';
+        $perPage = (int)($request->get('perPage', 25));
+        if ($perPage <= 0) { $perPage = 25; }
+        if ($perPage > 500) { $perPage = 500; }
 
         if ($tab === 'umk') {
             $query = LkpmUmk::query();
-
-            if ($search) {
-                $query->where(function($q) use ($search) {
-                    $q->where('nama_pelaku_usaha', 'like', "%{$search}%")
-                      ->orWhere('nomor_induk_berusaha', 'like', "%{$search}%")
-                      ->orWhere('no_kode_proyek', 'like', "%{$search}%")
-                      ->orWhere('id_laporan', 'like', "%{$search}%");
+            // search
+            if ($q !== '') {
+                $query->where(function($qb) use ($q) {
+                    $qb->where('no_kode_proyek', 'like', "%$q%")
+                       ->orWhere('nama_pelaku_usaha', 'like', "%$q%")
+                       ->orWhere('nomor_induk_berusaha', 'like', "%$q%")
+                       ->orWhere('kbli', 'like', "%$q%")
+                       ->orWhere('status_laporan', 'like', "%$q%")
+                       ->orWhere('kab_kota', 'like', "%$q%")
+                       ->orWhere('provinsi', 'like', "%$q%")
+                       ;
                 });
             }
+            // normalize filter inputs to arrays for multi-select
+            $statusArr = is_array($status) ? array_filter($status) : (empty($status) ? [] : [$status]);
+            $tahunArr = is_array($tahun) ? array_filter($tahun) : (empty($tahun) ? [] : [$tahun]);
+            $periodeArr = is_array($periode) ? array_filter($periode) : (empty($periode) ? [] : [$periode]);
 
-            if ($tahun) {
-                $query->where('tahun_laporan', $tahun);
+            // filters (main table)
+            if (!empty($statusArr)) { $query->whereIn('status_laporan', $statusArr); }
+            if (!empty($tahunArr)) { $query->whereIn('tahun_laporan', $tahunArr); }
+            if (!empty($periodeArr)) { $query->whereIn('periode_laporan', $periodeArr); }
+
+            // Base for status cards: only tahun & periode (ignore status & search)
+            $statusCardBaseUmk = LkpmUmk::query();
+            if (!empty($tahunArr)) { $statusCardBaseUmk->whereIn('tahun_laporan', $tahunArr); }
+            if (!empty($periodeArr)) { $statusCardBaseUmk->whereIn('periode_laporan', $periodeArr); }
+
+            // sorting whitelist
+                // totals for current filtered set
+                $sumQuery = clone $query;
+                $totalModalKerja = (int)$sumQuery->sum('modal_kerja_periode_pelaporan');
+                $sumQuery2 = clone $query;
+                $totalModalTetap = (int)$sumQuery2->sum('modal_tetap_periode_pelaporan');
+                $sumQuery3 = clone $query;
+                $totalTenagaKerjaLaki = (int)$sumQuery3->sum('tambahan_tenaga_kerja_laki_laki');
+                $sumQuery4 = clone $query;
+                $totalTenagaKerjaPerempuan = (int)$sumQuery4->sum('tambahan_tenaga_kerja_wanita');
+                $totalTenagaKerja = $totalTenagaKerjaLaki + $totalTenagaKerjaPerempuan;
+
+                // status-based totals: Disetujui/Sudah Diperbaiki vs Perlu Perbaikan
+                $approvedStatuses = ['DISETUJUI','SUDAH DIPERBAIKI'];
+                $approvedQuery = (clone $statusCardBaseUmk)->whereIn('status_laporan', $approvedStatuses);
+                $approvedMk = (int)$approvedQuery->sum('modal_kerja_periode_pelaporan');
+                $approvedMt = (int)$approvedQuery->sum('modal_tetap_periode_pelaporan');
+                $totalModalApprovedFixed = $approvedMk + $approvedMt;
+                $needFixQuery = (clone $statusCardBaseUmk)->where('status_laporan','PERLU PERBAIKAN');
+                $needFixMk = (int)$needFixQuery->sum('modal_kerja_periode_pelaporan');
+                $needFixMt = (int)$needFixQuery->sum('modal_tetap_periode_pelaporan');
+                $totalModalNeedFix = $needFixMk + $needFixMt;
+
+                // perusahaan & proyek (distinct)
+                $totalPerusahaan = (clone $query)
+                    ->whereNotNull('nomor_induk_berusaha')
+                    ->distinct('nomor_induk_berusaha')
+                    ->count('nomor_induk_berusaha');
+                $totalProyek = (clone $query)
+                    ->whereNotNull('no_kode_proyek')
+                    ->distinct('no_kode_proyek')
+                    ->count('no_kode_proyek');
+
+                // status-based perusahaan & proyek
+                $approvedCompanies = (clone $approvedQuery)
+                    ->whereNotNull('nomor_induk_berusaha')
+                    ->distinct('nomor_induk_berusaha')
+                    ->count('nomor_induk_berusaha');
+                $approvedProjects = (clone $approvedQuery)
+                    ->whereNotNull('no_kode_proyek')
+                    ->distinct('no_kode_proyek')
+                    ->count('no_kode_proyek');
+                $needFixCompanies = (clone $needFixQuery)
+                    ->whereNotNull('nomor_induk_berusaha')
+                    ->distinct('nomor_induk_berusaha')
+                    ->count('nomor_induk_berusaha');
+                $needFixProjects = (clone $needFixQuery)
+                    ->whereNotNull('no_kode_proyek')
+                    ->distinct('no_kode_proyek')
+                    ->count('no_kode_proyek');
+
+                // status-based tenaga kerja totals (UMK)
+                $approvedTkL = (int)(clone $approvedQuery)->sum('tambahan_tenaga_kerja_laki_laki');
+                $approvedTkP = (int)(clone $approvedQuery)->sum('tambahan_tenaga_kerja_wanita');
+                $needFixTkL = (int)(clone $needFixQuery)->sum('tambahan_tenaga_kerja_laki_laki');
+                $needFixTkP = (int)(clone $needFixQuery)->sum('tambahan_tenaga_kerja_wanita');
+            $sortable = [
+                'tanggal_laporan','tahun_laporan','periode_laporan',
+                'no_kode_proyek','nama_pelaku_usaha','kbli',
+                'modal_kerja_periode_pelaporan','modal_tetap_periode_pelaporan',
+                'tambahan_tenaga_kerja_laki_laki','tambahan_tenaga_kerja_wanita',
+                'status_laporan'
+            ];
+            if (!in_array($sort, $sortable)) { $sort = 'tanggal_laporan'; }
+            if ($sort2 && in_array($sort2, $sortable)) {
+                $query->orderBy($sort, $dir)->orderBy($sort2, $dir2);
+            } else {
+                $query->orderBy($sort, $dir);
             }
-
-            if ($periode) {
-                $query->where('periode_laporan', $periode);
-            }
-
-            $data = $query->orderBy('no_kode_proyek', 'asc')
-                         ->orderBy('tanggal_laporan', 'desc')
-                         ->paginate($perPage);
+            $data = $query->paginate($perPage)->withQueryString();
             $totalData = LkpmUmk::count();
-            
-            // Group by no_kode_proyek for current page
-            $groupedData = $data->groupBy('no_kode_proyek');
-        } else {
-            $query = LkpmNonUmk::query();
-
-            if ($search) {
-                $query->where(function($q) use ($search) {
-                    $q->where('nama_pelaku_usaha', 'like', "%{$search}%")
-                      ->orWhere('no_laporan', 'like', "%{$search}%")
-                      ->orWhere('no_kode_proyek', 'like', "%{$search}%");
-                });
-            }
-
-            if ($tahun) {
-                $query->where('tahun_laporan', $tahun);
-            }
-
-            if ($periode) {
-                $query->where('periode_laporan', $periode);
-            }
-
-            $data = $query->orderBy('no_kode_proyek', 'asc')
-                         ->orderBy('tanggal_laporan', 'desc')
-                         ->paginate($perPage);
-            $totalData = LkpmNonUmk::count();
-            
-            // Group by no_kode_proyek for current page
-            $groupedData = $data->groupBy('no_kode_proyek');
-        }
-
-        // Get available years for filter
-        $years = [];
-        if ($tab === 'umk') {
             $years = LkpmUmk::selectRaw('DISTINCT tahun_laporan')->whereNotNull('tahun_laporan')->pluck('tahun_laporan')->sort()->values();
         } else {
+            $query = LkpmNonUmk::query();
+            if ($q !== '') {
+                $query->where(function($qb) use ($q) {
+                    $qb->where('no_kode_proyek', 'like', "%$q%")
+                       ->orWhere('nama_pelaku_usaha', 'like', "%$q%")
+                       ->orWhere('kbli', 'like', "%$q%")
+                       ->orWhere('status_penanaman_modal', 'like', "%$q%")
+                       ->orWhere('status_laporan', 'like', "%$q%")
+                       ->orWhere('kab_kota', 'like', "%$q%")
+                       ->orWhere('provinsi', 'like', "%$q%")
+                       ;
+                });
+            }
+            // normalize filter inputs to arrays for multi-select
+            $statusArr = is_array($status) ? array_filter($status) : (empty($status) ? [] : [$status]);
+            $tahunArr = is_array($tahun) ? array_filter($tahun) : (empty($tahun) ? [] : [$tahun]);
+            $periodeArr = is_array($periode) ? array_filter($periode) : (empty($periode) ? [] : [$periode]);
+
+            if (!empty($statusArr)) { $query->whereIn('status_laporan', $statusArr); }
+            if (!empty($tahunArr)) { $query->whereIn('tahun_laporan', $tahunArr); }
+            if (!empty($periodeArr)) { $query->whereIn('periode_laporan', $periodeArr); }
+
+            // Base for status cards: only tahun & periode (ignore status & search)
+            $statusCardBaseNonUmk = LkpmNonUmk::query();
+            if (!empty($tahunArr)) { $statusCardBaseNonUmk->whereIn('tahun_laporan', $tahunArr); }
+            if (!empty($periodeArr)) { $statusCardBaseNonUmk->whereIn('periode_laporan', $periodeArr); }
+
+            // totals for current filtered set
+            $sumQuery = clone $query;
+            $totalModalKerja = (int)$sumQuery->sum('tambahan_modal_kerja_realisasi');
+            $sumQuery2 = clone $query;
+            $totalModalTetap = (int)$sumQuery2->sum('tambahan_modal_tetap_realisasi');
+            $sumQuery3 = clone $query;
+            $totalTenagaKerjaLaki = (int)$sumQuery3->sum('tki_realisasi');
+            $sumQuery4 = clone $query;
+            $totalTenagaKerjaPerempuan = (int)$sumQuery4->sum('tka_realisasi');
+            $totalTenagaKerja = $totalTenagaKerjaLaki + $totalTenagaKerjaPerempuan;
+
+            // status-based totals for Non-UMK
+            $approvedStatuses = ['DISETUJUI','SUDAH DIPERBAIKI'];
+            $approvedQuery = (clone $statusCardBaseNonUmk)->whereIn('status_laporan', $approvedStatuses);
+            $approvedMk = (int)$approvedQuery->sum('tambahan_modal_kerja_realisasi');
+            $approvedMt = (int)$approvedQuery->sum('tambahan_modal_tetap_realisasi');
+            $totalModalApprovedFixed = $approvedMk + $approvedMt;
+            $needFixQuery = (clone $statusCardBaseNonUmk)->where('status_laporan','PERLU PERBAIKAN');
+            $needFixMk = (int)$needFixQuery->sum('tambahan_modal_kerja_realisasi');
+            $needFixMt = (int)$needFixQuery->sum('tambahan_modal_tetap_realisasi');
+            $totalModalNeedFix = $needFixMk + $needFixMt;
+
+            // perusahaan & proyek (distinct)
+            $totalPerusahaan = (clone $query)
+                ->distinct('nama_pelaku_usaha')
+                ->count('nama_pelaku_usaha');
+            $totalProyek = (clone $query)
+                ->whereNotNull('no_kode_proyek')
+                ->distinct('no_kode_proyek')
+                ->count('no_kode_proyek');
+
+            // status-based perusahaan & proyek
+            $approvedCompanies = (clone $approvedQuery)
+                ->distinct('nama_pelaku_usaha')
+                ->count('nama_pelaku_usaha');
+            $approvedProjects = (clone $approvedQuery)
+                ->whereNotNull('no_kode_proyek')
+                ->distinct('no_kode_proyek')
+                ->count('no_kode_proyek');
+            $needFixCompanies = (clone $needFixQuery)
+                ->distinct('nama_pelaku_usaha')
+                ->count('nama_pelaku_usaha');
+            $needFixProjects = (clone $needFixQuery)
+                ->whereNotNull('no_kode_proyek')
+                ->distinct('no_kode_proyek')
+                ->count('no_kode_proyek');
+
+            // status-based tenaga kerja totals (Non-UMK)
+            $approvedTkL = (int)(clone $approvedQuery)->sum('tki_realisasi');
+            $approvedTkP = (int)(clone $approvedQuery)->sum('tka_realisasi');
+            $needFixTkL = (int)(clone $needFixQuery)->sum('tki_realisasi');
+            $needFixTkP = (int)(clone $needFixQuery)->sum('tka_realisasi');
+
+            $sortable = [
+                'tanggal_laporan','tahun_laporan','periode_laporan',
+                'no_kode_proyek','nama_pelaku_usaha','kbli',
+                'no_laporan','nilai_total_investasi_realisasi',
+                'tki_realisasi','tka_realisasi','status_laporan'
+            ];
+            if (!in_array($sort, $sortable)) { $sort = 'tanggal_laporan'; }
+            if ($sort2 && in_array($sort2, $sortable)) {
+                $query->orderBy($sort, $dir)->orderBy($sort2, $dir2);
+            } else {
+                $query->orderBy($sort, $dir);
+            }
+            $data = $query->paginate($perPage)->withQueryString();
+            $totalData = LkpmNonUmk::count();
             $years = LkpmNonUmk::selectRaw('DISTINCT tahun_laporan')->whereNotNull('tahun_laporan')->pluck('tahun_laporan')->sort()->values();
         }
 
-        return view('admin.lkpm.index', compact('judul', 'tab', 'data', 'groupedData', 'totalData', 'years', 'search', 'tahun', 'periode', 'perPage'));
+        return view('admin.lkpm.index', compact('judul', 'tab', 'data', 'totalData', 'years', 'q', 'status', 'tahun', 'periode', 'sort', 'dir', 'sort2', 'dir2', 'perPage', 'totalModalKerja', 'totalModalTetap', 'totalTenagaKerja', 'totalTenagaKerjaLaki', 'totalTenagaKerjaPerempuan', 'totalModalApprovedFixed', 'totalModalNeedFix', 'totalPerusahaan', 'totalProyek', 'approvedCompanies', 'approvedProjects', 'needFixCompanies', 'needFixProjects', 'approvedMk', 'approvedMt', 'needFixMk', 'needFixMt', 'approvedTkL', 'approvedTkP', 'needFixTkL', 'needFixTkP'));
     }
-
     /**
      * Import LKPM UMK from Excel
      */
@@ -101,8 +242,14 @@ class LkpmController extends Controller
         ]);
 
         try {
-            Excel::import(new LkpmUmkImport, $request->file('file'));
-            return redirect()->route('lkpm.index', ['tab' => 'umk'])->with('success', 'Data LKPM UMK berhasil diimpor');
+            $import = new LkpmUmkImport();
+            Excel::import($import, $request->file('file'));
+            $summary = $import->summary();
+            return redirect()->route('lkpm.index', ['tab' => 'umk'])
+                ->with('success', 'Import UMK selesai')
+                ->with('import_success', $summary['success'])
+                ->with('import_failed', $summary['failed'])
+                ->with('import_duplicates', $summary['duplicates']);
         } catch (\Throwable $e) {
             return redirect()->route('lkpm.index', ['tab' => 'umk'])->with('error', 'Gagal mengimpor: ' . $e->getMessage());
         }
@@ -118,8 +265,14 @@ class LkpmController extends Controller
         ]);
 
         try {
-            Excel::import(new LkpmNonUmkImport, $request->file('file'));
-            return redirect()->route('lkpm.index', ['tab' => 'non-umk'])->with('success', 'Data LKPM Non-UMK berhasil diimpor');
+            $import = new LkpmNonUmkImport();
+            Excel::import($import, $request->file('file'));
+            $summary = $import->summary();
+            return redirect()->route('lkpm.index', ['tab' => 'non-umk'])
+                ->with('success', 'Import Non-UMK selesai')
+                ->with('import_success', $summary['success'])
+                ->with('import_failed', $summary['failed'])
+                ->with('import_duplicates', $summary['duplicates']);
         } catch (\Throwable $e) {
             return redirect()->route('lkpm.index', ['tab' => 'non-umk'])->with('error', 'Gagal mengimpor: ' . $e->getMessage());
         }
@@ -154,175 +307,142 @@ class LkpmController extends Controller
     }
 
     /**
-     * Display LKPM statistics page
+     * Statistik LKPM UMK dan Non-UMK
      */
     public function statistik(Request $request)
     {
         $judul = 'Statistik LKPM';
         $tab = $request->get('tab', 'umk');
-        
-        // Filter parameters
         $tahun = $request->get('tahun');
         $periode = $request->get('periode');
-        $skalaRisiko = $request->get('skala_risiko');
 
         if ($tab === 'umk') {
-            $query = LkpmUmk::query();
 
-            if ($tahun) {
-                $query->where('tahun_laporan', $tahun);
-            }
-            if ($periode) {
-                $query->where('periode_laporan', $periode);
-            }
-            if ($skalaRisiko) {
-                $query->where('skala_risiko', $skalaRisiko);
-            }
+            $query = LkpmUmk::query()
+                ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
+                ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
+                ->when($periode, fn($q) => $q->where('periode_laporan', $periode));
 
-            // KPI Summary
-            $totalProyek = $query->distinct('no_kode_proyek')->count('no_kode_proyek');
+            $totalProyekFiltered = $query->distinct('no_kode_proyek')->count('no_kode_proyek');
+            $totalPerusahaanFiltered = (clone $query)
+                ->whereNotNull('nomor_induk_berusaha')
+                ->distinct('nomor_induk_berusaha')
+                ->count('nomor_induk_berusaha');
             $totalLaporan = $query->count();
-            
-            $modalKerjaStats = [
-                'pelaporan' => $query->sum('modal_kerja_periode_pelaporan'),
-                'sebelum' => $query->sum('modal_kerja_periode_sebelum'),
-                'akumulasi' => $query->sum('akumulasi_modal_kerja'),
-            ];
-            
-            $modalTetapStats = [
-                'pelaporan' => $query->sum('modal_tetap_periode_pelaporan'),
-                'sebelum' => $query->sum('modal_tetap_periode_sebelum'),
-                'akumulasi' => $query->sum('akumulasi_modal_tetap'),
-            ];
+            $totalProyekAll = LkpmUmk::distinct('no_kode_proyek')->count('no_kode_proyek');
 
-            $tenagaKerja = [
-                'laki' => $query->sum('tambahan_tenaga_kerja_laki_laki'),
-                'wanita' => $query->sum('tambahan_tenaga_kerja_wanita'),
-                'total' => $query->sum('tambahan_tenaga_kerja_laki_laki') + $query->sum('tambahan_tenaga_kerja_wanita'),
-            ];
-
-            // Breakdown by Skala Risiko
-            $bySkalaRisiko = LkpmUmk::selectRaw('skala_risiko, 
-                COUNT(DISTINCT no_kode_proyek) as jumlah_proyek,
-                SUM(modal_kerja_periode_pelaporan) as total_modal_kerja,
-                SUM(modal_tetap_periode_pelaporan) as total_modal_tetap,
-                SUM(tambahan_tenaga_kerja_laki_laki) as total_tk_laki,
-                SUM(tambahan_tenaga_kerja_wanita) as total_tk_wanita')
+            $capped = LkpmUmk::query()
+                ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
                 ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
                 ->when($periode, fn($q) => $q->where('periode_laporan', $periode))
-                ->groupBy('skala_risiko')
-                ->get();
+                ;
 
-            // Breakdown by Periode
-            $byPeriode = LkpmUmk::selectRaw('periode_laporan, tahun_laporan,
-                COUNT(DISTINCT no_kode_proyek) as jumlah_proyek,
-                SUM(modal_kerja_periode_pelaporan) as total_modal_kerja,
-                SUM(modal_tetap_periode_pelaporan) as total_modal_tetap')
+            $mkPelaporan = $capped->sum('modal_kerja_periode_pelaporan');
+            $mtPelaporan = $capped->sum('modal_tetap_periode_pelaporan');
+            $totalPelaporan = $mkPelaporan + $mtPelaporan;
+
+            $modalKerjaStats = [
+                'pelaporan' => $mkPelaporan,
+                'sebelum' => $capped->sum('modal_kerja_periode_sebelum'),
+                'akumulasi' => $capped->sum('akumulasi_modal_kerja'),
+            ];
+            $modalTetapStats = [
+                'pelaporan' => $mtPelaporan,
+                'sebelum' => $capped->sum('modal_tetap_periode_sebelum'),
+                'akumulasi' => $capped->sum('akumulasi_modal_tetap'),
+            ];
+            $modalComponents = [
+                'kerja_pelaporan' => $mkPelaporan,
+                'tetap_pelaporan' => $mtPelaporan,
+                'total_pelaporan' => $totalPelaporan,
+            ];
+
+            $tenagaKerjaQuery = LkpmUmk::query()
+                ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
                 ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
-                ->when($skalaRisiko, fn($q) => $q->where('skala_risiko', $skalaRisiko))
+                ->when($periode, fn($q) => $q->where('periode_laporan', $periode));
+            $tenagaKerja = [
+                'laki' => $tenagaKerjaQuery->sum('tambahan_tenaga_kerja_laki_laki'),
+                'wanita' => $tenagaKerjaQuery->sum('tambahan_tenaga_kerja_wanita'),
+                'total' => $tenagaKerjaQuery->sum('tambahan_tenaga_kerja_laki_laki') + $tenagaKerjaQuery->sum('tambahan_tenaga_kerja_wanita'),
+            ];
+
+            $byPeriode = LkpmUmk::selectRaw('periode_laporan, tahun_laporan, COUNT(DISTINCT no_kode_proyek) as jumlah_proyek, SUM(modal_kerja_periode_pelaporan) as total_modal_kerja, SUM(modal_tetap_periode_pelaporan) as total_modal_tetap')
+                ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
+                ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
                 ->groupBy('periode_laporan', 'tahun_laporan')
                 ->orderBy('tahun_laporan', 'asc')
                 ->orderBy('periode_laporan', 'asc')
                 ->get();
 
-            // Top 10 KBLI
-            $topKbli = LkpmUmk::selectRaw('kbli, 
-                COUNT(DISTINCT no_kode_proyek) as jumlah_proyek,
-                SUM(modal_kerja_periode_pelaporan + modal_tetap_periode_pelaporan) as total_investasi')
+            $topKbli = LkpmUmk::selectRaw('kbli, COUNT(DISTINCT no_kode_proyek) as jumlah_proyek, SUM(modal_kerja_periode_pelaporan + modal_tetap_periode_pelaporan) as total_investasi')
+                ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
                 ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
                 ->when($periode, fn($q) => $q->where('periode_laporan', $periode))
-                ->when($skalaRisiko, fn($q) => $q->where('skala_risiko', $skalaRisiko))
                 ->groupBy('kbli')
                 ->orderByDesc('total_investasi')
                 ->limit(10)
                 ->get();
 
-            // Get years and periods for filter
             $years = LkpmUmk::selectRaw('DISTINCT tahun_laporan')->whereNotNull('tahun_laporan')->pluck('tahun_laporan')->sort()->values();
-            $skalaRisikoList = ['Rendah', 'Menengah', 'Tinggi'];
-            
-            // Set default values for non-UMK variables
-            $investasiStats = ['rencana' => 0, 'realisasi' => 0];
             $byStatus = collect();
-
+            $investasiStats = ['rencana' => 0, 'realisasi' => 0];
+            $byTahun = LkpmUmk::selectRaw('tahun_laporan, COUNT(DISTINCT no_kode_proyek) as jumlah_proyek, SUM(modal_kerja_periode_pelaporan) as total_modal_kerja, SUM(modal_tetap_periode_pelaporan) as total_modal_tetap, SUM(tambahan_tenaga_kerja_laki_laki) as total_tk_laki, SUM(tambahan_tenaga_kerja_wanita) as total_tk_wanita')
+                ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
+                ->groupBy('tahun_laporan')
+                ->orderBy('tahun_laporan', 'asc')
+                ->get();
         } else {
-            // Non-UMK Statistics
-            $query = LkpmNonUmk::query();
+            $query = LkpmNonUmk::query()
+                ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
+                ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
+                ->when($periode, fn($q) => $q->where('periode_laporan', $periode));
 
-            if ($tahun) {
-                $query->where('tahun_laporan', $tahun);
-            }
-            if ($periode) {
-                $query->where('periode_laporan', $periode);
-            }
-
-            $totalProyek = $query->distinct('no_kode_proyek')->count('no_kode_proyek');
+            $totalProyekFiltered = $query->distinct('no_kode_proyek')->count('no_kode_proyek');
+            $totalPerusahaanFiltered = (clone $query)
+                ->distinct('nama_pelaku_usaha')
+                ->count('nama_pelaku_usaha');
             $totalLaporan = $query->count();
-            
+            $totalProyekAll = LkpmNonUmk::distinct('no_kode_proyek')->count('no_kode_proyek');
+
             $investasiStats = [
-                'rencana' => $query->sum('rencana_investasi'),
-                'realisasi' => $query->sum('realisasi_investasi'),
+                'rencana' => $query->sum('nilai_total_investasi_rencana'),
+                'realisasi' => $query->sum('total_tambahan_investasi'),
             ];
-            
             $modalTetapStats = [
-                'total' => $query->sum('modal_tetap_pelaporan'),
+                'total' => $query->sum('tambahan_modal_tetap_realisasi'),
             ];
-
             $tenagaKerja = [
-                'tki_rencana' => $query->sum('rencana_jumlah_tki'),
-                'tki_realisasi' => $query->sum('realisasi_jumlah_tki'),
-                'tka_rencana' => $query->sum('rencana_jumlah_tka'),
-                'tka_realisasi' => $query->sum('realisasi_jumlah_tka'),
+                'tki_rencana' => $query->sum('jumlah_rencana_tki'),
+                'tki_realisasi' => $query->sum('jumlah_realisasi_tki'),
+                'tka_rencana' => $query->sum('jumlah_rencana_tka'),
+                'tka_realisasi' => $query->sum('jumlah_realisasi_tka'),
             ];
-
-            // Breakdown by Status Penanaman Modal
-            $byStatus = LkpmNonUmk::selectRaw('status_penanaman_modal, 
-                COUNT(DISTINCT no_kode_proyek) as jumlah_proyek,
-                SUM(rencana_investasi) as total_rencana,
-                SUM(realisasi_investasi) as total_realisasi')
+            $byStatus = LkpmNonUmk::selectRaw('status_penanaman_modal, COUNT(DISTINCT no_kode_proyek) as jumlah_proyek, SUM(nilai_total_investasi_rencana) as total_rencana, SUM(total_tambahan_investasi) as total_realisasi')
+                ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
                 ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
                 ->when($periode, fn($q) => $q->where('periode_laporan', $periode))
                 ->groupBy('status_penanaman_modal')
                 ->get();
-
-            // Breakdown by Periode
-            $byPeriode = LkpmNonUmk::selectRaw('periode_laporan, tahun_laporan,
-                COUNT(DISTINCT no_kode_proyek) as jumlah_proyek,
-                SUM(rencana_investasi) as total_rencana,
-                SUM(realisasi_investasi) as total_realisasi')
+            $byPeriode = LkpmNonUmk::selectRaw('periode_laporan, tahun_laporan, COUNT(DISTINCT no_kode_proyek) as jumlah_proyek, SUM(nilai_total_investasi_rencana) as total_rencana, SUM(total_tambahan_investasi) as total_realisasi')
+                ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
                 ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
                 ->groupBy('periode_laporan', 'tahun_laporan')
                 ->orderBy('tahun_laporan', 'asc')
                 ->orderBy('periode_laporan', 'asc')
                 ->get();
-
             $years = LkpmNonUmk::selectRaw('DISTINCT tahun_laporan')->whereNotNull('tahun_laporan')->pluck('tahun_laporan')->sort()->values();
-            
-            // Set default values for UMK variables
-            $bySkalaRisiko = collect();
             $topKbli = collect();
-            $skalaRisikoList = [];
             $modalKerjaStats = ['pelaporan' => 0, 'sebelum' => 0, 'akumulasi' => 0];
+            $byTahun = collect();
+            $modalComponents = ['kerja_pelaporan' => 0, 'tetap_pelaporan' => 0, 'total_pelaporan' => 0];
         }
 
         return view('admin.lkpm.statistik', compact(
-            'judul', 
-            'tab', 
-            'totalProyek', 
-            'totalLaporan',
-            'modalKerjaStats',
-            'modalTetapStats',
-            'investasiStats',
-            'tenagaKerja',
-            'bySkalaRisiko',
-            'byPeriode',
-            'byStatus',
-            'topKbli',
-            'years',
-            'skalaRisikoList',
-            'tahun',
-            'periode',
-            'skalaRisiko'
+            'judul', 'tab', 'tahun', 'periode',
+            'totalProyekFiltered', 'totalProyekAll', 'totalLaporan', 'totalPerusahaanFiltered',
+            'modalKerjaStats', 'modalTetapStats', 'investasiStats', 'tenagaKerja',
+            'byPeriode', 'byStatus', 'topKbli', 'byTahun', 'years', 'modalComponents'
         ));
     }
 }
