@@ -126,73 +126,111 @@
               <div class="col-md-6">
                 <div class="card shadow-sm border-0 h-100">
                   <div class="card-body">
-                    <div class="d-flex align-items-center mb-3">
-                      <span class="avatar bg-primary-lt text-primary me-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3v18" /><path d="M4 12h16" /></svg>
-                      </span>
-                      <div>
-                        <div class="fw-semibold">Modal</div>
-                        <div class="text-muted small">Ringkasan investasi</div>
-                      </div>
-                      <div class="ms-auto d-flex gap-1 align-items-center">
-                        @if($tahunText || $periodeText)
-                          <span class="badge bg-light text-muted">{{ trim($tahunText.' '.($periodeText ? '• '.$periodeText : '')) }}</span>
-                        @endif
-                        @if($statusText)
-                          <span class="badge bg-light text-muted">{{ $statusText }}</span>
-                        @endif
-                      </div>
-                    </div>
-                    <div class="row g-3">
-                      <div class="col-6">
-                        <div class="text-muted small">Kerja</div>
-                        <div class="h3 mb-1">Rp {{ number_format($totalModalKerja ?? 0, 0, ',', '.') }}</div>
-                        <div class="progress progress-sm">
-                          @php $mkPct = $totalModal > 0 ? min(100, round(($totalModalKerja ?? 0) / max(1,$totalModal) * 100)) : 0; @endphp
-                          <div class="progress-bar" style="width: {{ $mkPct }}%" role="progressbar" aria-valuenow="{{ $mkPct }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    @if($tab === 'non-umk')
+                      <div class="d-flex align-items-center mb-3">
+                        <span class="avatar bg-primary-lt text-primary me-3">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3v18" /><path d="M4 12h16" /></svg>
+                        </span>
+                        <div>
+                          <div class="fw-semibold">Ringkasan Non-UMK</div>
+                          <div class="text-muted small">4 KPI utama</div>
+                        </div>
+                        <div class="ms-auto d-flex gap-1 align-items-center">
+                          @if($tahunText || $periodeText)
+                            <span class="badge bg-light text-muted">{{ trim($tahunText.' '.($periodeText ? '• '.$periodeText : '')) }}</span>
+                          @endif
+                          @if($statusText)
+                            <span class="badge bg-light text-muted">{{ $statusText }}</span>
+                          @endif
                         </div>
                       </div>
-                      <div class="col-6">
-                        <div class="text-muted small">Tetap</div>
-                        <div class="h3 mb-1">Rp {{ number_format($totalModalTetap ?? 0, 0, ',', '.') }}</div>
-                        <div class="progress progress-sm">
-                          @php $mtPct = $totalModal > 0 ? min(100, round(($totalModalTetap ?? 0) / max(1,$totalModal) * 100)) : 0; @endphp
-                          <div class="progress-bar bg-blue" style="width: {{ $mtPct }}%" role="progressbar" aria-valuenow="{{ $mtPct }}" aria-valuemin="0" aria-valuemax="100"></div>
+                      <div class="row g-3">
+                        <div class="col-6 col-lg-3">
+                          <div class="text-muted small">Total Proyek</div>
+                          <div class="h3 mb-0">{{ number_format($totalProyek ?? 0, 0, ',', '.') }}</div>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                          <div class="text-muted small">Rencana Investasi</div>
+                          <div class="h3 mb-0">Rp {{ number_format($totalRencanaInvestasi ?? 0, 0, ',', '.') }}</div>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                          <div class="text-muted small">Realisasi Investasi</div>
+                          <div class="h3 mb-0">Rp {{ number_format($totalRealisasiInvestasi ?? 0, 0, ',', '.') }}</div>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                          <div class="text-muted small">Total TKI & TKA</div>
+                          <div class="h3 mb-0">{{ number_format(($totalTenagaKerja ?? 0), 0, ',', '.') }} org</div>
                         </div>
                       </div>
-                      <div class="col-12">
-                        <div class="mt-1 p-2 rounded border bg-light">
-                          <span class="text-muted small">Total</span>
-                          <div class="h2 mb-0">Rp {{ number_format($totalModal, 0, ',', '.') }}</div>
+                    @else
+                      <div class="d-flex align-items-center mb-3">
+                        <span class="avatar bg-primary-lt text-primary me-3">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3v18" /><path d="M4 12h16" /></svg>
+                        </span>
+                        <div>
+                          <div class="fw-semibold">Modal</div>
+                          <div class="text-muted small">Ringkasan investasi</div>
+                        </div>
+                        <div class="ms-auto d-flex gap-1 align-items-center">
+                          @if($tahunText || $periodeText)
+                            <span class="badge bg-light text-muted">{{ trim($tahunText.' '.($periodeText ? '• '.$periodeText : '')) }}</span>
+                          @endif
+                          @if($statusText)
+                            <span class="badge bg-light text-muted">{{ $statusText }}</span>
+                          @endif
                         </div>
                       </div>
-                      <div class="col-12">
-                        <hr class="my-2">
-                        <div class="row g-2">
-                          <div class="col-6">
-                            <div class="text-muted small">Tenaga Kerja (Total)</div>
-                            <div class="h4 mb-0">{{ number_format($totalTenagaKerja ?? 0, 0, ',', '.') }} org</div>
-                          </div>
-                          <div class="col-6">
-                            <div class="text-muted small">Laki • Perempuan</div>
-                            <div class="h6 mb-0"><span class="badge bg-light text-muted">{{ number_format($totalTKL ?? 0, 0, ',', '.') }} L</span> <span class="badge bg-light text-muted">{{ number_format($totalTKP ?? 0, 0, ',', '.') }} P</span></div>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="col-12">
-                        <hr class="my-2">
-                        <div class="row g-2">
-                          <div class="col-6">
-                            <div class="text-muted small">Perusahaan</div>
-                            <div class="h4 mb-0">{{ number_format($totalPerusahaan ?? 0, 0, ',', '.') }}</div>
-                          </div>
-                          <div class="col-6">
-                            <div class="text-muted small">Proyek</div>
-                            <div class="h4 mb-0">{{ number_format($totalProyek ?? 0, 0, ',', '.') }}</div>
+                      <div class="row g-3">
+                        <div class="col-6">
+                          <div class="text-muted small">Kerja</div>
+                          <div class="h3 mb-1">Rp {{ number_format($totalModalKerja ?? 0, 0, ',', '.') }}</div>
+                          <div class="progress progress-sm">
+                            @php $mkPct = $totalModal > 0 ? min(100, round(($totalModalKerja ?? 0) / max(1,$totalModal) * 100)) : 0; @endphp
+                            <div class="progress-bar" style="width: {{ $mkPct }}%" role="progressbar" aria-valuenow="{{ $mkPct }}" aria-valuemin="0" aria-valuemax="100"></div>
                           </div>
                         </div>
+                        <div class="col-6">
+                          <div class="text-muted small">Tetap</div>
+                          <div class="h3 mb-1">Rp {{ number_format($totalModalTetap ?? 0, 0, ',', '.') }}</div>
+                          <div class="progress progress-sm">
+                            @php $mtPct = $totalModal > 0 ? min(100, round(($totalModalTetap ?? 0) / max(1,$totalModal) * 100)) : 0; @endphp
+                            <div class="progress-bar bg-blue" style="width: {{ $mtPct }}%" role="progressbar" aria-valuenow="{{ $mtPct }}" aria-valuemin="0" aria-valuemax="100"></div>
+                          </div>
+                        </div>
+                        <div class="col-12">
+                          <div class="mt-1 p-2 rounded border bg-light">
+                            <span class="text-muted small">Total</span>
+                            <div class="h2 mb-0">Rp {{ number_format($totalModal, 0, ',', '.') }}</div>
+                          </div>
+                        </div>
+                        <div class="col-12">
+                          <hr class="my-2">
+                          <div class="row g-2">
+                            <div class="col-6">
+                              <div class="text-muted small">Tenaga Kerja (Total)</div>
+                              <div class="h4 mb-0">{{ number_format($totalTenagaKerja ?? 0, 0, ',', '.') }} org</div>
+                            </div>
+                            <div class="col-6">
+                              <div class="text-muted small">Laki • Perempuan</div>
+                              <div class="h6 mb-0"><span class="badge bg-light text-muted">{{ number_format($totalTKL ?? 0, 0, ',', '.') }} L</span> <span class="badge bg-light text-muted">{{ number_format($totalTKP ?? 0, 0, ',', '.') }} P</span></div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-12">
+                          <hr class="my-2">
+                          <div class="row g-2">
+                            <div class="col-6">
+                              <div class="text-muted small">Perusahaan</div>
+                              <div class="h4 mb-0">{{ number_format($totalPerusahaan ?? 0, 0, ',', '.') }}</div>
+                            </div>
+                            <div class="col-6">
+                              <div class="text-muted small">Proyek</div>
+                              <div class="h4 mb-0">{{ number_format($totalProyek ?? 0, 0, ',', '.') }}</div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    @endif
                   </div>
                 </div>
               </div>

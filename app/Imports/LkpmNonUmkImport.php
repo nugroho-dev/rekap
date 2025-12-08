@@ -71,6 +71,8 @@ class LkpmNonUmkImport implements ToModel, WithHeadingRow, WithUpserts
     public function model(array $row)
     {
         try {
+            // Normalize special headers like "KABUPATEN/KOTA" -> kabupaten_kota
+            $row = $this->normalizeHeaders($row);
             $currentId = $row['no_laporan'] ?? null;
             if ($currentId) {
                 if (isset($this->seenIds[$currentId])) {
@@ -176,13 +178,27 @@ class LkpmNonUmkImport implements ToModel, WithHeadingRow, WithUpserts
      */
     private function parseDecimal($value)
     {
-        if (empty($value)) {
+        if (empty($value) || $value === '' || $value === null) {
             return null;
         }
 
-        // Remove currency symbols and thousands separators
-        $cleaned = preg_replace('/[^\d.,\-]/', '', $value);
-        $cleaned = str_replace(',', '', $cleaned);
+        // If already numeric, return as is
+        if (is_numeric($value)) {
+            return (float) $value;
+        }
+
+        // Remove currency symbols, spaces, and non-numeric characters except dots, commas, and minus
+        $cleaned = preg_replace('/[^\d.,\-]/', '', (string) $value);
+        
+        // Handle Indonesian format (1.234.567,89) or integers with dot thousand separators (9.367.341.840)
+        if (substr_count($cleaned, '.') > 1 || (strpos($cleaned, '.') !== false && strpos($cleaned, ',') !== false && strpos($cleaned, ',') > strpos($cleaned, '.'))) {
+            // Convert Indonesian format to standard
+            $cleaned = str_replace('.', '', $cleaned);
+            $cleaned = str_replace(',', '.', $cleaned);
+        } else {
+            // Handle US format (1,234,567.89)
+            $cleaned = str_replace(',', '', $cleaned);
+        }
 
         return is_numeric($cleaned) ? (float) $cleaned : null;
     }
@@ -192,10 +208,60 @@ class LkpmNonUmkImport implements ToModel, WithHeadingRow, WithUpserts
      */
     private function parseInt($value)
     {
-        if (empty($value)) {
+        if (empty($value) || $value === '' || $value === null) {
             return null;
         }
 
-        return is_numeric($value) ? (int) $value : null;
+        // Normalize thousand separators first (treat dot/comma as thousand sep for integers)
+        $cleaned = preg_replace('/[\.,\s]/', '', (string) $value);
+        // Keep only digits and optional leading minus
+        $cleaned = preg_replace('/(?!^)-|[^\d-]/', '', $cleaned);
+
+        return is_numeric($cleaned) ? (int) $cleaned : null;
+    }
+
+    /**
+     * Normalize incoming Excel heading keys to expected snake_case.
+     * Maps variants like 'KABUPATEN/KOTA' to 'kabupaten_kota'.
+     */
+    private function normalizeHeaders(array $row): array
+    {
+        $normalized = [];
+        foreach ($row as $key => $value) {
+            $lower = strtolower(trim($key));
+            // Replace non-alphanumeric with underscore
+            $canon = preg_replace('/[^a-z0-9]+/i', '_', $lower);
+            // Specific aliases
+            if ($lower === 'kabupaten/kota' || $canon === 'kabupaten_kota') {
+                $canon = 'kabupaten_kota';
+            }
+            // Investment total planned aliases
+            if ($lower === 'nilai total investasi rencana' || $canon === 'nilai_total_investasi_rencana') {
+                $canon = 'nilai_total_investasi_rencana';
+            }
+            // Modal tetap planned aliases
+            if ($lower === 'nilai modal tetap rencana' || $canon === 'nilai_modal_tetap_rencana') {
+                $canon = 'nilai_modal_tetap_rencana';
+            }
+            // Total tambahan investasi aliases
+            if ($lower === 'total tambahan investasi' || $canon === 'total_tambahan_investasi') {
+                $canon = 'total_tambahan_investasi';
+            }
+            $normalized[$canon] = $value;
+        }
+        // Ensure backward compatibility if original keys already correct
+        if (!isset($normalized['kabupaten_kota']) && isset($row['kabupaten_kota'])) {
+            $normalized['kabupaten_kota'] = $row['kabupaten_kota'];
+        }
+        if (!isset($normalized['nilai_total_investasi_rencana']) && isset($row['nilai_total_investasi_rencana'])) {
+            $normalized['nilai_total_investasi_rencana'] = $row['nilai_total_investasi_rencana'];
+        }
+        if (!isset($normalized['nilai_modal_tetap_rencana']) && isset($row['nilai_modal_tetap_rencana'])) {
+            $normalized['nilai_modal_tetap_rencana'] = $row['nilai_modal_tetap_rencana'];
+        }
+        if (!isset($normalized['total_tambahan_investasi']) && isset($row['total_tambahan_investasi'])) {
+            $normalized['total_tambahan_investasi'] = $row['total_tambahan_investasi'];
+        }
+        return $normalized;
     }
 }

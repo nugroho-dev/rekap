@@ -14,6 +14,9 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 14l-4 -4l4 -4" /><path d="M5 10h11a4 4 0 1 1 0 8h-1" /></svg>
             Kembali ke Data
           </a>
+          <a href="{{ route('lkpm.statistikNonUmk') }}" class="btn btn-primary">
+            Statistik Non-UMK
+          </a>
         </div>
       </div>
     </div>
@@ -32,7 +35,7 @@
             </a>
           </li>
           <li class="nav-item" role="presentation">
-            <a href="{{ route('lkpm.statistik', ['tab' => 'non-umk']) }}" class="nav-link {{ $tab === 'non-umk' ? 'active' : '' }}">
+            <a href="{{ route('lkpm.statistikNonUmk') }}" class="nav-link">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-2"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 21l18 0" /><path d="M5 21v-14l8 -4v18" /><path d="M19 21v-10l-6 -4" /><path d="M9 9l0 .01" /><path d="M9 12l0 .01" /><path d="M9 15l0 .01" /><path d="M9 18l0 .01" /></svg>
               LKPM Non-UMK
             </a>
@@ -88,7 +91,7 @@
 
         <!-- KPI Cards -->
         <div class="row row-deck mb-4">
-          <div class="col-md-6 col-lg-4">
+          <div class="col-md-6 col-lg-{{ $tab === 'non-umk' ? '3' : ($tab === 'umk' ? '4' : '3') }}">
             <div class="card shadow-sm">
               <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between mb-2">
@@ -156,7 +159,7 @@
 
           
 
-          <div class="col-md-6 col-lg-4">
+          <div class="col-md-6 col-lg-{{ $tab === 'non-umk' ? '3' : ($tab === 'umk' ? '4' : '3') }}">
             <div class="card shadow-sm">
               <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between mb-2">
@@ -176,56 +179,8 @@
               </div>
             </div>
           </div>
-          @elseif($tab === 'non-umk')
-          <div class="col-md-6 col-lg-3">
-            <div class="card">
-              <div class="card-body">
-                <div class="d-flex align-items-center">
-                  <div class="subheader">Rencana Investasi</div>
-                </div>
-                <div class="h1 mb-0 text-primary">Rp {{ number_format($investasiStats['rencana'], 0, ',', '.') }}</div>
-                <div class="text-muted mt-2">
-                  <small>Nilai penuh</small>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-6 col-lg-3">
-            <div class="card">
-              <div class="card-body">
-                <div class="d-flex align-items-center">
-                  <div class="subheader">Realisasi Investasi</div>
-                </div>
-                <div class="h1 mb-0 text-success">Rp {{ number_format($investasiStats['realisasi'], 0, ',', '.') }}</div>
-                <div class="text-muted mt-2">
-                  @php
-                    $persentase = $investasiStats['rencana'] > 0 ? ($investasiStats['realisasi'] / $investasiStats['rencana']) * 100 : 0;
-                  @endphp
-                  <small>{{ number_format($persentase, 1) }}% dari rencana</small>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-6 col-lg-3">
-            <div class="card">
-              <div class="card-body">
-                <div class="d-flex align-items-center">
-                  <div class="subheader">Total TKI & TKA</div>
-                </div>
-                <div class="h1 mb-0">{{ number_format($tenagaKerja['tki_realisasi'] + $tenagaKerja['tka_realisasi'], 0, ',', '.') }}</div>
-                <div class="text-muted mt-2">
-                  <small>
-                    TKI: {{ number_format($tenagaKerja['tki_realisasi'], 0, ',', '.') }} / 
-                    TKA: {{ number_format($tenagaKerja['tka_realisasi'], 0, ',', '.') }}
-                  </small>
-                </div>
-              </div>
-            </div>
-          </div>
           @else
-          <div class="col-md-6 col-lg-4">
+          <div class="col-md-6 col-lg-3">
             <div class="card shadow-sm">
               <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between mb-2">
@@ -246,7 +201,7 @@
             </div>
           </div>
 
-          <div class="col-md-6 col-lg-4">
+          <div class="col-md-6 col-lg-3">
             <div class="card shadow-sm">
               <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between mb-2">
@@ -264,7 +219,7 @@
             </div>
           </div>
 
-          <div class="col-md-6 col-lg-4">
+          <div class="col-md-6 col-lg-3">
             <div class="card shadow-sm">
               <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between mb-2">
@@ -415,8 +370,8 @@
                     <tr>
                       <td><span class="badge bg-primary-lt">{{ $item->status_penanaman_modal }}</span></td>
                       <td class="text-center">{{ number_format($item->jumlah_proyek, 0, ',', '.') }}</td>
-                      <td class="text-end">{{ number_format($item->total_rencana / 1000000, 0, ',', '.') }} jt</td>
-                      <td class="text-end fw-bold text-success">{{ number_format($item->total_realisasi / 1000000, 0, ',', '.') }} jt</td>
+                      <td class="text-end">Rp {{ number_format($item->total_rencana, 0, ',', '.') }}</td>
+                      <td class="text-end fw-bold text-success">Rp {{ number_format($item->total_realisasi, 0, ',', '.') }}</td>
                     </tr>
                     @empty
                     <tr>
@@ -694,11 +649,11 @@ document.addEventListener('DOMContentLoaded', function() {
     chartTahun.render();
   } else {
     const categories = byPeriode.map(item => `${item.periode_laporan} ${item.tahun_laporan}`);
-    const rRaw = byPeriode.map(item => (item.total_rencana || 0) / 1000000);
-    const reRaw = byPeriode.map(item => (item.total_realisasi || 0) / 1000000);
-    const rencanaData = rRaw.map(v => v.toFixed(2));
-    const realisasiData = reRaw.map(v => v.toFixed(2));
-    const totalRRData = rRaw.map((v, i) => (v + reRaw[i]).toFixed(2));
+    const rRaw = byPeriode.map(item => (item.total_rencana || 0));
+    const reRaw = byPeriode.map(item => (item.total_realisasi || 0));
+    const rencanaData = rRaw.map(v => v);
+    const realisasiData = reRaw.map(v => v);
+    const totalRRData = rRaw.map((v, i) => (v + reRaw[i]));
     
     const options = {
       chart: {
@@ -716,10 +671,10 @@ document.addEventListener('DOMContentLoaded', function() {
         labels: { rotate: -45 }
       },
       yaxis: {
-        title: { text: 'Jutaan Rupiah' },
+        title: { text: 'Rupiah' },
         labels: {
           formatter: function(val) {
-            return val.toLocaleString('id-ID');
+            return Number(val).toLocaleString('id-ID');
           }
         }
       },

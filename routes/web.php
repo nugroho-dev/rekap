@@ -142,10 +142,11 @@ Route::middleware('auth')->group(function () {
     // Statistik routes must be registered before the parameterized detail route
     Route::get('/sicantik/statistik', [DashboardVprosesSicantikController::class, 'statistik']);
     Route::post('/sicantik/statistik', [DashboardVprosesSicantikController::class, 'statistik']);
-    // Manual clear cache statistik (summary + detail)
-    Route::post('/sicantik/statistik/clear-cache', [DashboardVprosesSicantikController::class, 'clearStatistikCache'])->name('sicantik.statistik.clearCache');
-    // AJAX month detail for statistik (year & month query params)
-    Route::get('/sicantik/statistik/detail', [DashboardVprosesSicantikController::class, 'statistikDetail']);
+       
+        // Manual clear cache statistik (summary + detail)
+        Route::post('/sicantik/statistik/clear-cache', [DashboardVprosesSicantikController::class, 'clearStatistikCache'])->name('sicantik.statistik.clearCache');
+        // AJAX month detail for statistik (year & month query params)
+        Route::get('/sicantik/statistik/detail', [DashboardVprosesSicantikController::class, 'statistikDetail']);
     // Proses detail by no_permohonan (for SLA breakdown per langkah)
     Route::get('/sicantik/proses/{no_permohonan}', [DashboardVprosesSicantikController::class, 'showPermohonanProses'])->name('sicantik.proses.detail');
     // Detail endpoint for AJAX: return proses steps for a given id/no_permohonan
@@ -242,6 +243,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/lkpm', [App\Http\Controllers\LkpmController::class, 'index'])->name('lkpm.index');
     Route::get('/lkpm/statistik', [App\Http\Controllers\LkpmController::class, 'statistik'])->name('lkpm.statistik');
     Route::post('/lkpm/import-umk', [App\Http\Controllers\LkpmController::class, 'importUmk'])->name('lkpm.import.umk');
+     // Dedicated Non-UMK statistik route
+        Route::get('/lkpm/statistik/non-umk', [App\Http\Controllers\LkpmController::class, 'statistikNonUmk'])->name('lkpm.statistikNonUmk');
     Route::post('/lkpm/import-non-umk', [App\Http\Controllers\LkpmController::class, 'importNonUmk'])->name('lkpm.import.non-umk');
     Route::delete('/lkpm/umk/{id}', [App\Http\Controllers\LkpmController::class, 'destroyUmk'])->name('lkpm.destroy.umk');
     Route::delete('/lkpm/non-umk/{id}', [App\Http\Controllers\LkpmController::class, 'destroyNonUmk'])->name('lkpm.destroy.non-umk');

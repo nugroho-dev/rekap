@@ -67,6 +67,8 @@ class LkpmUmkImport implements ToModel, WithHeadingRow, WithUpserts
     public function model(array $row)
     {
         try {
+            // Normalize headers to handle variations like 'KABUPATEN/KOTA'
+            $row = $this->normalizeHeaders($row);
             $currentId = $this->getValue($row, ['id_laporan', 'id laporan']);
             if ($currentId) {
                 if (isset($this->seenIds[$currentId])) {
@@ -293,5 +295,27 @@ class LkpmUmkImport implements ToModel, WithHeadingRow, WithUpserts
         $cleaned = preg_replace('/[^\d\-]/', '', (string) $value);
 
         return is_numeric($cleaned) ? (int) $cleaned : null;
+    }
+
+    /**
+     * Normalize incoming Excel heading keys to expected snake_case.
+     * Maps variants like 'KABUPATEN/KOTA' to 'kab_kota'.
+     */
+    private function normalizeHeaders(array $row): array
+    {
+        $normalized = [];
+        foreach ($row as $key => $value) {
+            $lower = strtolower(trim($key));
+            $canon = preg_replace('/[^a-z0-9]+/i', '_', $lower);
+            if ($lower === 'kabupaten/kota' || $canon === 'kabupaten_kota') {
+                $canon = 'kab_kota';
+            }
+            $normalized[$canon] = $value;
+        }
+        // Preserve existing key if already correct
+        if (!isset($normalized['kab_kota']) && isset($row['kab_kota'])) {
+            $normalized['kab_kota'] = $row['kab_kota'];
+        }
+        return $normalized;
     }
 }
