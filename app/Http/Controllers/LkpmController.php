@@ -465,55 +465,14 @@ class LkpmController extends Controller
                 ->groupBy('tahun_laporan')
                 ->orderBy('tahun_laporan', 'asc')
                 ->get();
-        } else {
-            $query = LkpmNonUmk::query()
-                ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
-                ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
-                ->when($periode, fn($q) => $q->where('periode_laporan', $periode));
-
-            $totalProyekFiltered = $query->distinct('no_kode_proyek')->count('no_kode_proyek');
-            $totalPerusahaanFiltered = (clone $query)
-                ->distinct('nama_pelaku_usaha')
-                ->count('nama_pelaku_usaha');
-            $totalLaporan = $query->count();
-            $totalProyekAll = LkpmNonUmk::distinct('no_kode_proyek')->count('no_kode_proyek');
-
-            // Rencana Investasi = nilai_modal_tetap_rencana + nilai_total_investasi_rencana
-            $investasiStats = [
-                'rencana' => $query->sum('nilai_modal_tetap_rencana') + $query->sum('nilai_total_investasi_rencana'),
-                'realisasi' => $query->sum('total_tambahan_investasi'),
-                'akumulasi' => $query->sum('akumulasi_realisasi_investasi'),
-            ];
-            $modalTetapStats = [
-                'rencana' => $query->sum('nilai_modal_tetap_rencana'),
-                'realisasi' => $query->sum('tambahan_modal_tetap_realisasi'),
-                'akumulasi' => $query->sum('akumulasi_realisasi_modal_tetap'),
-            ];
-            $tenagaKerja = [
-                'tki_rencana' => $query->sum('jumlah_rencana_tki'),
-                'tki_realisasi' => $query->sum('jumlah_realisasi_tki'),
-                'tka_rencana' => $query->sum('jumlah_rencana_tka'),
-                'tka_realisasi' => $query->sum('jumlah_realisasi_tka'),
-            ];
-            $byStatus = LkpmNonUmk::selectRaw('status_penanaman_modal, COUNT(DISTINCT no_kode_proyek) as jumlah_proyek, SUM(nilai_total_investasi_rencana) as total_rencana, SUM(total_tambahan_investasi) as total_realisasi')
-                ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
-                ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
-                ->when($periode, fn($q) => $q->where('periode_laporan', $periode))
-                ->groupBy('status_penanaman_modal')
-                ->get();
-            $byPeriode = LkpmNonUmk::selectRaw('periode_laporan, tahun_laporan, COUNT(DISTINCT no_kode_proyek) as jumlah_proyek, SUM(nilai_total_investasi_rencana) as total_rencana, SUM(total_tambahan_investasi) as total_realisasi')
-                ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
-                ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
-                ->groupBy('periode_laporan', 'tahun_laporan')
-                ->orderBy('tahun_laporan', 'asc')
-                ->orderBy('periode_laporan', 'asc')
-                ->get();
-            $years = LkpmNonUmk::selectRaw('DISTINCT tahun_laporan')->whereNotNull('tahun_laporan')->pluck('tahun_laporan')->sort()->values();
-            $topKbli = collect();
-            $modalKerjaStats = ['pelaporan' => 0, 'sebelum' => 0, 'akumulasi' => 0];
-            $byTahun = collect();
-            $modalComponents = ['kerja_pelaporan' => 0, 'tetap_pelaporan' => 0, 'total_pelaporan' => 0];
         }
+        
+        // Set default values untuk view compatibility
+        $topKbli = $topKbli ?? collect();
+        $modalKerjaStats = $modalKerjaStats ?? ['pelaporan' => 0, 'sebelum' => 0, 'akumulasi' => 0];
+        $byTahun = $byTahun ?? collect();
+        $modalComponents = $modalComponents ?? ['kerja_pelaporan' => 0, 'tetap_pelaporan' => 0, 'total_pelaporan' => 0];
+        $byStatus = $byStatus ?? collect();
 
         return view('admin.lkpm.statistik', compact(
             'judul', 'tab', 'tahun', 'periode',
@@ -537,40 +496,69 @@ class LkpmController extends Controller
             ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
             ->when($periode, fn($q) => $q->where('periode_laporan', $periode));
 
-        $totalProyekFiltered = $query->distinct('no_kode_proyek')->count('no_kode_proyek');
+        // Query utama dengan semua agregasi sekaligus (SATU query untuk konsistensi)
+        $stats = LkpmNonUmk::selectRaw('
+            COUNT(no_kode_proyek) as jumlah_proyek,
+            SUM(jumlah_rencana_tki) as tki_rencana,
+            SUM(jumlah_realisasi_tki) as tki_realisasi,
+            SUM(jumlah_rencana_tka) as tka_rencana,
+            SUM(jumlah_realisasi_tka) as tka_realisasi,
+            SUM(nilai_total_investasi_rencana) as total_rencana,
+            SUM(total_tambahan_investasi) as total_realisasi,
+            SUM(akumulasi_realisasi_investasi) as akumulasi_investasi,
+            SUM(nilai_modal_tetap_rencana) as modal_tetap_rencana,
+            SUM(tambahan_modal_tetap_realisasi) as modal_tetap_realisasi,
+            SUM(akumulasi_realisasi_modal_tetap) as akumulasi_modal_tetap
+        ')
+            ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
+            ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
+            ->when($periode, fn($q) => $q->where('periode_laporan', $periode))
+            ->first();
+
+        $totalProyekFiltered = $stats->jumlah_proyek ?? 0;
         $totalPerusahaanFiltered = (clone $query)
             ->distinct('nama_pelaku_usaha')
             ->count('nama_pelaku_usaha');
         $totalLaporan = $query->count();
-        $totalProyekAll = LkpmNonUmk::distinct('no_kode_proyek')->count('no_kode_proyek');
+        $totalProyekAll = LkpmNonUmk::count('no_kode_proyek');
 
-        // KPI Investasi
+        // Gunakan hasil dari query agregasi tunggal
         $investasiStats = [
-            'rencana' => $query->sum('nilai_modal_tetap_rencana') + $query->sum('nilai_total_investasi_rencana'),
-            'realisasi' => $query->sum('total_tambahan_investasi'),
-            'akumulasi' => $query->sum('akumulasi_realisasi_investasi'),
+            'rencana' => $stats->total_rencana ?? 0,
+            'realisasi' => $stats->total_realisasi ?? 0,
+            'akumulasi' => $stats->akumulasi_investasi ?? 0,
         ];
         $modalTetapStats = [
-            'rencana' => $query->sum('nilai_modal_tetap_rencana'),
-            'realisasi' => $query->sum('tambahan_modal_tetap_realisasi'),
-            'akumulasi' => $query->sum('akumulasi_realisasi_modal_tetap'),
+            'rencana' => $stats->modal_tetap_rencana ?? 0,
+            'realisasi' => $stats->modal_tetap_realisasi ?? 0,
+            'akumulasi' => $stats->akumulasi_modal_tetap ?? 0,
         ];
+        
         $tenagaKerja = [
-            'tki_rencana' => $query->sum('jumlah_rencana_tki'),
-            'tki_realisasi' => $query->sum('jumlah_realisasi_tki'),
-            'tka_rencana' => $query->sum('jumlah_rencana_tka'),
-            'tka_realisasi' => $query->sum('jumlah_realisasi_tka'),
-            'total' => $query->sum('jumlah_realisasi_tki') + $query->sum('jumlah_realisasi_tka'),
+            'tki_rencana' => $stats->tki_rencana ?? 0,
+            'tki_realisasi' => $stats->tki_realisasi ?? 0,
+            'tka_rencana' => $stats->tka_rencana ?? 0,
+            'tka_realisasi' => $stats->tka_realisasi ?? 0,
+            'total' => ($stats->tki_realisasi ?? 0) + ($stats->tka_realisasi ?? 0),
         ];
-
-        // Tabel breakdown & tren
-        $byStatus = LkpmNonUmk::selectRaw('status_penanaman_modal, COUNT(DISTINCT no_kode_proyek) as jumlah_proyek, SUM(nilai_modal_tetap_rencana + nilai_total_investasi_rencana) as total_rencana, SUM(total_tambahan_investasi) as total_realisasi')
+        
+        // Log untuk debugging
+        \Illuminate\Support\Facades\Log::info('statistikNonUmk - Query Result', [
+            'route' => request()->url(),
+            'tenagaKerja' => $tenagaKerja,
+            'filter' => ['tahun' => $tahun, 'periode' => $periode]
+        ]);
+        
+        // Tabel breakdown by status
+        $byStatus = LkpmNonUmk::selectRaw('status_penanaman_modal, COUNT(no_kode_proyek) as jumlah_proyek, SUM(nilai_total_investasi_rencana) as total_rencana, SUM(total_tambahan_investasi) as total_realisasi')
             ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
             ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
             ->when($periode, fn($q) => $q->where('periode_laporan', $periode))
             ->groupBy('status_penanaman_modal')
             ->get();
-        $byPeriode = LkpmNonUmk::selectRaw('periode_laporan, tahun_laporan, COUNT(DISTINCT no_kode_proyek) as jumlah_proyek, SUM(nilai_modal_tetap_rencana + nilai_total_investasi_rencana) as total_rencana, SUM(total_tambahan_investasi) as total_realisasi')
+
+        // Tabel tren per periode
+        $byPeriode = LkpmNonUmk::selectRaw('periode_laporan, tahun_laporan, COUNT(DISTINCT no_kode_proyek) as jumlah_proyek, SUM(nilai_total_investasi_rencana) as total_rencana, SUM(total_tambahan_investasi) as total_realisasi')
             ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
             ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
             ->groupBy('periode_laporan', 'tahun_laporan')

@@ -7,6 +7,7 @@
       <div class="col">
         <div class="page-pretitle">Statistik</div>
         <h2 class="page-title">{{ $judul }}</h2>
+        <small class="text-muted">Loaded: {{ now()->format('Y-m-d H:i:s') }}</small>
       </div>
       <div class="col-auto ms-auto d-print-none">
         <div class="btn-list">
@@ -112,7 +113,11 @@
                 <div class="d-flex align-items-center justify-content-between mb-2">
                   <div class="text-muted">Total TKI & TKA (Realisasi)</div>
                 </div>
-                <div class="h1 mb-1">{{ number_format(($tenagaKerja['tki_realisasi'] ?? 0) + ($tenagaKerja['tka_realisasi'] ?? 0), 0, ',', '.') }}</div>
+                <div class="h1 mb-1">{{ number_format($tenagaKerja['total'] ?? 0, 0, ',', '.') }}</div>
+                <div class="small text-muted">
+                  TKI: {{ number_format($tenagaKerja['tki_realisasi'] ?? 0, 0, ',', '.') }} | 
+                  TKA: {{ number_format($tenagaKerja['tka_realisasi'] ?? 0, 0, ',', '.') }}
+                </div>
               </div>
             </div>
           </div>
@@ -200,16 +205,22 @@ document.addEventListener('DOMContentLoaded', function() {
   const options = {
     chart: { type: 'bar', height: 300, toolbar: { show: false } },
     series: [
-      { name: 'Rencana', data: rRaw },
-      { name: 'Realisasi', data: reRaw },
-      { name: 'Total (R+R)', data: rRaw.map((v,i)=>v+reRaw[i]) }
+      { name: 'Rencana Investasi', data: rRaw },
+      { name: 'Realisasi Investasi', data: reRaw }
     ],
     xaxis: { categories: categories, labels: { rotate: -45 } },
     yaxis: { title: { text: 'Rupiah' }, labels: { formatter: (val)=>Number(val).toLocaleString('id-ID') } },
     plotOptions: { bar: { columnWidth: '60%' } },
-    colors: ['#206bc4', '#2fb344', '#fa5252'],
+    colors: ['#206bc4', '#2fb344'],
     legend: { position: 'top' },
     dataLabels: { enabled: false },
+    tooltip: {
+      y: {
+        formatter: function(val) {
+          return 'Rp ' + Number(val).toLocaleString('id-ID');
+        }
+      }
+    }
   };
   new ApexCharts(document.querySelector('#chart-periode'), options).render();
 });

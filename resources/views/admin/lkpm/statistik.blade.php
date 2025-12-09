@@ -171,10 +171,15 @@
                   </div>
                   <span class="badge bg-indigo-lt">TK</span>
                 </div>
-                <div class="h1 mb-1">{{ number_format($tenagaKerja['total'], 0, ',', '.') }}</div>
+                <div class="h1 mb-1">{{ number_format($tenagaKerja['total'] ?? 0, 0, ',', '.') }}</div>
                 <div class="d-flex flex-wrap gap-2 small mt-2">
-                  <span class="badge bg-blue-lt">L: {{ number_format($tenagaKerja['laki'], 0, ',', '.') }}</span>
-                  <span class="badge bg-pink-lt">P: {{ number_format($tenagaKerja['wanita'], 0, ',', '.') }}</span>
+                  @if($tab === 'non-umk')
+                    <span class="badge bg-blue-lt">TKI: {{ number_format($tenagaKerja['tki_realisasi'] ?? 0, 0, ',', '.') }}</span>
+                    <span class="badge bg-pink-lt">TKA: {{ number_format($tenagaKerja['tka_realisasi'] ?? 0, 0, ',', '.') }}</span>
+                  @else
+                    <span class="badge bg-blue-lt">L: {{ number_format($tenagaKerja['laki'] ?? 0, 0, ',', '.') }}</span>
+                    <span class="badge bg-pink-lt">P: {{ number_format($tenagaKerja['wanita'] ?? 0, 0, ',', '.') }}</span>
+                  @endif
                 </div>
               </div>
             </div>
