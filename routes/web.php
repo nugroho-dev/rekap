@@ -100,6 +100,7 @@ Route::middleware('auth')->group(function () {
 
     // Commitment / Komitmen
     Route::resource('/commitment', DashboardKomitmenController::class);
+    Route::get('/commitment/statistik', [DashboardKomitmenController::class, 'statistik']);
     Route::post('/commitment/import_excel', [DashboardKomitmenController::class, 'import_excel']);
     Route::post('/komitmensort', [DashboardKomitmenController::class, 'index']);
 
