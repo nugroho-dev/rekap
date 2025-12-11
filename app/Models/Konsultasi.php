@@ -5,12 +5,14 @@ namespace App\Models;
 //use Cviebrock\EloquentSluggable\Sluggable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Konsultasi extends Model
 {
-    use HasFactory; //Sluggable;
+    use HasFactory, SoftDeletes; //Sluggable;
     protected $guarded = ['id'];
     public $table = "konsultasi";
+    protected $dates = ['deleted_at'];
     public function getRouteKeyName()
     {
         return 'id_rule';
