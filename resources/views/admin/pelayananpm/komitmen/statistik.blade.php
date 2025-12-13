@@ -1,4 +1,5 @@
-@extends('layouts.page-body')
+@extends('layouts.tableradminfluid')
+
 @section('css')
 <style>
     .progress {

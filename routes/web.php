@@ -99,15 +99,22 @@ Route::middleware('auth')->group(function () {
     Route::post('/konsultasicari', [KonsultasiDashboardController::class, 'index']);
 
     // Commitment / Komitmen
-    Route::resource('/commitment', DashboardKomitmenController::class);
+    Route::match(['get','post'],'/commitment', [DashboardKomitmenController::class, 'index']);
     Route::get('/commitment/statistik', [DashboardKomitmenController::class, 'statistik']);
     Route::post('/commitment/import_excel', [DashboardKomitmenController::class, 'import_excel']);
     Route::post('/komitmensort', [DashboardKomitmenController::class, 'index']);
 
     // Pengaduan
-    Route::resource('/pengaduan', PengaduanController::class);
-    Route::post('/pengaduancari', [PengaduanController::class, 'index']);
+    Route::match(['get','post'],'/pengaduan', [PengaduanController::class, 'index']);
+    Route::get('/pengaduan/create', [PengaduanController::class, 'create']);
+    Route::post('/pengaduan', [PengaduanController::class, 'store']);
     Route::get('/pengaduan/pengaduan/checkSlug', [PengaduanController::class, 'checkSlug']);
+     Route::get('/pengaduan/statistik', [PengaduanController::class, 'statistik']);
+    Route::get('/pengaduan/{pengaduan}', [PengaduanController::class, 'show']);
+    Route::get('/pengaduan/{pengaduan}/edit', [PengaduanController::class, 'edit']);
+    Route::put('/pengaduan/{pengaduan}', [PengaduanController::class, 'update']);
+    Route::delete('/pengaduan/{pengaduan}', [PengaduanController::class, 'destroy']);
+   
 
     // Pengawasan & related
     Route::resource('/pengawasan/sigumilang', SigumilangDashboardController::class);
@@ -128,6 +135,32 @@ Route::middleware('auth')->group(function () {
     Route::resource('/potensi', PetaPotensiController::class);
     Route::post('/potensicari', [PetaPotensiController::class, 'index']);
     Route::get('/peta/checkSlug', [PetaPotensiController::class, 'checkSlug']);
+
+    //loi
+    Route::match(['get','post'],'/loi', [DashboardLoiController::class, 'index']);
+    Route::get('/loi/statistik', [DashboardLoiController::class, 'statistik'])->name('loi.statistik');
+    Route::get('/loi/create', [DashboardLoiController::class, 'create']);
+    Route::post('/loi', [DashboardLoiController::class, 'store']);
+    Route::get('/loi/check/checkSlug', [DashboardLoiController::class, 'checkSlug']);
+    Route::get('/loi/{loi}', [DashboardLoiController::class, 'show']);
+    Route::get('/loi/{loi}/edit', [DashboardLoiController::class, 'edit']);
+    Route::put('/loi/{loi}', [DashboardLoiController::class, 'update']);
+    Route::delete('/loi/{loi}', [DashboardLoiController::class, 'destroy']);
+
+    //expo
+    Route::resource('/expo', DashboardExpoController::class);
+
+    //bussiness
+    Route::resource('/business', DashboardBusinessController::class);
+
+    //bimtek
+    Route::resource('/bimtek', DashboardBimtekController::class);
+
+    //pengawasan
+    Route::resource('/pengawasan', DashboardPengawasanController::class);
+
+    //fasilitasi
+    Route::resource('/fasilitasi', DashboardFasilitasiController::class);
 
     // Verifikasi realisasi investasi
     Route::resource('/realiasi/investasi/verifikasi', VerifikasiRealisasiInvestasiController::class);

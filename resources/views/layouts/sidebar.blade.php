@@ -239,7 +239,7 @@
                   </div>
                 </div>
               </li>
-              <li class="nav-item {{ Request::is('commitment*')?'active':'' }}{{ Request::is('pelayanan*')?'active':'' }} dropdown">
+              <li class="nav-item {{ Request::is('commitment*')?'active':'' }}{{ Request::is('konsultasi*')?'active':'' }} dropdown">
                 <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="true" >
                   <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-device-desktop-heart" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 16h-6a1 1 0 0 1 -1 -1v-10a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v6" /><path d="M7 20h3.5" /><path d="M9 16v4" /><path d="M18 22l3.35 -3.284a2.143 2.143 0 0 0 .005 -3.071a2.242 2.242 0 0 0 -3.129 -.006l-.224 .22l-.223 -.22a2.242 2.242 0 0 0 -3.128 -.006a2.143 2.143 0 0 0 -.006 3.071l3.355 3.296z" /></svg>
@@ -248,7 +248,7 @@
                     Pelayanan PM
                   </span>
                 </a>
-                <div class="dropdown-menu {{ Request::is('commitment*')?'show':'close' }}{{ Request::is('pelayanan*')?'show':'close' }}">
+                <div class="dropdown-menu {{ Request::is('commitment*')?'show':'close' }} {{ Request::is('konsultasi*')?'show':'close' }}">
                   <div class="dropdown-menu-columns">
                       <a class="dropdown-item" href="{{ url('/konsultasi') }}">
                         Konsultasi
@@ -271,7 +271,7 @@
                 <div class="dropdown-menu {{ Request::is('pengaduan*')?'show':'close' }}">
                   <div class="dropdown-menu-columns">
                       <a class="dropdown-item" href="{{ url('/pengaduan') }}">
-                        pengaduan
+                        Pengaduan
                       </a>
                   </div>
                 </div>
@@ -289,11 +289,6 @@
                   <div class="dropdown-menu-columns">
                       <a class="dropdown-item" href="{{ url('/insentif') }}">
                         Permohonan
-                      <a class="dropdown-item" href="{{ url('/maintenance') }}">
-                        Penetapan 
-                      </a>
-                      <a class="dropdown-item" href="{{ url('/maintenance') }}">
-                        Evaluasi
                       </a>
                      
                   </div>

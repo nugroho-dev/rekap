@@ -73,7 +73,7 @@
                         <label class="form-label required">Tanggal Terima</label>
                         <div>
                           <input type="datetime-local" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal_terima',$pengaduan->tanggal_terima) }}" name='tanggal_terima'>
-                            @error ('tanggal')
+                            @error ('tanggal_terima')
                           <small class="form-hint text-danger">{{ $message }}  </small>
                           @enderror
                         </div>

@@ -10,6 +10,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use \Cviebrock\EloquentSluggable\Services\SlugService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class PengaduanController extends Controller
 {
@@ -19,93 +20,46 @@ class PengaduanController extends Controller
     public function index(Request $request)
     {
         $judul='Data Pengaduan';
-		$query = Pengaduan::query()->where('del', 0);
+		$query = Pengaduan::query();
 		$search = $request->input('search');
 		$date_start = $request->input('date_start');
 		$date_end = $request->input('date_end');
 		$month = $request->input('month');
 		$year = $request->input('year');
-		if ($request->has('search')) {
-			$search = $request->input('search');
-			$query ->where('nama', 'LIKE', "%{$search}%")
+		if ($search) {
+			$query->where(function ($q) use ($search) {
+			$q      ->where('nama', 'LIKE', "%{$search}%")
 				   ->orWhere('alamat', 'LIKE', "%{$search}%")
 				   ->orWhere('keluhan', 'LIKE', "%{$search}%")
 				   ->orWhere('perbaikan', 'LIKE', "%{$search}%")
 				   ->orWhere('nomor', 'LIKE', "%{$search}%")
 				   ->orWhere('tahun', 'LIKE', "%{$search}%")
 				   ->orWhere('catatan', 'LIKE', "%{$search}%")
-				   ->orderBy('tanggal_terima', 'desc');
+				   ->orderBy('tanggal', 'desc');
+		    });
 		}
-		if ($request->has('date_start')&&$request->has('date_end')) {
-			$date_start = $request->input('date_start');
-			$date_end = $request->input('date_end');
-			if($date_start>$date_end ){
-				return redirect('/pengaduan')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda ');
-			}else{
-			$query ->whereBetween('tanggal_terima', [$date_start,$date_end])
-				   ->orderBy('tanggal_terima', 'desc');
+        
+
+        if ($date_start && $date_end) {
+			if ($date_start > $date_end) {
+			return redirect('/pengaduan')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda');
 			}
+			$query->whereBetween('tanggal', [$date_start, $date_end]) 
+                  ->orderBy('tanggal', 'desc');
 		}
-		if ($request->has('month')&&$request->has('year')) {
-			$month = $request->input('month');
-			$year = $request->input('year');
-			if(empty($month)&&empty($year)){
-				return redirect('/pengaduan')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
-			}if(empty($year)){
-				return redirect('/pengaduan')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
-			}if(empty($month)){
-				return redirect('/pengaduan')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
-			}else{
-			$query ->whereMonth('tanggal_terima', [$month])
-				   ->whereYear('tanggal_terima', [$year])
-				   ->orderBy('tanggal_terima', 'desc');
-				}
+        if ($month && $year) {
+			$query->whereMonth('tanggal', $month)
+			  ->whereYear('tanggal', $year);
+		} elseif ($year) {
+			$query->whereYear('tanggal', $year);
 		}
-		if ($request->has('year')) {
-			$year = $request->input('year');
-			$query ->whereYear('tanggal_terima', [$year])
-				   ->orderBy('tanggal_terima', 'desc');
-		}
+        $query->orderBy('tanggal', 'desc');
 		$perPage = $request->input('perPage', 50);
-		$items=$query->orderBy('tanggal_terima', 'desc')->paginate($perPage);
+		$items=$query->paginate($perPage);
 		$items->withPath(url('/pengaduan'));
         return view('admin.pengaduan.pengaduan.index', compact('judul','items','perPage','search','date_start','date_end','month','year'));
     }
-    public function cari(Request $request)
-    {
-        $judul = 'Daftar Pengaduan';
-        $cari=$request->cari;
-       
-        $nama=auth()->user()->pegawai->nama;
-        $items = Pengaduan::where('del', 0)->where('id_pegawai', auth()->user()->pegawai->id)->whereAny(['nama', 'no_tlp', 'email','alamat','nib','nama_perusahaan','lokasi_layanan',], 'LIKE', '%'.$cari.'%')->paginate(25);
-        return view('admin.pengaduan.pengaduan.index', compact('judul','items','nama'));
-    }
-    public function display(Request $request)
-    {
-        $judul = 'Daftar Konsultansi';
-        $tgl_awal=$request->tanggal_awal;
-        $tgl_akhir=$request->tanggal_akhir;
-        $nama=auth()->user()->pegawai->nama;
-        $items = Pengaduan::where('del', 0)->where('id_pegawai', auth()->user()->pegawai->id)->where('tanggal','>=',$tgl_awal)->where('tanggal','<=',$tgl_akhir)->paginate(25);
-        if($tgl_awal>$tgl_akhir){
-            return view('admin.pengaduan.pengaduan.index', compact('judul','items','nama'));
-        }if($tgl_awal<=$tgl_akhir){
-            return view('admin.pengaduan.pengaduan.display', compact('judul','items', 'nama'));
-        }
-        
-    }
-
-    public function printtandaterima(Pengaduan $item)
-    {
-        $pick = [
-            'items' => $item,
-        ];
-        
-        $pdf= PDF::loadView('admin.pengaduan.pengaduan.tandaterima', $pick );
-        
-        $pdf->setPaper(array(0,0,609.4488,935.433), 'portrait');
-        return $pdf->stream('pengaduan.pdf');
-    }
+   
     
     public function klasifikasi(Pengaduan $item)
     {
@@ -115,28 +69,7 @@ class PengaduanController extends Controller
         return view('admin.pengaduan.pengaduan.klasifikasi', compact('judul','media','klasifikasi','item'));
     }
 
-    public function print(Request $request)
-    {
-        $judul = 'Daftar Konsultansi';
-        $tgl_awal=$request->tanggal_awal;
-        $tgl_akhir=$request->tanggal_akhir;
-        //dd($tgl_awal, $tgl_akhir);
-        $nama=auth()->user()->pegawai->nama;
-        $item = Pengaduan::all()->where('del', 0)->where('id_pegawai', auth()->user()->pegawai->id)->where('tanggal','>=',$tgl_awal)->where('tanggal','<=',$tgl_akhir);
-        $data = [
-            'tgl_awal' => $tgl_awal,
-            'tgl_akhir' => $tgl_akhir,
-            'nama' => $nama,
-            'items' => $item,
-            'judul' => $judul
-        ];
-        
-        $pdf= PDF::loadView('admin.pengaduan.pengaduan.print', $data);
-        $customPaper = array(0,0,1299,827);
-        $pdf->setPaper($customPaper);
-        return $pdf->download('pengaduan.pdf');
-        
-    }
+    
     /**
      * Show the form for creating a new resource.
      */
@@ -148,8 +81,9 @@ class PengaduanController extends Controller
         $nomor = Pengaduan::where('del', 0)->where('tahun', $year)->count();
         $klasifikasi = Klasifikasipengaduan::all();
         $media = Mediapengaduan::all();
+        $pegawai = Auth::user()->pegawai->id;
         $number=$nomor+1;
-        return view('admin.pengaduan.pengaduan.create', compact('judul', 'current', 'year', 'number','klasifikasi','media'));
+        return view('admin.pengaduan.pengaduan.create', compact('judul', 'current', 'year', 'number','klasifikasi','media','pegawai'));
     }
 
     /**
@@ -174,9 +108,17 @@ class PengaduanController extends Controller
             'id_klasifikasi' => 'required',
             'catatan' => 'required',
             'tanggal_respon' => 'required', 
-            'tanggal_selesai' => 'required',  
+            'tanggal_selesai' => 'required', 
+            'id_pegawai' => 'required',
         ]);
+                
+        
+        $validatedData['tanggal'] = $request->tanggal_terima ? str_replace('T', ' ', $request->tanggal_terima) . ':00' : null;
+        $validatedData['tanggal_respon'] = $request->tanggal_respon ? str_replace('T', ' ', $request->tanggal_respon) . ':00' : null;
+        $validatedData['tanggal_selesai'] = $request->tanggal_selesai ? str_replace('T', ' ', $request->tanggal_selesai) . ':00' : null;
+        // lakukan juga untuk tanggal_respon dan tanggal_selesai
         $validatedData['del'] = 0;
+
         if ($request->file('file')) {
             $validatedData['file'] = $request->file('file')->store('public/pengaduan-files');
         }
@@ -238,7 +180,10 @@ class PengaduanController extends Controller
             $rules['slug'] = 'required|unique:pengaduan';
         }
         $validatedData = $request->validate($rules);
-        $validatedData['del'] = 0;
+    
+        $validatedData['tanggal'] = $request->tanggal_terima ? str_replace('T', ' ', $request->tanggal_terima) . ':00' : null;
+        $validatedData['tanggal_respon'] = $request->tanggal_respon ? str_replace('T', ' ', $request->tanggal_respon) . ':00' : null;
+        $validatedData['tanggal_selesai'] = $request->tanggal_selesai ? str_replace('T', ' ', $request->tanggal_selesai) . ':00' : null;
         if ($request->file('file')) {
             if ($request->oldImageFile) {
                 Storage::delete($request->oldImageFile);
@@ -275,14 +220,83 @@ class PengaduanController extends Controller
      */
     public function destroy(Pengaduan $pengaduan)
     {
-        $validatedData['del'] = 1;
-        
-        Pengaduan::where('id', $pengaduan->id)->update($validatedData);
-         return redirect('/pengaduan')->with('success', 'Data  Berhasil di Hapus !');
+        $pengaduan->delete(); // Soft delete, akan mengisi kolom deleted_at
+        return redirect('/pengaduan')->with('success', 'Data Berhasil di Hapus !');
     }
     public function checkSlug(Request $request)
     {
         $slug = SlugService::createSlug(Pengaduan::class, 'slug', $request->title);
         return response()->json(['slug' => $slug]);
+    }
+    public function statistik(Request $request)
+    {
+        $judul = 'Statistik Pengaduan';
+        $year = $request->input('year', date('Y'));
+        // Total pengaduan
+        $total = Pengaduan::whereYear('tanggal_terima', $year)->count();
+
+        
+        // Status pengaduan (misal: baru, diproses, selesai)
+        $statusCounts = Pengaduan::select('catatan as status')
+            ->selectRaw('count(*) as jumlah')
+            ->whereYear('tanggal_terima', $year)
+            ->groupBy('status')
+            ->pluck('jumlah', 'status');
+
+        // Rata-rata waktu respon & selesai (dalam jam)
+        $avgRespon = Pengaduan::whereNotNull('tanggal_respon')
+            ->whereYear('tanggal_terima', $year)
+            ->whereNotNull('tanggal_terima')
+            ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, tanggal_terima, tanggal_respon)) as avg_respon')
+            ->value('avg_respon');
+
+        $avgSelesai = Pengaduan::whereNotNull('tanggal_selesai')
+            ->whereYear('tanggal_terima', $year)
+            ->whereNotNull('tanggal_terima')
+            ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, tanggal_terima, tanggal_selesai)) as avg_selesai')
+            ->value('avg_selesai');
+
+        // Tren bulanan (jumlah pengaduan per bulan di tahun berjalan)
+        
+        $trend = Pengaduan::selectRaw('MONTH(tanggal_terima) as bulan, COUNT(*) as jumlah')
+            ->whereYear('tanggal_terima', $year)
+            ->groupByRaw('MONTH(tanggal_terima)')
+            ->orderBy('bulan')
+            ->pluck('jumlah', 'bulan');
+    
+
+        // Statistik klasifikasi berdasarkan relasi
+        $klasifikasiCounts = Pengaduan::with('klasifikasi')
+            ->whereYear('tanggal_terima', $year)
+            ->get()
+            ->groupBy(function($item) {
+                return $item->klasifikasi ? $item->klasifikasi->klasifikasi : 'Tanpa Klasifikasi';
+            })
+            ->map(function($group) {
+                return $group->count();
+            });
+
+        // Statistik media berdasarkan relasi
+        $mediaCounts = Pengaduan::with('media')
+            ->whereYear('tanggal_terima', $year)
+            ->get()
+            ->groupBy(function($item) {
+                return $item->media ? $item->media->media : 'Tanpa Media';
+            })
+            ->map(function($group) {
+                return $group->count();
+            });
+
+        return view('admin.pengaduan.pengaduan.statistik', compact(
+            'judul',
+            'total',
+            'statusCounts',
+            'avgRespon',
+            'avgSelesai',
+            'trend',
+            'year',
+            'klasifikasiCounts',
+            'mediaCounts'
+        ));
     }
 }
