@@ -23,8 +23,7 @@ class DashboardExpoController extends Controller
 		$year = $request->input('year');
 		if ($request->has('search')) {
 			$search = $request->input('search');
-			$query ->where('del', 0)
-				   ->where('nama_expo', 'LIKE', "%{$search}%")
+			$query ->where('nama_expo', 'LIKE', "%{$search}%")
 				   ->orWhere('tempat', 'LIKE', "%{$search}%")
 				   ->orderBy('tanggal_mulai', 'asc');
 		}
@@ -34,8 +33,7 @@ class DashboardExpoController extends Controller
 			if($date_start>$date_end ){
 				return redirect('/expo')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda ');
 			}else{
-			$query ->where('del', 0)
-				   ->whereBetween('tanggal_mulai', [$date_start,$date_end])
+			$query ->whereBetween('tanggal_mulai', [$date_start,$date_end])
 				   ->orderBy('tanggal_mulai', 'asc');
 			}
 		}
@@ -49,20 +47,18 @@ class DashboardExpoController extends Controller
 			}if(empty($month)){
 				return redirect('/expo')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
 			}else{
-			$query ->where('del', 0)
-				   ->whereMonth('tanggal_mulai', [$month])
+			$query ->whereMonth('tanggal_mulai', [$month])
 				   ->whereYear('tanggal_mulai', [$year])
 				   ->orderBy('tanggal_mulai', 'asc');
 				}
 		}
 		if ($request->has('year')) {
 			$year = $request->input('year');
-			$query ->where('del', 0)
-				   ->whereYear('tanggal_mulai', [$year])
+			$query ->whereYear('tanggal_mulai', [$year])
 				   ->orderBy('tanggal_mulai', 'asc');
 		}
 		$perPage = $request->input('perPage', 50);
-		$items=$query->where('del', 0)->orderBy('tanggal_mulai', 'asc')->paginate($perPage);
+		$items=$query->orderBy('tanggal_mulai', 'asc')->paginate($perPage);
 		$items->withPath(url('/expo'));
 		return view('admin.promosi.pameran.index',compact('judul','items','perPage','search','date_start','date_end','month','year'));
     }
@@ -149,13 +145,51 @@ class DashboardExpoController extends Controller
      */
     public function destroy(Expo $expo)
     {
-        $validatedData['del'] = 1;
-        Expo::where('id', $expo->id)->update($validatedData);
+        $expo->delete();
         return redirect('/expo')->with('success', 'Pameran Berhasil di hapus!');
     }
     public function checkSlug(Request $request)
     {
         $slug = SlugService::createSlug(Expo::class, 'slug', $request->title);
         return response()->json(['slug' => $slug]);
+    }
+    /**
+     * Statistik Pameran
+     */
+    public function statistik(Request $request)
+    {
+        $judul = 'Statistik Pameran';
+        $year = $request->input('year', date('Y'));
+        $years = Expo::selectRaw('YEAR(tanggal_mulai) as year')
+            ->distinct()->orderBy('year', 'desc')->pluck('year');
+
+        // Trend per bulan
+        $trend = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $trend[$m] = Expo::whereYear('tanggal_mulai', $year)
+                ->whereMonth('tanggal_mulai', $m)
+                ->count();
+        }
+
+        // Total
+        $total = Expo::whereYear('tanggal_mulai', $year)->count();
+
+        // Rekap per tempat
+        $tempatCounts = Expo::select('tempat')
+            ->whereYear('tanggal_mulai', $year)
+            ->groupBy('tempat')
+            ->selectRaw('tempat, COUNT(*) as jumlah')
+            ->get()->pluck('jumlah', 'tempat');
+
+        // Rekap per nama expo
+        $namaCounts = Expo::select('nama_expo')
+            ->whereYear('tanggal_mulai', $year)
+            ->groupBy('nama_expo')
+            ->selectRaw('nama_expo, COUNT(*) as jumlah')
+            ->get()->pluck('jumlah', 'nama_expo');
+
+        return view('admin.promosi.pameran.statistik', compact(
+            'judul', 'year', 'years', 'trend', 'total', 'tempatCounts', 'namaCounts'
+        ));
     }
 }

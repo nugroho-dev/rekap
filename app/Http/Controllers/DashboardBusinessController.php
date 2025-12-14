@@ -23,8 +23,7 @@ class DashboardBusinessController extends Controller
 		$year = $request->input('year');
 		if ($request->has('search')) {
 			$search = $request->input('search');
-			$query ->where('del', 0)
-				   ->where('nama_bisnis', 'LIKE', "%{$search}%")
+			$query ->where('nama_bisnis', 'LIKE', "%{$search}%")
 				   ->orWhere('tempat', 'LIKE', "%{$search}%")
 				   ->orderBy('tanggal', 'asc');
 		}
@@ -34,8 +33,7 @@ class DashboardBusinessController extends Controller
 			if($date_start>$date_end ){
 				return redirect('/business')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda ');
 			}else{
-			$query ->where('del', 0)
-				   ->whereBetween('tanggal', [$date_start,$date_end])
+			$query ->whereBetween('tanggal', [$date_start,$date_end])
 				   ->orderBy('tanggal', 'asc');
 			}
 		}
@@ -49,8 +47,7 @@ class DashboardBusinessController extends Controller
 			}if(empty($month)){
 				return redirect('/business')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
 			}else{
-			$query ->where('del', 0)
-				   ->whereMonth('tanggal', [$month])
+			$query ->whereMonth('tanggal', [$month])
 				   ->whereYear('tanggal', [$year])
 				   ->orderBy('tanggal', 'asc');
 				}
@@ -147,13 +144,40 @@ class DashboardBusinessController extends Controller
      */
     public function destroy(Bisnis $business)
     {
-        $validatedData['del'] = 1;
-        Bisnis::where('id', $business->id)->update($validatedData);
+         $business->delete();
         return redirect('/business')->with('success', 'Business Meeting Berhasil di hapus!');
     }
     public function checkSlug(Request $request)
     {
         $slug = SlugService::createSlug(Bisnis::class, 'slug', $request->title);
         return response()->json(['slug' => $slug]);
+    }
+    public function statistik(Request $request)
+    {
+        $judul = 'Statistik Business Meeting';
+        $years = Bisnis::selectRaw('YEAR(tanggal) as year')
+            ->distinct()->orderBy('year', 'desc')->pluck('year');
+        $year = $request->input('year', $years->first() ?? date('Y'));
+
+        // Total business meeting
+        $total = Bisnis::whereYear('tanggal', $year)->count();
+
+       
+
+        // Tren bulanan (jumlah business meeting per bulan di tahun berjalan)
+        $trend = Bisnis::selectRaw('MONTH(tanggal) as bulan, COUNT(*) as jumlah')
+            ->whereYear('tanggal', $year)
+            ->groupByRaw('MONTH(tanggal)')
+            ->orderBy('bulan')
+            ->pluck('jumlah', 'bulan');
+
+        return view('admin.promosi.business.statistik', compact(
+            'judul',
+            'total',
+           
+            'trend',
+            'year',
+            'years'
+        ));
     }
 }

@@ -22,8 +22,7 @@ class DashboardPengawasanController extends Controller
 		$year = $request->input('year');
 		if ($request->has('search')) {
 			$search = $request->input('search');
-			$query ->where('del', 0)
-				   ->where('nama_perusahaan', 'LIKE', "%{$search}%")
+			$query ->where('nama_perusahaan', 'LIKE', "%{$search}%")
 				   ->orWhere('nib', 'LIKE', "%{$search}%")
 				   ->orWhere('uraian_kbli', 'LIKE', "%{$search}%")
                    ->orWhere('kbli', 'LIKE', "%{$search}%")
@@ -35,8 +34,7 @@ class DashboardPengawasanController extends Controller
 			if($date_start>$date_end ){
 				return redirect('/pengawasan')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda ');
 			}else{
-			$query ->where('del', 0)
-				   ->whereBetween('hari_penjadwalan', [$date_start,$date_end])
+			$query ->whereBetween('hari_penjadwalan', [$date_start,$date_end])
 				   ->orderBy('hari_penjadwalan', 'asc');
 			}
 		}
@@ -50,8 +48,7 @@ class DashboardPengawasanController extends Controller
 			}if(empty($month)){
 				return redirect('/pengawasan')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
 			}else{
-			$query ->where('del', 0)
-				   ->whereMonth('hari_penjadwalan', [$month])
+			$query ->whereMonth('hari_penjadwalan', [$month])
 				   ->whereYear('hari_penjadwalan', [$year])
 				   ->orderBy('hari_penjadwalan', 'asc');
 				}
@@ -121,6 +118,12 @@ class DashboardPengawasanController extends Controller
         Pengawasan::where('nomor_kode_proyek', $item->nomor_kode_proyek)->update($validatedData);
         return redirect('/pengawasan/'.$item->nomor_kode_proyek.'')->with('success', 'Berhasil di Ubah !');
 	}
+	public function destroy(Pengawasan $item)
+	{
+		$item->delete();
+		return redirect('/pengawasan')->with('success', 'Berhasil di Hapus !');
+	}
+
     public function export_excel()
 	{
 		//return Excel::download(new SiswaExport, 'siswa.xlsx');
@@ -151,6 +154,39 @@ class DashboardPengawasanController extends Controller
 		// alihkan halaman kembali
 		return redirect('/pengawasan')->with('success', 'Data Berhasil Diimport !');
 	}
+	public function statistik(Request $request)
+    {
+        $judul = 'Statistik Pengawasan';
+        $years = Pengawasan::selectRaw('YEAR(hari_penjadwalan) as year')
+            ->distinct()->orderBy('year', 'desc')->pluck('year');
+        $year = $request->input('year', $years->first() ?? date('Y'));
+
+        // Total pengawasan
+        $total = Pengawasan::whereYear('hari_penjadwalan', $year)->count();
+
+        // Status pengawasan (misal: Baru, Proses, Selesai)
+        $statusCounts = Pengawasan::select('status')
+            ->selectRaw('count(*) as jumlah')
+            ->whereYear('hari_penjadwalan', $year)
+            ->groupBy('status')
+            ->pluck('jumlah', 'status');
+
+        // Tren bulanan (jumlah pengawasan per bulan di tahun berjalan)
+        $trend = Pengawasan::selectRaw('MONTH(hari_penjadwalan) as bulan, COUNT(*) as jumlah')
+            ->whereYear('hari_penjadwalan', $year)
+            ->groupByRaw('MONTH(hari_penjadwalan)')
+            ->orderBy('bulan')
+            ->pluck('jumlah', 'bulan');
+
+        return view('admin.pengawasanpm.statistik', compact(
+            'judul',
+            'total',
+            'statusCounts',
+            'trend',
+            'year',
+            'years'
+        ));
+    }
 	
     
 }

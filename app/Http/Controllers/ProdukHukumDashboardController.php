@@ -20,7 +20,7 @@ class ProdukHukumDashboardController extends Controller
     public function index(Request $request)
     {
         $judul = 'Deregulasi Produk Hukum';
-        $query = Hukum::query()->where('del', 0);
+        $query = Hukum::query();
 		$search = $request->input('search');
 		$date_start = $request->input('date_start');
 		$date_end = $request->input('date_end');
@@ -40,7 +40,7 @@ class ProdukHukumDashboardController extends Controller
 			$date_start = $request->input('date_start');
 			$date_end = $request->input('date_end');
 			if($date_start>$date_end ){
-				return redirect('/deregulasi/cari')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda ');
+				return redirect('/deregulasi')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda ');
 			}else{
 			$query ->whereBetween('tanggal_pengundangan', [$date_start,$date_end])
 				   ->orderBy('tanggal_pengundangan', 'desc');
@@ -50,11 +50,11 @@ class ProdukHukumDashboardController extends Controller
 			$month = $request->input('month');
 			$year = $request->input('year');
 			if(empty($month)&&empty($year)){
-				return redirect('/deregulasi/cari')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
+				return redirect('/deregulasi')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
 			}if(empty($year)){
-				return redirect('/deregulasi/cari')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
+				return redirect('/deregulasi')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
 			}if(empty($month)){
-				return redirect('/deregulasi/cari')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
+				return redirect('/deregulasi')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
 			}else{
 			$query ->whereMonth('tanggal_pengundangan', [$month])
 				   ->whereYear('tanggal_pengundangan', [$year])
@@ -194,15 +194,66 @@ class ProdukHukumDashboardController extends Controller
      */
     public function destroy(Hukum $deregulasi)
     {
-        $validatedData['del'] = 1;
-        
-        Hukum::where('id', $deregulasi->id)->update($validatedData);
-         return redirect('/deregulasi')->with('success', 'Data  Berhasil di Hapus !');
+       
+        $deregulasi->delete();
+        return redirect('/deregulasi')->with('success', 'Data Berhasil dihapus (soft delete)!');
     }
 
     public function checkSlug(Request $request)
     {
         $slug = SlugService::createSlug(Hukum::class, 'slug', $request->title);
         return response()->json(['slug' => $slug]);
+    }
+    /**
+     * Statistik Produk Hukum
+     */
+    public function statistik(Request $request)
+    {
+        $judul = 'Statistik Produk Hukum';
+        $year = $request->input('year', date('Y'));
+        $years = Hukum::selectRaw('YEAR(tanggal_pengundangan) as year')
+            ->distinct()->orderBy('year', 'desc')->pluck('year');
+
+        // Trend per bulan
+        $trend = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $trend[$m] = Hukum::whereYear('tanggal_pengundangan', $year)
+                ->whereMonth('tanggal_pengundangan', $m)
+                ->count();
+        }
+
+        // Total
+        $total = Hukum::whereYear('tanggal_pengundangan', $year)->count();
+
+        // Rekap per tipe dokumen
+        $tipeCounts = Hukum::select('id_tipe_dokumen')
+            ->whereYear('tanggal_pengundangan', $year)
+            ->groupBy('id_tipe_dokumen')
+            ->selectRaw('id_tipe_dokumen, COUNT(*) as jumlah')
+            ->get()->mapWithKeys(function($item) {
+                return [$item->tipe_dokumen->nama ?? $item->id_tipe_dokumen => $item->jumlah];
+            });
+
+        // Rekap per bidang
+        $bidangCounts = Hukum::select('id_bidang')
+            ->whereYear('tanggal_pengundangan', $year)
+            ->groupBy('id_bidang')
+            ->selectRaw('id_bidang, COUNT(*) as jumlah')
+            ->get()->mapWithKeys(function($item) {
+                return [$item->bidang->nama ?? $item->id_bidang => $item->jumlah];
+            });
+
+        // Rekap per status
+        $statusCounts = Hukum::select('id_status')
+            ->whereYear('tanggal_pengundangan', $year)
+            ->groupBy('id_status')
+            ->selectRaw('id_status, COUNT(*) as jumlah')
+            ->get()->mapWithKeys(function($item) {
+                return [$item->status->nama ?? $item->id_status => $item->jumlah];
+            });
+
+        return view('admin.deregulasipm.produkhukum.statistik', compact(
+            'judul', 'year', 'years', 'trend', 'total', 'tipeCounts', 'bidangCounts', 'statusCounts'
+        ));
     }
 }

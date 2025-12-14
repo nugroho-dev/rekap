@@ -6,6 +6,7 @@ use App\Models\Loi;
 use Illuminate\Http\Request;
 use \Cviebrock\EloquentSluggable\Services\SlugService;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class DashboardLoiController extends Controller
 {
@@ -197,28 +198,28 @@ class DashboardLoiController extends Controller
 
         // Jumlah per bidang_usaha
         $bidangUsaha = (clone $baseQuery)
-            ->select('bidang_usaha', \DB::raw('count(*) as jumlah'))
+            ->select('bidang_usaha', DB::raw('count(*) as jumlah'))
             ->groupBy('bidang_usaha')
             ->orderByDesc('jumlah')
             ->get();
 
         // Jumlah per peminatan_bidang_usaha
         $peminatanBidangUsaha = (clone $baseQuery)
-            ->select('peminatan_bidang_usaha', \DB::raw('count(*) as jumlah'))
+            ->select('peminatan_bidang_usaha', DB::raw('count(*) as jumlah'))
             ->groupBy('peminatan_bidang_usaha')
             ->orderByDesc('jumlah')
             ->get();
 
         // Jumlah per negara
         $negara = (clone $baseQuery)
-            ->select('negara', \DB::raw('count(*) as jumlah'))
+            ->select('negara', DB::raw('count(*) as jumlah'))
             ->groupBy('negara')
             ->orderByDesc('jumlah')
             ->get();
 
         // Jumlah per status_investasi
         $statusInvestasi = (clone $baseQuery)
-            ->select('status_investasi', \DB::raw('count(*) as jumlah'))
+            ->select('status_investasi', DB::raw('count(*) as jumlah'))
             ->groupBy('status_investasi')
             ->orderByDesc('jumlah')
             ->get();

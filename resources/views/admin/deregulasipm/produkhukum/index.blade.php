@@ -18,12 +18,12 @@
                           <span class="d-none d-sm-inline">
                           
                           </span>
-                          <a href="{{ url('/mppd/statistik')}}" class="btn btn-info d-none d-sm-inline-block">
+                          <a href="{{ url('/deregulasi/statistik')}}" class="btn btn-info d-none d-sm-inline-block">
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-chart-infographic"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M7 3v4h4" /><path d="M9 17l0 4" /><path d="M17 14l0 7" /><path d="M13 13l0 8" /><path d="M21 12l0 9" /></svg>
                             Statistik
                           </a>
-                          <a href="{{ url('/berusaha/statistik')}}" class="btn btn-info d-sm-none btn-icon">
+                          <a href="{{ url('/deregulasi/statistik')}}" class="btn btn-info d-sm-none btn-icon">
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-chart-infographic"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M7 3v4h4" /><path d="M9 17l0 4" /><path d="M17 14l0 7" /><path d="M13 13l0 8" /><path d="M21 12l0 9" /></svg>
                           </a>
@@ -76,8 +76,8 @@
                         Menampilkan
                         <div class="mx-2 d-inline-block">
                           
-                          <form action="{{ url('/deregulasicari')}}" method="POST">
-                            @csrf
+                          <form action="{{ url('/deregulasi')}}" method="GET">
+                            
                             <input type="hidden" name="page" value="{{ request()->get('page', 1) }}">
                             <select name="perPage" id="myselect" onchange="this.form.submit()" class="form-control form-control-sm">
                               @foreach ([5, 10, 20, 50, 60, 80, 100] as $size)
@@ -93,8 +93,8 @@
                       <div class="ms-auto text-muted">
                         Cari:
                         <div class="ms-2 d-inline-block ">
-                          <form action="{{ url('/deregulasicari')}}" method="POST">
-                            @csrf
+                          <form action="{{ url('/deregulasi')}}" method="GET">
+                            
                             <div class="input-group">
                               <input type="text" name="search" class="form-control form-control-sm" aria-label="cari" value="{{ old('search') }}">
                               <button type="submit" class="btn btn-icon btn-sm">
@@ -243,8 +243,8 @@
                             <div class="tab-content">
                               <div class="tab-pane fade active show" id="tabs-home-8" role="tabpanel">
                                 <h4>Pilih Tanggal :</h4>
-                                <form method="post" action="{{ url('/deregulasicari')}}" enctype="multipart/form-data">
-                                  @csrf
+                                <form method="GET" action="{{ url('/deregulasi')}}" enctype="multipart/form-data">
+                                 
                                 <div class="input-group mb-2">
                                   <input type="date" class="form-control" name="date_start" autocomplete="off">
                                   <span class="input-group-text">
@@ -258,8 +258,8 @@
                               <div class="tab-pane fade" id="tabs-profile-8" role="tabpanel">
                                 <h4>Pilih Bulan :</h4>
                                 <div>
-                                  <form method="post" action="{{ url('/deregulasicari')}}" enctype="multipart/form-data">
-                                    @csrf
+                                  <form method="G" action="{{ url('/deregulasi')}}" enctype="multipart/form-data">
+                                  
                                   <div class="row g-2">
                                     <div class="col-4">
                                       <select name="month" class="form-select">
@@ -287,8 +287,8 @@
                               <div class="tab-pane fade" id="tabs-activity-8" role="tabpanel">
                                 <h4>Pilih Tahun :</h4>
                                 <div>
-                                  <form method="post" action="{{ url('/deregulasicari')}}" enctype="multipart/form-data">
-                                    @csrf
+                                  <form method="GET" action="{{ url('/deregulasi')}}" enctype="multipart/form-data">
+                                 
                                   <div class="row g-2">
                                     <div class="col-4">
                                       <select name="year" class="form-select">

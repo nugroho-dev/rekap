@@ -138,7 +138,8 @@ class DashboardBimtekController extends Controller
      */
     public function destroy(Bimtek $bimtek)
     {
-        //
+        $bimtek->delete();
+		return redirect('/bimtek')->with('success', 'Berhasil di Hapus !');
     }
     public function export_excel()
 	{
