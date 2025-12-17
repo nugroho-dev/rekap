@@ -72,7 +72,7 @@
                       <div class="mb-3">
                         <label class="form-label required">Tanggal Terima</label>
                         <div>
-                          <input type="date" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal_terima',$pengaduan->tanggal_terima) }}" name='tanggal_terima'>
+                          <input type="date" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal_terima', \Carbon\Carbon::parse($pengaduan->tanggal_terima)->format('Y-m-d')) }}" name='tanggal_terima'>
                             @error ('tanggal_terima')
                           <small class="form-hint text-danger">{{ $message }}  </small>
                           @enderror
@@ -83,7 +83,7 @@
                       <div class="mb-3">
                         <label class="form-label required">Tanggal Respon</label>
                         <div>
-                          <input type="date" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal_respon',$pengaduan->tanggal_respon ) }}" name='tanggal_respon'>
+                          <input type="date" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal_respon',\Carbon\Carbon::parse($pengaduan->tanggal_respon)->format('Y-m-d')) }}" name='tanggal_respon'>
                             @error ('tanggal_respon')
                             <small class="form-hint text-danger">{{ $message }}  </small>
                             @enderror
@@ -94,7 +94,7 @@
                       <div class="mb-3">
                         <label class="form-label required">Tanggal Penyelesaian</label>
                         <div>
-                          <input type="date" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal_selesai',$pengaduan->tanggal_selesai ) }}" name='tanggal_selesai'>
+                          <input type="date" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal_selesai',\Carbon\Carbon::parse($pengaduan->tanggal_selesai)->format('Y-m-d')) }}" name='tanggal_selesai'>
                             @error ('tanggal_selesai')
                               <small class="form-hint text-danger">{{ $message }}  </small>
                             @enderror
