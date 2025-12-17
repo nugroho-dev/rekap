@@ -143,9 +143,9 @@
                             <div class="text-secondary">{!! $item->perbaikan !!}</div>
                           </td>
                           <td class="align-top">
-                            <div>Tanggal Terima. {{ \Carbon\Carbon::parse($item->tanggal_terima)->translatedFormat('D, d M Y, h:m:s a')}}</div>
-                            <div>Tanggal Respon. {{ \Carbon\Carbon::parse($item->tanggal_respon)->translatedFormat('D, d M Y, h:m:s a')}}</div>
-                            <div>Tanggal Selesai. {{ \Carbon\Carbon::parse($item->tanggal_selesai)->translatedFormat('D, d M Y, h:m:s a')}}</div>
+                            <div>Tanggal Terima. {{ \Carbon\Carbon::parse($item->tanggal_terima)->translatedFormat('D, d M Y')}}</div>
+                            <div>Tanggal Respon. {{ \Carbon\Carbon::parse($item->tanggal_respon)->translatedFormat('D, d M Y')}}</div>
+                            <div>Tanggal Selesai. {{ \Carbon\Carbon::parse($item->tanggal_selesai)->translatedFormat('D, d M Y')}}</div>
                           </td>
                           <td class="text-center">
                             <span class="dropdown">
