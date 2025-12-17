@@ -45,8 +45,5 @@ class MediaPengaduanSeeder extends Seeder
         DB::table('mediapengaduan')->insert([
             'media'  => 'Media Lainnya',
         ]);
-        DB::table('mediapengaduan')->insert([
-            'media'  => 'Surat',
-        ]);
     }
 }
