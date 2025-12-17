@@ -73,7 +73,7 @@
                         <label class="form-label required">Tanggal Terima</label>
                         <div>
                     
-                          <input type="datetime-local" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal_terima',$current ) }}" name='tanggal_terima'>
+                          <input type="date" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal_terima',$current ) }}" name='tanggal_terima'>
                             @error ('tanggal_terima')
                           <small class="form-hint text-danger">{{ $message }}  </small>
                           @enderror
@@ -84,7 +84,7 @@
                       <div class="mb-3">
                         <label class="form-label required">Tanggal Respon</label>
                         <div>
-                          <input type="datetime-local" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal_respon',$current ) }}" name='tanggal_respon'>
+                          <input type="date" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal_respon',$current ) }}" name='tanggal_respon'>
                             @error ('tanggal_respon')
                             <small class="form-hint text-danger">{{ $message }}  </small>
                             @enderror
@@ -95,7 +95,7 @@
                       <div class="mb-3">
                         <label class="form-label required">Tanggal Penyelesaian</label>
                         <div>
-                          <input type="datetime-local" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal_selesai',$current ) }}" name='tanggal_selesai'>
+                          <input type="date" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal_selesai',$current ) }}" name='tanggal_selesai'>
                             @error ('tanggal_selesai')
                               <small class="form-hint text-danger">{{ $message }}  </small>
                             @enderror
