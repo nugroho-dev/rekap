@@ -94,7 +94,7 @@
                             
                             <div class="col-sm-12 col-md-12 col-lg-12">
                               <div class="mb-3">
-                                <label class="form-label">File LOI</label>
+                                <label class="form-label">File Laporan</label>
                                 <div class="input-group">
                                   <span class="input-group-text">
                                     <input type="hidden" name="oldFile" value="">
@@ -282,7 +282,7 @@
                 const title = document.querySelector('#title');
                 const slug = document.querySelector('#slug');
 
-                title.addEventListener('change', function(){
+                title.addEventListener('input', function(){
                     fetch('{{ url('/expo/check/checkSlug') }}?title='+ title.value)
                     .then(response=>response.json())
                     .then(data=>slug.value=data.slug)

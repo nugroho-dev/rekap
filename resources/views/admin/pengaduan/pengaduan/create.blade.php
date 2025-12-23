@@ -19,7 +19,7 @@
                   <span class="d-none d-sm-inline">
                    
                   </span>
-                  <a href="{{ url('/pengaduan/pengaduan') }}" class="btn btn-primary d-none d-sm-inline-block" >
+                  <a href="{{ url('/pengaduan') }}" class="btn btn-primary d-none d-sm-inline-block" >
                     <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-back-up" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 14l-4 -4l4 -4" /><path d="M5 10h11a4 4 0 1 1 0 8h-1" /></svg>
                     Kembali
@@ -37,6 +37,7 @@
              <div class="col-md-12 ">
               <form class="card" method="post" action="{{ url('/pengaduan') }}" enctype="multipart/form-data">
                  @csrf
+                 <input type="hidden" name="id_pegawai" value="{{ $pegawai }}">
                 <div class="card-header">
                   <h3 class="card-title">Data Pengaduan</h3>
                 </div>
@@ -72,7 +73,7 @@
                         <label class="form-label required">Tanggal Terima</label>
                         <div>
                     
-                          <input type="datetime-local" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal_terima',$current ) }}" name='tanggal_terima'>
+                          <input type="date" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal_terima',$current ) }}" name='tanggal_terima'>
                             @error ('tanggal_terima')
                           <small class="form-hint text-danger">{{ $message }}  </small>
                           @enderror
@@ -83,7 +84,7 @@
                       <div class="mb-3">
                         <label class="form-label required">Tanggal Respon</label>
                         <div>
-                          <input type="datetime-local" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal_respon',$current ) }}" name='tanggal_respon'>
+                          <input type="date" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal_respon',$current ) }}" name='tanggal_respon'>
                             @error ('tanggal_respon')
                             <small class="form-hint text-danger">{{ $message }}  </small>
                             @enderror
@@ -94,7 +95,7 @@
                       <div class="mb-3">
                         <label class="form-label required">Tanggal Penyelesaian</label>
                         <div>
-                          <input type="datetime-local" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal_selesai',$current ) }}" name='tanggal_selesai'>
+                          <input type="date" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal_selesai',$current ) }}" name='tanggal_selesai'>
                             @error ('tanggal_selesai')
                               <small class="form-hint text-danger">{{ $message }}  </small>
                             @enderror

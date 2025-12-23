@@ -15,7 +15,7 @@ class PetaPotensiController extends Controller
     public function index(Request $request)
     {
         $judul='Data Peta Potensi';
-		$query = Potensi::query()->where('del', 0);
+		$query = Potensi::query();
 		$search = $request->input('search');
 		$date_start = $request->input('date_start');
 		$date_end = $request->input('date_end');
@@ -149,9 +149,8 @@ class PetaPotensiController extends Controller
      */
     public function destroy(Potensi $potensi)
     {
-        $validatedData['del'] = 1;
-        
-        Potensi::where('id', $potensi->id)->update($validatedData);
+        $potensi->delete();
+     
          return redirect('/potensi')->with('success', 'Data  Berhasil di Hapus !');
     }
     public function checkSlug(Request $request)
@@ -159,4 +158,37 @@ class PetaPotensiController extends Controller
         $slug = SlugService::createSlug(Potensi::class, 'slug', $request->title);
         return response()->json(['slug' => $slug]);
     }
+    /**
+     * Statistik Peta Potensi
+     */
+    public function statistik(Request $request)
+    {
+        $judul = 'Statistik Peta Potensi';
+        $year = $request->input('year', date('Y'));
+        $years = Potensi::selectRaw('YEAR(created_at) as year')
+            ->distinct()->orderBy('year', 'desc')->pluck('year');
+
+        // Trend per bulan
+        $trend = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $trend[$m] = Potensi::whereYear('created_at', $year)
+                ->whereMonth('created_at', $m)
+                ->count();
+        }
+
+        // Total
+        $total = Potensi::whereYear('created_at', $year)->count();
+
+        // Rekap per tahun
+        $tahunCounts = Potensi::select('tahun')
+            ->whereYear('created_at', $year)
+            ->groupBy('tahun')
+            ->selectRaw('tahun, COUNT(*) as jumlah')
+            ->get()->pluck('jumlah', 'tahun');
+
+        return view('admin.petapotensi.statistik', compact(
+            'judul', 'year', 'years', 'trend', 'total', 'tahunCounts'
+        ));
+    }
+    
 }

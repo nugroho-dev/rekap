@@ -95,7 +95,7 @@
                             
                             <div class="col-sm-12 col-md-12 col-lg-12">
                               <div class="mb-3">
-                                <label class="form-label">File LOI</label>
+                                <label class="form-label">File Laporan</label>
                                 <div class="input-group">
                                   <span class="input-group-text">
                                     <input type="hidden" name="oldFile" value="{{ $expo->file }}">

@@ -15,7 +15,7 @@ class InsentifController extends Controller
     public function index(Request $request)
     {
         $judul = 'Data Insentif';
-		$query = Insentif::query()->where('del', 0);
+		$query = Insentif::query();
 		$search = $request->input('search');
 		$date_start = $request->input('date_start');
 		$date_end = $request->input('date_end');
@@ -27,7 +27,6 @@ class InsentifController extends Controller
 				   ->orWhere('nama_perusahaan', 'LIKE', "%{$search}%")
 				   ->orWhere('alamat_perusahaan', 'LIKE', "%{$search}%")
 				   ->orWhere('alamat_penerima', 'LIKE', "%{$search}%")
-				  
 				   ->orderBy('tanggal_permohonan', 'desc');
 		}
 		if ($request->has('date_start')&&$request->has('date_end')) {
@@ -73,7 +72,7 @@ class InsentifController extends Controller
     public function create()
     {
         $judul = 'Data Insentif';
-        $nama=auth()->user()->pegawai->nama;
+        $nama = \Illuminate\Support\Facades\Auth::user()->pegawai->nama;
         
         return view('admin.insentif.permohonan.create',compact('judul','nama'));
     }
@@ -184,14 +183,64 @@ class InsentifController extends Controller
      */
     public function destroy(Insentif $insentif)
     {
-        $validatedData['del'] = 1;
-        
-        Insentif::where('id', $insentif->id)->update($validatedData);
-         return redirect('/insentif')->with('success', 'Data  Berhasil di Hapus !');
+        $insentif->delete();
+        return redirect('/insentif')->with('success', 'Data Berhasil dihapus!');
     }
     public function checkSlug(Request $request)
     {
         $slug = SlugService::createSlug(Insentif::class, 'slug', $request->title);
         return response()->json(['slug' => $slug]);
+    }
+    /**
+     * Statistik Insentif
+     */
+    public function statistik(Request $request)
+    {
+        $judul = 'Statistik Insentif';
+        $year = $request->input('year', date('Y'));
+        $years = Insentif::selectRaw('YEAR(tanggal_permohonan) as year')
+            ->distinct()->orderBy('year', 'desc')->pluck('year');
+
+        // Trend per bulan
+        $trendData = [
+            'labels' => [],
+            'jumlah_insentif' => []
+        ];
+        for ($m = 1; $m <= 12; $m++) {
+            $label = date('F', mktime(0, 0, 0, $m, 1));
+            $trendData['labels'][] = $label;
+            $trendData['jumlah_insentif'][] = Insentif::whereYear('tanggal_permohonan', $year)
+                ->whereMonth('tanggal_permohonan', $m)
+                ->count();
+        }
+
+        // Total
+        $totalInsentif = Insentif::whereYear('tanggal_permohonan', $year)->count();
+
+        // Rekap berdasarkan jenis_perusahaan
+        $jenisPerusahaan = Insentif::select('jenis_perusahaan')
+            ->whereYear('tanggal_permohonan', $year)
+            ->groupBy('jenis_perusahaan')
+            ->selectRaw('jenis_perusahaan, COUNT(*) as jumlah')
+            ->get();
+
+        // Rekap berdasarkan bentuk_pemberian
+        $bentukPemberian = Insentif::select('bentuk_pemberian')
+            ->whereYear('tanggal_permohonan', $year)
+            ->groupBy('bentuk_pemberian')
+            ->selectRaw('bentuk_pemberian, COUNT(*) as jumlah')
+            ->get();
+
+        // Rekap berdasarkan tahun pemberian
+        $tahunPemberian = Insentif::select('tahun_pemberian')
+            ->whereYear('tanggal_permohonan', $year)
+            ->groupBy('tahun_pemberian')
+            ->selectRaw('tahun_pemberian, COUNT(*) as jumlah')
+            ->get();
+
+        return view('admin.insentif.statistik', compact(
+            'judul', 'year', 'years', 'trendData', 'totalInsentif',
+            'jenisPerusahaan', 'bentukPemberian', 'tahunPemberian'
+        ));
     }
 }
