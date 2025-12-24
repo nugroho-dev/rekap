@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Sigumilang;
 use App\Models\Ossrbaproyeklaps;
+use App\Models\Proyek;
 use Illuminate\Http\Request;
 
 
@@ -12,12 +13,51 @@ class SigumilangDashboardController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $judul = 'Daftar Pelaporan SiGumilang';
-       
-        $items = Sigumilang::paginate(400);
+        $query = Sigumilang::orderBy('tahun', 'desc');
+
+        // Fitur search dua database
+        if ($request->filled('search')) {
+            $search = $request->search;
+
+            // Search di Proyek (db utama)
+            $proyekIdsFromProyek = Proyek::where(function($q) use ($search) {
+                $q->where('nib', 'like', "%$search%")
+                  ->orWhere('nama_perusahaan', 'like', "%$search%")
+                  ->orWhere('nama_proyek', 'like', "%$search%")
+                  ->orWhere('alamat_usaha', 'like', "%$search%")
+                  ;
+            })->pluck('id_proyek')->toArray();
+
+            // Search di Sigumilang (db kedua)
+            $query->where(function($q) use ($search, $proyekIdsFromProyek) {
+                $q->where('tahun', 'like', "%$search%")
+                  ->orWhere('periode', 'like', "%$search%")
+                  ->orWhere('permasalahan', 'like', "%$search%")
+                  ->orWhere('modal_kerja', 'like', "%$search%")
+                  ;
+                // Jika ada hasil dari Proyek, filter juga berdasarkan id_proyek
+                if (!empty($proyekIdsFromProyek)) {
+                    $q->orWhereIn('id_proyek', $proyekIdsFromProyek);
+                }
+            });
+        }
+
+        $items = $query->paginate(50);
         $items->withPath(url('/pengawasan/sigumilang'));
+
+        // Ambil semua id_proyek dari hasil Sigumilang
+        $proyekIds = $items->pluck('id_proyek')->toArray();
+        // Ambil data proyek dari database utama
+        $proyeks = Proyek::whereIn('id_proyek', $proyekIds)->get()->keyBy('id_proyek');
+
+        // Mapping data proyek ke setiap item Sigumilang
+        foreach ($items as $item) {
+            $item->proyek_data = $proyeks[$item->id_proyek] ?? null;
+        }
+
         return view('admin.pengawasanpm.sigumilang.index', compact('judul','items'));
     }
 
@@ -71,7 +111,41 @@ class SigumilangDashboardController extends Controller
        
         return redirect('/pengawasan/sigumilang/'.$sigumilang->id_proyek)->with('success', 'Data  Berhasil di Verifikasi !');
     }
+    /**
+     * Statistik pelaporan SiGumilang
+     */
+    public function statistik()
+    {
+         $judul = 'Statistik Pelaporan SiGumilang';
+        // Total laporan
+        $total = Sigumilang::count();
+        // Tahun terbaru
+        $tahun_terbaru = Sigumilang::max('tahun');
+        // Jumlah permasalahan (yang tidak null/kosong)
+        $jumlah_permasalahan = Sigumilang::whereNotNull('permasalahan')->where('permasalahan', '!=', '')->count();
 
+        // Statistik laporan per tahun (jumlah laporan, modal kerja, tki_l, tki_p, total tenaga kerja)
+        $statistik_tahun = Sigumilang::selectRaw('
+                tahun,
+                COUNT(*) as jumlah,
+                SUM(modal_kerja) as total_modal_kerja,
+                SUM(tki_l) as total_tki_l,
+                SUM(tki_p) as total_tki_p
+            ')
+            ->groupBy('tahun')
+            ->orderBy('tahun', 'desc')
+            ->get()
+            ->keyBy('tahun');
+
+        // Jumlah total modal kerja
+        $total_modal_kerja = Sigumilang::sum('modal_kerja');
+        // Jumlah total tenaga kerja (laki-laki + perempuan)
+        $total_tki_l = Sigumilang::sum('tki_l');
+        $total_tki_p = Sigumilang::sum('tki_p');
+        $total_tenaga_kerja = $total_tki_l + $total_tki_p;
+
+        return view('admin.pengawasanpm.sigumilang.statistik', compact('total', 'tahun_terbaru', 'jumlah_permasalahan', 'statistik_tahun', 'judul', 'total_modal_kerja', 'total_tenaga_kerja'));
+    }
     /**
      * Remove the specified resource from storage.
      */

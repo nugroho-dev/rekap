@@ -9,9 +9,15 @@ class Sigumilang extends Model
 {
     use HasFactory;
     protected $connection = 'second_db';
-    public $table = "view_proyek_laps";
+    public $table = "oss_rba_proyek_laps";
     public function getRouteKeyName()
     {
         return 'id_proyek';
+    }
+
+    // Relasi ke model Proyek
+    public function proyek()
+    {
+        return $this->belongsTo(Proyek::class, 'id_proyek', 'id_proyek');
     }
 }

@@ -117,9 +117,11 @@ Route::middleware('auth')->group(function () {
    
 
     // Pengawasan & related
-    Route::resource('/pengawasan/sigumilang', SigumilangDashboardController::class);
+    //Route::resource('/pengawasan/sigumilang', SigumilangDashboardController::class);
+    Route::get('/pengawasan/sigumilang/', [SigumilangDashboardController::class,'index'])->name('sigumilang.index');
     Route::get('/pengawasan/sigumilang/{id_proyek}/histori/{nib}', [SigumilangDashboardController::class,'histori']);
     Route::get('/pengawasan/laporan/sigumilang', [SigumilangDashboardController::class,'laporan']);
+    Route::get('/pengawasan/statistik/sigumilang', [SigumilangDashboardController::class,'statistik']);
 
     // Produk hukum / deregulasi
     Route::match(['get','post'], '/deregulasi', [ProdukHukumDashboardController::class, 'index']);

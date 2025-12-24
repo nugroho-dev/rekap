@@ -166,6 +166,9 @@
                       <a class="dropdown-item" href="{{ route('lkpm.index') }}">
                         Realisasi Investasi (LKPM)
                       </a>
+                       <a class="dropdown-item" href="{{ route('sigumilang.index') }}">
+                        Sigumilang
+                      </a>
                   </div>
                 </div>
               </li>
