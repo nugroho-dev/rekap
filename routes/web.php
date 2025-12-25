@@ -97,6 +97,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/konsultasi/statistik', [KonsultasiDashboardController::class, 'statistik']);
     Route::post('/konsultasi/import_excel', [KonsultasiDashboardController::class, 'import_excel']);
     Route::post('/konsultasicari', [KonsultasiDashboardController::class, 'index']);
+    // Edit konsultasi
+    Route::get('/konsultasi/{konsultasi}/edit', [KonsultasiDashboardController::class, 'edit'])->name('konsultasi.edit');
+    Route::put('/konsultasi/{konsultasi}', [KonsultasiDashboardController::class, 'update'])->name('konsultasi.update');
+    // Soft delete konsultasi
+    Route::delete('/konsultasi/{konsultasi}', [KonsultasiDashboardController::class, 'destroy'])->name('konsultasi.destroy');
 
     // Commitment / Komitmen
     Route::match(['get','post'],'/commitment', [DashboardKomitmenController::class, 'index']);

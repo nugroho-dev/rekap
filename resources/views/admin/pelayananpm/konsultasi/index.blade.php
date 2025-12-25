@@ -144,21 +144,12 @@
                            
                           </td>
                           <td class="text-center">
-                            <span class="dropdown">
-                              
-                              <button class="btn dropdown-toggle align-text-top" data-bs-boundary="viewport" data-bs-toggle="dropdown">Action</button>
-                              <div class="dropdown-menu dropdown-menu-end">
-                                <a class="dropdown-item" href="{{ url('/commitment/'.$item->id_rule.'/edit')}}" >
-                                  Edit
-                                </a>
-                                <button class="dropdown-item openModal" data-id="{{ $item->id_rule }}">
-                                  Buka Laporan
-                                </button>
-                                <button class="dropdown-item openModalDel" data-id="{{ $item->id_rule }}">
-                                  Hapus
-                                </button>
-                              </div>
-                            </span>
+                            <a href="{{ route('konsultasi.edit', $item->id_rule) }}" class="btn btn-warning btn-sm">Edit</a>
+                            <form action="{{ route('konsultasi.destroy', $item->id_rule) }}" method="POST" style="display:inline-block" onsubmit="return confirm('Yakin ingin menghapus data ini?')">
+                              @csrf
+                              @method('DELETE')
+                              <button type="submit" class="btn btn-danger btn-sm">Hapus</button>
+                            </form>
                            
                         </tr>
                         @endforeach

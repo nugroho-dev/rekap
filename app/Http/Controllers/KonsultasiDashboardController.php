@@ -98,11 +98,8 @@ class KonsultasiDashboardController extends Controller
      */
     public function edit(Konsultasi $konsultasi)
     {
-        $judul = 'Edit Konsultansi';
-        //$sbuitems=Sbu::where('del', 0)->get();
-        //$jenislayananitems=Jenislayanan::where('del', 0)->get();
-        //$atasnamaitems=Atasnama::where('del', 0)->get();
-        return view('admin.pelayananpm.konsultasi.edit', compact('judul','sbuitems','jenislayananitems','atasnamaitems', 'konsultasi'));
+        $judul = 'Edit Konsultasi';
+        return view('admin.pelayananpm.konsultasi.edit', compact('judul', 'konsultasi'));
     }
 
     /**
@@ -110,25 +107,24 @@ class KonsultasiDashboardController extends Controller
      */
     public function update(Request $request, Konsultasi $konsultasi)
     {
-        $validatedData = $request->validate([
-            'id_pegawai' => 'required',
-            'id_an' => 'required',
-            'id_sbu' => 'required',
-            'id_jenis_layanan' => 'required',
-            'tanggal' => 'required|date',
-            'nama' => 'required|max:255', 
-            'slug' => 'required|unique:konsultasi', 
-            'no_tlp' => 'required', 
-            'nama_perusahaan' => 'required', 
-            'email' => 'required', 
-            'nib' => 'nullable',
-            'alamat' => 'required',
-            'lokasi_layanan' => 'required',
-            'kendala' => 'required']);
-        $validatedData['del'] = 0;
-        
-       Konsultasi::where('id', $konsultasi->id)->update($validatedData);
-        return redirect('/pelayanan/konsultasi')->with('success', 'Data  Berhasil di Perbaharui !');
+        try {
+            $validatedData = $request->validate([
+                // Kolom validasi disesuaikan dengan form edit terbaru
+                'tanggal' => 'required|date',
+                'nama_pemohon' => 'required|string|max:255',
+                'no_hp' => 'nullable|string|max:20',
+                'nama_perusahaan' => 'nullable|string|max:255',
+                'email' => 'nullable|email',
+                'alamat' => 'nullable|string',
+                'perihal' => 'nullable|string',
+                'keterangan' => 'nullable|string',
+                'jenis' => 'required|in:Konsultasi,Informasi',
+            ]);
+            $konsultasi->update($validatedData);
+            return redirect('/konsultasi')->with('success', 'Data berhasil diperbarui!');
+        } catch (\Exception $e) {
+            return redirect()->back()->withInput()->with('error', 'Gagal memperbarui data: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -136,8 +132,9 @@ class KonsultasiDashboardController extends Controller
      */
     public function destroy(Konsultasi $konsultasi)
     {
+        // Soft delete
         $konsultasi->delete();
-        return redirect('/konsultasi')->with('success', 'Data Berhasil Dihapus!');
+        return redirect('/konsultasi')->with('success', 'Data berhasil dihapus (soft delete)!');
     }
     
     public function statistik(Request $request)

@@ -19,12 +19,12 @@
                   <span class="d-none d-sm-inline">
                    
                   </span>
-                  <a href="{{ url('/pelayanan/konsultasi') }}" class="btn btn-primary d-none d-sm-inline-block" >
+                  <a href="{{ url('/konsultasi') }}" class="btn btn-primary d-none d-sm-inline-block" >
                     <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-back-up" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 14l-4 -4l4 -4" /><path d="M5 10h11a4 4 0 1 1 0 8h-1" /></svg>
                     Kembali
                   </a>
-                  <a href="/pelayanan/konsultasi" class="btn btn-primary d-sm-none btn-icon" data-bs-toggle="modal" data-bs-target="#modal-report" aria-label="Create new report">
+                  <a href="{{ url('/konsultasi') }}" class="btn btn-primary d-sm-none btn-icon" data-bs-toggle="modal" data-bs-target="#modal-report" aria-label="Create new report">
                     <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-back-up" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 14l-4 -4l4 -4" /><path d="M5 10h11a4 4 0 1 1 0 8h-1" /></svg>
                   </a>
@@ -35,7 +35,7 @@
         </div>
     </div>
              <div class="col-md-12 ">
-              <form class="card" method="post" action="{{ url('/pelayanan/konsultasi/'.$konsultasi->slug) }}" enctype="multipart/form-data">
+              <form class="card" method="post" action="{{ route('konsultasi.update', $konsultasi->id_rule) }}" enctype="multipart/form-data">
                 @method('put')
                  @csrf
                 <div class="card-header">
@@ -43,178 +43,70 @@
                 </div>
                 <div class="card-body">
                   <div class="row row-cards">
-                    <div class="col-sm-6 col-md-3">
+                    <div class="col-md-6">
                       <div class="mb-3">
                         <label class="form-label required">Tanggal</label>
-                        <div>
-                          <input type="date" class="form-control" a placeholder="Tanggal" id="tanggal" value="{{ old('tanggal',$konsultasi->tanggal) }}" name='tanggal'>
-                          <input type="hidden" name="id_pegawai" value="{{ auth()->user()->pegawai->id}}">
-                            @error ('tanggal')
-                          <small class="form-hint text-danger">{{ $message }}  </small>
-                          @enderror
-                        </div>
+                        <input type="date" class="form-control" name="tanggal" value="{{ old('tanggal', $konsultasi->tanggal) }}">
+                        @error('tanggal')<small class="form-hint text-danger">{{ $message }}</small>@enderror
                       </div>
                     </div>
-                    <div class="col-sm-6 col-md-9">
+                    <div class="col-md-6">
                       <div class="mb-3">
-                        <label class="form-label required">Nama</label>
-                        <div>
-                          <input type="text" class="form-control" placeholder="Nama" id="title" name="nama" required value="{{ old('nama',$konsultasi->nama) }}" >
-                          @error ('nama')
-                          <small class="form-hint text-danger">
-                            {{ $message }}  
-                          </small>
-                          @enderror
-                        </div>
+                        <label class="form-label required">Nama Pemohon</label>
+                        <input type="text" class="form-control" name="nama_pemohon" value="{{ old('nama_pemohon', $konsultasi->nama_pemohon) }}">
+                        @error('nama_pemohon')<small class="form-hint text-danger">{{ $message }}</small>@enderror
                       </div>
                     </div>
-                    <div class="col-sm-6 col-md-12">
+                    <div class="col-md-6">
                       <div class="mb-3">
-                        <label class="form-label required">slug</label>
-                        <div>
-                          <input type="text" class="form-control" placeholder="Slug" id="slug" name="slug" required value="{{ old('slug',$konsultasi->slug) }}" readonly>
-                          @error ('slug')
-                          <small class="form-hint text-danger">
-                            {{ $message }}  
-                          </small>
-                          @enderror
-                        </div>
+                        <label class="form-label">Nomor HP</label>
+                        <input type="text" class="form-control" name="no_hp" value="{{ old('no_hp', $konsultasi->no_hp) }}">
+                        @error('no_hp')<small class="form-hint text-danger">{{ $message }}</small>@enderror
                       </div>
                     </div>
-                    <div class="col-sm-6 col-md-4">
-                      <div class="mb-3">
-                        <label class="form-label required">Nomor Telp</label>
-                        <div>
-                          <input type="text" class="form-control"  placeholder="Nomor Telp" name="no_tlp" value="{{ old('no_tlp',$konsultasi->no_tlp) }}">
-                          @error ('no_tlp')
-                          <small class="form-hint">{{ $message }} </small>
-                          @enderror
-                        </div>
-                      </div>
-                    </div>
-                    <div class="col-sm-6 col-md-4">
-                      <div class="mb-3">
-                        <label class="form-label required">Atas Nama</label>
-                        <div>
-                            <select class="form-select" name="id_an" >
-                              @foreach ($atasnamaitems as $item)
-                              @if (old('id_an', $item->id)==$konsultasi->id_an)
-                              <option value="{{ $item->id }}" selected>{{ $item->nama_an }}</option>
-                              @else
-                              <option value="{{ $item->id }}">{{ $item->nama_an }}</option>
-                              @endif
-                              @endforeach
-                               
-                            </select>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="col-sm-6 col-md-4">
-                      <div class="mb-3">
-                        <label class="form-label required">email</label>
-                        <div>
-                          <input type="email" class="form-control"  placeholder="Email" name="email" value="{{ old('email', $konsultasi->email) }}">
-                          @error ('email')
-                          <small class="form-hint">{{ $message }} </small>
-                          @enderror
-                        </div>
-                      </div>
-                    </div>
-                    <div class="col-sm-6 col-md-12">
+                    <div class="col-md-6">
                       <div class="mb-3">
                         <label class="form-label">Nama Perusahaan</label>
-                        <div>
-                          <input type="text" class="form-control"  placeholder="Nama Perusahaan" name="nama_perusahaan" value="{{ old('nama_perusahaan',$konsultasi->nama_perusahaan) }}">
-                          @error ('nama_perusahaan')
-                          <small class="form-hint">{{ $message }} </small>
-                          @enderror
-                        </div>
+                        <input type="text" class="form-control" name="nama_perusahaan" value="{{ old('nama_perusahaan', $konsultasi->nama_perusahaan) }}">
+                        @error('nama_perusahaan')<small class="form-hint text-danger">{{ $message }}</small>@enderror
                       </div>
                     </div>
-                    
-                    <div class="mb-3">
-                      <label class="form-label required">Alamat</label>
-                      <div>
-                        <input type="text" class="form-control"  placeholder="Alamat" name="alamat" value="{{ old('alamat',$konsultasi->alamat) }}">
-                        @error ('alamat')
-                        <small class="form-hint">{{ $message }} </small>
-                        @enderror
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" name="email" value="{{ old('email', $konsultasi->email) }}">
+                        @error('email')<small class="form-hint text-danger">{{ $message }}</small>@enderror
                       </div>
                     </div>
-                    <div class="col-sm-6 col-md-6">
-                    <div class="mb-3">
-                      <label class="form-label">NIB</label>
-                      <div>
-                        <input type="text" class="form-control"  placeholder="Nomor Induk Berusaha" name="nib" value="{{ old('nib',$konsultasi->nib) }}">
-                        @error ('nib')
-                        <small class="form-hint">{{ $message }} </small>
-                        @enderror
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label class="form-label">Alamat</label>
+                        <input type="text" class="form-control" name="alamat" value="{{ old('alamat', $konsultasi->alamat) }}">
+                        @error('alamat')<small class="form-hint text-danger">{{ $message }}</small>@enderror
                       </div>
                     </div>
-                  </div>
-                  <div class="col-sm-6 col-md-6">
-                    <div class="mb-3">
-                      <label class="form-label required">Sektor Bidang Usaha</label>
-                      <div>
-                       
-                        <select class="form-select" name="id_sbu" >
-                                
-                          @foreach ($sbuitems as $item)
-                                @if (old('id_sbu', $item->id)==$konsultasi->id_sbu)
-                                <option value="{{ $item->id }}" selected>{{ $item->nama_sbu }}</option>
-                                @else
-                                <option value="{{ $item->id }}">{{ $item->nama_sbu }}</option>
-                                @endif
-                           @endforeach
-                         
-                      </select>
-                        @error ('bidang_usaha')
-                        <small class="form-hint">{{ $message }} </small>
-                        @enderror
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label class="form-label">Perihal</label>
+                        <input type="text" class="form-control" name="perihal" value="{{ old('perihal', $konsultasi->perihal) }}">
+                        @error('perihal')<small class="form-hint text-danger">{{ $message }}</small>@enderror
                       </div>
                     </div>
-                  </div>
-                  <div class="col-sm-6 col-md-6">
-                    <div class="mb-3">
-                      <label class="form-label required">Jenis Layanan</label>
-                      <div>
-                       
-                        <select class="form-select" name="id_jenis_layanan" >
-                                
-                          @foreach ($jenislayananitems as $item)
-                          @if (old('id_jenis_layanan', $item->id)==$konsultasi->id_jenis_layanan)
-                          <option value="{{ $item->id }}" selected>{{ $item->nama_jenis_layanan }}</option>
-                          @else
-                          <option value="{{ $item->id }}">{{ $item->nama_jenis_layanan }}</option>
-                          @endif
-                          @endforeach
-                         
-                      </select>
-                        @error ('id_jenis_layanan')
-                        <small class="form-hint">{{ $message }} </small>
-                        @enderror
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label class="form-label">Keterangan</label>
+                        <input type="text" class="form-control" name="keterangan" value="{{ old('keterangan', $konsultasi->keterangan) }}">
+                        @error('keterangan')<small class="form-hint text-danger">{{ $message }}</small>@enderror
                       </div>
                     </div>
-                  </div>
-                  <div class="col-sm-6 col-md-6">
-                    <div class="mb-3">
-                      <label class="form-label required">Lokasi Layanan/ Media Layanan</label>
-                      <div>
-                        <input type="text" class="form-control"  placeholder="Lokasi Layanan" name="lokasi_layanan" value="{{ old('lokasi_layanan',$konsultasi->lokasi_layanan) }}">
-                        @error ('lokasi_layanan')
-                        <small class="form-hint">{{ $message }} </small>
-                        @enderror
-                      </div>
-                    </div>
-                  </div>
-                  
-                    <div class="mb-3">
-                      <label class="form-label required">Kendala</label>
-                      <div>
-                        <input type="text" class="form-control"  placeholder="Kendala" name="kendala" value="{{ old('kendala',$konsultasi->kendala) }}">
-                        @error ('kendala')
-                        <small class="form-hint">{{ $message }} </small>
-                        @enderror
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label class="form-label">Jenis</label>
+                        <select class="form-select" name="jenis">
+                          <option value="Konsultasi" {{ old('jenis', $konsultasi->jenis) == 'Konsultasi' ? 'selected' : '' }}>Konsultasi</option>
+                          <option value="Informasi" {{ old('jenis', $konsultasi->jenis) == 'Informasi' ? 'selected' : '' }}>Informasi</option>
+                        </select>
+                        @error('jenis')<small class="form-hint text-danger">{{ $message }}</small>@enderror
                       </div>
                     </div>
                   </div>
