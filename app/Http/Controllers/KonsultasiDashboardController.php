@@ -73,7 +73,8 @@ class KonsultasiDashboardController extends Controller
      */
     public function create()
     {
-        
+        $judul = 'Tambah Data Konsultasi';
+        return view('admin.pelayananpm.konsultasi.create', compact('judul'));
     }
 
     /**
@@ -81,8 +82,30 @@ class KonsultasiDashboardController extends Controller
      */
     public function store(Request $request)
     {
-        
-       
+        try {
+            $validatedData = $request->validate([
+                'id_rule' => 'nullable|string|max:50',
+                'tanggal' => 'required|date',
+                'nama_pemohon' => 'required|string|max:255',
+                'no_hp' => 'nullable|string|max:20',
+                'nama_perusahaan' => 'nullable|string|max:255',
+                'email' => 'nullable|email',
+                'alamat' => 'nullable|string',
+                'perihal' => 'nullable|string',
+                'keterangan' => 'nullable|string',
+                'jenis' => 'required|in:Konsultasi,Informasi',
+            ]);
+
+            // Generate id_rule jika kosong
+            if (empty($validatedData['id_rule'])) {
+                $validatedData['id_rule'] = $this->generateIdRule($validatedData['tanggal'], $validatedData['nama_pemohon'], $validatedData['no_hp'] ?? '');
+            }
+
+            Konsultasi::create($validatedData);
+            return redirect('/konsultasi')->with('success', 'Data berhasil ditambahkan!');
+        } catch (\Exception $e) {
+            return redirect()->back()->withInput()->with('error', 'Gagal menambah data: ' . $e->getMessage());
+        }
     }
 
     /**

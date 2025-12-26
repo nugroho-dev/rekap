@@ -94,6 +94,8 @@ Route::middleware('auth')->group(function () {
 
     // Konsultasi
     Route::match(['get','post'], '/konsultasi', [KonsultasiDashboardController::class, 'index']);
+    Route::get('/konsultasi/create', [KonsultasiDashboardController::class, 'create'])->name('konsultasi.create');
+    Route::post('/konsultasi', [KonsultasiDashboardController::class, 'store'])->name('konsultasi.store');
     Route::get('/konsultasi/statistik', [KonsultasiDashboardController::class, 'statistik']);
     Route::post('/konsultasi/import_excel', [KonsultasiDashboardController::class, 'import_excel']);
     Route::post('/konsultasicari', [KonsultasiDashboardController::class, 'index']);
