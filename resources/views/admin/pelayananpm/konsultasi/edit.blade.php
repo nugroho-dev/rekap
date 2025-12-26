@@ -43,6 +43,13 @@
                 </div>
                 <div class="card-body">
                   <div class="row row-cards">
+                                        <div class="col-md-6">
+                                          <div class="mb-3">
+                                            <label class="form-label required">ID Rule</label>
+                                            <input type="text" class="form-control" name="id_rule" value="{{ old('id_rule', $konsultasi->id_rule) }}">
+                                            @error('id_rule')<small class="form-hint text-danger">{{ $message }}</small>@enderror
+                                          </div>
+                                        </div>
                     <div class="col-md-6">
                       <div class="mb-3">
                         <label class="form-label required">Tanggal</label>

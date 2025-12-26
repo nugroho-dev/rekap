@@ -109,7 +109,7 @@ class KonsultasiDashboardController extends Controller
     {
         try {
             $validatedData = $request->validate([
-                // Kolom validasi disesuaikan dengan form edit terbaru
+                'id_rule' => 'nullable|string|max:50',
                 'tanggal' => 'required|date',
                 'nama_pemohon' => 'required|string|max:255',
                 'no_hp' => 'nullable|string|max:20',
@@ -120,11 +120,26 @@ class KonsultasiDashboardController extends Controller
                 'keterangan' => 'nullable|string',
                 'jenis' => 'required|in:Konsultasi,Informasi',
             ]);
+
+            // Generate id_rule jika kosong atau ingin diganti otomatis
+            if (empty($validatedData['id_rule'])) {
+                $validatedData['id_rule'] = $this->generateIdRule($validatedData['tanggal'], $validatedData['nama_pemohon'], $validatedData['no_hp'] ?? '');
+            }
+
             $konsultasi->update($validatedData);
             return redirect('/konsultasi')->with('success', 'Data berhasil diperbarui!');
         } catch (\Exception $e) {
             return redirect()->back()->withInput()->with('error', 'Gagal memperbarui data: ' . $e->getMessage());
         }
+
+    }
+
+    // Tambahkan fungsi generateIdRule seperti di import
+    private function generateIdRule($tanggal, $nama_pemohon, $no_hp)
+    {
+        $date = \Carbon\Carbon::parse($tanggal)->format('Ymd');
+        $hash = substr(md5($tanggal . $nama_pemohon . $no_hp), 0, 6);
+        return "KS-{$date}-" . strtoupper($hash);
     }
 
     /**
