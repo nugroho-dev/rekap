@@ -26,6 +26,17 @@ class DashboardPengawasanController extends Controller
 				   ->orWhere('nib', 'LIKE', "%{$search}%")
 				   ->orWhere('uraian_kbli', 'LIKE', "%{$search}%")
                    ->orWhere('kbli', 'LIKE', "%{$search}%")
+				   ->orWhere('nomor_kode_proyek', 'LIKE', "%{$search}%")
+				   ->orWhere('sektor', 'LIKE', "%{$search}%")
+				   ->orWhere('alamat_proyek', 'LIKE', "%{$search}%")
+				   ->orWhere('daerah_kabupaten_proyek', 'LIKE', "%{$search}%")
+				   ->orWhere('propinsi_proyek', 'LIKE', "%{$search}%")
+				   ->orWhere('kecamatan_proyek', 'LIKE', "%{$search}%")
+				   ->orWhere('kelurahan_proyek', 'LIKE', "%{$search}%")
+				   ->orWhere('resiko', 'LIKE', "%{$search}%")
+				   ->orWhere('sumber_data', 'LIKE', "%{$search}%")
+				   ->orWhere('skala_usaha_perusahaan', 'LIKE', "%{$search}%")
+				   ->orWhere('skala_usaha_proyek', 'LIKE', "%{$search}%")
 				   ->orderBy('hari_penjadwalan', 'asc');
 		}
 		if ($request->has('date_start')&&$request->has('date_end')) {
@@ -64,13 +75,13 @@ class DashboardPengawasanController extends Controller
 		$items->withPath(url('/pengawasan'));
 		return view('admin.pengawasanpm.index',compact('judul','items','perPage','search','date_start','date_end','month','year'));
     }
-	public function edit(Pengawasan $item)
+	public function edit(Pengawasan $pengawasan)
     {
         $judul = 'Edit Data Pengawasan';
 		
-		return view('admin.pengawasanpm.edit', compact('judul','item'));
+		return view('admin.pengawasanpm.edit', compact('judul','pengawasan'));
     }
-	public function update(Request $request, Pengawasan $item)
+	public function update(Request $request, Pengawasan $pengawasan)
     {
 		$rules=[
 		'nama_perusahaan'=>'required',
@@ -100,10 +111,10 @@ class DashboardPengawasanController extends Controller
 		'hari_penjadwalan'=>'required' , 
 		'kewenangan_koordinator'=>'required',
 		'kewenangan_pengawasan'=>'required',
-		'permasalahan'=>'required',
-		'rekomendasi'=>'required',
-		'file'=>'file|mimes:pdf|required',];
-        if ($request->nomor_kode_proyek != $item->nomor_kode_proyek) {
+		'permasalahan'=>'string|nullable',
+		'rekomendasi'=>'string|nullable',
+		'file'=>'file|mimes:pdf|nullable',];
+        if ($request->nomor_kode_proyek != $pengawasan->nomor_kode_proyek) {
             $rules['nomor_kode_proyek'] = 'required|unique:pengawasan';
         }
         $validatedData = $request->validate($rules);
@@ -115,13 +126,19 @@ class DashboardPengawasanController extends Controller
         }
 		
         $validatedData['del'] = 0;
-        Pengawasan::where('nomor_kode_proyek', $item->nomor_kode_proyek)->update($validatedData);
-        return redirect('/pengawasan/'.$item->nomor_kode_proyek.'')->with('success', 'Berhasil di Ubah !');
+        Pengawasan::where('nomor_kode_proyek', $pengawasan->nomor_kode_proyek)->update($validatedData);
+        return redirect('/pengawasan/'.$pengawasan->nomor_kode_proyek.'')->with('success', 'Berhasil di Ubah !');
 	}
-	public function destroy(Pengawasan $item)
+	public function show($nomor_kode_proyek)
 	{
-		$item->delete();
-		return redirect('/pengawasan')->with('success', 'Berhasil di Hapus !');
+		$judul = 'Edit Data Pengawasan';
+		$item = Pengawasan::where('nomor_kode_proyek', $nomor_kode_proyek)->firstOrFail();
+		return view('admin.pengawasanpm.show', compact('item','judul'));
+	}
+	public function destroy(Pengawasan $pengawasan)
+	{
+		$pengawasan->delete();
+		return redirect('/pengawasan')->with('success', 'Berhasil dihapus (soft delete)!');
 	}
 
     public function export_excel()
@@ -145,48 +162,145 @@ class DashboardPengawasanController extends Controller
 		// upload ke folder file_siswa di dalam folder public
 		$file->move(base_path('storage/app/public/file_pengawasan'), $nama_file);
 
-		// import data
-		Excel::import(new PengawasanImport, base_path('storage/app/public/file_pengawasan/' . $nama_file));
-        
-		// notifikasi dengan session
-		//Session::flash('sukses','Data  Berhasil Diimport!');
- 
+		// import data dengan error handling
+		try {
+			Excel::import(new PengawasanImport, base_path('storage/app/public/file_pengawasan/' . $nama_file));
+		} catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+			$failures = $e->failures();
+			$messages = [];
+			foreach ($failures as $failure) {
+				$messages[] = 'Baris ' . $failure->row() . ': ' . implode(', ', $failure->errors());
+			}
+			return redirect('/pengawasan')->with('error', 'Gagal import!\n' . implode("\n", $messages));
+		} catch (\Exception $e) {
+			return redirect('/pengawasan')->with('error', 'Gagal import! ' . $e->getMessage());
+		}
 		// alihkan halaman kembali
 		return redirect('/pengawasan')->with('success', 'Data Berhasil Diimport !');
 	}
 	public function statistik(Request $request)
-    {
-        $judul = 'Statistik Pengawasan';
-        $years = Pengawasan::selectRaw('YEAR(hari_penjadwalan) as year')
-            ->distinct()->orderBy('year', 'desc')->pluck('year');
-        $year = $request->input('year', $years->first() ?? date('Y'));
+	{
+		// Statistik jumlah perusahaan per bulan (1 perusahaan 1 NIB)
+		$years = Pengawasan::selectRaw('YEAR(hari_penjadwalan) as year')
+			->distinct()
+			->orderBy('year', 'desc')
+			->pluck('year');
+		$year = $request->input('year', $years->first() ?? date('Y'));
 
-        // Total pengawasan
-        $total = Pengawasan::whereYear('hari_penjadwalan', $year)->count();
+		$perusahaanPerBulan = Pengawasan::selectRaw('MONTH(hari_penjadwalan) as bulan, COUNT(DISTINCT nib) as jumlah')
+			->whereYear('hari_penjadwalan', $year)
+			->groupByRaw('MONTH(hari_penjadwalan)')
+			->orderBy('bulan')
+			->pluck('jumlah', 'bulan');
 
-        // Status pengawasan (misal: Baru, Proses, Selesai)
-        $statusCounts = Pengawasan::select('status')
-            ->selectRaw('count(*) as jumlah')
-            ->whereYear('hari_penjadwalan', $year)
-            ->groupBy('status')
-            ->pluck('jumlah', 'status');
+		$judul = 'Statistik Pengawasan';
 
-        // Tren bulanan (jumlah pengawasan per bulan di tahun berjalan)
-        $trend = Pengawasan::selectRaw('MONTH(hari_penjadwalan) as bulan, COUNT(*) as jumlah')
-            ->whereYear('hari_penjadwalan', $year)
-            ->groupByRaw('MONTH(hari_penjadwalan)')
-            ->orderBy('bulan')
-            ->pluck('jumlah', 'bulan');
+		// Total pengawasan
+		$total = Pengawasan::whereYear('hari_penjadwalan', $year)->count();
 
-        return view('admin.pengawasanpm.statistik', compact(
-            'judul',
-            'total',
-            'statusCounts',
-            'trend',
-            'year',
-            'years'
-        ));
-    }
+		// Statistik status penanaman modal
+		$statusPenanamanModal = Pengawasan::select('status_penanaman_modal', DB::raw('count(*) as jumlah'))
+			->whereYear('hari_penjadwalan', $year)
+			->groupBy('status_penanaman_modal')
+			->pluck('jumlah', 'status_penanaman_modal');
+
+		// Statistik KBLI (menampilkan kbli dan uraian_kbli)
+		$kbliStat = Pengawasan::select('kbli', 'uraian_kbli', DB::raw('count(*) as jumlah'))
+			->whereYear('hari_penjadwalan', $year)
+			->groupBy('kbli', 'uraian_kbli')
+			->orderBy('jumlah', 'desc')
+			->limit(10)
+			->get()
+			->mapWithKeys(function ($item) {
+				return [
+					$item->kbli => [
+						'jumlah' => $item->jumlah,
+						'uraian_kbli' => $item->uraian_kbli,
+					]
+				];
+			});
+
+		// Tren bulanan (jumlah pengawasan per bulan di tahun berjalan)
+		$trend = Pengawasan::selectRaw('MONTH(hari_penjadwalan) as bulan, COUNT(*) as jumlah')
+			->whereYear('hari_penjadwalan', $year)
+			->groupByRaw('MONTH(hari_penjadwalan)')
+			->orderBy('bulan')
+			->pluck('jumlah', 'bulan');
+
+		// Statistik jumlah investasi (total dan rata-rata)
+		$jumlahInvestasi = [
+			'total' => Pengawasan::whereYear('hari_penjadwalan', $year)->sum('jumlah_investasi'),
+			'rata'  => Pengawasan::whereYear('hari_penjadwalan', $year)->avg('jumlah_investasi'),
+		];
+
+		// Statistik skala usaha proyek
+		$skalaUsahaProyekStat = Pengawasan::select('skala_usaha_proyek', DB::raw('count(*) as jumlah'))
+			->whereYear('hari_penjadwalan', $year)
+			->groupBy('skala_usaha_proyek')
+			->orderBy('jumlah', 'desc')
+			->pluck('jumlah', 'skala_usaha_proyek');
+
+		// Statistik skala usaha perusahaan
+		$skalaUsahaPerusahaanStat = Pengawasan::select('skala_usaha_perusahaan', DB::raw('count(*) as jumlah'))
+			->whereYear('hari_penjadwalan', $year)
+			->groupBy('skala_usaha_perusahaan')
+			->orderBy('jumlah', 'desc')
+			->pluck('jumlah', 'skala_usaha_perusahaan');
+
+		// Statistik resiko
+		$resikoStat = Pengawasan::select('resiko', DB::raw('count(*) as jumlah'))
+			->whereYear('hari_penjadwalan', $year)
+			->groupBy('resiko')
+			->orderBy('jumlah', 'desc')
+			->limit(10)
+			->pluck('jumlah', 'resiko');
+
+		// Statistik jumlah tenaga kerja (WNI/WNA, L/P)
+		$tenagaKerja = [
+			'tki_l' => Pengawasan::whereYear('hari_penjadwalan', $year)->sum('jumlah_tki_l'),
+			'tki_p' => Pengawasan::whereYear('hari_penjadwalan', $year)->sum('jumlah_tki_p'),
+			'tka_l' => Pengawasan::whereYear('hari_penjadwalan', $year)->sum('jumlah_tka_l'),
+			'tka_p' => Pengawasan::whereYear('hari_penjadwalan', $year)->sum('jumlah_tka_p'),
+		];
+
+		// Statistik jumlah perusahaan (1 perusahaan 1 NIB)
+		$perusahaanStat = Pengawasan::select('nib', 'nama_perusahaan')
+			->whereYear('hari_penjadwalan', $year)
+			->groupBy('nib', 'nama_perusahaan')
+			->get();
+		$jumlahPerusahaan = $perusahaanStat->count();
+		$perusahaanChartData = [
+			'labels' => $perusahaanStat->pluck('nama_perusahaan')->toArray(),
+			'nib' => $perusahaanStat->pluck('nib')->toArray(),
+		];
+
+		// Statistik sektor
+		$sektorStat = Pengawasan::select('sektor', DB::raw('count(*) as jumlah'))
+			->whereYear('hari_penjadwalan', $year)
+			->groupBy('sektor')
+			->orderBy('jumlah', 'desc')
+			->limit(10)
+			->pluck('jumlah', 'sektor');
+
+		return view('admin.pengawasanpm.statistik', compact(
+			'judul',
+			'total',
+			'trend',
+			'year',
+			'years',
+			'statusPenanamanModal',
+			'kbliStat',
+			'sektorStat',
+			'tenagaKerja',
+			'resikoStat',
+			'skalaUsahaPerusahaanStat',
+			'skalaUsahaProyekStat',
+			'jumlahInvestasi',
+			  'jumlahPerusahaan',
+			  'perusahaanChartData',
+			  'perusahaanPerBulan'
+		));
+	}
 	
     
 }

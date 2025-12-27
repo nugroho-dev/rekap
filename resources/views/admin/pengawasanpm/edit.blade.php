@@ -68,26 +68,27 @@
               <div class="col-12">
                 <div class="card">
                   <div class="card-header">
-                    <h3 class="card-title">Data Pengawasan Berusaha {{ $item->nama_perusahaan }} </h3>
+                    <h3 class="card-title">Data Pengawasan Berusaha {{ $pengawasan->nama_perusahaan }} </h3>
                   </div>
                   <div class="row justify-content-center m-3">
                     <div class="col-lg-9 col-md-12 col-sm-12">
-                      <form class="card" method="post" action="{{ url('/pengawasan/'.$item->nomor_kode_proyek.'') }}" enctype="multipart/form-data">
+                      <form class="card" method="post" action="{{ url('/pengawasan/'.$pengawasan->nomor_kode_proyek.'') }}" enctype="multipart/form-data">
                         
                         @csrf
+                        @method('put')
                         <div class="card-body">
                           <h3 class="card-title">Edit Profile</h3>
                           <div class="row row-cards">
                             <div class="col-md-4 col-sm-12">
                               <div class="mb-3">
                                 <label class="form-label">Nomor Kode Proyek</label>
-                                <input type="text" class="form-control" name="nomor_kode_proyek"  placeholder="" value="{{ $item->nomor_kode_proyek }}" readonly>
+                                <input type="text" class="form-control" name="nomor_kode_proyek"  placeholder="" value="{{ $pengawasan->nomor_kode_proyek }}" readonly>
                               </div>
                             </div>
                             <div class="col-md-8 col-sm-12">
                               <div class="mb-3">
                                 <label class="form-label">Nama Perusahaan</label>
-                                <input type="text" class="form-control" name="nama_perusahaan" placeholder="" value="{{ old('nama_perusahaan',$item->nama_perusahaan) }}">
+                                <input type="text" class="form-control" name="nama_perusahaan" placeholder="" value="{{ old('nama_perusahaan',$pengawasan->nama_perusahaan) }}">
                                 @error ('nama_perusahaan')
                                 <small class="form-hint text-danger">{{ $message }}  </small>
                                 @enderror
@@ -96,7 +97,7 @@
                             <div class="col-md-7 col-sm-12">
                               <div class="mb-3">
                                 <label class="form-label">Alamat Perusahaan</label>
-                                <input type="text" class="form-control" name="alamat_perusahaan" placeholder="" value="{{ old('alamat_perusahaan',$item->alamat_perusahaan) }}">
+                                <input type="text" class="form-control" name="alamat_perusahaan" placeholder="" value="{{ old('alamat_perusahaan',$pengawasan->alamat_perusahaan) }}">
                                 @error ('alamat_perusahaan')
                                 <small class="form-hint text-danger">{{ $message }}  </small>
                                 @enderror
@@ -105,7 +106,7 @@
                             <div class="col-sm-12 col-md-5">
                               <div class="mb-3">
                                 <label class="form-label">Status Penananaman Modal</label>
-                                <input type="text" class="form-control" name="status_penanaman_modal" placeholder="" value="{{ old('status_penanaman_modal',$item->status_penanaman_modal) }}">
+                                <input type="text" class="form-control" name="status_penanaman_modal" placeholder="" value="{{ old('status_penanaman_modal',$pengawasan->status_penanaman_modal) }}">
                                 @error ('status_penanaman_modal')
                                 <small class="form-hint text-danger">{{ $message }}  </small>
                                 @enderror
@@ -114,7 +115,7 @@
                             <div class="col-sm-12 col-md-8">
                               <div class="mb-3">
                                 <label class="form-label">Jenis Perusahaan</label>
-                                <input type="text" class="form-control" name="jenis_perusahaan" placeholder="" value="{{ old('jenis_perusahaan',$item->jenis_perusahaan) }}">
+                                <input type="text" class="form-control" name="jenis_perusahaan" placeholder="" value="{{ old('jenis_perusahaan',$pengawasan->jenis_perusahaan) }}">
                                 @error ('jenis_perusahaan')
                                 <small class="form-hint text-danger">{{ $message }}  </small>
                                 @enderror
@@ -123,7 +124,7 @@
                             <div class="col-sm-12 col-md-4">
                               <div class="mb-3">
                                 <label class="form-label">Nomor Induk Berusaha</label>
-                                <input type="text" class="form-control" name="nib" placeholder="" value="{{ old('nib',$item->nib) }}">
+                                <input type="text" class="form-control" name="nib" placeholder="" value="{{ old('nib',$pengawasan->nib) }}">
                                 @error ('nib')
                                 <small class="form-hint text-danger">{{ $message }}  </small>
                                 @enderror
@@ -132,7 +133,7 @@
                             <div class="col-sm-12 col-md-3">
                               <div class="mb-3">
                                 <label class="form-label">KBLI</label>
-                                <input type="text" class="form-control" name="kbli" placeholder="" value="{{ old('kbli',$item->kbli) }}">
+                                <input type="text" class="form-control" name="kbli" placeholder="" value="{{ old('kbli',$pengawasan->kbli) }}">
                                 @error ('kbli')
                                 <small class="form-hint text-danger">{{ $message }}  </small>
                                 @enderror
@@ -141,8 +142,8 @@
                             <div class="col-sm-12 col-md-9">
                               <div class="mb-3">
                                 <label class="form-label">Uraian KBLI</label>
-                                <input type="text" class="form-control" name="uraian_kbli" placeholder="" value="{{ old('',$item->uraian_kbli) }}">
-                                @error ('')
+                                <input type="text" class="form-control" name="uraian_kbli" placeholder="" value="{{ old('uraian_kbli', $pengawasan->uraian_kbli) }}">
+                                @error ('uraian_kbli')
                                 <small class="form-hint text-danger">{{ $message }}  </small>
                                 @enderror
                               </div>
@@ -150,8 +151,8 @@
                             <div class="col-sm-12 col-md-3">
                               <div class="mb-3">
                                 <label class="form-label">Sektor</label>
-                                <input type="text" class="form-control" placeholder=""  name="sektor" value="{{ old('',$item->sektor) }}">
-                                @error ('')
+                                <input type="text" class="form-control" placeholder=""  name="sektor" value="{{ old('sektor', $pengawasan->sektor) }}">
+                                @error ('sektor')
                                 <small class="form-hint text-danger">{{ $message }}  </small>
                                 @enderror
                               </div>
@@ -160,7 +161,7 @@
                               <div class="col-sm-12 col-md-9">
                                 <div class="mb-3">
                                   <label class="form-label">Alamat Proyek</label>
-                                  <input type="text" class="form-control" placeholder="" name="alamat_proyek" value="{{ old('alamat_proyek',$item->alamat_proyek)}}">
+                                  <input type="text" class="form-control" placeholder="" name="alamat_proyek" value="{{ old('alamat_proyek',$pengawasan->alamat_proyek)}}">
                                   @error ('alamat_proyek')
                                   <small class="form-hint text-danger">{{ $message }}  </small>
                                    @enderror
@@ -169,7 +170,7 @@
                               <div class="col-sm-12 col-md-3">
                                 <div class="mb-3">
                                   <label class="form-label">Kelurahan Proyek</label>
-                                  <input type="test" class="form-control" placeholder="" name="kelurahan_proyek" value="{{ old('kelurahan_proyek',$item->kelurahan_proyek) }}">
+                                    <input type="text" class="form-control" placeholder="" name="kelurahan_proyek" value="{{ old('kelurahan_proyek',$pengawasan->kelurahan_proyek) }}">
                                   @error ('kelurahan_proyek')
                                 <small class="form-hint text-danger">{{ $message }}  </small>
                                 @enderror
@@ -178,7 +179,7 @@
                               <div class="col-sm-12 col-md-4">
                                 <div class="mb-3">
                                   <label class="form-label">Kecamatan Proyek</label>
-                                  <input type="text" class="form-control" placeholder="" name="kecamatan_proyek" value="{{ old('kecamatan_proyek',$item->kecamatan_proyek) }}">
+                                  <input type="text" class="form-control" placeholder="" name="kecamatan_proyek" value="{{ old('kecamatan_proyek',$pengawasan->kecamatan_proyek) }}">
                                   @error ('kecamatan_proyek')
                                 <small class="form-hint text-danger">{{ $message }}  </small>
                                 @enderror
@@ -187,7 +188,7 @@
                               <div class="col-sm-12 col-md-4">
                                 <div class="mb-3">
                                   <label class="form-label">Kota/Kab Proyek</label>
-                                  <input type="text" class="form-control" placeholder="" name="daerah_kabupaten_proyek" value="{{ old('daerah_kabupaten_proyek',$item->daerah_kabupaten_proyek) }}">
+                                  <input type="text" class="form-control" placeholder="" name="daerah_kabupaten_proyek" value="{{ old('daerah_kabupaten_proyek',$pengawasan->daerah_kabupaten_proyek) }}">
                                   @error ('daerah_kabupaten_proyek')
                                 <small class="form-hint text-danger">{{ $message }}  </small>
                                 @enderror
@@ -196,7 +197,7 @@
                             <div class="col-sm-12 col-md-4">
                               <div class="mb-3">
                                 <label class="form-label">Propinsi Proyek</label>
-                                <input type="text" class="form-control" placeholder="" name="propinsi_proyek" value="{{ old('propinsi_proyek',$item->propinsi_proyek) }}">
+                                <input type="text" class="form-control" placeholder="" name="propinsi_proyek" value="{{ old('propinsi_proyek',$pengawasan->propinsi_proyek) }}">
                                 @error ('propinsi_proyek')
                                 <small class="form-hint text-danger">{{ $message }}  </small>
                                 @enderror
@@ -206,7 +207,7 @@
                             <div class="col-sm-12 col-md-3">
                               <div class="mb-3">
                                 <label class="form-label">Luas Tanah</label>
-                                <input type="number" class="form-control" placeholder="" name="luas_tanah" value="{{ old('luas_tanah',$item->luas_tanah) }}">
+                                <input type="number" class="form-control" placeholder="" name="luas_tanah" value="{{ old('luas_tanah',$pengawasan->luas_tanah) }}">
                                 @error ('luas_tanah')
                                 <small class="form-hint text-danger">{{ $message }}  </small>
                                 @enderror
@@ -215,7 +216,7 @@
                             <div class="col-sm-12 col-md-3">
                               <div class="mb-3">
                                 <label class="form-label">Satuan Luas Tanah</label>
-                                <input type="text" class="form-control" placeholder="" name="satuan_luas_tanah" value="{{ old('',$item->satuan_luas_tanah) }}">
+                                <input type="text" class="form-control" placeholder="" name="satuan_luas_tanah" value="{{ old('satuan_luas_tanah', $pengawasan->satuan_luas_tanah) }}">
                                 @error ('satuan_luas_tanah')
                                 <small class="form-hint text-danger">{{ $message }}  </small>
                                 @enderror
@@ -225,7 +226,7 @@
                               <div class="col-sm-12 col-md-6">
                                 <div class="mb-3">
                                   <label class="form-label">Jumlah Tenaga Kerja Indonesia (Pria)</label>
-                                  <input type="number" class="form-control" placeholder="" name="jumlah_tki_l" value="{{ old('jumlah_tki_l',$item->jumlah_tki_l) }}">
+                                    <input type="number" class="form-control" placeholder="" name="jumlah_tki_l" value="{{ old('jumlah_tki_l', $pengawasan->jumlah_tki_l) }}">
                                   @error ('jumlah_tki_l')
                                 <small class="form-hint text-danger">{{ $message }}  </small>
                                 @enderror
@@ -234,7 +235,7 @@
                               <div class="col-sm-12 col-md-6">
                                 <div class="mb-3">
                                   <label class="form-label">Jumlah Tenaga Kerja Indonesia (Wanita)</label>
-                                  <input type="number" class="form-control" placeholder="" name="jumlah_tki_p" value="{{ old('',$item->jumlah_tki_p) }}">
+                                    <input type="number" class="form-control" placeholder="" name="jumlah_tki_p" value="{{ old('jumlah_tki_p', $pengawasan->jumlah_tki_p) }}">
                                   @error ('jumlah_tki_p')
                                 <small class="form-hint text-danger">{{ $message }}  </small>
                                 @enderror
@@ -243,7 +244,7 @@
                               <div class="col-sm-12 col-md-6">
                                 <div class="mb-3">
                                   <label class="form-label">Jumlah Tenaga Kerja Asing (Pria)</label>
-                                  <input type="number" class="form-control" placeholder="" name="jumlah_tka_l" value="{{ old('',$item->jumlah_tka_l) }}">
+                                    <input type="number" class="form-control" placeholder="" name="jumlah_tka_l" value="{{ old('jumlah_tka_l', $pengawasan->jumlah_tka_l) }}">
                                   @error ('jumlah_tka_l')
                                 <small class="form-hint text-danger">{{ $message }}  </small>
                                 @enderror
@@ -252,7 +253,7 @@
                               <div class="col-sm-12 col-md-6">
                                 <div class="mb-3">
                                   <label class="form-label">Jumlah Tenaga Kerja Asing (Wanita)</label>
-                                  <input type="number" class="form-control" placeholder="" name="jumlah_tka_p" value="{{ old('',$item->jumlah_tka_p) }}">
+                                  <input type="number" class="form-control" placeholder="" name="jumlah_tka_p" value="{{ old('jumlah_tka_p',$pengawasan->jumlah_tka_p) }}">
                                   @error ('jumlah_tka_p')
                                 <small class="form-hint text-danger">{{ $message }}  </small>
                                 @enderror
@@ -262,7 +263,7 @@
                             <div class="col-sm-12 col-md-6">
                               <div class="mb-3">
                                 <label class="form-label">Resiko</label>
-                                <input type="text" class="form-control" placeholder="" name="resiko" value="{{ old('resiko',$item->resiko) }}">
+                                <input type="text" class="form-control" placeholder="" name="resiko" value="{{ old('resiko',$pengawasan->resiko) }}">
                                 @error ('resiko')
                                 <small class="form-hint text-danger">{{ $message }}  </small>
                                 @enderror
@@ -271,7 +272,7 @@
                             <div class="col-sm-12 col-md-6">
                               <div class="mb-3">
                                 <label class="form-label">Sumber data</label>
-                                <input type="test" class="form-control" placeholder="" name="sumber_data" value="{{ old('sumber_data',$item->sumber_data) }}">
+                                <input type="text" class="form-control" placeholder="" name="sumber_data" value="{{ old('sumber_data',$pengawasan->sumber_data) }}">
                                 @error ('sumber_data')
                                 <small class="form-hint text-danger">{{ $message }}  </small>
                                 @enderror
@@ -280,7 +281,7 @@
                             <div class="col-sm-12 col-md-6">
                               <div class="mb-3">
                                 <label class="form-label">Jumlah Investasi</label>
-                                <input type="number" class="form-control" placeholder="" name="jumlah_investasi" value="{{ old('jumlah_investasi',$item->jumlah_investasi) }}">
+                                <input type="number" class="form-control" placeholder="" name="jumlah_investasi" value="{{ old('jumlah_investasi',$pengawasan->jumlah_investasi) }}">
                                 @error ('jumlah_investasi')
                                 <small class="form-hint text-danger">{{ $message }}  </small>
                                 @enderror
@@ -290,7 +291,7 @@
                               <div class="col-sm-12 col-md-4">
                                 <div class="mb-3">
                                   <label class="form-label">Skala Usaha Perusahaan</label>
-                                  <input type="text" class="form-control" placeholder="" name="skala_usaha_perusahaan" value="{{ old('skala_usaha_perusahaan',$item->skala_usaha_perusahaan) }}">
+                                  <input type="text" class="form-control" placeholder="" name="skala_usaha_perusahaan" value="{{ old('skala_usaha_perusahaan',$pengawasan->skala_usaha_perusahaan) }}">
                                   @error ('skala_usaha_perusahaan')
                                 <small class="form-hint text-danger">{{ $message }}  </small>
                                 @enderror
@@ -299,7 +300,7 @@
                               <div class="col-sm-12 col-md-4">
                                 <div class="mb-3">
                                   <label class="form-label">Skala Usaha Proyek</label>
-                                  <input type="text" class="form-control" placeholder="" name="skala_usaha_proyek" value="{{ old('skala_usaha_proyek',$item->skala_usaha_proyek) }}">
+                                  <input type="text" class="form-control" placeholder="" name="skala_usaha_proyek" value="{{ old('skala_usaha_proyek',$pengawasan->skala_usaha_proyek) }}">
                                   @error ('skala_usaha_proyek')
                                   <small class="form-hint text-danger">{{ $message }}  </small>
                                   @enderror
@@ -308,7 +309,7 @@
                               <div class="col-sm-12 col-md-4">
                                 <div class="mb-3">
                                   <label class="form-label">Hari Penjadwalan</label>
-                                  <input type="date" class="form-control" placeholder="" name="hari_penjadwalan" value="{{ old('hari_penjadwalan',$item->hari_penjadwalan) }}">
+                                  <input type="date" class="form-control" placeholder="" name="hari_penjadwalan" value="{{ old('hari_penjadwalan',$pengawasan->hari_penjadwalan) }}">
                                   @error ('hari_penjadwalan')
                                 <small class="form-hint text-danger">{{ $message }}  </small>
                                 @enderror
@@ -319,7 +320,7 @@
                             <div class="col-sm-12 col-md-5">
                               <div class="mb-3">
                                 <label class="form-label">Kewenangan Koordinator</label>
-                                <input type="text" class="form-control" placeholder="" name="kewenangan_koordinator" value="{{ old('kewenangan_koordinator',$item->kewenangan_koordinator) }}">
+                                <input type="text" class="form-control" placeholder="" name="kewenangan_koordinator" value="{{ old('kewenangan_koordinator',$pengawasan->kewenangan_koordinator) }}">
                                 @error ('kewenangan_koordinator')
                                 <small class="form-hint text-danger">{{ $message }}  </small>
                                 @enderror
@@ -329,7 +330,7 @@
                               <div class="mb-3">
                                 <label class="form-label">Kewenangan Pengawasan</label>
                                 
-                                    <input type="text" class="form-control" placeholder=""  name="kewenangan_pengawasan" value="{{ old('kewenangan_pengawasan',$item->kewenangan_pengawasan)}}">
+                                    <input type="text" class="form-control" placeholder=""  name="kewenangan_pengawasan" value="{{ old('kewenangan_pengawasan',$pengawasan->kewenangan_pengawasan)}}">
                                   
                                  
                                
@@ -343,7 +344,7 @@
                                 <label class="form-label">File BAP</label>
                                 <div class="input-group">
                                   <span class="input-group-text">
-                                    <input type="hidden" name="oldFile" value="{{ $item->file }}">
+                                    <input type="hidden" name="oldFile" value="{{ $pengawasan->file }}">
                                     <input type="file" class="form-control" placeholder="" name="file" id="docpdf"  onchange="priviewDocPdf()">
                                     </span>
                                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
@@ -359,7 +360,7 @@
                             <div class="col-md-12">
                               <div class="mb-3 mb-0">
                                 <label class="form-label">Permasalah</label>
-                                <textarea rows="5" class="form-control" placeholder="Here can be your description" name="permasalahan">{{ old('permasalahan',$item->permasalahan) }}</textarea>
+                                <textarea rows="5" class="form-control" placeholder="Here can be your description" name="permasalahan">{{ old('permasalahan',$pengawasan->permasalahan) }}</textarea>
                                 @error ('permasalahan')
                                 <small class="form-hint text-danger">{{ $message }}  </small>
                                 @enderror
@@ -368,7 +369,7 @@
                             <div class="col-md-12">
                               <div class="mb-3 mb-0">
                                 <label class="form-label">Rekomendasi</label>
-                                <textarea rows="5" class="form-control" placeholder="Here can be your description" name="rekomendasi">{{ old('rekomendasi',$item->rekomendasi) }}</textarea>
+                                <textarea rows="5" class="form-control" placeholder="Here can be your description" name="rekomendasi">{{ old('rekomendasi',$pengawasan->rekomendasi) }}</textarea>
                                 @error ('rekomendasi')
                                 <small class="form-hint text-danger">{{ $message }}  </small>
                                 @enderror
@@ -524,7 +525,7 @@
                     </div>
                     <div class="modal-body">
                       <div class="flexible-container">
-                        <embed src="{{ url(Storage::url($item->file)) }}" class="docpdf-preview" id="my-object" width="100%" type="application/pdf" height="650"></embed>
+                        <embed src="{{ url(Storage::url($pengawasan->file)) }}" class="docpdf-preview" id="my-object" width="100%" type="application/pdf" height="650"></embed>
                       </div>
                     </div>
                     <div class="modal-footer">

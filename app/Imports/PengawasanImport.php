@@ -13,54 +13,92 @@ use PhpOffice\PhpSpreadsheet\Shared\Date;
 class PengawasanImport implements ToModel, WithHeadingRow, WithValidation
 {
     /**
+     * Define validation rules for each row.
+     *
+     * @return array
+     */
+    public function rules(): array
+    {
+        return [
+            'nomor_kode_proyek' => ['required'],
+            'nama_perusahaan' => ['required'],
+            // Tambahkan aturan validasi lain sesuai kebutuhan kolom Anda
+        ];
+    }
+
+    /**
     * @param array $row
     *
     * @return \Illuminate\Database\Eloquent\Model|null
     */
     public function model(array $row)
     {
-        return new Pengawasan([
-            'nomor_kode_proyek'=>$row['nomor_kode_proyek'],
-            'nama_perusahaan'=>$row['nama_perusahaan'],
-            'alamat_perusahaan'=>$row['alamat_perusahaan'],
-            'status_penanaman_modal'=>$row['status_penanaman_modal'],
-            'jenis_perusahaan'=>$row['jenis_perusahaan'],
-            'nib'=>$row['nib'],
-            'kbli'=>$row['kbli'],
-            'uraian_kbli'=>$row['uraian_kbli'],
-            'sektor'=>$row['sektor'],
-            'alamat_proyek'=>$row['alamat_proyek'],
-            'propinsi_proyek'=>$row['propinsi_proyek'],
-            'daerah_kabupaten_proyek'=>$row['daerah_kabupaten_proyek'],
-            'kecamatan_proyek'=>$row['kecamatan_proyek'],
-            'kelurahan_proyek'=>$row['kelurahan_proyek'],
-            'luas_tanah'=>$row['luas_tanah'],
-            'satuan_luas_tanah'=>$row['satuan_luas_tanah'],
-            'jumlah_tki_l'=>$row['jumlah_tki_l'],
-            'jumlah_tki_p'=>$row['jumlah_tki_p'],
-            'jumlah_tka_l'=>$row['jumlah_tka_l'],
-            'jumlah_tka_p'=>$row['jumlah_tka_p'],
-            'resiko'=>$row['resiko'],
-            'sumber_data'=>$row['sumber_data'],
-            'jumlah_investasi'=>$row['jumlah_investasi'],
-            'skala_usaha_perusahaan'=>$row['skala_usaha_perusahaan'],
-            'skala_usaha_proyek'=>$row['skala_usaha_proyek'],
-            'hari_penjadwalan'=> Carbon::instance(Date::excelToDateTimeObject($row['hari_penjadwalan']))->toDateString(),//$row['hari_penjadwalan'], 
-            'kewenangan_koordinator'=>$row['kewenangan_koordinator'],
-            'kewenangan_pengawasan'=>$row['kewenangan_pengawasan'],
-            'permasalahan'=>$row['permasalahan'],
-            'rekomendasi'=>$row['rekomendasi'],
-            'file'=>'',
-            'del'=>0
-        ]);
-    }
-    public function rules(): array
-    {
-        return [
-            'nomor_kode_proyek' => [
-                'required', 
-                Rule::unique('pengawasan', 'nomor_kode_proyek'), // Validasi email harus unik di tabel `users`
-            ]
+        $data = [
+            'nomor_kode_proyek' => $row['nomor_kode_proyek'] ?? $row['nomor kode proyek'] ?? null,
+            'nama_perusahaan' => $row['nama_perusahaan'] ?? $row['nama perusahaan'] ?? null,
+            'alamat_perusahaan' => $row['alamat_perusahaan'] ?? $row['alamat perusahaan'] ?? null,
+            'status_penanaman_modal' => $row['status_penanaman_modal'] ?? $row['status penanaman modal'] ?? null,
+            'jenis_perusahaan' => $row['jenis_perusahaan'] ?? $row['jenis perusahaan'] ?? null,
+            'nib' => $row['nib'] ?? null,
+            'kbli' => $row['kbli'] ?? null,
+            'uraian_kbli' => $row['uraian_kbli'] ?? $row['uraian kbli'] ?? null,
+            'sektor' => $row['sektor'] ?? null,
+            'alamat_proyek' => $row['alamat_proyek'] ?? $row['alamat proyek'] ?? null,
+            'propinsi_proyek' => $row['propinsi_proyek'] ?? $row['propinsi proyek'] ?? null,
+            'daerah_kabupaten_proyek' => $row['daerah_kabupaten_proyek'] ?? $row['daerah kabupaten proyek'] ?? null,
+            'kecamatan_proyek' => $row['kecamatan_proyek'] ?? $row['kecamatan proyek'] ?? null,
+            'kelurahan_proyek' => $row['kelurahan_proyek'] ?? $row['kelurahan proyek'] ?? null,
+            'luas_tanah' => $row['luas_tanah'] ?? $row['luas tanah'] ?? null,
+            'satuan_luas_tanah' => $row['satuan_luas_tanah'] ?? $row['satuan luas tanah'] ?? null,
+            // Mapping kolom tenaga kerja, handle heading yang mirip dan typo
+            'jumlah_tki_l' => $row['jumlah_tki_l'] ?? $row['jumlah tki (l)'] ?? $row['jumlah tenaga kerja indonesia (l)'] ?? null,
+            'jumlah_tki_p' => $row['jumlah_tki_p'] ?? $row['jumlah tki (p)'] ?? $row['jumlah tenaga kerja indonesia (p)'] ?? null,
+            'jumlah_tka_l' => $row['jumlah_tka_l'] ?? $row['jumlah tka (l)'] ?? $row['jumlah tenaga kerja asing (l)'] ?? null,
+            'jumlah_tka_p' => $row['jumlah_tka_p'] ?? $row['jumlah tka (p)'] ?? $row['jumlah tenaga kerja asing (p)'] ?? null,
+            'resiko' => $row['resiko'] ?? null,
+            'sumber_data' => $row['sumber_data'] ?? $row['sumber data'] ?? null,
+            'jumlah_investasi' => $row['jumlah_investasi'] ?? $row['jumlah investasi'] ?? null,
+            'skala_usaha_perusahaan' => $row['skala_usaha_perusahaan'] ?? $row['skala usaha (perusahaan)'] ?? null,
+            'skala_usaha_proyek' => $row['skala_usaha_proyek'] ?? $row['skala usaha (proyek)'] ?? null,
+            'hari_penjadwalan' => $this->parseTanggalExcel($row),
+            'kewenangan_koordinator' => $row['kewenangan_koordinator'] ?? $row['kewenangan koordinator'] ?? null,
+            'kewenangan_pengawasan' => $row['kewenangan_pengawasan'] ?? $row['kewenangan pengawasan'] ?? null,
+            'permasalahan' => $row['permasalahan'] ?? null,
+            'rekomendasi' => $row['rekomendasi'] ?? null,
+            'file' => '',
+            'del' => 0
         ];
+
+        // Cek jika sudah ada: update, jika tidak: insert baru
+        $existing = Pengawasan::where('nomor_kode_proyek', $data['nomor_kode_proyek'])
+            ->where('hari_penjadwalan', $data['hari_penjadwalan'])
+            ->first();
+        if ($existing) {
+            $existing->update($data);
+            return null; // Tidak insert baru
+        }
+        return new Pengawasan($data);
     }
+                 /**
+                 * Parse tanggal dari kolom Excel (bisa format Excel number atau string yyyy-mm-dd)
+                 */
+                private function parseTanggalExcel($row)
+                {
+                    $val = $row['hari_penjadwalan'] ?? $row['hari penjadwalan'] ?? null;
+                    if (is_null($val) || $val === '') return null;
+                    if (is_numeric($val)) {
+                        try {
+                            return Carbon::instance(Date::excelToDateTimeObject($val))->toDateString();
+                        } catch (\Exception $e) {
+                            return null;
+                        }
+                    }
+                    // Jika string, coba parse langsung
+                    try {
+                        return Carbon::parse($val)->toDateString();
+                    } catch (\Exception $e) {
+                        return null;
+                    }
+                }
+    
 }

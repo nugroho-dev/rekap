@@ -110,35 +110,12 @@
                     <table class="table card-table table-vcenter text-nowrap  table-striped ">
                       <thead class="text-center">
                         <tr>
-                          <th class="w-1" rowspan="2">No.</th>
-                          <th class="w-1" rowspan="2">Nomor Kode Proyek </th>
-                          <th rowspan="2">Nama Perusahaan</th>
-                          <th rowspan="2">Alamat Perusahaan</th>
-                          <th rowspan="2">Status Penanaman Modal</th>
-                          <th rowspan="2">Jenis Perusahaan</th>
-                          <th rowspan="2">NIB</th>
-                          <th rowspan="2">Uraian KBLI</th>
-                          <th rowspan="2">Sektor</th>
-                          <th rowspan="2">Alamat Proyek</th>
-                          <th rowspan="2">Luas Tanah</th>
-                          <th colspan="2">Jumlah Tenaga Kerja Indonesia</th>
-                          <th colspan="2">Jumlah Tenaga Kerja Asing</th>
-                          <th rowspan="2">Resiko</th>
-                          <th rowspan="2">Sumber Data</th>
-                          <th rowspan="2">Jumlah Investasi</th>
-                          <th colspan="2">Skala Usaha</th>
-                          <th rowspan="2">Penjadwalan</th>
-                          <th rowspan="2">Kewenangan Koordinator</th>
-                          <th rowspan="2">Kewenangan Pengawasan</th>
+                          <th class="w-1 align-middle" rowspan="2">No.</th>
+                          <th class="align-middle" rowspan="2">Perusahaan</th>
+                          <th class="bg-primary-lt border-end align-middle">Proyek & KBLI</th>
+                          <th class="bg-success-lt border-end align-middle">Tenaga Kerja</th>
                         </tr>
-                        <tr>
-                          <th>(L)</th>
-                          <th>(P)</th>
-                          <th>(L)</th>
-                          <th>(P)</th>
-                          <th>Perusahaan</th>
-                          <th>Proyek</th>
-                        </tr>
+                        
                       </thead>
                       <tbody class="font-monospace fs-5" >
                        @php
@@ -152,28 +129,35 @@
                         @endphp
                         <tr>
                           <td>{{ $loop->iteration + $items->firstItem()-1 }}</td>
-                          <td><a href="{{ url('/pengawasan/'.$item->nomor_kode_proyek) }}" class="btn btn-sm btn-outline-info btn-pill">{{ $item->nomor_kode_proyek }}</a></td>
-                          <td>{{ $item->nama_perusahaan }}</td>
-                          <td ><div class="text-wrap" style="width: 480px;">{{ $item->alamat_perusahaan }}</div></td>
-                          <td>{{ $item->status_penanaman_modal }}</td>
-                          <td>{{ $item->jenis_perusahaan }}</td>
-                          <td>{{ $item->nib }}</td>
-                          <td>{{ $item->kbli }} {{ $item->uraian_kbli }}</td>
-                          <td>{{ $item->sektor }}</td>
-                          <td><div class="text-wrap" style="width: 470px;">{{ $item->alamat_proyek}}, {{ $item->kelurahan_proyek }}, {{ $item->kecamatan_proyek }}, {{ $item->daerah_kabupaten_proyek }}, {{ $item->propinsi_proyek }}</div></td>
-                          <td>{{ $item->luas_tanah }} {{ $item->satuan_luas_tanah }}</td>
-                          <td>{{ $item->jumlah_tki_l }}</td>
-                          <td>{{ $item->jumlah_tki_p }}</td>
-                          <td>{{ $item->jumlah_tka_l }}</td>
-                          <td>{{ $item->jumlah_tka_p }}</td>
-                          <td>{{ $item->resiko }}</td>
-                          <td>{{ $item->sumber_data }}</td>
-                          <td>@currency($item->jumlah_investasi)</td>
-                          <td>{{ $item->skala_usaha_perusahaan}}</td>
-                          <td>{{ $item->skala_usaha_proyek}}</td>
-                          <td>{{ Carbon\Carbon::parse($item->hari_penjadwalan)->translatedFormat('d F Y') }}</td>
-                          <td>{{ $item->kewenangan_koordinator }}</td>
-                          <td>{{ $item->kewenangan_pengawasan }}</td>
+                          <td>
+                            <div>{{ $item->nama_perusahaan }}</div>
+                            <div class="text-wrap" style="width: 320px;">{{ $item->alamat_perusahaan }}</div>
+                            <div>NIB: {{ $item->nib }}</div>
+                            <div>Skala Usaha Perusahaan: {{ $item->skala_usaha_perusahaan}}</div>
+                            <div>Jenis Perusahaan: {{ $item->jenis_perusahaan }}</div>
+                            <div>Status Penanaman Modal: {{ $item->status_penanaman_modal }}</div>
+                          </td>
+                          <td class="bg-primary-lt border-end">
+                            <div>Nomor Kode Proyek: <a href="{{ url('/pengawasan/'.$item->nomor_kode_proyek) }}" class="btn btn-sm btn-outline-info btn-pill">{{ $item->nomor_kode_proyek }}</a></div>
+                            <div>Kode KBLI: {{ $item->kbli }}</div>
+                            <div>Uraian KBLI: {{ $item->uraian_kbli }}</div>
+                            <div>Sektor: {{ $item->sektor }}</div>
+                            <div class="text-wrap">Alamat Proyek: {{ $item->alamat_proyek}}, {{ $item->kelurahan_proyek }}, {{ $item->kecamatan_proyek }}, {{ $item->daerah_kabupaten_proyek }}, {{ $item->propinsi_proyek }}</div>
+                            <div>Luas Tanah: {{ $item->luas_tanah }} {{ $item->satuan_luas_tanah }}</div>
+                            <div>Skala Usaha Proyek: {{ $item->skala_usaha_proyek}}</div>
+                            <div>Resiko: {{ $item->resiko }}</div>
+                            <div>Jumlah Investasi: @currency($item->jumlah_investasi)</div>
+                            <div>Sumber Data: {{ $item->sumber_data }}</div>
+                            <div>Penjadwalan: {{ Carbon\Carbon::parse($item->hari_penjadwalan)->translatedFormat('d F Y') }}</div>
+                            <div>Kewenangan Koordinator: {{ $item->kewenangan_koordinator }}</div>
+                            <div>Kewenangan Pengawasan: {{ $item->kewenangan_pengawasan }}</div>
+                          </td>
+                          <td class="bg-success-lt border-end">
+                            <div>TKI (L): {{ $item->jumlah_tki_l }}</div>
+                            <div>TKI (P): {{ $item->jumlah_tki_p }}</div>
+                            <div>TKA (L): {{ $item->jumlah_tka_l }}</div>
+                            <div>TKA (P): {{ $item->jumlah_tka_p }}</div>
+                          </td>
                         </tr>
                         @endforeach
                         @if($items->count() == 0)
@@ -201,7 +185,7 @@
               $currentYear = date('Y'); // Tahun sekarang
               @endphp
               <div class="modal  fade" id="modal-team" tabindex="-1" role="dialog" aria-hidden="true">
-                <form method="post" action="{{ url('/imporpengawasan/import_excel')}}" enctype="multipart/form-data">
+                <form method="post" action="{{ url('/pengawasan/import_excel')}}" enctype="multipart/form-data">
                   {{ csrf_field() }}
                 <div class="modal-dialog modal-dialog-centered" role="document">
                   <div class="modal-content">
