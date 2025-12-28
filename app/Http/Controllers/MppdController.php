@@ -288,7 +288,7 @@ class MppdController extends Controller
 		$judul = 'Audit Import / Export MPPD';
 		$entries = DB::table('mppd_audits')->orderByDesc('id')->limit(500)->get()->map(function($row){
 			$filters = [];
-			try { $filters = $row->filters ? json_decode($row->filters, true) ?: [] : []; } catch(\Throwable $e) { $filters = []; }
+			try { $filters = $row->filters ? (json_decode($row->filters, true) ?: []) : []; } catch(\Throwable $_) { $filters = []; }
 			$row->failure_count = $filters['failure_count'] ?? null;
 			$row->aliases_used = $filters['aliases_used'] ?? null;
 			return $row;
