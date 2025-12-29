@@ -545,7 +545,9 @@
     </div>
   </div>
 </div>
-<script src="/js/chart-dashboard.js"></script>
+@push('scripts')
+<script src="{{ asset('/js/chart-dashboard.js') }}"></script>
+@endpush
 @endsection
 
 

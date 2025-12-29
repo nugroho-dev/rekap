@@ -43,6 +43,7 @@
         <!-- Page body -->
          @include('layouts.page-body')
         @include('layouts.footer')
+		@stack('scripts')
       </div>
     </div>
     <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
