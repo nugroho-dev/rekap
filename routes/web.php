@@ -45,6 +45,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\ProyekVerificationController;
 use App\Http\Controllers\NibController;
 use App\Http\Controllers\IzinController;
+use App\Http\Controllers\Admin\PublikasiDataController;
 
 /*
 |--------------------------------------------------------------------------
@@ -90,6 +91,18 @@ Route::middleware('auth')->group(function () {
         // User
         Route::get('user/checkSlug', [UsersDashboardController::class, 'checkSlug'])->name('user.checkSlug');
         Route::resource('user', UsersDashboardController::class)->names('user');
+
+        // Publikasi Data
+        Route::resource('publikasi-data', PublikasiDataController::class)
+            ->names([
+                'index' => 'admin.publikasi-data.index',
+                'create' => 'admin.publikasi-data.create',
+                'store' => 'admin.publikasi-data.store',
+                'edit' => 'admin.publikasi-data.edit',
+                'update' => 'admin.publikasi-data.update',
+                'destroy' => 'admin.publikasi-data.destroy',
+                'show' => 'admin.publikasi-data.show',
+            ]);
     });
 
     // Konsultasi

@@ -415,6 +415,9 @@
                       <a class="dropdown-item" href="{{ url('/konfigurasi/instansi') }}">
                         Instansi
                       </a>
+                      <a class="dropdown-item" href="{{ route('admin.publikasi-data.index') }}">
+                        Publikasi Data
+                      </a>
                       <a class="dropdown-item" href="{{ url('/dayoff') }}">
                         Hari Libur
                       </a>
