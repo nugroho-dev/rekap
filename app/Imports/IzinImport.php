@@ -7,10 +7,18 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Illuminate\Support\Collection;
 
-class IzinImport implements ToCollection, WithHeadingRow
+class IzinImport implements ToCollection, WithHeadingRow, WithChunkReading
 {
+    /**
+     * Untuk import data besar, gunakan chunk agar memory lebih efisien
+     */
+    public function chunkSize(): int
+    {
+        return 1000; // atau sesuaikan dengan resource server
+    }
     public function headingRow(): int
     {
         return 1;
@@ -48,7 +56,7 @@ class IzinImport implements ToCollection, WithHeadingRow
 
         $idPermohonan = $get(['id_permohonan_izin', 'Id Permohonan Izin', 'id permohonan izin']);
         $namaPerusahaan = $get(['nama_perusahaan', 'Nama Perusahaan']);
-        $nib = $get(['nib', 'NIB']);
+        $nib = $get(['nib', 'NIB', 'Nib']);
         $kbli = $get(['kbli', 'KBLI']);
         $idProyek = $get(['id_proyek', 'Id Proyek', 'id proyek']);
         $kdResiko = $get(['kd_resiko', 'Kd Resiko', 'kd_resiko_kegiatan']);
@@ -56,7 +64,9 @@ class IzinImport implements ToCollection, WithHeadingRow
         $kewenangan = $get(['kewenangan', 'Kewenangan']);
         $klSektor = $get(['kl_sektor', 'KL Sektor']);
         $propinsi = $get(['propinsi', 'Provinsi', 'Propinsi']);
-        $kabKota = $get(['kab_kota', 'Kab/Kota', 'Kabupaten/Kota']);
+        $kabKota = $get(['kab_kota', 'Kab/Kota', 'Kabupaten/Kota', 'Kab Kota']);
+        $kecamatan = $get(['kecamatan', 'Kecamatan',]);
+        $kelurahan = $get(['kelurahan', 'Kelurahan']);
         $uraianJenisPerizinan = $get(['uraian_jenis_perizinan', 'Uraian Jenis Perizinan']);
         $namaDokumen = $get(['nama_dokumen', 'Nama Dokumen']);
         $uraianKewenangan = $get(['uraian_kewenangan', 'Uraian Kewenangan']);
@@ -81,6 +91,8 @@ class IzinImport implements ToCollection, WithHeadingRow
             'kl_sektor' => $this->str($klSektor),
             'propinsi' => $this->str($propinsi),
             'kab_kota' => $this->str($kabKota),
+            'kecamatan' => $this->str($kecamatan),
+            'kelurahan' => $this->str($kelurahan),
             'uraian_jenis_perizinan' => $this->str($uraianJenisPerizinan),
             'nama_dokumen' => $this->str($namaDokumen),
             'uraian_kewenangan' => $this->str($uraianKewenangan),
