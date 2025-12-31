@@ -1,46 +1,91 @@
-@extends('layouts.app')
+@extends('layouts.tableradminfluid')
 @section('title', 'Edit Jenis Informasi')
 @section('content')
-<div class="container">
-    <h1 class="mb-4">Edit Jenis Informasi</h1>
-    <form action="{{ route('admin.publikasi-data.update', $jenis->id) }}" method="POST">
-        @csrf
-        @method('PUT')
-        <div class="mb-3">
-            <label for="kategori_id" class="form-label">Kategori</label>
-            <select name="kategori_id" id="kategori_id" class="form-select" required>
-                <option value="">Pilih Kategori</option>
-                @foreach($kategori as $kat)
-                    <option value="{{ $kat->id }}" {{ $jenis->kategori_id == $kat->id ? 'selected' : '' }}>{{ $kat->nama }}</option>
-                @endforeach
-            </select>
+<div class="page-wrapper">
+        <div class="page-header d-print-none">
+            <div class="container-xl">
+                <div class="row g-2 align-items-center">
+                    <div class="col">
+                        <h2 class="page-title">
+                            Edit Jenis Informasi
+                        </h2>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="mb-3">
-            <label for="label" class="form-label">Label</label>
-            <input type="text" name="label" id="label" class="form-control" required value="{{ old('label', $jenis->label) }}">
+        <div class="page-body">
+            <div class="container-xl">
+                <div class="row row-cards">
+                    <div class="col-lg-8 mx-auto">
+                        <div class="card card-lg">
+                            <div class="card-body">
+                                <form method="POST" action="{{ url('konfigurasi/publikasi/'.$jenis->id) }}">
+                                    @csrf
+                                    @method('PUT')
+                                    <div class="mb-3">
+                                        <label class="form-label">Kategori</label>
+                                        <select name="kategori_id" class="form-select" required>
+                                            <option value="">Pilih Kategori</option>
+                                            @foreach($kategori as $kat)
+                                                <option value="{{ $kat->id }}" {{ old('kategori_id', $jenis->kategori_id) == $kat->id ? 'selected' : '' }}>{{ $kat->nama }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('kategori_id')
+                                            <small class="form-hint text-danger">{{ $message }}</small>
+                                        @enderror
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Label</label>
+                                        <input type="text" class="form-control" name="label" value="{{ old('label', $jenis->label) }}" required>
+                                        @error('label')
+                                            <small class="form-hint text-danger">{{ $message }}</small>
+                                        @enderror
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Model</label>
+                                        <input type="text" class="form-control" name="model" value="{{ old('model', $jenis->model) }}">
+                                        @error('model')
+                                            <small class="form-hint text-danger">{{ $message }}</small>
+                                        @enderror
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Icon</label>
+                                        <input type="text" class="form-control" name="icon" value="{{ old('icon', $jenis->icon) }}">
+                                        @error('icon')
+                                            <small class="form-hint text-danger">{{ $message }}</small>
+                                        @enderror
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Link API</label>
+                                        <input type="text" class="form-control" name="link_api" value="{{ old('link_api', $jenis->link_api) }}">
+                                        @error('link_api')
+                                            <small class="form-hint text-danger">{{ $message }}</small>
+                                        @enderror
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Dataset</label>
+                                        <input type="text" class="form-control" name="dataset" value="{{ old('dataset', $jenis->dataset) }}">
+                                        @error('dataset')
+                                            <small class="form-hint text-danger">{{ $message }}</small>
+                                        @enderror
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Urutan</label>
+                                        <input type="number" class="form-control" name="urutan" value="{{ old('urutan', $jenis->urutan) }}">
+                                        @error('urutan')
+                                            <small class="form-hint text-danger">{{ $message }}</small>
+                                        @enderror
+                                    </div>
+                                    <div class="text-end">
+                                        <button type="submit" class="btn btn-primary">Update</button>
+                                        <a href="{{ url('konfigurasi/publikasi') }}" class="btn btn-secondary">Batal</a>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="mb-3">
-            <label for="model" class="form-label">Model</label>
-            <input type="text" name="model" id="model" class="form-control" value="{{ old('model', $jenis->model) }}">
-        </div>
-        <div class="mb-3">
-            <label for="icon" class="form-label">Icon</label>
-            <input type="text" name="icon" id="icon" class="form-control" value="{{ old('icon', $jenis->icon) }}">
-        </div>
-        <div class="mb-3">
-            <label for="link_api" class="form-label">Link API</label>
-            <input type="text" name="link_api" id="link_api" class="form-control" value="{{ old('link_api', $jenis->link_api) }}">
-        </div>
-        <div class="mb-3">
-            <label for="dataset" class="form-label">Dataset</label>
-            <input type="text" name="dataset" id="dataset" class="form-control" value="{{ old('dataset', $jenis->dataset) }}">
-        </div>
-        <div class="mb-3">
-            <label for="urutan" class="form-label">Urutan</label>
-            <input type="number" name="urutan" id="urutan" class="form-control" value="{{ old('urutan', $jenis->urutan) }}">
-        </div>
-        <button type="submit" class="btn btn-primary">Update</button>
-        <a href="{{ route('admin.publikasi-data.index') }}" class="btn btn-secondary">Batal</a>
-    </form>
 </div>
 @endsection

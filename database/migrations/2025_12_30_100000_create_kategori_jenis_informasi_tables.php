@@ -22,7 +22,7 @@ return new class extends Migration
             $table->foreign('kategori_id')->references('id')->on('kategori_informasi')->onDelete('cascade');
             $table->string('label');
             $table->string('model')->nullable(); // nama model/data terkait
-            $table->string('icon')->nullable();
+            $table->text('icon')->nullable();
             $table->string('link_api')->nullable();
             $table->string('dataset')->nullable();
             $table->integer('urutan')->default(0);

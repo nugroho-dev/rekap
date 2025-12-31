@@ -74,6 +74,17 @@ Route::middleware('auth')->group(function () {
 
     // konfigurasi group (pegawai, instansi, user)
     Route::prefix('konfigurasi')->name('konfigurasi.')->group(function () {
+        // Kategori Informasi
+        Route::resource('kategori-informasi', \App\Http\Controllers\Admin\KategoriInformasiController::class)
+            ->names([
+                'index' => 'admin.kategori-informasi.index',
+                'create' => 'admin.kategori-informasi.create',
+                'store' => 'admin.kategori-informasi.store',
+                'edit' => 'admin.kategori-informasi.edit',
+                'update' => 'admin.kategori-informasi.update',
+                'destroy' => 'admin.kategori-informasi.destroy',
+                'show' => 'admin.kategori-informasi.show',
+            ]);
 
         // Pegawai
         Route::get('pegawai/checkSlug', [PegawaiController::class, 'checkSlug'])->name('pegawai.checkSlug');
@@ -93,16 +104,13 @@ Route::middleware('auth')->group(function () {
         Route::resource('user', UsersDashboardController::class)->names('user');
 
         // Publikasi Data
-        Route::resource('publikasi-data', PublikasiDataController::class)
-            ->names([
-                'index' => 'admin.publikasi-data.index',
-                'create' => 'admin.publikasi-data.create',
-                'store' => 'admin.publikasi-data.store',
-                'edit' => 'admin.publikasi-data.edit',
-                'update' => 'admin.publikasi-data.update',
-                'destroy' => 'admin.publikasi-data.destroy',
-                'show' => 'admin.publikasi-data.show',
-            ]);
+        Route::match(['get','post'], 'publikasi', [PublikasiDataController::class, 'index'])->name('admin.publikasi.index');
+        Route::get('publikasi/create', [PublikasiDataController::class, 'create'])->name('admin.publikasi.create');
+        Route::post('publikasi', [PublikasiDataController::class, 'store'])->name('admin.publikasi.store');
+        Route::get('publikasi/{publikasi_data}/edit', [PublikasiDataController::class, 'edit'])->name('admin.publikasi.edit');
+        Route::put('publikasi/{publikasi_data}', [PublikasiDataController::class, 'update'])->name('admin.publikasi.update');
+        Route::delete('publikasi/{publikasi_data}', [PublikasiDataController::class, 'destroy'])->name('admin.publikasi.destroy');
+        Route::get('publikasi/{publikasi_data}', [PublikasiDataController::class, 'show'])->name('admin.publikasi.show');
     });
 
     // Konsultasi

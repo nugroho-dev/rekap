@@ -1,9 +1,9 @@
-@extends('layouts.app')
+@extends('layouts.tableradminfluid')
 @section('title', 'Publikasi Data')
 @section('content')
 <div class="container">
     <h1 class="mb-4">Publikasi Data</h1>
-    <a href="{{ route('admin.publikasi-data.create') }}" class="btn btn-primary mb-3">Tambah Jenis Informasi</a>
+    <a href="{{ url('konfigurasi/publikasi/create') }}" class="btn btn-primary mb-3">Tambah Jenis Informasi</a>
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
@@ -31,13 +31,13 @@
                         <tr>
                             <td>{{ $jenis->label }}</td>
                             <td>{{ $jenis->model }}</td>
-                            <td>{{ $jenis->icon }}</td>
+                            <td>{!! $jenis->icon !!}</td>
                             <td>{{ $jenis->link_api }}</td>
                             <td>{{ $jenis->dataset }}</td>
                             <td>{{ $jenis->urutan }}</td>
                             <td>
-                                <a href="{{ route('admin.publikasi-data.edit', $jenis->id) }}" class="btn btn-sm btn-warning">Edit</a>
-                                <form action="{{ route('admin.publikasi-data.destroy', $jenis->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Yakin hapus?')">
+                                <a href="{{ url('konfigurasi/publikasi/' . $jenis->id . '/edit') }}" class="btn btn-sm btn-warning">Edit</a>
+                                <form action="{{ url('konfigurasi/publikasi/' . $jenis->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Yakin hapus?')">
                                     @csrf
                                     @method('DELETE')
                                     <button class="btn btn-sm btn-danger">Hapus</button>
