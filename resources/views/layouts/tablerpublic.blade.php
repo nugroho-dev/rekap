@@ -31,7 +31,7 @@
   </head>
   <body >
     <script src="{{ asset('tabler/dist/js/demo-theme.min.js?1684106062') }}"></script>
-    <div class="page">
+    <div class="layout-fluid">
       <!-- Navbar -->
       @include('layouts.navbarpublic')
       
