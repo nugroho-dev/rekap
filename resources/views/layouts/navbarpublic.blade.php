@@ -163,9 +163,14 @@
           <div class="container-xl">
             <div class="row flex-fill align-items-center">
               <div class="col">
+                @php
+                  $navKategori = \App\Models\KategoriInformasi::with(['jenisInformasi' => function($q){ 
+                    $q->orderBy('urutan'); 
+                  }])->orderBy('urutan')->get();
+                @endphp
                 <ul class="navbar-nav">
-                  <li class="nav-item">
-                    <a class="nav-link" href="./" >
+                  <li class="nav-item {{ request()->is('/') ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ url('/') }}" >
                       <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/home -->
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l-2 0l9 -9l9 9l-2 0" /><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" /><path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" /></svg>
                       </span>
@@ -174,202 +179,79 @@
                       </span>
                     </a>
                   </li>
-                  <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#navbar-base" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
-                      <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/package -->
-                        <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-clock-dollar"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M20.866 10.45a9 9 0 1 0 -7.815 10.488" /><path d="M12 7v5l1.5 1.5" /><path d="M21 15h-2.5a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-2.5" /><path d="M19 21v1m0 -8v1" /></svg>
-                      </span>
-                      <span class="nav-link-title">
-                        Investasi
-                      </span>
-                    </a>
-                    <div class="dropdown-menu">
-                      <div class="dropdown-menu-columns">
-                        <div class="dropdown-menu-column">
-                          
-                          <div class="dropend">
-                            <a class="dropdown-item dropdown-toggle" href="#sidebar-cards" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
-                              Investasi
-                            
-                            </a>
-                            <div class="dropdown-menu">
-                              <a href="./cards.html" class="dropdown-item">
-                                Data Proyek
-                              </a>
-                              <a href="./card-actions.html" class="dropdown-item">
-                                Data LKPM
-                                
-                              </a>
-                              <a href="./cards-masonry.html" class="dropdown-item">
-                                Data LKPM Usaha Mikro
-                              </a>
-                            </div>
-                          </div>
-                          <a class="dropdown-item" href="./colors.html">
-                            Data Investor
-                          </a>
-                          
-                        </div>
-                      
-                      </div>
-                    </div>
-                  </li>
-                  <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#navbar-extra" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
-                      <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/star -->
-                        <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-license"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 21h-9a3 3 0 0 1 -3 -3v-1h10v2a2 2 0 0 0 4 0v-14a2 2 0 1 1 2 2h-2m2 -4h-11a3 3 0 0 0 -3 3v11" /><path d="M9 7l4 0" /><path d="M9 11l4 0" /></svg>
-                      </span>
-                      <span class="nav-link-title">
-                        Perizinan
-                      </span>
-                    </a>
-                    <div class="dropdown-menu">
-                      <div class="dropdown-menu-columns">
-                        <div class="dropdown-menu-column">
-                          <a class="dropdown-item" href="./empty.html">
-                            Berusaha
-                          </a>
-                          <div class="dropend">
-                            <a class="dropdown-item dropdown-toggle" href="#sidebar-cards" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
-                            Non Berusaha
-                            </a>
-                            <div class="dropdown-menu">
-                              <a href="./cards.html" class="dropdown-item">
-                                Data SiCantik
-                              </a>
-                              <a href="./card-actions.html" class="dropdown-item">
-                                Data Simpel
-                              </a>
-                              <a href="./cards-masonry.html" class="dropdown-item">
-                                Data SiMBG
-                              </a>
-                              <a href="./cards-masonry.html" class="dropdown-item">
-                                Data MPP Digital
-                              </a>
+                  
+                  @foreach($navKategori as $kat)
+                    @if($kat->jenisInformasi->isNotEmpty())
+                      <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#navbar-{{ Str::slug($kat->nama) }}" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
+                          <span class="nav-link-icon d-md-none d-lg-inline-block">
+                            @if($kat->icon)
+                              {!! $kat->icon !!}
+                            @else
+                              <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 7m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" /><path d="M8 7v-2a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2v2" /><path d="M12 12l0 .01" /><path d="M3 13a20 20 0 0 0 18 0" /></svg>
+                            @endif
+                          </span>
+                          <span class="nav-link-title">
+                            {{ $kat->nama }}
+                          </span>
+                        </a>
+                        <div class="dropdown-menu">
+                          <div class="dropdown-menu-columns">
+                            <div class="dropdown-menu-column">
+                              @foreach($kat->jenisInformasi as $jenis)
+                                @if($jenis->link_api)
+                                  <a class="dropdown-item" href="{{ $jenis->link_api }}" target="_blank">
+                                    @if($jenis->icon)
+                                      <span class="me-2">{!! $jenis->icon !!}</span>
+                                    @endif
+                                    {{ $jenis->label }}
+                                    @if($jenis->jumlah)
+                                      <span class="badge bg-primary ms-2">{{ number_format($jenis->jumlah) }}</span>
+                                    @endif
+                                  </a>
+                                @elseif($jenis->dataset)
+                                  <a class="dropdown-item" href="{{ $jenis->dataset }}" target="_blank">
+                                    @if($jenis->icon)
+                                      <span class="me-2">{!! $jenis->icon !!}</span>
+                                    @endif
+                                    {{ $jenis->label }}
+                                    @if($jenis->jumlah)
+                                      <span class="badge bg-primary ms-2">{{ number_format($jenis->jumlah) }}</span>
+                                    @endif
+                                  </a>
+                                @else
+                                  <span class="dropdown-item text-muted disabled">
+                                    @if($jenis->icon)
+                                      <span class="me-2">{!! $jenis->icon !!}</span>
+                                    @endif
+                                    {{ $jenis->label }}
+                                    @if($jenis->jumlah)
+                                      <span class="badge bg-secondary ms-2">{{ number_format($jenis->jumlah) }}</span>
+                                    @endif
+                                  </span>
+                                @endif
+                              @endforeach
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  </li>
-                  <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
-                      <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v1a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" /><path d="M4 13m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v3a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" /><path d="M14 4m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v3a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" /><path d="M14 15m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v1a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" /></svg>
-                      </span>
-                      <span class="nav-link-title">
-                        Pelayanan
-                      </span>
-                    </a>
-                    <div class="dropdown-menu">
-                      <div class="dropdown-menu-columns">
-                        <div class="dropdown-menu-column">
-                          <a class="dropdown-item" href="./layout-horizontal.html">
-                            Data Konsultasi
-                          </a>
-                          <a class="dropdown-item" href="./layout-boxed.html">
-                            Data Komitmen
-                          </a>
-                          <a class="dropdown-item" href="./layout-vertical.html">
-                            Data Pengaduan
-                          </a>
-                          <a class="dropdown-item" href="./layout-vertical-transparent.html">
-                            Data Fasilitasi / Insentif
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-                  <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#navbar-extra" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
-                      <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/star -->
-                        <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-align-box-left-stretch"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 5a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14z" /><path d="M9 17h-2" /><path d="M13 12h-6" /><path d="M11 7h-4" /></svg>
-                      </span>
-                      <span class="nav-link-title">
-                        Pembinaan
-                      </span>
-                    </a>
-                    <div class="dropdown-menu">
-                      <div class="dropdown-menu-columns">
-                        <div class="dropdown-menu-column">
-                          <a class="dropdown-item" href="./empty.html">
-                            Pengawasan
-                          </a>
-                          <div class="dropend">
-                            <a class="dropdown-item dropdown-toggle" href="#sidebar-cards" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
-                            Pembinaan
-                            </a>
-                            <div class="dropdown-menu">
-                              <a href="./cards.html" class="dropdown-item">
-                                Bimbingan Teknis
-                              </a>
-                              <a href="./card-actions.html" class="dropdown-item">
-                                Fasilitasi Permasalahan
-                              </a>
-                              
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-                  <li class="nav-item active dropdown">
-                    <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
-                      <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
-                        <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="currentColor"  class="icon icon-tabler icons-tabler-filled icon-tabler-badge-ad"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19 4a3 3 0 0 1 3 3v10a3 3 0 0 1 -3 3h-14a3 3 0 0 1 -3 -3v-10a3 3 0 0 1 3 -3zm-4 4h-1a1 1 0 0 0 -1 1v6a1 1 0 0 0 1 1h1a3 3 0 0 0 3 -3v-2a3 3 0 0 0 -3 -3m-6.5 0a2.5 2.5 0 0 0 -2.5 2.5v4.5a1 1 0 0 0 2 0v-1h1v1a1 1 0 0 0 .883 .993l.117 .007a1 1 0 0 0 1 -1v-4.5a2.5 2.5 0 0 0 -2.5 -2.5m6.5 2a1 1 0 0 1 1 1v2a1 1 0 0 1 -.883 .993l-.117 .007zm-6.5 0a.5 .5 0 0 1 .5 .5v1.5h-1v-1.5a.5 .5 0 0 1 .41 -.492z" /></svg>
-                      </span>
-                      <span class="nav-link-title">
-                        Promosi
-                      </span>
-                    </a>
-                    <div class="dropdown-menu">
-                      <div class="dropdown-menu-columns">
-                        <div class="dropdown-menu-column">
-                            <div class="dropend">
-                                <a class="dropdown-item dropdown-toggle" href="#sidebar-cards" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
-                                Promosi Investasi
-                                </a>
-                                <div class="dropdown-menu">
-                                  <a href="./cards.html" class="dropdown-item">
-                                    LOI
-                                  </a>
-                                  <a href="./card-actions.html" class="dropdown-item">
-                                    Pameran
-                                  </a>
-                                  <a href="./card-actions.html" class="dropdown-item">
-                                    Business Meeting
-                                  </a>
-                                </div>
-                              </div>
-                          <a class="dropdown-item" href="./layout-boxed.html">
-                            Pemetaan Potensi Invstasi
-                          </a>
-                          
-                        </div>
-                        
-                      </div>
-                    </div>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link" href="./" >
-                      <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/home -->
-                        <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-gavel"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M13 10l7.383 7.418c.823 .82 .823 2.148 0 2.967a2.11 2.11 0 0 1 -2.976 0l-7.407 -7.385" /><path d="M6 9l4 4" /><path d="M13 10l-4 -4" /><path d="M3 21h7" /><path d="M6.793 15.793l-3.586 -3.586a1 1 0 0 1 0 -1.414l2.293 -2.293l.5 .5l3 -3l-.5 -.5l2.293 -2.293a1 1 0 0 1 1.414 0l3.586 3.586a1 1 0 0 1 0 1.414l-2.293 2.293l-.5 -.5l-3 3l.5 .5l-2.293 2.293a1 1 0 0 1 -1.414 0z" /></svg>
-                      </span>
-                      <span class="nav-link-title">
-                        Produk Hukum
-                      </span>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link" href="./" >
-                      <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/home -->
-                        <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-share"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M18 6m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M18 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M8.7 10.7l6.6 -3.4" /><path d="M8.7 13.3l6.6 3.4" /></svg>
-                      </span>
-                      <span class="nav-link-title">
-                        API
-                      </span>
-                    </a>
-                  </li>
+                      </li>
+                    @else
+                      <li class="nav-item">
+                        <a class="nav-link text-muted" href="#" >
+                          <span class="nav-link-icon d-md-none d-lg-inline-block">
+                            @if($kat->icon)
+                              {!! $kat->icon !!}
+                            @else
+                              <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 7m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" /></svg>
+                            @endif
+                          </span>
+                          <span class="nav-link-title">
+                            {{ $kat->nama }}
+                          </span>
+                        </a>
+                      </li>
+                    @endif
+                  @endforeach
                 </ul>
               </div>
               <div class="col-2 d-none d-xxl-block">
