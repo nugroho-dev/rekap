@@ -117,13 +117,6 @@ class MppdImport implements ToModel, WithHeadingRow, WithValidation, WithBatchIn
                 return null;
             }
 
-            // First try Carbon's parser for common formats (ISO, English months, etc.)
-            try {
-                return Carbon::parse($str)->toDateString();
-            } catch (\Throwable $e) {
-                // fall through to Indonesian month handling
-            }
-
             // Handle Indonesian month names like "02 Oktober 2025" (with optional leading zeros)
             $bulan = [
                 'januari' => 1, 'jan' => 1,
@@ -140,6 +133,16 @@ class MppdImport implements ToModel, WithHeadingRow, WithValidation, WithBatchIn
                 'november' => 11, 'nov' => 11,
                 'desember' => 12, 'des' => 12,
             ];
+
+            // Pattern: ISO-like yyyy-mm-dd or yyyy/mm/dd or yyyy.mm.dd
+            if (preg_match('/^(\d{4})[\-\/.](\d{1,2})[\-\/.](\d{1,2})$/', $str, $m)) {
+                $y = (int) $m[1];
+                $mm = (int) $m[2];
+                $d = (int) $m[3];
+                if ($mm >= 1 && $mm <= 12 && $d >= 1 && $d <= 31) {
+                    return sprintf('%04d-%02d-%02d', $y, $mm, $d);
+                }
+            }
 
             // Pattern: d{1,2} <bulan> yyyy (case-insensitive)
             if (preg_match('/^(\d{1,2})\s+([\p{L}\.]+)\s+(\d{2,4})$/ui', $str, $m)) {
@@ -163,6 +166,15 @@ class MppdImport implements ToModel, WithHeadingRow, WithValidation, WithBatchIn
                 if ($y < 100) { $y += ($y >= 70 ? 1900 : 2000); }
                 if ($mm >= 1 && $mm <= 12 && $d >= 1 && $d <= 31) {
                     return sprintf('%04d-%02d-%02d', $y, $mm, $d);
+                }
+            }
+
+            // As a last resort, try Carbon only if an explicit 4-digit year exists
+            if (preg_match('/\b\d{4}\b/', $str)) {
+                try {
+                    return Carbon::parse($str)->toDateString();
+                } catch (\Throwable $e) {
+                    // fall through
                 }
             }
 
