@@ -67,6 +67,11 @@ Route::post('/send-mail/{id}', [MailController::class, 'index']);
 // Public Statistik SiCantik (controller)
 Route::get('/statistik-sicantik', [\App\Http\Controllers\PublicStatistikSicantikController::class, 'index'])->name('public.statistik.sicantik');
 
+// Public Statistik MPPD
+Route::get('/statistik-mppd', [\App\Http\Controllers\MppdController::class, 'statistik_public'])->name('public.statistik.mppd');
+// Public Statistik Simpel (Izin Pemakaman)
+Route::get('/statistik-simpel', [\App\Http\Controllers\DashboradSimpelController::class, 'statistik_public'])->name('public.statistik.simpel');
+
 /*
 |--------------------------------------------------------------------------
 | Authenticated routes

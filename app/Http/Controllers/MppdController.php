@@ -296,6 +296,175 @@ class MppdController extends Controller
 		return view('admin.nonberusaha.mppd.audits', compact('judul','entries'));
 	}
 
+	public function statistik_public(Request $request)
+	{
+		$judul = 'Statistik MPP Digital';
+		$now = Carbon::now();
+		$year = $request->input('year', $now->year);
+		$semester = $request->input('semester');
+		
+		// Determine month range based on semester
+		if($semester === '1') {
+			$monthStart = 1; $monthEnd = 6;
+		} elseif($semester === '2') {
+			$monthStart = 7; $monthEnd = 12;
+		} else {
+			$monthStart = 1; $monthEnd = 12;
+		}
+		
+		// Get available years
+		$availableYears = Mppd::selectRaw('YEAR(tanggal_sip) as year')
+			->whereNotNull('tanggal_sip')
+			->distinct()
+			->orderByDesc('year')
+			->pluck('year')
+			->toArray();
+		if(empty($availableYears)) $availableYears = [$now->year];
+		
+		// Total count for selected year
+		$total = Mppd::whereYear('tanggal_sip', $year)->count();
+		
+		// Profession stats (like jenis_izin in sicantik)
+		$stats = Mppd::selectRaw('profesi, COUNT(*) as jumlah, MAX(updated_at) as last_update')
+			->whereYear('tanggal_sip', $year)
+			->groupBy('profesi')
+			->orderByDesc('jumlah')
+			->get();
+		
+		// Monthly counts
+		$monthlyRaw = Mppd::selectRaw('MONTH(tanggal_sip) as bulan, COUNT(*) as jumlah')
+			->whereYear('tanggal_sip', $year)
+			->whereRaw('MONTH(tanggal_sip) BETWEEN ? AND ?', [$monthStart, $monthEnd])
+			->groupByRaw('MONTH(tanggal_sip)')
+			->get();
+		$monthlyCounts = [];
+		foreach($monthlyRaw as $mr){
+			$monthlyCounts[(int)$mr->bulan] = $mr->jumlah;
+		}
+		$totalTerbit = array_sum($monthlyCounts);
+		
+		// Daily counts by month
+		$dailyRaw = Mppd::selectRaw('MONTH(tanggal_sip) as bulan, DAY(tanggal_sip) as hari, COUNT(*) as jumlah')
+			->whereYear('tanggal_sip', $year)
+			->whereRaw('MONTH(tanggal_sip) BETWEEN ? AND ?', [$monthStart, $monthEnd])
+			->groupByRaw('MONTH(tanggal_sip), DAY(tanggal_sip)')
+			->get();
+		$dailyCountsByMonth = [];
+		foreach($dailyRaw as $dr){
+			if(!isset($dailyCountsByMonth[$dr->bulan])) $dailyCountsByMonth[$dr->bulan] = [];
+			$dailyCountsByMonth[$dr->bulan][$dr->hari] = $dr->jumlah;
+		}
+		
+		// Profession daily by month (for drilldown)
+		$profesiDailyRaw = Mppd::selectRaw('MONTH(tanggal_sip) as bulan, DAY(tanggal_sip) as hari, profesi, COUNT(*) as jumlah')
+			->whereYear('tanggal_sip', $year)
+			->whereRaw('MONTH(tanggal_sip) BETWEEN ? AND ?', [$monthStart, $monthEnd])
+			->groupByRaw('MONTH(tanggal_sip), DAY(tanggal_sip), profesi')
+			->get();
+		$profesiDailyByMonth = [];
+		foreach($profesiDailyRaw as $pdr){
+			if(!isset($profesiDailyByMonth[$pdr->bulan])) $profesiDailyByMonth[$pdr->bulan] = [];
+			if(!isset($profesiDailyByMonth[$pdr->bulan][$pdr->hari])) $profesiDailyByMonth[$pdr->bulan][$pdr->hari] = [];
+			$profesiDailyByMonth[$pdr->bulan][$pdr->hari][$pdr->profesi] = $pdr->jumlah;
+		}
+		
+		// Profession by month
+		$profesiByMonthRaw = Mppd::selectRaw('MONTH(tanggal_sip) as bulan, profesi, COUNT(*) as jumlah')
+			->whereYear('tanggal_sip', $year)
+			->whereRaw('MONTH(tanggal_sip) BETWEEN ? AND ?', [$monthStart, $monthEnd])
+			->groupByRaw('MONTH(tanggal_sip), profesi')
+			->get();
+		$profesiByMonth = [];
+		$allProfesi = [];
+		foreach($profesiByMonthRaw as $pbmr){
+			if(!isset($profesiByMonth[$pbmr->profesi])) {
+				$profesiByMonth[$pbmr->profesi] = [];
+				$allProfesi[] = $pbmr->profesi;
+			}
+			$profesiByMonth[$pbmr->profesi][(int)$pbmr->bulan] = $pbmr->jumlah;
+		}
+		// Sort profesi by total descending
+		usort($allProfesi, function($a,$b) use ($profesiByMonth){
+			$sumA = array_sum($profesiByMonth[$a] ?? []);
+			$sumB = array_sum($profesiByMonth[$b] ?? []);
+			return $sumB - $sumA;
+		});
+		
+		// Prepare month labels & profesi series
+		$months = range($monthStart, $monthEnd);
+		$monthLabels = [];
+		foreach($months as $m){
+			$monthLabels[] = Carbon::createFromDate(null,$m,1)->translatedFormat('F');
+		}
+		$profesiSeries = [];
+		foreach($allProfesi as $p){
+			$profesiSeries[$p] = [];
+			foreach($months as $m){
+				$profesiSeries[$p][] = (int)($profesiByMonth[$p][$m] ?? 0);
+			}
+		}
+		
+		// Weekday counts
+		$weekdayRaw = Mppd::selectRaw('WEEKDAY(tanggal_sip) as dow, COUNT(*) as jumlah')
+			->whereYear('tanggal_sip', $year)
+			->groupByRaw('WEEKDAY(tanggal_sip)')
+			->get();
+		$weekdayCounts = [0,0,0,0,0,0,0]; // Mon-Sun
+		foreach($weekdayRaw as $wr){
+			$weekdayCounts[$wr->dow] = $wr->jumlah;
+		}
+		
+		// Top profesi for donut
+		$topProfesi = [];
+		foreach($stats->take(10) as $s){
+			$topProfesi[] = ['name' => $s->profesi ?: 'Tidak Diketahui', 'y' => $s->jumlah];
+		}
+		
+		// Yearly counts
+		$yearlyRaw = Mppd::selectRaw('YEAR(tanggal_sip) as tahun, COUNT(*) as jumlah')
+			->whereNotNull('tanggal_sip')
+			->groupByRaw('YEAR(tanggal_sip)')
+			->orderBy('tahun')
+			->get();
+		$yearlyCounts = [];
+		foreach($yearlyRaw as $yr){
+			$yearlyCounts[$yr->tahun] = $yr->jumlah;
+		}
+		
+		// Profession by year (for stacked chart if needed)
+		$profesiByYearRaw = Mppd::selectRaw('YEAR(tanggal_sip) as tahun, profesi, COUNT(*) as jumlah')
+			->whereNotNull('tanggal_sip')
+			->groupByRaw('YEAR(tanggal_sip), profesi')
+			->get();
+		$profesiByYear = [];
+		foreach($profesiByYearRaw as $pbyr){
+			if(!isset($profesiByYear[$pbyr->profesi])) $profesiByYear[$pbyr->profesi] = [];
+			$profesiByYear[$pbyr->profesi][$pbyr->tahun] = $pbyr->jumlah;
+		}
+		$profesiSeriesByYear = [];
+		foreach($allProfesi as $p){
+			$profesiSeriesByYear[$p] = [];
+			foreach($availableYears as $y){
+				$profesiSeriesByYear[$p][] = (int)($profesiByYear[$p][$y] ?? 0);
+			}
+		}
+		
+		// Month names in Indonesian
+		$bulanNames = [
+			1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+			5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+			9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+		];
+		
+		return view('publicviews.statistik.mppd', compact(
+			'judul', 'stats', 'total', 'year', 'semester', 'monthStart', 'monthEnd',
+			'monthlyCounts', 'totalTerbit', 'bulanNames', 'availableYears',
+			'dailyCountsByMonth', 'yearlyCounts', 'profesiByMonth', 'allProfesi',
+			'profesiDailyByMonth', 'months', 'monthLabels', 'profesiSeries',
+			'weekdayCounts', 'topProfesi', 'profesiSeriesByYear'
+		));
+	}
+
 	public function upload_file(Request $request)
 	{
 		$request->validate([
