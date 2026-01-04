@@ -809,5 +809,6 @@
       });
       // @formatter:on
     </script>
+		@stack('scripts')
   </body>
 </html>

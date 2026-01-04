@@ -200,7 +200,7 @@
                             <div class="dropdown-menu-column">
                               @foreach($kat->jenisInformasi as $jenis)
                                 @if($jenis->link_api)
-                                  <a class="dropdown-item" href="{{ $jenis->link_api }}" target="_blank">
+                                  <a class="dropdown-item" href="{{ url($jenis->link_api) }}" target="_blank">
                                     @if($jenis->icon)
                                       <span class="me-2">{!! $jenis->icon !!}</span>
                                     @endif
@@ -210,7 +210,7 @@
                                     @endif
                                   </a>
                                 @elseif($jenis->dataset)
-                                  <a class="dropdown-item" href="{{ $jenis->dataset }}" target="_blank">
+                                  <a class="dropdown-item" href="{{ url($jenis->dataset) }}" target="_blank">
                                     @if($jenis->icon)
                                       <span class="me-2">{!! $jenis->icon !!}</span>
                                     @endif

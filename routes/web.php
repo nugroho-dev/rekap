@@ -46,6 +46,8 @@ use App\Http\Controllers\ProyekVerificationController;
 use App\Http\Controllers\NibController;
 use App\Http\Controllers\IzinController;
 use App\Http\Controllers\Admin\PublikasiDataController;
+use App\Models\Proses;
+use Illuminate\Support\Facades\DB;
 
 /*
 |--------------------------------------------------------------------------
@@ -61,6 +63,9 @@ Route::match(['get','post'], '/kirim/dokumen/{id}', [SicantikApiController::clas
 Route::get('/kirim/{id}', [SicantikApiController::class, 'kirim']);
 Route::get('/send-mail', [MailController::class, 'index']);
 Route::post('/send-mail/{id}', [MailController::class, 'index']);
+
+// Public Statistik SiCantik (controller)
+Route::get('/statistik-sicantik', [\App\Http\Controllers\PublicStatistikSicantikController::class, 'index'])->name('public.statistik.sicantik');
 
 /*
 |--------------------------------------------------------------------------
