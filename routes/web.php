@@ -329,6 +329,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/pbg', [DashboardPbgController::class, 'index']);
     Route::post('/pbgsort', [DashboardPbgController::class, 'index']);
     Route::post('/pbg/import_excel', [DashboardPbgController::class, 'import_excel']);
+    Route::get('/pbg/export/excel', [DashboardPbgController::class, 'exportExcel'])->name('pbg.export.excel');
     Route::post('/pbg', [DashboardPbgController::class, 'store']);
     // Statistik PBG (register before parameterized /pbg/{pbg})
     Route::get('/pbg/statistik', [DashboardPbgController::class, 'statistik']);
