@@ -135,6 +135,7 @@
             <div class="mt-2 text-center">
               <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#jenisModal">Selengkapnya</button>
               <button type="button" class="btn btn-sm btn-outline-primary ms-2" data-bs-toggle="modal" data-bs-target="#jenisPerBulanModal">Jenis per Bulan</button>
+              <button type="button" class="btn btn-sm btn-outline-success ms-2" data-bs-toggle="modal" data-bs-target="#jenisPermohonanPerBulanModal">Jenis × Permohonan</button>
             </div>
           </div>
         </div>
@@ -400,6 +401,66 @@
                 </tbody>
               </table>
             </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Jenis izin berdasarkan Jenis Permohonan per Bulan -->
+    <div class="modal fade" id="jenisPermohonanPerBulanModal" tabindex="-1" aria-labelledby="jenisPermohonanPerBulanLabel" aria-hidden="true">
+      <div class="modal-dialog modal-fullscreen modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="jenisPermohonanPerBulanLabel">Jumlah Jenis Izin berdasarkan Jenis Permohonan per Bulan</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            @php $start = $monthStart ?? 1; $end = $monthEnd ?? 12; @endphp
+            @forelse(($permohonanJenisIzinMonthlySorted ?? []) as $perm => $jenisMap)
+              <div class="mini-card mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <h6 class="mb-0">Jenis Permohonan: {{ $perm }}</h6>
+                  <span class="small-muted">Periode: {{ \Carbon\Carbon::create()->month($start)->translatedFormat('M') }} - {{ \Carbon\Carbon::create()->month($end)->translatedFormat('M') }} {{ $year ?? \Carbon\Carbon::now()->year }}</span>
+                </div>
+                <div class="table-responsive">
+                  <table class="table table-sm table-bordered mb-0">
+                    <thead>
+                      <tr>
+                        <th style="width:50px">No</th>
+                        <th>Jenis Izin</th>
+                        @foreach(range($start,$end) as $mm)
+                          <th class="text-center">{{ $bulanNames[$mm] ?? \Carbon\Carbon::create()->month($mm)->translatedFormat('M') }}</th>
+                        @endforeach
+                        <th class="text-center">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @php $idx = 1; @endphp
+                      @foreach($jenisMap as $j => $monthsMap)
+                        @php $sum = 0; @endphp
+                        <tr>
+                          <td class="text-center">{{ $idx++ }}</td>
+                          <td style="min-width:260px">{{ $j ?: 'Tidak Diketahui' }}</td>
+                          @foreach(range($start,$end) as $mm)
+                            @php $cnt = intval($monthsMap[$mm] ?? 0); $sum += $cnt; @endphp
+                            <td class="text-center">{{ number_format($cnt) }}</td>
+                          @endforeach
+                          <td class="text-center fw-bold">{{ number_format($sum) }}</td>
+                        </tr>
+                      @endforeach
+                      @if(empty($jenisMap))
+                        <tr><td colspan="{{ ($end-$start+1) + 3 }}" class="text-center small-muted">Tidak ada data</td></tr>
+                      @endif
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            @empty
+              <div class="mini-card"><div class="small-muted text-center">Tidak ada data untuk periode ini</div></div>
+            @endforelse
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
