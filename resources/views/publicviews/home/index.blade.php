@@ -242,7 +242,7 @@
                   </td>
                   <td class="text-center">
                     @if($jenis->dataset)
-                      <a href="{{ $jenis->dataset }}" class="action-btn btn-available" target="_blank">
+                      <a href="{{ url($jenis->dataset) }}" class="action-btn btn-available" target="_self">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1" style="display: inline-block; vertical-align: middle;"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10" /></svg>
                         Tersedia
                       </a>
@@ -255,7 +255,7 @@
                   </td>
                   <td class="text-center">
                     @if($jenis->link_api)
-                      <a href="{{ $jenis->link_api }}" class="action-btn btn-stats" target="_blank">
+                      <a href="{{ url($jenis->link_api) }}" class="action-btn btn-stats" target="_self">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1" style="display: inline-block; vertical-align: middle;"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M9 8m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M15 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /></svg>
                         Tersedia
                       </a>
