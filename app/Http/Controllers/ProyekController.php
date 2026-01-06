@@ -635,10 +635,9 @@ class ProyekController extends Controller
         $judul = 'Statistik Perusahaan Berdasarkan Skala Usaha';
         $year = $request->input('year', Carbon::now()->year);
         
-        // Menghitung berdasarkan 1 NIB (COUNT DISTINCT)
-        // Data sudah konsisten: 1 NIB hanya punya 1 skala usaha
+        // Menghitung semua entri tanpa DISTINCT NIB (sesuai permintaan)
         $skalaUsaha = DB::table('proyek')
-            ->selectRaw('uraian_skala_usaha, COUNT(DISTINCT nib) AS jumlah_nib')
+            ->selectRaw('uraian_skala_usaha, COUNT(*) AS jumlah_nib')
             ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
             ->whereNotNull('uraian_skala_usaha')
             ->where('uraian_skala_usaha', '!=', '')
