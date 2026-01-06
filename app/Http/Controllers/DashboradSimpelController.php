@@ -121,6 +121,141 @@ class DashboradSimpelController extends Controller
 		};
 		return view('admin.nonberusaha.simpel.statistik',compact('judul','jumlah_permohonan','date_start','date_end','month','year','rataRataJumlahHariPerBulan', 'rataRataJumlahHari','totalJumlahData','totalJumlahHari','coverse'));
 	}
+
+    public function statistik_public(Request $request)
+    {
+        $judul = 'Statistik Izin Pemakaman';
+        $now = Carbon::now();
+        $year = $request->input('year', $now->year);
+        $semester = $request->input('semester');
+
+        if($semester === '1') { $monthStart = 1; $monthEnd = 6; }
+        elseif($semester === '2') { $monthStart = 7; $monthEnd = 12; }
+        else { $monthStart = 1; $monthEnd = 12; }
+
+        $availableYears = Vsimpel::selectRaw('YEAR(rekomendasi) as year')
+            ->whereNotNull('rekomendasi')
+            ->distinct()
+            ->orderByDesc('year')
+            ->pluck('year')
+            ->toArray();
+        if(empty($availableYears)) $availableYears = [$now->year];
+
+        $total = Vsimpel::whereYear('rekomendasi', $year)->count();
+
+        // alias jasa -> profesi so blade can reuse same templates
+        $stats = Vsimpel::selectRaw('jasa as profesi, COUNT(*) as jumlah, MAX(updated_at) as last_update')
+            ->whereYear('rekomendasi', $year)
+            ->groupBy('jasa')
+            ->orderByDesc('jumlah')
+            ->get();
+
+        // monthly counts
+        $monthlyRaw = Vsimpel::selectRaw('MONTH(rekomendasi) as bulan, COUNT(*) as jumlah')
+            ->whereYear('rekomendasi', $year)
+            ->whereRaw('MONTH(rekomendasi) BETWEEN ? AND ?', [$monthStart, $monthEnd])
+            ->groupByRaw('MONTH(rekomendasi)')
+            ->get();
+        $monthlyCounts = [];
+        foreach($monthlyRaw as $mr) { $monthlyCounts[(int)$mr->bulan] = $mr->jumlah; }
+        $totalTerbit = array_sum($monthlyCounts);
+
+        // daily counts by month
+        $dailyRaw = Vsimpel::selectRaw('MONTH(rekomendasi) as bulan, DAY(rekomendasi) as hari, COUNT(*) as jumlah')
+            ->whereYear('rekomendasi', $year)
+            ->whereRaw('MONTH(rekomendasi) BETWEEN ? AND ?', [$monthStart, $monthEnd])
+            ->groupByRaw('MONTH(rekomendasi), DAY(rekomendasi)')
+            ->get();
+        $dailyCountsByMonth = [];
+        foreach($dailyRaw as $dr) {
+            if(!isset($dailyCountsByMonth[$dr->bulan])) $dailyCountsByMonth[$dr->bulan] = [];
+            $dailyCountsByMonth[$dr->bulan][$dr->hari] = $dr->jumlah;
+        }
+
+        // jasa (profesi) daily by month for drilldown
+        $profesiDailyRaw = Vsimpel::selectRaw('MONTH(rekomendasi) as bulan, DAY(rekomendasi) as hari, jasa as profesi, COUNT(*) as jumlah')
+            ->whereYear('rekomendasi', $year)
+            ->whereRaw('MONTH(rekomendasi) BETWEEN ? AND ?', [$monthStart, $monthEnd])
+            ->groupByRaw('MONTH(rekomendasi), DAY(rekomendasi), jasa')
+            ->get();
+        $profesiDailyByMonth = [];
+        foreach($profesiDailyRaw as $pdr){
+            if(!isset($profesiDailyByMonth[$pdr->bulan])) $profesiDailyByMonth[$pdr->bulan] = [];
+            if(!isset($profesiDailyByMonth[$pdr->bulan][$pdr->hari])) $profesiDailyByMonth[$pdr->bulan][$pdr->hari] = [];
+            $profesiDailyByMonth[$pdr->bulan][$pdr->hari][$pdr->profesi] = $pdr->jumlah;
+        }
+
+        // jasa by month series
+        $profesiByMonthRaw = Vsimpel::selectRaw('MONTH(rekomendasi) as bulan, jasa as profesi, COUNT(*) as jumlah')
+            ->whereYear('rekomendasi', $year)
+            ->whereRaw('MONTH(rekomendasi) BETWEEN ? AND ?', [$monthStart, $monthEnd])
+            ->groupByRaw('MONTH(rekomendasi), jasa')
+            ->get();
+        $profesiByMonth = [];
+        $allProfesi = [];
+        foreach($profesiByMonthRaw as $pbmr){
+            if(!isset($profesiByMonth[$pbmr->profesi])) { $profesiByMonth[$pbmr->profesi] = []; $allProfesi[] = $pbmr->profesi; }
+            $profesiByMonth[$pbmr->profesi][(int)$pbmr->bulan] = $pbmr->jumlah;
+        }
+        usort($allProfesi, function($a,$b) use ($profesiByMonth){
+            $sumA = array_sum($profesiByMonth[$a] ?? []);
+            $sumB = array_sum($profesiByMonth[$b] ?? []);
+            return $sumB - $sumA;
+        });
+
+        $months = range($monthStart, $monthEnd);
+        $monthLabels = [];
+        foreach($months as $m){ $monthLabels[] = Carbon::createFromDate(null,$m,1)->translatedFormat('F'); }
+        $profesiSeries = [];
+        foreach($allProfesi as $p){
+            $profesiSeries[$p] = [];
+            foreach($months as $m){ $profesiSeries[$p][] = (int)($profesiByMonth[$p][$m] ?? 0); }
+        }
+
+        // weekdays
+        $weekdayRaw = Vsimpel::selectRaw('WEEKDAY(rekomendasi) as dow, COUNT(*) as jumlah')
+            ->whereYear('rekomendasi', $year)
+            ->groupByRaw('WEEKDAY(rekomendasi)')
+            ->get();
+        $weekdayCounts = [0,0,0,0,0,0,0];
+        foreach($weekdayRaw as $wr) { $weekdayCounts[$wr->dow] = $wr->jumlah; }
+
+        // top profesi for donut
+        $topProfesi = [];
+        foreach($stats->take(10) as $s){ $topProfesi[] = ['name' => $s->profesi ?: 'Tidak Diketahui', 'y' => $s->jumlah]; }
+
+        // yearly counts
+        $yearlyRaw = Vsimpel::selectRaw('YEAR(rekomendasi) as tahun, COUNT(*) as jumlah')
+            ->whereNotNull('rekomendasi')
+            ->groupByRaw('YEAR(rekomendasi)')
+            ->orderBy('tahun')
+            ->get();
+        $yearlyCounts = [];
+        foreach($yearlyRaw as $yr) { $yearlyCounts[$yr->tahun] = $yr->jumlah; }
+
+        // profesi by year
+        $profesiByYearRaw = Vsimpel::selectRaw('YEAR(rekomendasi) as tahun, jasa as profesi, COUNT(*) as jumlah')
+            ->whereNotNull('rekomendasi')
+            ->groupByRaw('YEAR(rekomendasi), jasa')
+            ->get();
+        $profesiByYear = [];
+        foreach($profesiByYearRaw as $pbyr){ if(!isset($profesiByYear[$pbyr->profesi])) $profesiByYear[$pbyr->profesi] = []; $profesiByYear[$pbyr->profesi][$pbyr->tahun] = $pbyr->jumlah; }
+        $profesiSeriesByYear = [];
+        foreach($allProfesi as $p){
+            $profesiSeriesByYear[$p] = [];
+            foreach($availableYears as $y){ $profesiSeriesByYear[$p][] = (int)($profesiByYear[$p][$y] ?? 0); }
+        }
+
+        $bulanNames = [1=>'Januari',2=>'Februari',3=>'Maret',4=>'April',5=>'Mei',6=>'Juni',7=>'Juli',8=>'Agustus',9=>'September',10=>'Oktober',11=>'November',12=>'Desember'];
+
+        return view('publicviews.statistik.simpel', compact(
+            'judul','stats','total','year','semester','monthStart','monthEnd',
+            'monthlyCounts','totalTerbit','bulanNames','availableYears',
+            'dailyCountsByMonth','yearlyCounts','profesiByMonth','allProfesi',
+            'profesiDailyByMonth','months','monthLabels','profesiSeries',
+            'weekdayCounts','topProfesi','profesiSeriesByYear'
+        ));
+    }
     public function rincian(Request $request)
     {
         $judul='Statistik Izin Pemakaman';

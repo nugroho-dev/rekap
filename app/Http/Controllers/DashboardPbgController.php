@@ -7,6 +7,7 @@ use App\Imports\PbgImport;
 use App\Models\Pbg;
 use App\Models\Tanah;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\PbgExport;
 use Illuminate\Support\Facades\Storage;
 
 class DashboardPbgController extends Controller
@@ -293,5 +294,55 @@ class DashboardPbgController extends Controller
 		$pbg->file_pbg = null;
 		$pbg->save();
 		return back()->with('success','File PBG berhasil dihapus');
+	}
+
+	/**
+	 * Export PBG data to Excel.
+	 */
+	public function exportExcel(Request $request)
+	{
+		$query = Pbg::query()->with('tanah');
+		$search = trim((string)$request->input('search')) ?: null;
+		$date_start = $request->input('date_start');
+		$date_end = $request->input('date_end');
+		$month = $request->input('month');
+		$year = $request->input('year');
+
+		if ($search) {
+			$query->where(function ($q) use ($search) {
+				$q->where('nomor', 'LIKE', "%{$search}%")
+				  ->orWhere('nama_pemohon', 'LIKE', "%{$search}%")
+				  ->orWhere('alamat', 'LIKE', "%{$search}%")
+				  ->orWhere('peruntukan', 'LIKE', "%{$search}%")
+				  ->orWhere('nama_bangunan', 'LIKE', "%{$search}%")
+				  ->orWhere('fungsi', 'LIKE', "%{$search}%")
+				  ->orWhere('sub_fungsi', 'LIKE', "%{$search}%")
+				  ->orWhere('klasifikasi', 'LIKE', "%{$search}%")
+				  ->orWhere('lokasi', 'LIKE', "%{$search}%");
+			})->orWhereHas('tanah', function ($t) use ($search) {
+				$t->where('hak_tanah', 'LIKE', "%{$search}%")
+				  ->orWhere('pemilik_tanah', 'LIKE', "%{$search}%");
+			});
+		}
+
+		if ($date_start && $date_end) {
+			if ($date_start > $date_end) {
+				return redirect('/pbg')->with('error', 'Silakan cek kembali range tanggal Anda');
+			}
+			$query->whereBetween('tgl_terbit', [$date_start, $date_end]);
+		}
+
+		if ($month && $year) {
+			$query->whereMonth('tgl_terbit', $month)->whereYear('tgl_terbit', $year);
+		} elseif ($month && !$year) {
+			return redirect('/pbg')->with('error', 'Tahun wajib diisi bila memilih bulan');
+		} elseif (!$month && $year) {
+			$query->whereYear('tgl_terbit', $year);
+		}
+
+		$items = $query->orderBy('tgl_terbit', 'desc')->get();
+
+		$fileName = 'pbg_export_' . date('Ymd_His') . '.xlsx';
+		return Excel::download(new PbgExport($items), $fileName);
 	}
 }
