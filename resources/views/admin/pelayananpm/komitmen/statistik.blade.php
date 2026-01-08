@@ -272,7 +272,7 @@
 <div class="modal modal-blur fade" id="modal-filter" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
-            <form action="/commitment/statistik" method="GET">
+            <form action="{{ url('/commitment/statistik') }}" method="GET">
                 <div class="modal-header">
                     <h5 class="modal-title">Filter Statistik</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -325,7 +325,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <a href="/commitment/statistik" class="btn btn-link link-secondary" data-bs-dismiss="modal">
+                    <a href="{{ url('/commitment/statistik') }}" class="btn btn-link link-secondary" data-bs-dismiss="modal">
                         Reset
                     </a>
                     <button type="submit" class="btn btn-primary ms-auto">
