@@ -46,10 +46,18 @@ class KomitmenImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
         if (is_string($value)) {
             // Map bulan Indonesia ke Inggris
             $bulanIndonesia = [
-                'Januari' => 'January', 'Februari' => 'February', 'Maret' => 'March',
-                'April' => 'April', 'Mei' => 'May', 'Juni' => 'June',
-                'Juli' => 'July', 'Agustus' => 'August', 'September' => 'September',
-                'Oktober' => 'October', 'November' => 'November', 'Desember' => 'December'
+                'Januari' => 'January', 'januari' => 'January', 'JANUARI' => 'January',
+                'Februari' => 'February', 'februari' => 'February', 'FEBRUARI' => 'February',
+                'Maret' => 'March', 'maret' => 'March', 'MARET' => 'March',
+                'April' => 'April', 'april' => 'April', 'APRIL' => 'April',
+                'Mei' => 'May', 'mei' => 'May', 'MEI' => 'May',
+                'Juni' => 'June', 'juni' => 'June', 'JUNI' => 'June',
+                'Juli' => 'July', 'juli' => 'July', 'JULI' => 'July',
+                'Agustus' => 'August', 'agustus' => 'August', 'AGUSTUS' => 'August',
+                'September' => 'September', 'september' => 'September', 'SEPTEMBER' => 'September',
+                'Oktober' => 'October', 'oktober' => 'October', 'OKTOBER' => 'October',
+                'November' => 'November', 'november' => 'November', 'NOVEMBER' => 'November',
+                'Desember' => 'December', 'desember' => 'December', 'DESEMBER' => 'December'
             ];
             
             $tanggalStr = str_replace(array_keys($bulanIndonesia), array_values($bulanIndonesia), $value);
@@ -76,6 +84,19 @@ class KomitmenImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
         
         if (!$tanggal) {
             $this->errorCount++;
+            // Catat rincian kegagalan ketika tanggal tidak valid
+            $this->failedRows[] = [
+                'row' => null,
+                'attribute' => 'tanggal_terbit_izin',
+                'errors' => [
+                    'Tanggal tidak valid atau kosong: "' . ($row['tanggal_terbit_izin'] ?? 'null') . '"'
+                ],
+                'context' => [
+                    'nama_pelaku_usaha' => trim($row['nama_pelaku_usaha'] ?? ''),
+                    'nib' => trim($row['nib'] ?? ''),
+                    'nama_proyek' => trim($row['nama_proyek'] ?? ''),
+                ],
+            ];
             return null;
         }
 
@@ -131,6 +152,12 @@ class KomitmenImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
     public function onError(Throwable $e)
     {
         $this->errorCount++;
+        // Catat pesan error umum tanpa nomor baris (tidak tersedia di hook ini)
+        $this->failedRows[] = [
+            'row' => null,
+            'attribute' => 'general',
+            'errors' => [method_exists($e, 'getMessage') ? $e->getMessage() : 'Terjadi kesalahan saat memproses baris'],
+        ];
     }
 
     public function onFailure(Failure ...$failures)

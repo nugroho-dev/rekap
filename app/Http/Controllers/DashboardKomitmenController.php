@@ -162,27 +162,40 @@ class DashboardKomitmenController extends Controller
         // Total komitmen
         $totalKomitmen = (clone $query)->count();
         
-        // Total per status
-        $totalStatusAktif = (clone $query)->where('status', 'Aktif')->count();
-        $totalStatusNonAktif = (clone $query)->where('status', 'Non Aktif')->count();
+        // Total per status (Baru & Perpanjangan)
+        $totalStatusBaru = (clone $query)->where('status', 'Baru')->count();
+        $totalStatusPerpanjangan = (clone $query)->where('status', 'Perpanjangan')->count();
         
         // Komitmen per bulan (tahun ini) - Terpisah per status
         $currentYear = $year ?: date('Y');
         
-        // Data Aktif per bulan
-        $komitmenAktifPerBulan = Komitmen::selectRaw('MONTH(tanggal_izin_terbit) as bulan, COUNT(*) as jumlah')
-            ->whereYear('tanggal_izin_terbit', $currentYear)
-            ->where('status', 'Aktif')
+        // Base query untuk per-month data (menghormati filter yang sama)
+        $monthQueryBase = Komitmen::query();
+        if ($date_start && $date_end) {
+            $monthQueryBase->whereBetween('tanggal_izin_terbit', [$date_start, $date_end]);
+        } elseif ($month && $year) {
+            // Jika filter spesifik bulan & tahun, chart tetap menampilkan 12 bulan untuk konteks
+            $monthQueryBase->whereYear('tanggal_izin_terbit', $year);
+        } elseif ($year) {
+            $monthQueryBase->whereYear('tanggal_izin_terbit', $year);
+        } else {
+            $monthQueryBase->whereYear('tanggal_izin_terbit', $currentYear);
+        }
+        
+        // Data Baru per bulan
+        $komitmenBaruPerBulan = (clone $monthQueryBase)
+            ->selectRaw('MONTH(tanggal_izin_terbit) as bulan, COUNT(*) as jumlah')
+            ->where('status', 'Baru')
             ->groupBy('bulan')
             ->orderBy('bulan')
             ->get()
             ->pluck('jumlah', 'bulan')
             ->toArray();
         
-        // Data Non Aktif per bulan
-        $komitmenNonAktifPerBulan = Komitmen::selectRaw('MONTH(tanggal_izin_terbit) as bulan, COUNT(*) as jumlah')
-            ->whereYear('tanggal_izin_terbit', $currentYear)
-            ->where('status', 'Non Aktif')
+        // Data Perpanjangan per bulan
+        $komitmenPerpanjanganPerBulan = (clone $monthQueryBase)
+            ->selectRaw('MONTH(tanggal_izin_terbit) as bulan, COUNT(*) as jumlah')
+            ->where('status', 'Perpanjangan')
             ->groupBy('bulan')
             ->orderBy('bulan')
             ->get()
@@ -190,11 +203,11 @@ class DashboardKomitmenController extends Controller
             ->toArray();
         
         // Isi bulan yang kosong dengan 0
-        $chartDataAktif = [];
-        $chartDataNonAktif = [];
+        $chartDataBaru = [];
+        $chartDataPerpanjangan = [];
         for ($i = 1; $i <= 12; $i++) {
-            $chartDataAktif[] = $komitmenAktifPerBulan[$i] ?? 0;
-            $chartDataNonAktif[] = $komitmenNonAktifPerBulan[$i] ?? 0;
+            $chartDataBaru[] = $komitmenBaruPerBulan[$i] ?? 0;
+            $chartDataPerpanjangan[] = $komitmenPerpanjanganPerBulan[$i] ?? 0;
         }
         
         // Top 10 Jenis Izin
@@ -211,6 +224,16 @@ class DashboardKomitmenController extends Controller
             ->groupBy('status')
             ->get();
         
+        // Komitmen per Keterangan (Top 10)
+        $byKeterangan = (clone $query)
+            ->selectRaw('keterangan, COUNT(*) as jumlah')
+            ->whereNotNull('keterangan')
+            ->where('keterangan', '!=', '')
+            ->groupBy('keterangan')
+            ->orderByDesc('jumlah')
+            ->limit(10)
+            ->get();
+        
         // Tren komitmen (3 bulan terakhir)
         $trenKomitmen = Komitmen::selectRaw('DATE_FORMAT(tanggal_izin_terbit, "%Y-%m") as bulan, COUNT(*) as jumlah')
             ->where('tanggal_izin_terbit', '>=', now()->subMonths(3))
@@ -221,12 +244,13 @@ class DashboardKomitmenController extends Controller
         return view('admin.pelayananpm.komitmen.statistik', compact(
             'judul',
             'totalKomitmen',
-            'totalStatusAktif',
-            'totalStatusNonAktif',
-            'chartDataAktif',
-            'chartDataNonAktif',
+            'totalStatusBaru',
+            'totalStatusPerpanjangan',
+            'chartDataBaru',
+            'chartDataPerpanjangan',
             'topJenisIzin',
             'komitmenPerStatus',
+            'byKeterangan',
             'trenKomitmen',
             'month',
             'year',
@@ -257,31 +281,29 @@ class DashboardKomitmenController extends Controller
 		// upload ke folder file_komitmen di dalam folder public
 		$file->move(base_path('storage/app/public/file_komitmen'), $nama_file);
 
-		// import data
+        // import data
 		$import = new KomitmenImport;
 		Excel::import($import, base_path('storage/app/public/file_komitmen/' . $nama_file));
         
-		// Notifikasi berdasarkan hasil import
-		if ($import->errorCount > 0) {
-			$message = "Import selesai dengan peringatan: ";
-			$message .= "{$import->importedCount} data baru ditambahkan, ";
-			$message .= "{$import->updatedCount} data diperbarui, ";
-			$message .= "{$import->errorCount} data gagal diimport.";
-			
-			if (!empty($import->failedRows)) {
-				$message .= " Baris yang gagal: " . implode(', ', array_column($import->failedRows, 'row'));
-			}
-			
-			return redirect('/commitment')->with('warning', $message);
-		} elseif ($import->updatedCount > 0 && $import->importedCount == 0) {
-			return redirect('/commitment')->with('info', "Semua data sudah ada. {$import->updatedCount} data diperbarui.");
-		} else {
-			$message = "Data Berhasil Diimport! ";
-			$message .= "{$import->importedCount} data baru ditambahkan";
-			if ($import->updatedCount > 0) {
-				$message .= ", {$import->updatedCount} data diperbarui";
-			}
-			return redirect('/commitment')->with('success', $message);
-		}
+        // Notifikasi berdasarkan hasil import
+        if ($import->errorCount > 0) {
+            $message = "Import selesai dengan peringatan: ";
+            $message .= "{$import->importedCount} ditambahkan, ";
+            $message .= "{$import->updatedCount} diperbarui, ";
+            $message .= "{$import->errorCount} gagal diimport.";
+
+            return redirect('/commitment')
+                ->with('warning', $message)
+                ->with('import_failures', $import->failedRows);
+        } elseif ($import->updatedCount > 0 && $import->importedCount == 0) {
+            return redirect('/commitment')->with('info', "Semua data sudah ada. {$import->updatedCount} data diperbarui.");
+        } else {
+            $message = "Data Berhasil Diimport! ";
+            $message .= "{$import->importedCount} data baru ditambahkan";
+            if ($import->updatedCount > 0) {
+                $message .= ", {$import->updatedCount} data diperbarui";
+            }
+            return redirect('/commitment')->with('success', $message);
+        }
 	}
 }

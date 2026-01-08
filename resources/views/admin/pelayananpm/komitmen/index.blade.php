@@ -1,5 +1,75 @@
 @extends('layouts.tableradminfluid')
 @section('content')
+              @if(session('success'))
+                <div class="alert alert-success" role="alert">
+                  {{ session('success') }}
+                </div>
+              @endif
+              @if(session('info'))
+                <div class="alert alert-info" role="alert">
+                  {{ session('info') }}
+                </div>
+              @endif
+              @if(session('warning'))
+                <div class="alert alert-warning" role="alert">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>{{ session('warning') }}</div>
+                    @if(session('import_failures'))
+                      <button class="btn btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#import-failure-details" aria-expanded="false" aria-controls="import-failure-details">
+                        Lihat rincian
+                      </button>
+                    @endif
+                  </div>
+                </div>
+                @if(session('import_failures'))
+                  <div class="collapse mb-3" id="import-failure-details">
+                    <div class="card">
+                      <div class="card-header">
+                        <h3 class="card-title">Rincian Kegagalan Import</h3>
+                      </div>
+                      <div class="card-body p-0">
+                        <div class="table-responsive">
+                          <table class="table table-sm table-striped mb-0">
+                            <thead>
+                              <tr>
+                                <th style="width: 70px;">Baris</th>
+                                <th>Atribut</th>
+                                <th>Pesan Kesalahan</th>
+                                <th>Nama Pelaku Usaha</th>
+                                <th>NIB</th>
+                                <th>Nama Proyek</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              @foreach(session('import_failures') as $failure)
+                                <tr>
+                                  <td>{{ $failure['row'] ?? '-' }}</td>
+                                  <td>{{ $failure['attribute'] ?? '-' }}</td>
+                                  <td>
+                                    @php $errs = $failure['errors'] ?? []; @endphp
+                                    @if(is_array($errs))
+                                      <ul class="mb-0 ps-3">
+                                        @foreach($errs as $err)
+                                          <li>{{ $err }}</li>
+                                        @endforeach
+                                      </ul>
+                                    @else
+                                      {{ $errs }}
+                                    @endif
+                                  </td>
+                                  <td>{{ $failure['context']['nama_pelaku_usaha'] ?? '-' }}</td>
+                                  <td>{{ $failure['context']['nib'] ?? '-' }}</td>
+                                  <td>{{ $failure['context']['nama_proyek'] ?? '-' }}</td>
+                                </tr>
+                              @endforeach
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                @endif
+              @endif
               <div class="page-header d-print-none">
                 <div class="container-xl">
                     <div class="row g-2 align-items-center">

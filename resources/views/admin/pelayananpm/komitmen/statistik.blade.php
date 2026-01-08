@@ -75,8 +75,8 @@
                                 </span>
                             </div>
                             <div class="col">
-                                <div class="font-weight-medium">Status Aktif</div>
-                                <div class="text-muted">{{ number_format($totalStatusAktif) }} data</div>
+                                <div class="font-weight-medium">Baru</div>
+                                <div class="text-muted">{{ number_format($totalStatusBaru) }} data</div>
                             </div>
                         </div>
                     </div>
@@ -93,8 +93,8 @@
                                 </span>
                             </div>
                             <div class="col">
-                                <div class="font-weight-medium">Status Non Aktif</div>
-                                <div class="text-muted">{{ number_format($totalStatusNonAktif) }} data</div>
+                                <div class="font-weight-medium">Perpanjangan</div>
+                                <div class="text-muted">{{ number_format($totalStatusPerpanjangan) }} data</div>
                             </div>
                         </div>
                     </div>
@@ -107,7 +107,7 @@
                         <div class="d-flex align-items-center">
                             <div class="subheader">Rata-rata/Bulan</div>
                         </div>
-                        <div class="h1 mb-3">{{ number_format(($totalStatusAktif + $totalStatusNonAktif) / 12, 1) }}</div>
+                        <div class="h1 mb-3">{{ number_format(($totalKomitmen) / 12, 1) }}</div>
                         <div class="d-flex mb-2">
                             <div>Tahun {{ $currentYear }}</div>
                         </div>
@@ -122,10 +122,10 @@
             <div class="col-lg-6">
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">Komitmen Aktif per Bulan - Tahun {{ $currentYear }}</h3>
+                        <h3 class="card-title">Komitmen Baru per Bulan - Tahun {{ $currentYear }}</h3>
                     </div>
                     <div class="card-body">
-                        <canvas id="chartAktifPerBulan" height="120"></canvas>
+                        <div id="chartAktifPerBulan"></div>
                     </div>
                 </div>
             </div>
@@ -134,10 +134,10 @@
             <div class="col-lg-6">
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">Komitmen Non Aktif per Bulan - Tahun {{ $currentYear }}</h3>
+                        <h3 class="card-title">Komitmen Perpanjangan per Bulan - Tahun {{ $currentYear }}</h3>
                     </div>
                     <div class="card-body">
-                        <canvas id="chartNonAktifPerBulan" height="120"></canvas>
+                        <div id="chartNonAktifPerBulan"></div>
                     </div>
                 </div>
             </div>
@@ -148,10 +148,10 @@
             <div class="col-lg-8">
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">Perbandingan Aktif & Non Aktif - Tahun {{ $currentYear }}</h3>
+                        <h3 class="card-title">Perbandingan Baru & Perpanjangan - Tahun {{ $currentYear }}</h3>
                     </div>
                     <div class="card-body">
-                        <canvas id="chartGabungan" height="80"></canvas>
+                        <div id="chartGabungan"></div>
                     </div>
                 </div>
             </div>
@@ -160,51 +160,102 @@
             <div class="col-lg-4">
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">Proporsi per Status</h3>
+                        <h3 class="card-title">Proporsi Baru vs Perpanjangan</h3>
                     </div>
                     <div class="card-body">
-                        <canvas id="chartPerStatus" height="200"></canvas>
+                        <div id="chartPerStatus"></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Top Jenis Izin -->
+        <!-- Statistics Tables Row -->
         <div class="row row-deck row-cards mt-3">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
+            <!-- Top Jenis Izin -->
+            <div class="col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary-lt">
                         <h3 class="card-title">Top 10 Jenis Izin</h3>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-vcenter">
+                            <table class="table table-vcenter table-striped mb-0">
                                 <thead>
                                     <tr>
-                                        <th>No</th>
+                                        <th class="w-1">No</th>
                                         <th>Jenis Izin</th>
-                                        <th>Jumlah</th>
-                                        <th width="30%">Persentase</th>
+                                        <th class="text-end">Jumlah</th>
+                                        <th class="text-end">Persentase</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @forelse($topJenisIzin as $index => $item)
+                                    @php
+                                        $pct = $totalKomitmen > 0 ? round(($item->jumlah / $totalKomitmen) * 100, 1) : 0;
+                                    @endphp
                                     <tr>
                                         <td>{{ $index + 1 }}</td>
                                         <td>{{ $item->jenis_izin }}</td>
-                                        <td><strong>{{ $item->jumlah }}</strong></td>
-                                        <td>
-                                            <div class="progress">
-                                                <div class="progress-bar" style="width: {{ ($item->jumlah / $totalKomitmen) * 100 }}%" role="progressbar" aria-valuenow="{{ ($item->jumlah / $totalKomitmen) * 100 }}" aria-valuemin="0" aria-valuemax="100">
-                                                    <span class="visually-hidden">{{ number_format(($item->jumlah / $totalKomitmen) * 100, 1) }}%</span>
+                                        <td class="text-end"><strong>{{ number_format($item->jumlah) }}</strong></td>
+                                        <td class="text-end">
+                                            <div class="d-flex align-items-center justify-content-end">
+                                                <span class="badge bg-primary-lt me-2">{{ $pct }}%</span>
+                                                <div class="progress" style="width: 80px; height: 6px;">
+                                                    <div class="progress-bar bg-primary" style="width: {{ min($pct, 100) }}%"></div>
                                                 </div>
                                             </div>
-                                            <small class="text-muted">{{ number_format(($item->jumlah / $totalKomitmen) * 100, 1) }}%</small>
                                         </td>
                                     </tr>
                                     @empty
                                     <tr>
-                                        <td colspan="4" class="text-center">Tidak ada data</td>
+                                        <td colspan="4" class="text-center text-muted">Tidak ada data</td>
+                                    </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Keterangan -->
+            <div class="col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-teal-lt">
+                        <h3 class="card-title">Top 10 Keterangan</h3>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-vcenter table-striped mb-0">
+                                <thead>
+                                    <tr>
+                                        <th class="w-1">No</th>
+                                        <th>Keterangan</th>
+                                        <th class="text-end">Jumlah</th>
+                                        <th class="text-end">Persentase</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($byKeterangan as $index => $item)
+                                    @php
+                                        $pct = $totalKomitmen > 0 ? round(($item->jumlah / $totalKomitmen) * 100, 1) : 0;
+                                    @endphp
+                                    <tr>
+                                        <td>{{ $index + 1 }}</td>
+                                        <td>{{ Str::limit($item->keterangan, 50) }}</td>
+                                        <td class="text-end"><strong>{{ number_format($item->jumlah) }}</strong></td>
+                                        <td class="text-end">
+                                            <div class="d-flex align-items-center justify-content-end">
+                                                <span class="badge bg-teal-lt me-2">{{ $pct }}%</span>
+                                                <div class="progress" style="width: 80px; height: 6px;">
+                                                    <div class="progress-bar bg-teal" style="width: {{ min($pct, 100) }}%"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    @empty
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">Tidak ada data</td>
                                     </tr>
                                     @endforelse
                                 </tbody>
@@ -288,148 +339,199 @@
 </div>
 @endsection
 
-@section('js')
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const bulanLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
-    
-    // Chart Aktif per Bulan
-    const ctxAktif = document.getElementById('chartAktifPerBulan').getContext('2d');
-    new Chart(ctxAktif, {
-        type: 'bar',
-        data: {
-            labels: bulanLabels,
-            datasets: [{
-                label: 'Aktif',
-                data: {!! json_encode(array_values($chartDataAktif)) !!},
-                backgroundColor: 'rgba(82, 196, 26, 0.8)',
-                borderColor: 'rgba(82, 196, 26, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        stepSize: 1
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                }
-            }
-        }
-    });
+document.addEventListener("DOMContentLoaded", function () {
+  // Monthly chart data
+  const monthlyDataBaru = @json(array_values($chartDataBaru ?? []));
+  const monthlyDataPerpanjangan = @json(array_values($chartDataPerpanjangan ?? []));
+  const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
 
-    // Chart Non Aktif per Bulan
-    const ctxNonAktif = document.getElementById('chartNonAktifPerBulan').getContext('2d');
-    new Chart(ctxNonAktif, {
-        type: 'bar',
-        data: {
-            labels: bulanLabels,
-            datasets: [{
-                label: 'Non Aktif',
-                data: {!! json_encode(array_values($chartDataNonAktif)) !!},
-                backgroundColor: 'rgba(245, 34, 45, 0.8)',
-                borderColor: 'rgba(245, 34, 45, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        stepSize: 1
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                }
-            }
-        }
-    });
+  // Chart Baru per Bulan (Bar)
+  const chartBaru = new ApexCharts(document.getElementById('chartAktifPerBulan'), {
+    chart: {
+      type: 'bar',
+      fontFamily: 'inherit',
+      height: 280,
+      parentHeightOffset: 0,
+      toolbar: { show: false },
+      animations: { enabled: true }
+    },
+    plotOptions: {
+      bar: {
+        columnWidth: '50%',
+      }
+    },
+    dataLabels: { enabled: false },
+    fill: {
+      opacity: 1,
+    },
+    series: [{
+      name: "Baru",
+      data: monthlyDataBaru
+    }],
+    grid: {
+      padding: {
+        top: -20,
+        right: 0,
+        left: -4,
+        bottom: -4
+      },
+      strokeDashArray: 4,
+    },
+    xaxis: {
+      labels: {
+        padding: 0,
+      },
+      tooltip: { enabled: false },
+      axisBorder: { show: false },
+      categories: monthLabels,
+    },
+    yaxis: {
+      labels: {
+        padding: 4
+      },
+    },
+    colors: ["#52c41a"],
+    legend: { show: false },
+  });
+  chartBaru.render();
 
-    // Chart Gabungan (Line)
-    const ctxGabungan = document.getElementById('chartGabungan').getContext('2d');
-    new Chart(ctxGabungan, {
-        type: 'line',
-        data: {
-            labels: bulanLabels,
-            datasets: [{
-                label: 'Aktif',
-                data: {!! json_encode(array_values($chartDataAktif)) !!},
-                backgroundColor: 'rgba(82, 196, 26, 0.2)',
-                borderColor: 'rgba(82, 196, 26, 1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4
-            }, {
-                label: 'Non Aktif',
-                data: {!! json_encode(array_values($chartDataNonAktif)) !!},
-                backgroundColor: 'rgba(245, 34, 45, 0.2)',
-                borderColor: 'rgba(245, 34, 45, 1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        stepSize: 1
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top'
-                }
-            }
-        }
-    });
+  // Chart Perpanjangan per Bulan (Bar)
+  const chartPerpanjangan = new ApexCharts(document.getElementById('chartNonAktifPerBulan'), {
+    chart: {
+      type: 'bar',
+      fontFamily: 'inherit',
+      height: 280,
+      parentHeightOffset: 0,
+      toolbar: { show: false },
+      animations: { enabled: true }
+    },
+    plotOptions: {
+      bar: {
+        columnWidth: '50%',
+      }
+    },
+    dataLabels: { enabled: false },
+    fill: {
+      opacity: 1,
+    },
+    series: [{
+      name: "Perpanjangan",
+      data: monthlyDataPerpanjangan
+    }],
+    grid: {
+      padding: {
+        top: -20,
+        right: 0,
+        left: -4,
+        bottom: -4
+      },
+      strokeDashArray: 4,
+    },
+    xaxis: {
+      labels: {
+        padding: 0,
+      },
+      tooltip: { enabled: false },
+      axisBorder: { show: false },
+      categories: monthLabels,
+    },
+    yaxis: {
+      labels: {
+        padding: 4
+      },
+    },
+    colors: ["#f5222d"],
+    legend: { show: false },
+  });
+  chartPerpanjangan.render();
 
-    // Chart Per Status (Doughnut)
-    const ctxStatus = document.getElementById('chartPerStatus').getContext('2d');
-    new Chart(ctxStatus, {
-        type: 'doughnut',
-        data: {
-            labels: ['Aktif', 'Non Aktif'],
-            datasets: [{
-                data: [{{ $totalStatusAktif }}, {{ $totalStatusNonAktif }}],
-                backgroundColor: [
-                    'rgba(82, 196, 26, 0.8)',
-                    'rgba(245, 34, 45, 0.8)'
-                ],
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
-            }
+  // Chart Gabungan (Area)
+  const chartGabungan = new ApexCharts(document.getElementById('chartGabungan'), {
+    chart: {
+      type: 'area',
+      fontFamily: 'inherit',
+      height: 300,
+      parentHeightOffset: 0,
+      toolbar: { show: false },
+      animations: { enabled: true }
+    },
+    dataLabels: { enabled: false },
+    fill: {
+      opacity: 0.16,
+      type: 'solid'
+    },
+    stroke: {
+      width: 2,
+      lineCap: "round",
+      curve: "smooth",
+    },
+    series: [{
+      name: "Baru",
+      data: monthlyDataBaru
+    }, {
+      name: "Perpanjangan",
+      data: monthlyDataPerpanjangan
+    }],
+    grid: {
+      padding: {
+        top: -20,
+        right: 0,
+        left: -4,
+        bottom: -4
+      },
+      strokeDashArray: 4,
+    },
+    xaxis: {
+      labels: {
+        padding: 0,
+      },
+      tooltip: { enabled: false },
+      axisBorder: { show: false },
+      categories: monthLabels,
+    },
+    yaxis: {
+      labels: {
+        padding: 4
+      },
+    },
+    colors: ["#52c41a", "#f5222d"],
+    legend: { 
+      show: true,
+      position: 'top',
+    },
+  });
+  chartGabungan.render();
+
+  // Status Donut Chart
+  const chartPerStatus = new ApexCharts(document.getElementById('chartPerStatus'), {
+    chart: {
+      type: 'donut',
+      fontFamily: 'inherit',
+      height: 320,
+    },
+    series: [{{ $totalStatusBaru }}, {{ $totalStatusPerpanjangan }}],
+    labels: ['Baru', 'Perpanjangan'],
+    colors: ["#52c41a", "#f5222d"],
+    legend: {
+      show: true,
+      position: 'bottom',
+    },
+    plotOptions: {
+      pie: {
+        donut: {
+          size: '60%'
         }
-    });
+      }
+    },
+    dataLabels: {
+      enabled: true,
+      formatter: function(val) {
+        return Math.round(val) + '%';
+      }
+    }
+  });
+  chartPerStatus.render();
 });
 </script>
-@endsection
