@@ -300,6 +300,9 @@
                             @else
                               {{ is_null($item->end_date_akhir) ? 'Proses' : (Carbon\Carbon::parse($item->end_date_akhir)->translatedFormat('Y')==0001?'Proses':'Terbit') }}
                             @endif
+                            @if(isset($item->counted_in_statistik) && $item->counted_in_statistik === false)
+                              <span class="badge bg-warning text-dark ms-2" title="{{ $item->stat_exclusion_reason ?? 'Tidak terhitung di statistik' }}">Non-stat</span>
+                            @endif
                           </td>
                           <td class="text-start">
                             <div>

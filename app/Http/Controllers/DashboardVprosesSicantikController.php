@@ -32,6 +32,24 @@ class DashboardVprosesSicantikController extends Controller
 		$month = $request->input('month');
 		$year = $request->input('year');
 		$group = $request->input('group');
+		$mode = $request->input('mode'); // optional: 'terbit' to mirror statistik
+		// Auto-enable terbit mode when any date filter is applied (month/year or explicit range)
+		$isDateFiltered = (!empty($month) || !empty($year) || ($date_start && $date_end));
+		$isTerbitMode = ($mode === 'terbit') || $isDateFiltered;
+
+		// Precompute set of permohonan_izin_id counted in statistik for requested period (year/month)
+		$statPermIds = collect();
+		if (!empty($year)) {
+			$statQuery = Proses::query()
+				->where('jenis_proses_id', 40)
+				->whereRaw("LOWER(TRIM(status)) = 'selesai'")
+				->where(function($q){ $q->whereNotNull('end_date')->orWhereNotNull('tgl_signed_report'); })
+				->whereRaw("YEAR(LEAST(IFNULL(end_date,'9999-12-31'), IFNULL(tgl_signed_report,'9999-12-31'))) = ?", [$year]);
+			if (!empty($month)) {
+				$statQuery->whereRaw("MONTH(LEAST(IFNULL(end_date,'9999-12-31'), IFNULL(tgl_signed_report,'9999-12-31'))) = ?", [$month]);
+			}
+			$statPermIds = $statQuery->distinct()->pluck('permohonan_izin_id')->filter()->unique()->values();
+		}
 
 		// Apply search
 		if ($search) {
@@ -42,23 +60,49 @@ class DashboardVprosesSicantikController extends Controller
 			});
 		}
 
-		// Date range filter (tgl_penetapan)
+		// Date range filter
 		if ($date_start && $date_end) {
 			if ($date_start > $date_end) {
 				return redirect('/sicantik')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda');
 			}
-			$query->whereBetween('tgl_penetapan', [$date_start, $date_end]);
+			if ($isTerbitMode) {
+				// gunakan tanggal efektif terbit: LEAST(end_date, tgl_signed_report) untuk jenis 40 selesai
+				$query->where('jenis_proses_id', 40)
+					->whereRaw("LOWER(TRIM(status)) = 'selesai'")
+					->where(function($q){ $q->whereNotNull('end_date')->orWhereNotNull('tgl_signed_report'); })
+					->whereRaw("LEAST(IFNULL(end_date,'9999-12-31'), IFNULL(tgl_signed_report,'9999-12-31')) BETWEEN ? AND ?", [$date_start, $date_end]);
+			} else {
+				// existing: tgl_penetapan
+				$query->whereBetween('tgl_penetapan', [$date_start, $date_end]);
+			}
 		}
 
 		// Month/year filters
 		if ($month && $year) {
-			$query->whereMonth('tgl_penetapan', $month)->whereYear('tgl_penetapan', $year);
+			if ($isTerbitMode) {
+				$query->where('jenis_proses_id', 40)
+					->whereRaw("LOWER(TRIM(status)) = 'selesai'")
+					->where(function($q){ $q->whereNotNull('end_date')->orWhereNotNull('tgl_signed_report'); })
+					->whereRaw("YEAR(LEAST(IFNULL(end_date,'9999-12-31'), IFNULL(tgl_signed_report,'9999-12-31'))) = ?", [$year])
+					->whereRaw("MONTH(LEAST(IFNULL(end_date,'9999-12-31'), IFNULL(tgl_signed_report,'9999-12-31'))) = ?", [$month]);
+			} else {
+				$query->whereMonth('tgl_penetapan', $month)->whereYear('tgl_penetapan', $year);
+			}
 		} elseif ($year) {
-			$query->whereYear('tgl_penetapan', $year);
+			if ($isTerbitMode) {
+				$query->where('jenis_proses_id', 40)
+					->whereRaw("LOWER(TRIM(status)) = 'selesai'")
+					->where(function($q){ $q->whereNotNull('end_date')->orWhereNotNull('tgl_signed_report'); })
+					->whereRaw("YEAR(LEAST(IFNULL(end_date,'9999-12-31'), IFNULL(tgl_signed_report,'9999-12-31'))) = ?", [$year]);
+			} else {
+				$query->whereYear('tgl_penetapan', $year);
+			}
 		}
 
-		// Only show items that are still in process
-		$query->where('status', 'Proses');
+		// Only show items that are still in process (non-terbit mode)
+		if (!$isTerbitMode) {
+			$query->where('status', 'Proses');
+		}
 
 		// Pagination
 		$perPage = (int) $request->input('perPage', 10);
@@ -80,7 +124,16 @@ class DashboardVprosesSicantikController extends Controller
 		$items->withPath(url('/sicantik'));
 
         // Hitung lama_proses & jumlah_hari_kerja per item (start = end_date jenis=2, end = end_date jenis=40 or fallback)
-		$items->getCollection()->transform(function ($item) {
+		$items->getCollection()->transform(function ($item) use ($statPermIds) {
+			// Tandai apakah item ini terhitung di statistik (berdasarkan permohonan_izin_id & periode dipilih)
+			if ($statPermIds && $statPermIds->count() > 0) {
+				$item->counted_in_statistik = $statPermIds->contains($item->permohonan_izin_id);
+				if ($item->counted_in_statistik === false) {
+					$item->stat_exclusion_reason = 'Tidak ada langkah 40 selesai dengan tanggal efektif pada periode.';
+				}
+			} else {
+				$item->counted_in_statistik = null;
+			}
 			try {
 				$no = $item->permohonan_izin_id;
 				$invalidDates = ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000'];
@@ -603,9 +656,9 @@ public function show(Request $request, $id)
 			$baseQuery = Proses::query()
 				->where('jenis_proses_id', 40)
 				->whereRaw("LOWER(TRIM(status)) = 'selesai'")
-				->whereNotNull('end_date')
-				->whereYear('end_date', $year);
-			if ($month) { $baseQuery->whereMonth('end_date', $month); }
+				->where(function($q){ $q->whereNotNull('end_date')->orWhereNotNull('tgl_signed_report'); })
+				->whereRaw("YEAR(LEAST(IFNULL(end_date, '9999-12-31'), IFNULL(tgl_signed_report, '9999-12-31'))) = ?", [$year]);
+			if ($month) { $baseQuery->whereRaw("MONTH(LEAST(IFNULL(end_date, '9999-12-31'), IFNULL(tgl_signed_report, '9999-12-31'))) = ?", [$month]); }
 			$items = $baseQuery->get();
 			$invalidDates = ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000'];
 
