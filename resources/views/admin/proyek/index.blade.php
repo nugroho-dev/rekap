@@ -93,6 +93,18 @@
                           <form action="{{ url('/berusaha/proyek')}}" method="POST">
                             @csrf
                             <input type="hidden" name="page" value="{{ request()->get('page', 1) }}">
+                            @if($search)<input type="hidden" name="search" value="{{ $search }}">@endif
+                            @if($date_start)<input type="hidden" name="date_start" value="{{ $date_start }}">@endif
+                            @if($date_end)<input type="hidden" name="date_end" value="{{ $date_end }}">@endif
+                            @if($month)<input type="hidden" name="month" value="{{ $month }}">@endif
+                            @if($year)<input type="hidden" name="year" value="{{ $year }}">@endif
+                            @if($kbli && is_array($kbli))
+                              @foreach($kbli as $k)
+                                <input type="hidden" name="kbli[]" value="{{ $k }}">
+                              @endforeach
+                            @elseif($kbli)
+                              <input type="hidden" name="kbli" value="{{ $kbli }}">
+                            @endif
                             <select name="perPage" id="myselect" onchange="this.form.submit()" class="form-control form-control-sm">
                               @foreach ([5, 10, 20, 50, 60, 80, 100] as $size)
                                 <option value="{{ $size }}" {{ $perPage == $size ? 'selected' : '' }}>
@@ -256,6 +268,14 @@
                                 <h4>Pilih Tanggal :</h4>
                                 <form method="post" action="{{ url('/berusaha/proyek')}}" enctype="multipart/form-data">
                                   @csrf
+                                  @if($search)<input type="hidden" name="search" value="{{ $search }}">@endif
+                                  @if($kbli && is_array($kbli))
+                                    @foreach($kbli as $k)
+                                      <input type="hidden" name="kbli[]" value="{{ $k }}">
+                                    @endforeach
+                                  @elseif($kbli)
+                                    <input type="hidden" name="kbli" value="{{ $kbli }}">
+                                  @endif
                                 <div class="input-group mb-2">
                                   <input type="date" class="form-control" name="date_start" autocomplete="off">
                                   <span class="input-group-text">
@@ -271,6 +291,14 @@
                                 <div>
                                   <form method="post" action="{{ url('/berusaha/proyek')}}" enctype="multipart/form-data">
                                     @csrf
+                                    @if($search)<input type="hidden" name="search" value="{{ $search }}">@endif
+                                    @if($kbli && is_array($kbli))
+                                      @foreach($kbli as $k)
+                                        <input type="hidden" name="kbli[]" value="{{ $k }}">
+                                      @endforeach
+                                    @elseif($kbli)
+                                      <input type="hidden" name="kbli" value="{{ $kbli }}">
+                                    @endif
                                   <div class="row g-2">
                                     <div class="col-4">
                                       <select name="month" class="form-select">
@@ -300,6 +328,17 @@
                                 <div>
                                   <form method="post" action="{{ url('/berusaha/proyek')}}" enctype="multipart/form-data">
                                     @csrf
+                                    @if($search)<input type="hidden" name="search" value="{{ $search }}">@endif
+                                    @if($date_start)<input type="hidden" name="date_start" value="{{ $date_start }}">@endif
+                                    @if($date_end)<input type="hidden" name="date_end" value="{{ $date_end }}">@endif
+                                    @if($month)<input type="hidden" name="month" value="{{ $month }}">@endif
+                                    @if($kbli && is_array($kbli))
+                                      @foreach($kbli as $k)
+                                        <input type="hidden" name="kbli[]" value="{{ $k }}">
+                                      @endforeach
+                                    @elseif($kbli)
+                                      <input type="hidden" name="kbli" value="{{ $kbli }}">
+                                    @endif
                                   <div class="row g-2">
                                     <div class="col-4">
                                       <select name="year" class="form-select">
@@ -321,9 +360,11 @@
                                 <div>
                                   <form method="post" action="{{ url('/berusaha/proyek')}}" enctype="multipart/form-data">
                                     @csrf
+                                    @if($search)<input type="hidden" name="search" value="{{ $search }}">@endif
                                   <div class="row g-2">
                                     <div class="col-12 mb-3">
-                                      <select name="kbli[]" class="form-select" multiple size="10" style="height: 250px;">
+                                      <label class="form-label">KBLI</label>
+                                      <select name="kbli[]" class="form-select" multiple size="8" style="height: 200px;">
                                         @foreach($kbliOptions as $option)
                                           <option value="{{ $option->kbli }}" 
                                             {{ is_array($kbli) && in_array($option->kbli, $kbli) ? 'selected' : '' }}>
@@ -332,6 +373,32 @@
                                         @endforeach
                                       </select>
                                       <small class="form-hint">Tahan Ctrl (Windows) atau Cmd (Mac) untuk memilih lebih dari satu KBLI</small>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                      <label class="form-label">Rentang Tanggal (opsional)</label>
+                                      <div class="input-group">
+                                        <input type="date" class="form-control" name="date_start" value="{{ $date_start ?? '' }}" autocomplete="off">
+                                        <span class="input-group-text">s/d</span>
+                                        <input type="date" class="form-control" name="date_end" value="{{ $date_end ?? '' }}" autocomplete="off">
+                                      </div>
+                                    </div>
+                                    <div class="col-6 mb-3">
+                                      <label class="form-label">Bulan (opsional)</label>
+                                      <select name="month" class="form-select">
+                                        <option value="">Pilih Bulan</option>
+                                        @foreach ($namaBulan as $index => $bulan)
+                                        <option value="{{ $index + 1 }}" {{ $month == ($index + 1) ? 'selected' : '' }}>{{ $bulan }}</option>
+                                        @endforeach
+                                      </select>
+                                    </div>
+                                    <div class="col-6 mb-3">
+                                      <label class="form-label">Tahun (opsional)</label>
+                                      <select name="year" class="form-select">
+                                        <option value="">Pilih Tahun</option>
+                                        @for ($y = $startYear; $y <= $currentYear; $y++)
+                                        <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
+                                        @endfor
+                                      </select>
                                     </div>
                                     <div class="col-12">
                                       <button type="submit" class="btn btn-primary w-100">Tampilkan</button>
