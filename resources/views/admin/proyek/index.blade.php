@@ -50,18 +50,18 @@
                           <span class="d-none d-sm-inline">
                           
                           </span>
-                          <a href="{{ route('proyek.export.excel', ['search' => $search, 'date_start' => $date_start, 'date_end' => $date_end, 'month' => $month, 'year' => $year]) }}" class="btn btn-success d-none d-sm-inline-block">
+                          <a href="{{ route('proyek.export.excel', ['search' => $search, 'date_start' => $date_start, 'date_end' => $date_end, 'month' => $month, 'year' => $year, 'kbli' => $kbli]) }}" class="btn btn-success d-none d-sm-inline-block">
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4h16v16H4z"/><path d="M4 10h16"/><path d="M10 4v16"/><path d="M7 7l-2 3l2 3"/><path d="M13 13l2 3l2 -3"/></svg>
                             Export Excel
                           </a>
-                          <a href="{{ route('proyek.export.pdf', ['search' => $search, 'date_start' => $date_start, 'date_end' => $date_end, 'month' => $month, 'year' => $year]) }}" target="_blank" class="btn btn-secondary d-none d-sm-inline-block">
+                          <a href="{{ route('proyek.export.pdf', ['search' => $search, 'date_start' => $date_start, 'date_end' => $date_end, 'month' => $month, 'year' => $year, 'kbli' => $kbli]) }}" target="_blank" class="btn btn-secondary d-none d-sm-inline-block">
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M5 12v-5a2 2 0 0 1 2 -2h7l5 5v7a2 2 0 0 1 -2 2h-6"/><path d="M3 21l6 -7"/><path d="M9 21h-6v-6"/></svg>
                             Export PDF
                           </a>
-                          <a href="{{ route('proyek.export.excel', ['search' => $search, 'date_start' => $date_start, 'date_end' => $date_end, 'month' => $month, 'year' => $year]) }}" class="btn btn-success d-sm-none btn-icon" aria-label="Export Excel">
+                          <a href="{{ route('proyek.export.excel', ['search' => $search, 'date_start' => $date_start, 'date_end' => $date_end, 'month' => $month, 'year' => $year, 'kbli' => $kbli]) }}" class="btn btn-success d-sm-none btn-icon" aria-label="Export Excel">
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4h16v16H4z"/><path d="M4 10h16"/><path d="M10 4v16"/><path d="M7 7l-2 3l2 3"/><path d="M13 13l2 3l2 -3"/></svg>
                           </a>
-                          <a href="{{ route('proyek.export.pdf', ['search' => $search, 'date_start' => $date_start, 'date_end' => $date_end, 'month' => $month, 'year' => $year]) }}" target="_blank" class="btn btn-secondary d-sm-none btn-icon" aria-label="Export PDF">
+                          <a href="{{ route('proyek.export.pdf', ['search' => $search, 'date_start' => $date_start, 'date_end' => $date_end, 'month' => $month, 'year' => $year, 'kbli' => $kbli]) }}" target="_blank" class="btn btn-secondary d-sm-none btn-icon" aria-label="Export PDF">
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M5 12v-5a2 2 0 0 1 2 -2h7l5 5v7a2 2 0 0 1 -2 2h-6"/><path d="M3 21l6 -7"/><path d="M9 21h-6v-6"/></svg>
                           </a>
                           <a href="#" class="btn btn-primary d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#modal-team">
@@ -82,7 +82,7 @@
               <div class="col-12">
                 <div class="card">
                   <div class="card-header">
-                    <h3 class="card-title"> {{ $judul }} @if($date_start&&$date_end) : {{ Carbon\Carbon::parse($date_start)->translatedFormat('d F Y') }} Sampai Dengan {{ Carbon\Carbon::parse($date_end)->translatedFormat('d F Y') }}@endif @if($month) Bulan {{ Carbon\Carbon::createFromDate(null,$month,1)->translatedFormat('F') }}  @endif @if($year) Tahun {{ $year }}  @endif </h3>
+                    <h3 class="card-title"> {{ $judul }} @if($kbli) KBLI: {{ is_array($kbli) ? implode(', ', $kbli) : $kbli }} @endif @if($date_start&&$date_end) : {{ Carbon\Carbon::parse($date_start)->translatedFormat('d F Y') }} Sampai Dengan {{ Carbon\Carbon::parse($date_end)->translatedFormat('d F Y') }}@endif @if($month) Bulan {{ Carbon\Carbon::createFromDate(null,$month,1)->translatedFormat('F') }}  @endif @if($year) Tahun {{ $year }}  @endif </h3>
                   </div>
                   <div class="card-body border-bottom py-3">
                     <div class="d-flex">
@@ -187,7 +187,7 @@
                     </table>
                   </div>
                   <div class="card-footer d-flex align-items-center">
-                     {{ $items->appends(['perPage' => $perPage, 'search' => $search, 'date_start' => $date_start, 'date_end' => $date_end, 'month' => $month, 'year' => $year])->links() }}
+                     {{ $items->appends(['perPage' => $perPage, 'search' => $search, 'date_start' => $date_start, 'date_end' => $date_end, 'month' => $month, 'year' => $year, 'kbli' => $kbli])->links() }}
                   </div>
                 </div>
               </div>
@@ -244,6 +244,9 @@
                               </li>
                               <li class="nav-item" role="presentation">
                                 <a href="#tabs-activity-8" class="nav-link" data-bs-toggle="tab" aria-selected="false" role="tab" tabindex="-1">Tahun</a>
+                              </li>
+                              <li class="nav-item" role="presentation">
+                                <a href="#tabs-kbli-8" class="nav-link" data-bs-toggle="tab" aria-selected="false" role="tab" tabindex="-1">KBLI</a>
                               </li>
                             </ul>
                           </div>
@@ -308,6 +311,30 @@
                                     </div>
                                     <div class="col-2">
                                       <button type="submit" class="btn btn-primary">Tampilkan</button>
+                                    </div>
+                                  </div>
+                                 </form>
+                              </div>
+                              </div>
+                              <div class="tab-pane fade" id="tabs-kbli-8" role="tabpanel">
+                                <h4>Pilih KBLI :</h4>
+                                <div>
+                                  <form method="post" action="{{ url('/berusaha/proyek')}}" enctype="multipart/form-data">
+                                    @csrf
+                                  <div class="row g-2">
+                                    <div class="col-12 mb-3">
+                                      <select name="kbli[]" class="form-select" multiple size="10" style="height: 250px;">
+                                        @foreach($kbliOptions as $option)
+                                          <option value="{{ $option->kbli }}" 
+                                            {{ is_array($kbli) && in_array($option->kbli, $kbli) ? 'selected' : '' }}>
+                                            {{ $option->kbli }} - {{ Str::limit($option->judul_kbli, 60) }}
+                                          </option>
+                                        @endforeach
+                                      </select>
+                                      <small class="form-hint">Tahan Ctrl (Windows) atau Cmd (Mac) untuk memilih lebih dari satu KBLI</small>
+                                    </div>
+                                    <div class="col-12">
+                                      <button type="submit" class="btn btn-primary w-100">Tampilkan</button>
                                     </div>
                                   </div>
                                  </form>

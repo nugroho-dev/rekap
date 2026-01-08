@@ -41,6 +41,15 @@ class ProyekController extends Controller
         $date_end = $request->input('date_end');
         $month = $request->input('month');
         $year = $request->input('year');
+        $kbli = $request->input('kbli');
+        
+        // Fetch all distinct KBLI for dropdown
+        $kbliOptions = Proyek::select('kbli', 'judul_kbli')
+            ->whereNotNull('kbli')
+            ->where('kbli', '!=', '')
+            ->groupBy('kbli', 'judul_kbli')
+            ->orderBy('kbli', 'asc')
+            ->get();
 
         if ($search) {
             // support single string or array of tags
@@ -75,6 +84,14 @@ class ProyekController extends Controller
             $query->whereYear('day_of_tanggal_pengajuan_proyek', $year);
         }
 
+        if ($kbli) {
+            if (is_array($kbli)) {
+                $query->whereIn('kbli', $kbli);
+            } else {
+                $query->where('kbli', $kbli);
+            }
+        }
+
         $perPage = (int) $request->input('perPage', 50);
 
         // simplePaginate menghindari COUNT(*) yang berat untuk tabel besar
@@ -85,7 +102,7 @@ class ProyekController extends Controller
         $importErrors = session('import_errors', []);
 
         return view('admin.proyek.index', compact(
-            'judul','items','perPage','search','date_start','date_end','month','year',
+            'judul','items','perPage','search','date_start','date_end','month','year','kbli','kbliOptions',
             'importSkipped','importErrors'
         ));
     }
@@ -201,6 +218,7 @@ class ProyekController extends Controller
         $date_end = $request->input('date_end');
         $month = $request->input('month');
         $year = $request->input('year');
+        $kbli = $request->input('kbli');
 
         if ($search) {
             $query->where(function($q) use ($search) {
@@ -208,6 +226,14 @@ class ProyekController extends Controller
                   ->orWhere('kbli', 'LIKE', "%{$search}%")
                   ->orWhere('nama_perusahaan', 'LIKE', "%{$search}%");
             });
+        }
+
+        if ($kbli) {
+            if (is_array($kbli)) {
+                $query->whereIn('kbli', $kbli);
+            } else {
+                $query->where('kbli', $kbli);
+            }
         }
 
         if ($date_start && $date_end) {
