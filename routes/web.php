@@ -295,6 +295,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/mppd/statistik', [MppdController::class, 'statistik']);
     Route::post('/mppd/statistik', [MppdController::class, 'statistik']);
     Route::post('/mppd/rincian', [MppdController::class, 'rincian']);
+    Route::get('/mppd/rincian', [MppdController::class, 'rincian']);
+    Route::get('/mppd/rincian/print', [MppdController::class, 'printRincian'])->name('mppd.rincian.print');
     Route::post('/mppd/upload_file', [MppdController::class, 'upload_file']);
     Route::post('/mppd/delete_file', [MppdController::class, 'delete_file']);
     Route::resource('/mppd', MppdController::class)->except(['index','store']);
@@ -305,6 +307,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/simpel/print', [DashboradSimpelController::class, 'print']);
     Route::get('/simpel/statistik', [DashboradSimpelController::class, 'statistik']);
     Route::post('/simpel/statistik', [DashboradSimpelController::class, 'statistik']);
+    Route::get('/simpel/rincian', [DashboradSimpelController::class, 'rincian']);
+    Route::post('/simpel/rincian', [DashboradSimpelController::class, 'rincian']);
+    Route::get('/simpel/rincian/print', [DashboradSimpelController::class, 'printRincian'])->name('simpel.rincian.print');
     Route::post('/simpel/rincian', [DashboradSimpelController::class, 'rincian']);
 
     // Proyek

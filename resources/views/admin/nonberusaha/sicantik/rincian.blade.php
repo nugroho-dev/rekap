@@ -9,10 +9,18 @@
       </div>
       <div class="col-auto ms-auto d-print-none">
         <div class="btn-list">
-          <a href="{{ url('/sicantik/rincian/print') }}?year={{ (int)$year }}&month={{ (int)$month }}" target="_blank" class="btn btn-secondary d-none d-sm-inline-block">
+          @php
+            $printUrl = url('/sicantik/rincian/print') . '?year=' . (int)$year;
+            if (!empty($period) && $period === 'year') {
+              $printUrl .= '&period=year';
+            } elseif (!empty($month)) {
+              $printUrl .= '&month=' . (int)$month;
+            }
+          @endphp
+          <a href="{{ $printUrl }}" target="_blank" class="btn btn-secondary d-none d-sm-inline-block">
             Cetak PDF
           </a>
-          <a href="{{ url('/sicantik/rincian/print') }}?year={{ (int)$year }}&month={{ (int)$month }}" target="_blank" class="btn btn-secondary d-sm-none btn-icon" title="Cetak PDF">
+          <a href="{{ $printUrl }}" target="_blank" class="btn btn-secondary d-sm-none btn-icon" title="Cetak PDF">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icon-tabler-printer">
               <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
               <path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2" />
@@ -102,7 +110,11 @@
 <div class="col-lg-12 col-sm-12">
   <div class="card">
     <div class="card-body table-responsive">
-      <h3 class="card-title">Rincian Izin Terbit Bulan {{ Carbon\Carbon::createFromDate(null, $month, 1)->translatedFormat('F') }} Tahun {{ $year }}</h3>
+      @php
+        $isYearly = (!empty($period) && $period==='year') || empty($month);
+        $periodeLabel = $isYearly ? ('Tahun ' . $year) : ('Bulan ' . Carbon\Carbon::createFromDate(null, $month, 1)->translatedFormat('F') . ' Tahun ' . $year);
+      @endphp
+      <h3 class="card-title">Rincian Izin Terbit {{ $periodeLabel }}</h3>
       <table class="table">
         <thead>
           <tr>
@@ -145,7 +157,9 @@
               <div class="dropdown-menu dropdown-menu-end">
                 <form method="get" action="{{ url('/sicantik')}}" enctype="multipart/form-data">
                   
-                <input type="hidden" name="month" value="{{ $month }}">
+                    @if(!$isYearly)
+                    <input type="hidden" name="month" value="{{ $month }}">
+                    @endif
                 <input type="hidden" name="year" value="{{ $year }}">
                 <input type="hidden" name="search" value="{{ $data->jenis_izin }}">
                 <button type="submit" class="dropdown-item">
@@ -154,7 +168,9 @@
                 </form>
                 
                   <form method="get" action="{{ url('/sicantik/print') }}" target="_blank">
+                    @if(!$isYearly)
                     <input type="hidden" name="month" value="{{ $month }}">
+                    @endif
                     <input type="hidden" name="year" value="{{ $year }}">
                     <input type="hidden" name="search" value="{{ $data->jenis_izin }}">
                     <button type="submit" class="dropdown-item">Cetak Rincian Izin Terbit</button>
@@ -224,6 +240,9 @@ $currentYear = date('Y');
               <li class="nav-item" role="presentation">
                 <a href="#tabs-profile-8" class="nav-link" data-bs-toggle="tab" aria-selected="false" role="tab" tabindex="-1">Bulan</a>
               </li>
+              <li class="nav-item" role="presentation">
+                <a href="#tabs-profile-9" class="nav-link" data-bs-toggle="tab" aria-selected="false" role="tab" tabindex="-1">Tahun</a>
+              </li>
             </ul>
           </div>
           <div class="card-body">
@@ -251,6 +270,28 @@ $currentYear = date('Y');
                         </select>
                       </div>
                       <div class="col-2">
+                        <button type="submit" class="btn btn-primary">Tampilkan</button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+              <div class="tab-pane fade" id="tabs-profile-9" role="tabpanel">
+                <h4>Pilih Tahun :</h4>
+                <div>
+                  <form method="post" action="{{ url('/sicantik/rincian') }}" enctype="multipart/form-data">
+                    @csrf
+                    <input type="hidden" name="period" value="year">
+                    <div class="row g-2">
+                      <div class="col-6">
+                        <select name="year" class="form-select">
+                          <option value="{{ $year }}">Tahun</option>
+                          @for ($year = $startYear; $year <= $currentYear; $year++)
+                          <option value="{{ $year }}">{{ $year }}</option>
+                          @endfor
+                        </select>
+                      </div>
+                      <div class="col-3">
                         <button type="submit" class="btn btn-primary">Tampilkan</button>
                       </div>
                     </div>

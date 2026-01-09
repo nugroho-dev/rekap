@@ -259,27 +259,65 @@ class DashboradSimpelController extends Controller
     public function rincian(Request $request)
     {
         $judul='Statistik Izin Pemakaman';
-        if ($request->has('year') && $request->has('month')) {
-            $year = $request->input('year');
-            $month = $request->input('month');
-            $rincianterbit = DB::table('view_simpel')
-            ->selectRaw('month(rekomendasi) AS bulan, year(rekomendasi) AS tahun, jasa as jenis_izin, jasa as jenis_izin_id, count(rekomendasi) as jumlah_izin, pemohon, sum(jumlah_hari) as jumlah_hari')
-            ->whereYear('rekomendasi', $year)
-            ->whereMonth('rekomendasi', $month)
-            ->groupBy('jasa')
-            ->orderBy('jumlah_izin', 'desc')
-            ->get();
+        $year = $request->input('year');
+        $period = $request->input('period'); // 'year' for yearly aggregate
+        $monthInput = $request->input('month');
+        $month = ($period === 'year') ? null : $monthInput;
+
+        if ($year) {
+            if ($month !== null) {
+                $rincianterbit = DB::table('view_simpel')
+                    ->selectRaw('month(rekomendasi) AS bulan, year(rekomendasi) AS tahun, jasa as jenis_izin, jasa as jenis_izin_id, count(rekomendasi) as jumlah_izin, sum(jumlah_hari) as jumlah_hari')
+                    ->whereYear('rekomendasi', $year)
+                    ->whereMonth('rekomendasi', $month)
+                    ->groupBy('jasa')
+                    ->orderBy('jumlah_izin', 'desc')
+                    ->get();
+            } else {
+                // Year-only aggregation by jasa
+                $rincianterbit = DB::table('view_simpel')
+                    ->selectRaw('year(rekomendasi) AS tahun, jasa as jenis_izin, jasa as jenis_izin_id, count(rekomendasi) as jumlah_izin, sum(jumlah_hari) as jumlah_hari')
+                    ->whereYear('rekomendasi', $year)
+                    ->groupBy('jasa')
+                    ->orderBy('jumlah_izin', 'desc')
+                    ->get()->map(function($row) use($year){ $row->bulan = null; $row->tahun = (int)$year; return $row; });
+            }
 
             $totalJumlahHari = $rincianterbit->sum('jumlah_hari');
             $total_izin = $rincianterbit->sum('jumlah_izin');
             $rataRataJumlahHari = $total_izin ? $totalJumlahHari / $total_izin : 0;
 
             $rataRataJumlahHariPerJenisIzin = $rincianterbit->map(function ($item) {
-                $item->rata_rata_jumlah_hari = $item->jumlah_hari / $item->jumlah_izin;
+                $item->rata_rata_jumlah_hari = $item->jumlah_izin ? ($item->jumlah_hari / $item->jumlah_izin) : 0;
                 return $item;
             });
         }
-		return view('admin.nonberusaha.simpel.rincian',compact('judul','month','year','rataRataJumlahHariPerJenisIzin', 'rataRataJumlahHari','total_izin','totalJumlahHari'));
+		return view('admin.nonberusaha.simpel.rincian',compact('judul','month','year','rataRataJumlahHariPerJenisIzin', 'rataRataJumlahHari','total_izin','totalJumlahHari') + ['period' => $period]);
+    }
+
+    public function printRincian(Request $request)
+    {
+        $judul='Rincian Izin Pemakaman';
+        $year = (int) $request->input('year', Carbon::now()->year);
+        $period = $request->input('period');
+        $monthInput = $request->input('month');
+        $month = ($period === 'year') ? null : ($monthInput !== null ? (int)$monthInput : null);
+
+        $query = DB::table('view_simpel')->selectRaw('jasa as jenis_izin, COUNT(rekomendasi) as jumlah_izin, SUM(jumlah_hari) as jumlah_hari');
+        $query->whereYear('rekomendasi', $year);
+        if ($month !== null) { $query->whereMonth('rekomendasi', $month); }
+        $query->groupBy('jasa')->orderByDesc('jumlah_izin');
+        $items = $query->get()->map(function($row){
+            $row->rata_rata_jumlah_hari = $row->jumlah_izin ? ($row->jumlah_hari / $row->jumlah_izin) : 0;
+            return $row;
+        });
+        $total_izin = (int) ($items->sum('jumlah_izin'));
+        $totalJumlahHari = (float) ($items->sum('jumlah_hari'));
+        $rataRataJumlahHari = $total_izin ? ($totalJumlahHari / $total_izin) : 0;
+
+        return Pdf::loadView('admin.nonberusaha.simpel.print.rincian', compact('judul','items','year','month','total_izin','totalJumlahHari','rataRataJumlahHari','period'))
+            ->setPaper('A4','landscape')
+            ->stream(($period === 'year' ? ('simpel-rincian-'.$year.'.pdf') : ('simpel-rincian-'.$year.'-'.str_pad((string)($month ?? 0),2,'0',STR_PAD_LEFT).'.pdf')));
     }
     public function print(Request $request)
 	{

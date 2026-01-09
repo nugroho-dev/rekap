@@ -91,7 +91,16 @@
 <div class="col-lg-12 col-sm-12">
   <div class="card">
     <div class="card-body table-responsive">
-      <h3 class="card-title">Rincian Izin Terbit Bulan {{ Carbon\Carbon::createFromDate(null, $month, 1)->translatedFormat('F') }} Tahun {{ $year }}</h3>
+      @php
+        $isYearly = (!empty($period) && $period==='year') || empty($month);
+        $periodeLabel = $isYearly ? ('Tahun ' . $year) : ('Bulan ' . Carbon\Carbon::createFromDate(null, $month, 1)->translatedFormat('F') . ' Tahun ' . $year);
+        $printUrl = url('/mppd/rincian/print') . '?year=' . (int)$year;
+        if ($isYearly) { $printUrl .= '&period=year'; } elseif (!empty($month)) { $printUrl .= '&month=' . (int)$month; }
+      @endphp
+      <div class="d-flex justify-content-between align-items-center">
+        <h3 class="card-title">Rincian Izin Terbit {{ $periodeLabel }}</h3>
+        <a href="{{ $printUrl }}" target="_blank" class="btn btn-secondary">Cetak PDF</a>
+      </div>
       <table class="table">
         <thead>
           <tr>
@@ -113,7 +122,9 @@
               <div class="dropdown-menu dropdown-menu-end">
                 <form method="get" action="{{ url('/mppd')}}" enctype="multipart/form-data">
                   
+                @if(!$isYearly)
                 <input type="hidden" name="month" value="{{ $data->bulan }}">
+                @endif
                 <input type="hidden" name="year" value="{{ $year }}">
                 <input type="hidden" name="search" value="{{ $data->jenis_izin }}">
                 <button type="submit" class="dropdown-item">
@@ -165,6 +176,9 @@ $currentYear = date('Y');
               <li class="nav-item" role="presentation">
                 <a href="#tabs-profile-8" class="nav-link" data-bs-toggle="tab" aria-selected="false" role="tab" tabindex="-1">Bulan</a>
               </li>
+              <li class="nav-item" role="presentation">
+                <a href="#tabs-profile-9" class="nav-link" data-bs-toggle="tab" aria-selected="false" role="tab" tabindex="-1">Tahun</a>
+              </li>
             </ul>
           </div>
           <div class="card-body">
@@ -192,6 +206,28 @@ $currentYear = date('Y');
                         </select>
                       </div>
                       <div class="col-2">
+                        <button type="submit" class="btn btn-primary">Tampilkan</button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+              <div class="tab-pane fade" id="tabs-profile-9" role="tabpanel">
+                <h4>Pilih Tahun :</h4>
+                <div>
+                  <form method="post" action="{{ url('/mppd/rincian') }}" enctype="multipart/form-data">
+                    @csrf
+                    <input type="hidden" name="period" value="year">
+                    <div class="row g-2">
+                      <div class="col-6">
+                        <select name="year" class="form-select">
+                          <option value="{{ $year }}">Tahun</option>
+                          @for ($year = $startYear; $year <= $currentYear; $year++)
+                          <option value="{{ $year }}">{{ $year }}</option>
+                          @endfor
+                        </select>
+                      </div>
+                      <div class="col-3">
                         <button type="submit" class="btn btn-primary">Tampilkan</button>
                       </div>
                     </div>
