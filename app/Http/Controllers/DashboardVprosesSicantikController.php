@@ -1260,9 +1260,11 @@ public function show(Request $request, $id)
 	{
 		$judul = 'Statistik Izin SiCantik';
 		$year = (int) $request->input('year', \Carbon\Carbon::now()->year);
-		$month = (int) $request->input('month', \Carbon\Carbon::now()->month);
+		$period = $request->input('period'); // 'year' for yearly aggregate, otherwise monthly
+		$monthInput = $request->input('month');
+		$month = ($period === 'year') ? null : ($monthInput !== null ? (int) $monthInput : (int) \Carbon\Carbon::now()->month);
 		if ($year <= 0) { $year = (int) \Carbon\Carbon::now()->year; }
-		if ($month < 1 || $month > 12) { $month = (int) \Carbon\Carbon::now()->month; }
+		if ($month !== null && ($month < 1 || $month > 12)) { $month = (int) \Carbon\Carbon::now()->month; }
 
 		$invalid = ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000'];
 		$base = Proses::query()
@@ -1270,8 +1272,12 @@ public function show(Request $request, $id)
 			->whereRaw("LOWER(TRIM(status)) = 'selesai'")
 			->where(function($q){ $q->whereNotNull('end_date')->orWhereNotNull('tgl_signed_report'); })
 			->whereRaw("YEAR(LEAST(IFNULL(end_date, '9999-12-31'), IFNULL(tgl_signed_report, '9999-12-31'))) = ?", [$year])
-			->whereRaw("MONTH(LEAST(IFNULL(end_date, '9999-12-31'), IFNULL(tgl_signed_report, '9999-12-31'))) = ?", [$month])
-			->get(['permohonan_izin_id','no_permohonan','jenis_izin','end_date','tgl_signed_report','jenis_proses_id']);
+			;
+
+		if ($month !== null) {
+			$base->whereRaw("MONTH(LEAST(IFNULL(end_date, '9999-12-31'), IFNULL(tgl_signed_report, '9999-12-31'))) = ?", [$month]);
+		}
+		$base = $base->get(['permohonan_izin_id','no_permohonan','jenis_izin','end_date','tgl_signed_report','jenis_proses_id']);
 
 		$mapped = $base->map(function($item) use ($invalid) {
 			$row = (object) [
@@ -1410,7 +1416,7 @@ public function show(Request $request, $id)
 
 		return view(
 			'admin.nonberusaha.sicantik.rincian',
-			compact('judul', 'month', 'year', 'rataRataJumlahHariPerJenisIzin', 'rataRataJumlahHari', 'total_izin', 'totalJumlahHari', 'totalSlaDpm', 'totalSlaDinas', 'totalSlaGab')
+			compact('judul', 'month', 'year', 'rataRataJumlahHariPerJenisIzin', 'rataRataJumlahHari', 'total_izin', 'totalJumlahHari', 'totalSlaDpm', 'totalSlaDinas', 'totalSlaGab') + ['period' => $period]
 		);
 	}
 
@@ -1418,9 +1424,11 @@ public function show(Request $request, $id)
 	{
 		$judul = 'Rincian Izin SiCantik';
 		$year = (int) $request->input('year', \Carbon\Carbon::now()->year);
-		$month = (int) $request->input('month', \Carbon\Carbon::now()->month);
+		$period = $request->input('period');
+		$monthInput = $request->input('month');
+		$month = ($period === 'year') ? null : ($monthInput !== null ? (int) $monthInput : (int) \Carbon\Carbon::now()->month);
 		if ($year <= 0) { $year = (int) \Carbon\Carbon::now()->year; }
-		if ($month < 1 || $month > 12) { $month = (int) \Carbon\Carbon::now()->month; }
+		if ($month !== null && ($month < 1 || $month > 12)) { $month = (int) \Carbon\Carbon::now()->month; }
 
 		$invalid = ['0001-01-01 00:00:00', '0001-01-01 00:00:00.000'];
 		$base = Proses::query()
@@ -1428,8 +1436,12 @@ public function show(Request $request, $id)
 			->whereRaw("LOWER(TRIM(status)) = 'selesai'")
 			->where(function($q){ $q->whereNotNull('end_date')->orWhereNotNull('tgl_signed_report'); })
 			->whereRaw("YEAR(LEAST(IFNULL(end_date, '9999-12-31'), IFNULL(tgl_signed_report, '9999-12-31'))) = ?", [$year])
-			->whereRaw("MONTH(LEAST(IFNULL(end_date, '9999-12-31'), IFNULL(tgl_signed_report, '9999-12-31'))) = ?", [$month])
-			->get(['permohonan_izin_id','no_permohonan','jenis_izin','end_date','tgl_signed_report','jenis_proses_id']);
+			;
+
+		if ($month !== null) {
+			$base->whereRaw("MONTH(LEAST(IFNULL(end_date, '9999-12-31'), IFNULL(tgl_signed_report, '9999-12-31'))) = ?", [$month]);
+		}
+		$base = $base->get(['permohonan_izin_id','no_permohonan','jenis_izin','end_date','tgl_signed_report','jenis_proses_id']);
 
 		$mapped = $base->map(function($item) use ($invalid) {
 			$row = (object) [
@@ -1558,9 +1570,12 @@ public function show(Request $request, $id)
 
 		return Pdf::loadView('admin.nonberusaha.sicantik.print.rincian', compact(
 			'judul','year','month','rataRataJumlahHariPerJenisIzin','rataRataJumlahHari','total_izin','totalJumlahHari','totalSlaDpm','totalSlaDinas','totalSlaGab'
-		))
+		) + ['period' => $period])
 		->setPaper('A4','landscape')
-		->stream('sicantik-rincian-'.str_pad((string)$year,4,'0',STR_PAD_LEFT).'-'.str_pad((string)$month,2,'0',STR_PAD_LEFT).'.pdf');
+		->stream(($period === 'year'
+			? ('sicantik-rincian-'.str_pad((string)$year,4,'0',STR_PAD_LEFT).'.pdf')
+			: ('sicantik-rincian-'.str_pad((string)$year,4,'0',STR_PAD_LEFT).'-'.str_pad((string)($month ?? 0),2,'0',STR_PAD_LEFT).'.pdf')
+		));
 	}
 	public function sync(Request $request)
 	{

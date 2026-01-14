@@ -2,7 +2,11 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>{{ $judul }} - {{ \Carbon\Carbon::create((int)$year,(int)$month,1)->translatedFormat('F Y') }}</title>
+  @php
+    $isYearly = (!empty($period) && $period==='year') || empty($month);
+    $periodeTitle = $isYearly ? ('Tahun ' . (int)$year) : \Carbon\Carbon::create((int)$year,(int)$month,1)->translatedFormat('F Y');
+  @endphp
+  <title>{{ $judul }} - {{ $periodeTitle }}</title>
   <style>
     * { font-family: DejaVu Sans, sans-serif; }
     body { font-size: 12px; }
@@ -18,7 +22,7 @@
 </head>
 <body>
   <h2>{{ $judul }}</h2>
-  <div class="meta">Periode: {{ \Carbon\Carbon::create((int)$year,(int)$month,1)->translatedFormat('F Y') }}</div>
+  <div class="meta">Periode: {{ $periodeTitle }}</div>
 
   <table>
     <thead>

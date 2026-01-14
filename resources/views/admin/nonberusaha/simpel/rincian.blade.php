@@ -91,7 +91,16 @@
 <div class="col-lg-12 col-sm-12">
   <div class="card">
     <div class="card-body table-responsive">
-      <h3 class="card-title">Rincian Izin Terbit Bulan {{ Carbon\Carbon::createFromDate(null, $month, 1)->translatedFormat('F') }} Tahun {{ $year }}</h3>
+      @php
+        $isYearly = (!empty($period) && $period==='year') || empty($month);
+        $periodeLabel = $isYearly ? ('Tahun ' . $year) : ('Bulan ' . Carbon\Carbon::createFromDate(null, $month, 1)->translatedFormat('F') . ' Tahun ' . $year);
+        $printUrl = url('/simpel/rincian/print') . '?year=' . (int)$year;
+        if ($isYearly) { $printUrl .= '&period=year'; } elseif (!empty($month)) { $printUrl .= '&month=' . (int)$month; }
+      @endphp
+      <div class="d-flex justify-content-between align-items-center">
+        <h3 class="card-title">Rincian Izin Terbit {{ $periodeLabel }}</h3>
+        <a href="{{ $printUrl }}" target="_blank" class="btn btn-secondary">Cetak PDF</a>
+      </div>
       <table class="table ">
         <thead>
           <tr>
@@ -106,15 +115,17 @@
           @foreach ($rataRataJumlahHariPerJenisIzin as $data)
           <tr>
             <td>{{ $data->jenis_izin }}</td>
-            <td class="text-center">{{ $data->jumlah_izin }} Izin</td>
-            <td class="text-center">{{ $data->jumlah_hari }} Hari</td>
-            <td class="text-center">{{ number_format($data->rata_rata_jumlah_hari, 2) }} Hari</td>
+            <td class="text-center">{{ number_format($data->jumlah_izin, 0, ',', '.') }} Izin</td>
+            <td class="text-center">{{ number_format($data->jumlah_hari ?? 0, 0, ',', '.') }} Hari</td>
+            <td class="text-center">{{ number_format($data->rata_rata_jumlah_hari ?? 0, 2, ',', '.') }} Hari</td>
             <td><span class="dropdown">
                 
               <button class="btn dropdown-toggle align-text-top" data-bs-boundary="viewport" data-bs-toggle="dropdown">Action</button>
               <div class="dropdown-menu dropdown-menu-end">
                 <form method="get" action="{{ url('/simpel')}}" enctype="multipart/form-data">
+                @if(!$isYearly)
                 <input type="hidden" name="month" value="{{ $data->bulan }}">
+                @endif
                 <input type="hidden" name="year" value="{{ $year }}">
                 <input type="hidden" name="search" value="{{ $data->jenis_izin }}">
                 <button type="submit" class="dropdown-item">
@@ -167,6 +178,9 @@ $currentYear = date('Y');
               <li class="nav-item" role="presentation">
                 <a href="#tabs-profile-8" class="nav-link" data-bs-toggle="tab" aria-selected="false" role="tab" tabindex="-1">Bulan</a>
               </li>
+              <li class="nav-item" role="presentation">
+                <a href="#tabs-profile-9" class="nav-link" data-bs-toggle="tab" aria-selected="false" role="tab" tabindex="-1">Tahun</a>
+              </li>
             </ul>
           </div>
           <div class="card-body">
@@ -174,7 +188,7 @@ $currentYear = date('Y');
               <div class="tab-pane fade active show" id="tabs-profile-8" role="tabpanel">
                 <h4>Pilih Bulan :</h4>
                 <div>
-                  <form method="post" action="{{ url('/sicantik/statistik') }}" enctype="multipart/form-data">
+                  <form method="post" action="{{ url('/simpel/rincian') }}" enctype="multipart/form-data">
                     @csrf
                     <div class="row g-2">
                       <div class="col-4">
@@ -194,6 +208,28 @@ $currentYear = date('Y');
                         </select>
                       </div>
                       <div class="col-2">
+                        <button type="submit" class="btn btn-primary">Tampilkan</button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+              <div class="tab-pane fade" id="tabs-profile-9" role="tabpanel">
+                <h4>Pilih Tahun :</h4>
+                <div>
+                  <form method="post" action="{{ url('/simpel/rincian') }}" enctype="multipart/form-data">
+                    @csrf
+                    <input type="hidden" name="period" value="year">
+                    <div class="row g-2">
+                      <div class="col-6">
+                        <select name="year" class="form-select">
+                          <option value="{{ $year }}">Tahun</option>
+                          @for ($year = $startYear; $year <= $currentYear; $year++)
+                          <option value="{{ $year }}">{{ $year }}</option>
+                          @endfor
+                        </select>
+                      </div>
+                      <div class="col-3">
                         <button type="submit" class="btn btn-primary">Tampilkan</button>
                       </div>
                     </div>

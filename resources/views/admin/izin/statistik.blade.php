@@ -15,10 +15,21 @@
             Kembali
           </a>
           <form action="{{ route('izin.statistik') }}" method="GET" class="d-inline-block">
+            <input type="hidden" name="quarter" value="{{ $quarter }}">
             <select name="year" class="form-select" onchange="this.form.submit()">
               @foreach($years as $y)
                 <option value="{{ $y }}" {{ (int)$y === (int)$year ? 'selected' : '' }}>{{ $y }}</option>
               @endforeach
+            </select>
+          </form>
+          <form action="{{ route('izin.statistik') }}" method="GET" class="d-inline-block ms-2">
+            <input type="hidden" name="year" value="{{ $year }}">
+            <select name="quarter" class="form-select" onchange="this.form.submit()">
+              <option value="0" {{ (int)$quarter === 0 ? 'selected' : '' }}>Semua (Tahun)</option>
+              <option value="1" {{ (int)$quarter === 1 ? 'selected' : '' }}>Triwulan I</option>
+              <option value="2" {{ (int)$quarter === 2 ? 'selected' : '' }}>Triwulan II</option>
+              <option value="3" {{ (int)$quarter === 3 ? 'selected' : '' }}>Triwulan III</option>
+              <option value="4" {{ (int)$quarter === 4 ? 'selected' : '' }}>Triwulan IV</option>
             </select>
           </form>
         </div>
@@ -59,8 +70,8 @@
                 </span>
               </div>
               <div class="col">
-                <div class="font-weight-medium">Izin {{ $year }}</div>
-                <div class="text-muted">Tahun {{ $year }}</div>
+                <div class="font-weight-medium">Izin {{ $scopeLabel }}</div>
+                <div class="text-muted">{{ $scopeLabel }}</div>
               </div>
             </div>
             <div class="h1 mt-3 mb-0">{{ number_format($totalYear) }}</div>
@@ -110,7 +121,7 @@
       <div class="col-lg-8">
         <div class="card">
           <div class="card-header">
-            <h3 class="card-title">Grafik Perkembangan Izin Per Bulan ({{ $year }})</h3>
+            <h3 class="card-title">Grafik Perkembangan Izin Per Bulan ({{ $scopeLabel }})</h3>
           </div>
           <div class="card-body">
             <div id="chart-monthly" style="min-height: 300px;"></div>
@@ -135,7 +146,7 @@
           <div class="col-lg-12 col-xl-12 mb-3">
             <div class="card shadow-sm">
               <div class="card-header bg-primary-lt">
-                <h3 class="card-title">Detail Per Bulan ({{ $year }})</h3>
+                <h3 class="card-title">Detail Per Bulan ({{ $scopeLabel }})</h3>
               </div>
               <div class="table-responsive">
                 <table class="table card-table table-vcenter table-striped mb-0">
@@ -150,7 +161,7 @@
                     @php 
                       $monthsShown = []; 
                       $allMonths = [];
-                      for($i=1; $i<=12; $i++) {
+                      foreach(($monthRange ?? []) as $i) {
                         $allMonths[$i] = 0;
                       }
                     @endphp
@@ -160,7 +171,7 @@
                         $monthsShown[] = (int)$row->bulan;
                       @endphp
                     @endforeach
-                    @for($m=1; $m<=12; $m++)
+                    @foreach(($monthRange ?? []) as $m)
                       @php
                         $monthName = \Carbon\Carbon::createFromDate($year, $m, 1)->translatedFormat('F');
                         $count = $allMonths[$m];
@@ -175,7 +186,7 @@
                           <span class="badge bg-blue-lt">{{ $pct }}%</span>
                         </td>
                       </tr>
-                    @endfor
+                    @endforeach
                   </tbody>
                 </table>
               </div>
@@ -611,7 +622,7 @@
 document.addEventListener("DOMContentLoaded", function () {
   // Monthly chart data
   const monthlyData = @json(array_values($allMonths ?? []));
-  const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+  const monthLabels = @json($monthLabels ?? []);
 
   // Monthly Line Chart
   const chartMonthly = new ApexCharts(document.getElementById('chart-monthly'), {

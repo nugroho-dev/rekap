@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 
 class MppdController extends Controller
@@ -122,16 +123,28 @@ class MppdController extends Controller
 	{
 		$judul = 'Statistik Izin MPP Digital';
 		$year = $request->input('year');
-		$month = $request->input('month');
+		$period = $request->input('period'); // 'year' for yearly aggregate
+		$monthInput = $request->input('month');
+		$month = ($period === 'year') ? null : $monthInput;
 
-		if ($year && $month) {
-			$rincianterbit = DB::table('mppd')
-				->selectRaw('month(tanggal_sip) AS bulan, year(tanggal_sip) AS tahun, count(tanggal_sip) as jumlah_izin, profesi as jenis_izin')
-				->whereYear('tanggal_sip', $year)
-				->whereMonth('tanggal_sip', $month)
-				->groupBy('profesi')
-				->orderBy('jumlah_izin', 'desc')
-				->get();
+		if ($year) {
+			if ($month !== null) {
+				$rincianterbit = DB::table('mppd')
+					->selectRaw('month(tanggal_sip) AS bulan, year(tanggal_sip) AS tahun, count(tanggal_sip) as jumlah_izin, profesi as jenis_izin')
+					->whereYear('tanggal_sip', $year)
+					->whereMonth('tanggal_sip', $month)
+					->groupBy('profesi')
+					->orderBy('jumlah_izin', 'desc')
+					->get();
+			} else {
+				// Year-only aggregation
+				$rincianterbit = DB::table('mppd')
+					->selectRaw('year(tanggal_sip) AS tahun, count(tanggal_sip) as jumlah_izin, profesi as jenis_izin')
+					->whereYear('tanggal_sip', $year)
+					->groupBy('profesi')
+					->orderBy('jumlah_izin', 'desc')
+					->get()->map(function($row) use($year){ $row->bulan = null; $row->tahun = (int)$year; return $row; });
+			}
 
 			
 			$total_izin = $rincianterbit->sum('jumlah_izin');
@@ -142,7 +155,27 @@ class MppdController extends Controller
 			});
 		}
 
-		return view('admin.nonberusaha.mppd.rincian', compact('judul', 'month', 'year', 'rataRataJumlahHariPerJenisIzin', 'total_izin', ));
+		return view('admin.nonberusaha.mppd.rincian', compact('judul', 'month', 'year', 'rataRataJumlahHariPerJenisIzin', 'total_izin') + ['period' => $period]);
+	}
+    
+	public function printRincian(Request $request)
+	{
+		$judul = 'Rincian Izin MPP Digital';
+		$year = (int) $request->input('year', Carbon::now()->year);
+		$period = $request->input('period');
+		$monthInput = $request->input('month');
+		$month = ($period === 'year') ? null : ($monthInput !== null ? (int)$monthInput : null);
+
+		$query = DB::table('mppd')->selectRaw('profesi as jenis_izin, COUNT(*) as jumlah_izin');
+		$query->whereYear('tanggal_sip', $year);
+		if ($month !== null) { $query->whereMonth('tanggal_sip', $month); }
+		$query->groupBy('profesi')->orderByDesc('jumlah_izin');
+		$items = $query->get();
+		$total_izin = (int) ($items->sum('jumlah_izin'));
+
+		return Pdf::loadView('admin.nonberusaha.mppd.print.rincian', compact('judul','items','year','month','total_izin','period'))
+			->setPaper('A4','landscape')
+			->stream(($period === 'year' ? ('mppd-rincian-'.$year.'.pdf') : ('mppd-rincian-'.$year.'-'.str_pad((string)($month ?? 0),2,'0',STR_PAD_LEFT).'.pdf')));
 	}
 	/**
 	 * Show the form for creating a new resource.
