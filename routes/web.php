@@ -48,6 +48,7 @@ use App\Http\Controllers\IzinController;
 use App\Http\Controllers\Admin\PublikasiDataController;
 use App\Models\Proses;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\KbliController;
 
 /*
 |--------------------------------------------------------------------------
@@ -428,3 +429,9 @@ Route::middleware('auth')->group(function () {
         ->name('proyek.verification.list')
         ->middleware('auth');
 });
+
+// KBLI Master
+Route::get('/admin/kbli', [KbliController::class, 'index'])->name('kbli.index');
+Route::get('/admin/kbli/import', [KbliController::class, 'importForm'])->name('kbli.import');
+Route::post('/admin/kbli/import', [KbliController::class, 'import'])->name('kbli.import.post');
+Route::get('/admin/kbli/import/template', [KbliController::class, 'downloadTemplate'])->name('kbli.import.template');
