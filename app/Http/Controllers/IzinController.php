@@ -28,7 +28,8 @@ class IzinController extends Controller
                   ->orWhere('nib', 'like', "%$search%")
                   ->orWhere('kbli', 'like', "%$search%")
                   ->orWhere('kab_kota', 'like', "%$search%")
-                  ->orWhere('propinsi', 'like', "%$search%");
+                  ->orWhere('propinsi', 'like', "%$search%")
+                  ->orWhere('kl_sektor', 'like', "%$search%");
             });
         }
 
