@@ -11,8 +11,18 @@ use Illuminate\Support\Facades\DB;
 class NibController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Export NIB data to Excel.
      */
+    public function export(Request $request)
+    {
+        $search = $request->input('search');
+        $fileName = 'data_nib_' . now()->format('Ymd_His') . '.xlsx';
+    return Excel::download(new \App\Exports\NibExport($search), $fileName);
+}
+
+/**
+ * Display a listing of the resource.
+ */
     public function index(Request $request)
     {
         $perPage = (int) $request->input('perPage', 10);

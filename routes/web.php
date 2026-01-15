@@ -347,12 +347,14 @@ Route::middleware('auth')->group(function () {
     Route::put('/pbg/{pbg}', [DashboardPbgController::class, 'update']);
     Route::delete('/pbg/{pbg}', [DashboardPbgController::class, 'destroy']);
 
-    // NIB listing and import
+    // NIB listing, import, and export
     Route::get('/nib', [NibController::class, 'index'])->name('nib.index');
     Route::post('/nib/import', [NibController::class, 'import'])->name('nib.import');
+    Route::get('/nib/export', [NibController::class, 'export'])->name('nib.export');
     // Alternate path under /berusaha
     Route::get('/berusaha/nib', [NibController::class, 'index'])->name('nib.index.berusaha');
     Route::post('/berusaha/nib/import', [NibController::class, 'import'])->name('nib.import.berusaha');
+    Route::get('/berusaha/nib/export', [NibController::class, 'export'])->name('nib.export.berusaha');
     // NIB statistik
     Route::get('/nib/statistik', [NibController::class, 'statistik'])->name('nib.statistik');
     Route::get('/berusaha/nib/statistik', [NibController::class, 'statistik'])->name('nib.statistik.berusaha');
