@@ -91,6 +91,27 @@
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-table-import"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 21h-7a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v8" /><path d="M3 10h18" /><path d="M10 3v18" /><path d="M19 22v-6" /><path d="M22 19l-3 -3l-3 3" /></svg>
                           </a>
+                          @php
+                            $hasBatch = false;
+                            foreach ($items as $it) { if (!empty($it->file_signed_report)) { $hasBatch = true; break; } }
+                          @endphp
+                          @if($hasBatch)
+                            <form method="POST" action="{{ route('sicantik.downloadPdfBatch') }}" class="d-inline">
+                              @csrf
+                              @foreach ($items as $it)
+                                @if (!empty($it->file_signed_report))
+                                  <input type="hidden" name="batch[{{ $it->no_permohonan }}]" value="{{ $it->file_signed_report }}">
+                                @endif
+                              @endforeach
+                              <button type="submit" class="btn btn-warning d-none d-sm-inline-block" title="Singkron batch (halaman ini)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-cloud-download"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19 18a3.5 3.5 0 0 0 -3 -3.45a5 5 0 0 0 -9 1.95h-1a3 3 0 0 0 0 6h13a2.5 2.5 0 0 0 0 -5z" /><path d="M12 13v7" /><path d="M9.5 16.5l2.5 2.5l2.5 -2.5" /></svg>
+                                Singkron Batch
+                              </button>
+                              <button type="submit" class="btn btn-warning d-sm-none btn-icon" title="Singkron batch (halaman ini)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-cloud-download"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19 18a3.5 3.5 0 0 0 -3 -3.45a5 5 0 0 0 -9 1.95h-1a3 3 0 0 0 0 6h13a2.5 2.5 0 0 0 0 -5z" /><path d="M12 13v7" /><path d="M9.5 16.5l2.5 2.5l2.5 -2.5" /></svg>
+                              </button>
+                            </form>
+                          @endif
                         </div>
                       </div>
                     
@@ -372,10 +393,62 @@
                                       data-id="{{ $item->id_proses_permohonan ?? $item->id ?? $item->no_permohonan }}"
                                       data-file="{{ $item->file_signed_report ?? '' }}"
                                       title="Lihat Dokumen TTE">Lihat</button>
+                              @php
+                                $signedFile = $item->file_signed_report ?? '';
+                                $baseSignedUrl = 'https://sicantik.go.id/api/view/webroot/files/signed/';
+                                $safeNo = preg_replace('/[^A-Za-z0-9_-]/','', (string)($item->no_permohonan ?? ''));
+                                $serverRelPath = 'public/pdf/sicantik_' . $safeNo . '.pdf';
+                                $serverExists = \Illuminate\Support\Facades\Storage::exists($serverRelPath);
+                                $serverPublicUrl = asset('storage/pdf/sicantik_' . $safeNo . '.pdf');
+                              @endphp
+                              @if(!empty($signedFile))
+                                <form method="POST" action="{{ route('sicantik.downloadPdf') }}" class="d-inline ms-1">
+                                  @csrf
+                                  <input type="hidden" name="url" value="{{ $baseSignedUrl . $signedFile }}">
+                                  <input type="hidden" name="no_permohonan" value="{{ $item->no_permohonan }}">
+                                  <button type="submit" class="btn btn-sm btn-warning" title="Singkron ke server">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-cloud-download"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19 18a3.5 3.5 0 0 0 -3 -3.45a5 5 0 0 0 -9 1.95h-1a3 3 0 0 0 0 6h13a2.5 2.5 0 0 0 0 -5z" /><path d="M12 13v7" /><path d="M9.5 16.5l2.5 2.5l2.5 -2.5" /></svg>
+                                    Singkron
+                                  </button>
+                                </form>
+                              @endif
+                              @if($serverExists)
+                                <button type="button" class="btn btn-sm btn-success ms-1" title="Lihat file tersimpan (server)" data-bs-toggle="modal" data-bs-target="#modal-view-sicantik-server-{{ $safeNo }}">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-file-description"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M9 7l1 0" /><path d="M9 13l6 0" /><path d="M9 17l6 0" /></svg>
+                                  Lihat File
+                                </button>
+                              @endif
                             </div>
                            
                           </td>
                         </tr>
+                        @php
+                          $safeNo = preg_replace('/[^A-Za-z0-9_-]/','', (string)($item->no_permohonan ?? ''));
+                          $serverRelPath = 'public/pdf/sicantik_' . $safeNo . '.pdf';
+                          $serverExists = \Illuminate\Support\Facades\Storage::exists($serverRelPath);
+                          $serverPublicUrl = asset('storage/pdf/sicantik_' . $safeNo . '.pdf');
+                        @endphp
+                        @if($serverExists)
+                        <!-- Modal Server PDF (per row) -->
+                        <div class="modal fade modal-blur" id="modal-view-sicantik-server-{{ $safeNo }}" tabindex="-1" role="dialog" aria-hidden="true">
+                          <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title">Salinan Dokumen di Server - {{ $item->nama }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                              </div>
+                              <div class="modal-body">
+                                <iframe src="{{ $serverPublicUrl }}" style="width: 100%; height: 70vh; border: none;" class="rounded shadow"></iframe>
+                              </div>
+                              <div class="modal-footer">
+                                <a href="{{ $serverPublicUrl }}" target="_blank" class="btn btn-info">Buka di Tab Baru</a>
+                                <a href="{{ $serverPublicUrl }}" download class="btn btn-success">Unduh</a>
+                                <button type="button" class="btn" data-bs-dismiss="modal">Tutup</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        @endif
                         @endforeach
                         </tbody>
                       </table>

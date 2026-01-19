@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 class DashboardVprosesSicantikController extends Controller
 {
@@ -1638,5 +1639,127 @@ public function show(Request $request, $id)
 		$msg = "Sinkronisasi telah dijadwalkan. {$jobsDispatched} job(s) dijadwalkan dan akan berjalan di background.";
 		return $request->boolean('statistik') ? redirect('/sicantik/statistik')->with('success', $msg) : redirect('/sicantik')->with('success', $msg);
 	}
+	/**
+			 * Download external PDF to local storage (public/pdf) for Sicantik.
+			 * Accepts 'url' (remote PDF URL) and 'no_permohonan' (for deterministic filename).
+			 * Returns JSON for AJAX or redirects back with flash messages for non-AJAX.
+			 */
+			public function downloadPdfToServer(Request $request)
+			{
+				$validated = $request->validate([
+					'url' => 'required|url',
+					'no_permohonan' => 'required|string',
+				]);
+
+				$remoteUrl = $validated['url'];
+				$no = preg_replace('/[^A-Za-z0-9_-]/', '', (string) $validated['no_permohonan']);
+				$dir = storage_path('app/public/pdf');
+				if (!is_dir($dir)) {
+					@mkdir($dir, 0775, true);
+				}
+				$filename = 'sicantik_' . ($no !== '' ? $no : (string) time()) . '.pdf';
+				$fullPath = $dir . DIRECTORY_SEPARATOR . $filename;
+
+				try {
+					$context = stream_context_create([
+						'http' => [
+							'timeout' => 20,
+							'header' => "User-Agent: Mozilla/5.0\r\n",
+						],
+						'ssl' => [
+							'verify_peer' => false,
+							'verify_peer_name' => false,
+						],
+					]);
+					$content = @file_get_contents($remoteUrl, false, $context);
+					if ($content === false) {
+						throw new \RuntimeException('Gagal mengunduh file dari sumber eksternal.');
+					}
+					// Basic PDF signature check
+					if (strpos($content, '%PDF') !== 0) {
+						// tetap simpan, namun beri peringatan
+					}
+					file_put_contents($fullPath, $content);
+				} catch (\Throwable $e) {
+					$msg = 'Gagal menyimpan file: ' . $e->getMessage();
+					if ($request->expectsJson()) {
+						return response()->json(['success' => false, 'error' => $msg], 500);
+					}
+					return redirect()->back()->with('error', $msg);
+				}
+
+				$publicUrl = asset('storage/pdf/' . $filename);
+				if ($request->expectsJson()) {
+					return response()->json(['success' => true, 'file' => $publicUrl]);
+				}
+				return redirect()->back()->with(['success' => 'File berhasil disalin ke server.', 'file' => $publicUrl]);
+			}
+
+			/**
+			 * Batch download multiple signed PDFs to local storage for Sicantik.
+			 * Input:
+			 * - batch: associative array no_permohonan => file_signed_report
+			 * - or nos[]: list of no_permohonan (will resolve latest file_signed_report jenis 40)
+			 * Skips items already present on server.
+			 */
+			public function downloadPdfBatchToServer(Request $request)
+			{
+				$batch = (array) $request->input('batch', []);
+				$nos = (array) $request->input('nos', []);
+				$baseSignedUrl = 'https://sicantik.go.id/api/view/webroot/files/signed/';
+				$success = 0; $skipped = 0; $failed = 0;
+
+				// If batch not provided, try to resolve from nos[] via latest jenis 40 step
+				if (empty($batch) && !empty($nos)) {
+					foreach ($nos as $noPerm) {
+						try {
+							$latest = \App\Models\Proses::where('no_permohonan', $noPerm)
+								->where('jenis_proses_id', 40)
+								->whereNotNull('file_signed_report')
+								->orderByDesc('id')
+								->first(['file_signed_report']);
+							if ($latest && !empty($latest->file_signed_report)) {
+								$batch[$noPerm] = $latest->file_signed_report;
+							}
+						} catch (\Throwable $e) {
+							// ignore resolution errors per item
+						}
+					}
+				}
+
+				$dir = storage_path('app/public/pdf');
+				if (!is_dir($dir)) { @mkdir($dir, 0775, true); }
+
+				foreach ($batch as $noPermohonan => $signedFile) {
+					$safeNo = preg_replace('/[^A-Za-z0-9_-]/', '', (string) $noPermohonan);
+					if ($safeNo === '' || empty($signedFile)) { $failed++; continue; }
+					$filename = 'sicantik_' . $safeNo . '.pdf';
+					$storageRel = 'public/pdf/' . $filename;
+					if (\Illuminate\Support\Facades\Storage::exists($storageRel)) { $skipped++; continue; }
+					$fullPath = $dir . DIRECTORY_SEPARATOR . $filename;
+					try {
+						$context = stream_context_create([
+							'http' => [
+								'timeout' => 20,
+								'header' => "User-Agent: Mozilla/5.0\r\n",
+							],
+							'ssl' => [
+								'verify_peer' => false,
+								'verify_peer_name' => false,
+							],
+						]);
+						$remoteUrl = $baseSignedUrl . ltrim((string)$signedFile, '/');
+						$content = @file_get_contents($remoteUrl, false, $context);
+						if ($content === false) { throw new \RuntimeException('Gagal mengunduh: ' . $signedFile); }
+						file_put_contents($fullPath, $content);
+						$success++;
+					} catch (\Throwable $e) {
+						$failed++;
+					}
+				}
+
+				$msg = "Sinkron batch selesai. Berhasil: {$success}, Terlewati: {$skipped}, Gagal: {$failed}.";
+				return redirect()->back()->with('success', $msg);
+			}
 
 }

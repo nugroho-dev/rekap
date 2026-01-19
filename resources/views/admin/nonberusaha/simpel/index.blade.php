@@ -75,6 +75,31 @@
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-table-import"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 21h-7a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v8" /><path d="M3 10h18" /><path d="M10 3v18" /><path d="M19 22v-6" /><path d="M22 19l-3 -3l-3 3" /></svg>
                           </a>
+                          @php
+                            $hasBatch = false;
+                            foreach ($items as $it) {
+                              $ext = strtolower(pathinfo($it->ijin, PATHINFO_EXTENSION));
+                              if (!empty($it->ijin) && $ext === 'pdf') { $hasBatch = true; break; }
+                            }
+                          @endphp
+                          @if($hasBatch)
+                            <form method="POST" action="{{ route('simpel.downloadPdfBatch') }}" class="d-inline">
+                              @csrf
+                              @foreach ($items as $it)
+                                @php $ext = strtolower(pathinfo($it->ijin, PATHINFO_EXTENSION)); @endphp
+                                @if (!empty($it->ijin) && $ext === 'pdf')
+                                  <input type="hidden" name="batch[{{ $it->token }}]" value="{{ $it->ijin }}">
+                                @endif
+                              @endforeach
+                              <button type="submit" class="btn btn-warning d-none d-sm-inline-block" title="Singkron batch (halaman ini)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-cloud-download"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19 18a3.5 3.5 0 0 0 -3 -3.45a5 5 0 0 0 -9 1.95h-1a3 3 0 0 0 0 6h13a2.5 2.5 0 0 0 0 -5z" /><path d="M12 13v7" /><path d="M9.5 16.5l2.5 2.5l2.5 -2.5" /></svg>
+                                Singkron Batch
+                              </button>
+                              <button type="submit" class="btn btn-warning d-sm-none btn-icon" title="Singkron batch (halaman ini)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-cloud-download"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19 18a3.5 3.5 0 0 0 -3 -3.45a5 5 0 0 0 -9 1.95h-1a3 3 0 0 0 0 6h13a2.5 2.5 0 0 0 0 -5z" /><path d="M12 13v7" /><path d="M9.5 16.5l2.5 2.5l2.5 -2.5" /></svg>
+                              </button>
+                            </form>
+                          @endif
                         </div>
                       </div>
                     
@@ -82,6 +107,20 @@
                 </div>
               </div>
               <div class="col-12">
+                @if(session('success'))
+                  <div class="alert alert-success" role="alert">
+                    {{ session('success') }}
+                    @if(session('file'))
+                      <div><a href="{{ session('file') }}" target="_blank">Lihat file tersimpan</a></div>
+                    @endif
+                  </div>
+                @endif
+                @if(session('error'))
+                  <div class="alert alert-danger" role="alert">
+                    {{ session('error') }}
+                  </div>
+                @endif
+              </div>
                 <div class="card">
                   <div class="card-header">
                     <h3 class="card-title">{{ $judul }} @if($date_start&&$date_end) : {{ Carbon\Carbon::parse($date_start)->translatedFormat('d F Y') }} Sampai Dengan {{ Carbon\Carbon::parse($date_end)->translatedFormat('d F Y') }}@endif @if($month) Bulan {{ Carbon\Carbon::createFromDate(null,$month,1)->translatedFormat('F') }}  @endif @if($year) Tahun {{ $year }}  @endif </h3>
@@ -218,6 +257,30 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-eye"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" /></svg>
                                 Lihat
                               </button>
+                              @php $extIjin = strtolower(pathinfo($item->ijin, PATHINFO_EXTENSION)); @endphp
+                              @if($extIjin === 'pdf')
+                                <form method="POST" action="{{ route('simpel.downloadPdf') }}" class="d-inline">
+                                  @csrf
+                                  <input type="hidden" name="url" value="{{ $item->ijin }}">
+                                  <input type="hidden" name="token" value="{{ $item->token }}">
+                                  <button type="submit" class="btn btn-sm btn-warning" title="Singkron ke server">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-cloud-download"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19 18a3.5 3.5 0 0 0 -3 -3.45a5 5 0 0 0 -9 1.95h-1a3 3 0 0 0 0 6h13a2.5 2.5 0 0 0 0 -5z" /><path d="M12 13v7" /><path d="M9.5 16.5l2.5 2.5l2.5 -2.5" /></svg>
+                                    Singkron
+                                  </button>
+                                </form>
+                                @php
+                                  $safeToken = preg_replace('/[^A-Za-z0-9_-]/','', $item->token);
+                                  $serverRelPath = 'public/pdf/simpel_' . $safeToken . '.pdf';
+                                  $serverExists = \Illuminate\Support\Facades\Storage::exists($serverRelPath);
+                                  $serverPublicUrl = asset('storage/pdf/simpel_' . $safeToken . '.pdf');
+                                @endphp
+                                @if($serverExists)
+                                  <button type="button" class="btn btn-sm btn-success" title="Lihat file tersimpan (server)" data-bs-toggle="modal" data-bs-target="#modal-view-izin-server-{{ $item->token }}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-file-description"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M9 7l1 0" /><path d="M9 13l6 0" /><path d="M9 17l6 0" /></svg>
+                                    Lihat File
+                                  </button>
+                                @endif
+                              @endif
                             @else
                               <span class="text-muted">-</span>
                             @endif
@@ -279,6 +342,33 @@
                                     </div>
                                   @endif
                                 </div>
+
+                                @php
+                                  $safeToken = preg_replace('/[^A-Za-z0-9_-]/','', $item->token);
+                                  $serverRelPath = 'public/pdf/simpel_' . $safeToken . '.pdf';
+                                  $serverExists = \Illuminate\Support\Facades\Storage::exists($serverRelPath);
+                                  $serverPublicUrl = asset('storage/pdf/simpel_' . $safeToken . '.pdf');
+                                @endphp
+                                @if($serverExists)
+                                  <div class="card mt-3">
+                                    <div class="card-header">
+                                      <h4 class="card-title mb-0">Salinan di Server</h4>
+                                    </div>
+                                    <div class="card-body">
+                                      <iframe src="{{ $serverPublicUrl }}" style="width: 100%; height: 70vh; border: none;" class="rounded shadow"></iframe>
+                                      <div class="mt-2">
+                                        <a href="{{ $serverPublicUrl }}" target="_blank" class="btn btn-sm btn-success">
+                                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-external-link"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 6h-6a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-6" /><path d="M11 13l9 -9" /><path d="M15 4h5v5" /></svg>
+                                          Buka Salinan Server
+                                        </a>
+                                        <a href="{{ $serverPublicUrl }}" download class="btn btn-sm btn-primary">
+                                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-download"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg>
+                                          Unduh Salinan Server
+                                        </a>
+                                      </div>
+                                    </div>
+                                  </div>
+                                @endif
                               </div>
                               <div class="modal-footer">
                                 <a href="{{ $item->ijin }}" class="btn btn-success" download>
@@ -294,6 +384,66 @@
                             </div>
                           </div>
                         </div>
+                        @php
+                          $safeToken = preg_replace('/[^A-Za-z0-9_-]/','', $item->token);
+                          $serverRelPath = 'public/pdf/simpel_' . $safeToken . '.pdf';
+                          $serverExists = \Illuminate\Support\Facades\Storage::exists($serverRelPath);
+                          $serverPublicUrl = asset('storage/pdf/simpel_' . $safeToken . '.pdf');
+                        @endphp
+                        @if($serverExists)
+                        <!-- Modal View Izin (Server Copy) -->
+                        <div class="modal fade modal-blur" id="modal-view-izin-server-{{ $item->token }}" tabindex="-1" role="dialog" aria-hidden="true">
+                          <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-file-certificate"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M5 8v-3a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2h-5" /><path d="M6 14m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M4.5 17l-1.5 5l3 -1.5l3 1.5l-1.5 -5" /></svg>
+                                  Salinan di Server - {{ $item->nama }}
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                              </div>
+                              <div class="modal-body">
+                                <div class="card mb-3">
+                                  <div class="card-body bg-light">
+                                    <div class="row">
+                                      <div class="col-md-6">
+                                        <strong>Pemohon:</strong> {{ $item->pemohon }}
+                                      </div>
+                                      <div class="col-md-6">
+                                        <strong>Token:</strong> {{ $item->token }}
+                                      </div>
+                                      <div class="col-md-6">
+                                        <strong>Nama Makam:</strong> {{ $item->nama }}
+                                      </div>
+                                      <div class="col-md-6">
+                                        <strong>Jenis Izin:</strong> {{ $item->jasa }}
+                                      </div>
+                                      <div class="col-md-6">
+                                        <strong>Status:</strong> <span class="badge bg-success">{{ $item->status }}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div class="text-center">
+                                  <iframe src="{{ $serverPublicUrl }}" style="width: 100%; height: 70vh; border: none;" class="rounded shadow"></iframe>
+                                </div>
+                              </div>
+                              <div class="modal-footer">
+                                <a href="{{ $serverPublicUrl }}" target="_blank" class="btn btn-info">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-external-link"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 6h-6a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-6" /><path d="M11 13l9 -9" /><path d="M15 4h5v5" /></svg>
+                                  Buka di Tab Baru
+                                </a>
+                                <a href="{{ $serverPublicUrl }}" class="btn btn-success" download>
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-download"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg>
+                                  Unduh
+                                </a>
+                                <button type="button" class="btn" data-bs-dismiss="modal">Tutup</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        @endif
                         @endif
                         @endforeach
                         @if($items->count() == 0)

@@ -13,6 +13,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class DashboradSimpelController extends Controller
 {
+
     public function index(Request $request)
     {
         $judul = 'Data Izin Pemakaman';
@@ -379,5 +380,83 @@ class DashboradSimpelController extends Controller
 		return Pdf::loadView('admin.nonberusaha.simpel.print.print', compact('items','search','logo', 'month', 'year','nama','nip'))
 			->setPaper('A4', 'landscape')
 			->stream('simpel.pdf');
+    }
+    public function downloadPdfToServer(Request $request)
+    {
+        $url = $request->input('url');
+        $token = $request->input('token');
+        if (!$url || !filter_var($url, FILTER_VALIDATE_URL)) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['error' => 'URL tidak valid'], 400);
+            }
+            return redirect()->back()->with('error', 'URL tidak valid');
+        }
+
+        $pdfContent = @file_get_contents($url);
+        if ($pdfContent === false) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['error' => 'Gagal mengunduh file PDF'], 500);
+            }
+            return redirect()->back()->with('error', 'Gagal mengunduh file PDF');
+        }
+
+        // Gunakan nama file berdasarkan token bila tersedia agar deterministik per data
+        $safeToken = $token ? preg_replace('/[^A-Za-z0-9_-]/', '', $token) : null;
+        $filename = $safeToken ? ('simpel_' . $safeToken . '.pdf') : ('pdf_' . time() . '.pdf');
+        $savePath = storage_path('app/public/pdf/' . $filename);
+
+        // Pastikan folder ada
+        if (!file_exists(dirname($savePath))) {
+            mkdir(dirname($savePath), 0775, true);
+        }
+
+        $result = file_put_contents($savePath, $pdfContent);
+        if ($result === false) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['error' => 'Gagal menyimpan file PDF'], 500);
+            }
+            return redirect()->back()->with('error', 'Gagal menyimpan file PDF');
+        }
+
+        // Jika ingin mengembalikan path publik
+        $publicPath = asset('storage/pdf/' . $filename);
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'file' => $publicPath]);
+        }
+        return redirect()->back()->with(['success' => 'File PDF berhasil disimpan ke server.', 'file' => $publicPath]);
+    }
+
+    /**
+     * Batch download external PDFs to local storage (public/pdf) for Simpel.
+     * Input: batch associative array token => url
+     * Skips items already present on server.
+     */
+    public function downloadPdfBatchToServer(Request $request)
+    {
+        $batch = (array) $request->input('batch', []);
+        $success = 0; $skipped = 0; $failed = 0;
+
+        $dir = storage_path('app/public/pdf');
+        if (!is_dir($dir)) { @mkdir($dir, 0775, true); }
+
+        foreach ($batch as $token => $url) {
+            $safeToken = $token ? preg_replace('/[^A-Za-z0-9_-]/', '', (string) $token) : '';
+            if ($safeToken === '' || empty($url) || !filter_var($url, FILTER_VALIDATE_URL)) { $failed++; continue; }
+            $filename = 'simpel_' . $safeToken . '.pdf';
+            $storageRel = 'public/pdf/' . $filename;
+            if (\Illuminate\Support\Facades\Storage::exists($storageRel)) { $skipped++; continue; }
+            $fullPath = $dir . DIRECTORY_SEPARATOR . $filename;
+            try {
+                $pdfContent = @file_get_contents($url);
+                if ($pdfContent === false) { throw new \RuntimeException('Gagal mengunduh: ' . $url); }
+                file_put_contents($fullPath, $pdfContent);
+                $success++;
+            } catch (\Throwable $e) {
+                $failed++;
+            }
+        }
+
+        $msg = "Sinkron batch Simpel selesai. Berhasil: {$success}, Terlewati: {$skipped}, Gagal: {$failed}.";
+        return redirect()->back()->with('success', $msg);
     }
 }

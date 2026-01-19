@@ -277,6 +277,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/sicantik/sych', [DashboardVprosesSicantikController::class, 'sync']);
     // New route: accept correct spelling '/sync' in addition to legacy '/sych'
     Route::post('/sicantik/sync', [DashboardVprosesSicantikController::class, 'sync']);
+    // Download signed PDF to server (similar to Simpel)
+    Route::post('/sicantik/download-pdf', [DashboardVprosesSicantikController::class, 'downloadPdfToServer'])->name('sicantik.downloadPdf');
+    // Batch download signed PDFs to server
+    Route::post('/sicantik/download-pdf/batch', [DashboardVprosesSicantikController::class, 'downloadPdfBatchToServer'])->name('sicantik.downloadPdfBatch');
     Route::post('/sicantik/rincian', [DashboardVprosesSicantikController::class, 'rincian']);
     Route::get('/sicantik/rincian/print', [DashboardVprosesSicantikController::class, 'printRincian'])->name('sicantik.rincian.print');
 
@@ -311,6 +315,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/simpel/rincian', [DashboradSimpelController::class, 'rincian']);
     Route::get('/simpel/rincian/print', [DashboradSimpelController::class, 'printRincian'])->name('simpel.rincian.print');
     Route::post('/simpel/rincian', [DashboradSimpelController::class, 'rincian']);
+    Route::post('/simpel/download-pdf', [DashboradSimpelController::class, 'downloadPdfToServer'])->name('simpel.downloadPdf');
+    // Batch download PDFs to server (Simpel)
+    Route::post('/simpel/download-pdf/batch', [DashboradSimpelController::class, 'downloadPdfBatchToServer'])->name('simpel.downloadPdfBatch');
 
     // Proyek
     Route::match(['get','post'], '/berusaha/proyek', [ProyekController::class, 'index']);
