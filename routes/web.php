@@ -48,6 +48,7 @@ use App\Http\Controllers\IzinController;
 use App\Http\Controllers\Admin\PublikasiDataController;
 use App\Models\Proses;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\KbliController;
 
 /*
 |--------------------------------------------------------------------------
@@ -353,12 +354,14 @@ Route::middleware('auth')->group(function () {
     Route::put('/pbg/{pbg}', [DashboardPbgController::class, 'update']);
     Route::delete('/pbg/{pbg}', [DashboardPbgController::class, 'destroy']);
 
-    // NIB listing and import
+    // NIB listing, import, and export
     Route::get('/nib', [NibController::class, 'index'])->name('nib.index');
     Route::post('/nib/import', [NibController::class, 'import'])->name('nib.import');
+    Route::get('/nib/export', [NibController::class, 'export'])->name('nib.export');
     // Alternate path under /berusaha
     Route::get('/berusaha/nib', [NibController::class, 'index'])->name('nib.index.berusaha');
     Route::post('/berusaha/nib/import', [NibController::class, 'import'])->name('nib.import.berusaha');
+    Route::get('/berusaha/nib/export', [NibController::class, 'export'])->name('nib.export.berusaha');
     // NIB statistik
     Route::get('/nib/statistik', [NibController::class, 'statistik'])->name('nib.statistik');
     Route::get('/berusaha/nib/statistik', [NibController::class, 'statistik'])->name('nib.statistik.berusaha');
@@ -435,3 +438,9 @@ Route::middleware('auth')->group(function () {
         ->name('proyek.verification.list')
         ->middleware('auth');
 });
+
+// KBLI Master
+Route::get('/admin/kbli', [KbliController::class, 'index'])->name('kbli.index');
+Route::get('/admin/kbli/import', [KbliController::class, 'importForm'])->name('kbli.import');
+Route::post('/admin/kbli/import', [KbliController::class, 'import'])->name('kbli.import.post');
+Route::get('/admin/kbli/import/template', [KbliController::class, 'downloadTemplate'])->name('kbli.import.template');
