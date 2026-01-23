@@ -86,11 +86,11 @@
                         <tr>
                             <td class="align-top">{{ $loop->iteration + $items->firstItem()-1 }}</td>
                             <td class="align-top">
-                                <div><strong>{{ $item->nama_proyek }}</strong></div>
+                                <div><strong>{{ $item->nama_proyek }}</strong> {{ $item->id_proyek }}</div>
                                 <div>KBLI: {{ $item->kbli }} — {{ $item->judul_kbli }}</div>
                                 <div>Risiko: {{ $item->uraian_risiko_proyek }}</div>
                                 <div>Pengajuan: {{ $item->day_of_tanggal_pengajuan_proyek }}</div>
-                                                                @php $izinList = isset($izinRows) ? ($izinRows[$item->nib] ?? collect()) : collect(); @endphp
+                                                                @php $izinList = isset($izinRows) ? ($izinRows[$item->id_proyek] ?? collect()) : collect(); @endphp
                                                                 @if($izinList->count() > 0)
                                                                     <div class="mt-2">
                                                                         <div class="text-muted fw-bold">Perizinan ({{ $izinList->count() }})</div>
@@ -100,6 +100,7 @@
                                                                                     <th>ID Permohonan</th>
                                                                                     <th>Jenis</th>
                                                                                     <th>Status</th>
+                                                                                    <th>Dokumen</th>
                                                                                     <th>Resiko</th>
                                                                                     <th>Terbit OSS</th>
                                                                                 </tr>
@@ -107,11 +108,12 @@
                                                                             <tbody>
                                                                                 @foreach($izinList as $iz)
                                                                                     <tr>
-                                                                                        <td>{{ $iz->id_permohonan_izin }}</td>
+                                                                                        <td>{{ $iz->id_permohonan_izin }}/{{ $iz->id_proyek }}</td>
                                                                                         <td>{{ $iz->uraian_jenis_perizinan }}</td>
                                                                                         <td>{{ $iz->status_perizinan }}</td>
-                                                                                        <td>{{ $iz->kd_resiko ?? ($iz->uraian_risiko_perizinan ?? '-') }}</td>
-                                                                                        <td>{{ $iz->day_of_tanggal_terbit_oss }}</td>
+                                                                                        <td>{{ $iz->nama_dokumen }}</td>
+                                                                                        <td>{{ $iz->kd_resiko ?? '-' }}</td>
+                                                                                        <td>{{ $iz->day_of_tanggal_terbit_oss }}/{{ $iz->day_of_tgl_izin }}</td>
                                                                                     </tr>
                                                                                 @endforeach
                                                                             </tbody>
