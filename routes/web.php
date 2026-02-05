@@ -60,6 +60,9 @@ Route::get('/unduh/{no_permohonan}/{email}', [TteController::class, 'index']);
 
 Route::get('/', [PublicViewHomeController::class, 'index']);
 Route::post('/', [SicantikApiController::class, 'index']);
+// Gabungan Proyek & Izin
+Route::get('/berusaha/proyekizin', [App\Http\Controllers\ProyekIzinController::class, 'index'])->name('proyekizin.index');
+Route::get('/berusaha/proyekizin/export-excel', [App\Http\Controllers\ProyekIzinController::class, 'exportExcel'])->name('proyekizin.export.excel');
 Route::match(['get','post'], '/kirim/dokumen/{id}', [SicantikApiController::class, 'dokumen']);
 Route::get('/kirim/{id}', [SicantikApiController::class, 'kirim']);
 Route::get('/send-mail', [MailController::class, 'index']);
