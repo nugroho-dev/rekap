@@ -76,7 +76,7 @@
                 <tbody>
                 @php $issuedCount = 0; @endphp
                 @foreach($items as $item)
-                    @php $issuedDate = $item['tgl_penetapan'] ?? $item['end_date'] ?? null; $issuedCount++; @endphp
+                    @php $issuedDate = $item['tanggal_terbit'] ?? $item['tgl_penetapan'] ?? $item['end_date'] ?? null; $issuedCount++; @endphp
                     <tr>
                         <td class="text-center">{{ $loop->iteration }}</td>
                         <td>

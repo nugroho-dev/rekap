@@ -555,12 +555,17 @@ public function show(Request $request, $id)
 	{
 
 		$judul = 'Data Izin SiCantik';
-		// Legacy view/table 'sicantik_proses' (Vproses) no longer available; switch to core 'proses' data
-		// Use finalized steps (jenis_proses_id=40, status selesai) as issued permits for print report
+		// Samakan definisi "izin terbit" dengan rincian/statistik:
+		// langkah jenis_proses_id=40, status selesai, tanggal terbit efektif = LEAST(end_date, tgl_signed_report)
+		$effectiveTerbitExpr = "LEAST(IFNULL(end_date, '9999-12-31'), IFNULL(tgl_signed_report, '9999-12-31'))";
 		$query = Proses::query()
 			->where('jenis_proses_id', 40)
 			->whereRaw("LOWER(TRIM(status)) = 'selesai'")
-			->whereNotNull('end_date');
+			->where(function ($q) {
+				$q->whereNotNull('end_date')->orWhereNotNull('tgl_signed_report');
+			})
+			->select('proses.*')
+			->selectRaw("{$effectiveTerbitExpr} AS tanggal_terbit");
 		$instansi = Instansi::where('slug', '=', 'dinas-penanaman-modal-dan-pelayanan-terpadu-satu-pintu-kota-magelang')->first();
 		// Safely resolve penandatangan without assuming a 'ttd' column exists
 		$pegawai = null;
@@ -599,43 +604,26 @@ public function show(Request $request, $id)
 			if ($date_start > $date_end) {
 				return redirect('/sicantik')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda');
 			}
-			// Prefer tgl_penetapan range; fallback to end_date if tgl_penetapan null
-			$query->where(function($q) use ($date_start,$date_end){
-				$q->whereBetween('tgl_penetapan', [$date_start, $date_end])
-				  ->orWhere(function($qq) use ($date_start,$date_end){
-					  $qq->whereNull('tgl_penetapan')->whereBetween('end_date', [$date_start, $date_end]);
-				  });
-			});
+			// Filter berdasarkan tanggal terbit efektif agar konsisten dengan rincian()
+			$query->whereRaw("{$effectiveTerbitExpr} BETWEEN ? AND ?", [$date_start, $date_end]);
 		}
 
 		if ($jenis_izin && $month && $year) {
 			$query->where('jenis_izin', $jenis_izin)
-				->where(function($q) use ($month,$year){
-					$q->whereMonth('tgl_penetapan', $month)->whereYear('tgl_penetapan',$year)
-					  ->orWhere(function($qq) use ($month,$year){
-						  $qq->whereNull('tgl_penetapan')->whereMonth('end_date',$month)->whereYear('end_date',$year);
-					  });
-				});
+				->whereRaw("YEAR({$effectiveTerbitExpr}) = ?", [$year])
+				->whereRaw("MONTH({$effectiveTerbitExpr}) = ?", [$month]);
 		} elseif ($month && $year) {
-			$query->where(function($q) use ($month,$year){
-				$q->whereMonth('tgl_penetapan',$month)->whereYear('tgl_penetapan',$year)
-				  ->orWhere(function($qq) use ($month,$year){
-					  $qq->whereNull('tgl_penetapan')->whereMonth('end_date',$month)->whereYear('end_date',$year);
-				  });
-			});
+			$query->whereRaw("YEAR({$effectiveTerbitExpr}) = ?", [$year])
+				->whereRaw("MONTH({$effectiveTerbitExpr}) = ?", [$month]);
 		} elseif ($year) {
-			$query->where(function($q) use ($year){
-				$q->whereYear('tgl_penetapan',$year)
-				  ->orWhere(function($qq) use ($year){
-					  $qq->whereNull('tgl_penetapan')->whereYear('end_date',$year);
-				  });
-			});
+			$query->whereRaw("YEAR({$effectiveTerbitExpr}) = ?", [$year]);
 		}
 
 		$perPage = $request->input('perPage', 111);
-	$items = $query->orderByRaw("COALESCE(tgl_penetapan, end_date, created_at) ASC")
-		   ->orderBy('no_permohonan', 'ASC')
-		   ->paginate($perPage);
+		$items = $query
+			->orderByRaw("{$effectiveTerbitExpr} ASC")
+			->orderBy('no_permohonan', 'ASC')
+			->paginate($perPage);
 		$items->withPath(url('/sicantik'));
 		return Pdf::loadView('admin.nonberusaha.sicantik.print.print', compact('items','search','logo', 'month', 'year','nama','nip','hasSigner'))
 			->setPaper('A4', 'landscape')

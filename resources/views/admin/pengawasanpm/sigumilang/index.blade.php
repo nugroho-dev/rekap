@@ -46,18 +46,62 @@
               </div>
               entries
             </div>-->
-            <div class="ms-auto text-muted">
-              Cari:
-              <div class="ms-2 d-inline-block">
-                <form action="{{ url('/pengawasan/sigumilang') }}" method="GET">
+            <div class="ms-auto text-muted col-12" >
+              <form action="{{ url('/pengawasan/sigumilang') }}" method="GET" class="row g-2 align-items-end">
+                <div class="col-12 col-md-4">
+                  <label class="form-label mb-1">Cari</label>
                   <div class="input-group">
                     <input type="text" name="search" class="form-control form-control-sm" placeholder="Cari perusahaan/proyek..." value="{{ request('search') }}">
-                    <button type="submit" class="btn btn-icon btn-sm">
+                    <button type="submit" class="btn btn-icon btn-sm" aria-label="Cari">
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"></path><path d="M21 21l-6 -6"></path></svg>
                     </button>
                   </div>
-                </form>
-              </div>
+                </div>
+
+                <div class="col-6 col-md-2">
+                  <label class="form-label mb-1">Tahun Laporan</label>
+                  <select name="tahun" class="form-select form-select-sm">
+                    <option value="">Semua</option>
+                    @foreach(($tahunOptions ?? collect()) as $t)
+                      <option value="{{ $t }}" @selected((string)request('tahun') === (string)$t)>{{ $t }}</option>
+                    @endforeach
+                  </select>
+                </div>
+
+                <div class="col-6 col-md-2">
+                  <label class="form-label mb-1">Bulan Input</label>
+                  <select name="month" class="form-select form-select-sm">
+                    <option value="">Semua</option>
+                    @for($m=1;$m<=12;$m++)
+                      <option value="{{ $m }}" @selected((int)request('month') === $m)>{{ str_pad((string)$m,2,'0',STR_PAD_LEFT) }}</option>
+                    @endfor
+                  </select>
+                </div>
+
+                <div class="col-6 col-md-2">
+                  <label class="form-label mb-1">Tahun Input</label>
+                  <select name="year" class="form-select form-select-sm">
+                    <option value="">Semua</option>
+                    @foreach(($yearCreatedOptions ?? collect()) as $y)
+                      <option value="{{ $y }}" @selected((string)request('year') === (string)$y)>{{ $y }}</option>
+                    @endforeach
+                  </select>
+                </div>
+
+                <div class="col-6 col-md-2">
+                  <label class="form-label mb-1">Tanggal Mulai</label>
+                  <input type="date" name="date_start" class="form-control form-control-sm" value="{{ request('date_start') }}">
+                </div>
+                <div class="col-6 col-md-2">
+                  <label class="form-label mb-1">Tanggal Akhir</label>
+                  <input type="date" name="date_end" class="form-control form-control-sm" value="{{ request('date_end') }}">
+                </div>
+
+                <div class="col-12 col-md-2 d-flex gap-2">
+                  <button type="submit" class="btn btn-sm btn-primary">Terapkan</button>
+                  <a href="{{ url('/pengawasan/sigumilang') }}" class="btn btn-sm btn-outline-secondary">Reset</a>
+                </div>
+              </form>
             </div>
           </div>
         </div>
