@@ -240,41 +240,94 @@ class SigumilangDashboardController extends Controller
             ->withQueryString();
 
         // Statistik laporan per kecamatan
-                $sigumilangIds = (clone $baseQuery)->pluck('id_proyek');
-                $defaultDbName = DB::connection()->getDatabaseName();
-                $statistik_kecamatan = DB::connection('second_db')->table('oss_rba_proyek_laps as sig')
-                    ->join($defaultDbName . '.nibs', 'sig.id_proyek', '=', 'nibs.id_proyek')
-                    ->whereIn('sig.id_proyek', $sigumilangIds)
-                    ->selectRaw('
-                        nibs.kecamatan as kecamatan,
-                        COUNT(sig.id) as jumlah,
-                        SUM(sig.modal_kerja) as total_modal_kerja,
-                        SUM(sig.tki_l) as total_tki_l,
-                        SUM(sig.tki_p) as total_tki_p
-                    ')
-                    ->whereNotNull('nibs.kecamatan')
-                    ->where('nibs.kecamatan', '!=', '')
-                    ->groupBy('nibs.kecamatan')
-                    ->orderByDesc('jumlah')
-                    ->get();
+        $sigumilangIds = (clone $baseQuery)->pluck('id_proyek')->toArray();
         
-                // Statistik laporan per kelurahan
-                $statistik_kelurahan = DB::connection('second_db')->table('oss_rba_proyek_laps as sig')
-                    ->join($defaultDbName . '.nibs', 'sig.id_proyek', '=', 'nibs.id_proyek')
-                    ->whereIn('sig.id_proyek', $sigumilangIds)
-                    ->selectRaw('
-                        nibs.kelurahan as kelurahan,
-                        nibs.kecamatan as kecamatan,
-                        COUNT(sig.id) as jumlah,
-                        SUM(sig.modal_kerja) as total_modal_kerja,
-                        SUM(sig.tki_l) as total_tki_l,
-                        SUM(sig.tki_p) as total_tki_p
-                    ')
-                    ->whereNotNull('nibs.kelurahan')
-                    ->where('nibs.kelurahan', '!=', '')
-                    ->groupBy('nibs.kelurahan', 'nibs.kecamatan')
-                    ->orderByDesc('jumlah')
-                    ->get();
+        // Get geographic data from default database (proyek table)
+        $proyeksData = DB::table('proyek')
+            ->whereIn('id_proyek', $sigumilangIds)
+            ->whereNotNull('kecamatan_usaha')
+            ->where('kecamatan_usaha', '!=', '')
+            ->select('id_proyek', 'kecamatan_usaha')
+            ->get()
+            ->groupBy('kecamatan_usaha');
+        
+        // Get aggregated data from second_db
+        $sigData = DB::connection('second_db')->table('oss_rba_proyek_laps')
+            ->whereIn('id_proyek', $sigumilangIds)
+            ->select('id_proyek', 'modal_kerja', 'tki_l', 'tki_p')
+            ->get()
+            ->keyBy('id_proyek');
+        
+        // Merge data by kecamatan
+        $statistik_kecamatan = collect();
+        foreach ($proyeksData as $kecamatan => $items) {
+            $jumlah = 0;
+            $total_modal_kerja = 0;
+            $total_tki_l = 0;
+            $total_tki_p = 0;
+            
+            foreach ($items as $item) {
+                if (isset($sigData[$item->id_proyek])) {
+                    $jumlah++;
+                    $total_modal_kerja += $sigData[$item->id_proyek]->modal_kerja ?? 0;
+                    $total_tki_l += $sigData[$item->id_proyek]->tki_l ?? 0;
+                    $total_tki_p += $sigData[$item->id_proyek]->tki_p ?? 0;
+                }
+            }
+            
+            $statistik_kecamatan->push((object)[
+                'kecamatan' => $kecamatan,
+                'jumlah' => $jumlah,
+                'total_modal_kerja' => $total_modal_kerja,
+                'total_tki_l' => $total_tki_l,
+                'total_tki_p' => $total_tki_p,
+            ]);
+        }
+        
+        $statistik_kecamatan = $statistik_kecamatan->sortByDesc('jumlah')->values();
+        
+        // Statistik laporan per kelurahan
+        $proyeksKelurahanData = DB::table('proyek')
+            ->whereIn('id_proyek', $sigumilangIds)
+            ->whereNotNull('kelurahan_usaha')
+            ->where('kelurahan_usaha', '!=', '')
+            ->select('id_proyek', 'kelurahan_usaha', 'kecamatan_usaha')
+            ->get()
+            ->groupBy(function($item) {
+                return $item->kelurahan_usaha . '|' . $item->kecamatan_usaha;
+            });
+        
+        // Merge data by kelurahan
+        $statistik_kelurahan = collect();
+        foreach ($proyeksKelurahanData as $key => $items) {
+            $jumlah = 0;
+            $total_modal_kerja = 0;
+            $total_tki_l = 0;
+            $total_tki_p = 0;
+            
+            $kelurahan = $items->first()->kelurahan_usaha;
+            $kecamatan = $items->first()->kecamatan_usaha;
+            
+            foreach ($items as $item) {
+                if (isset($sigData[$item->id_proyek])) {
+                    $jumlah++;
+                    $total_modal_kerja += $sigData[$item->id_proyek]->modal_kerja ?? 0;
+                    $total_tki_l += $sigData[$item->id_proyek]->tki_l ?? 0;
+                    $total_tki_p += $sigData[$item->id_proyek]->tki_p ?? 0;
+                }
+            }
+            
+            $statistik_kelurahan->push((object)[
+                'kelurahan' => $kelurahan,
+                'kecamatan' => $kecamatan,
+                'jumlah' => $jumlah,
+                'total_modal_kerja' => $total_modal_kerja,
+                'total_tki_l' => $total_tki_l,
+                'total_tki_p' => $total_tki_p,
+            ]);
+        }
+        
+        $statistik_kelurahan = $statistik_kelurahan->sortByDesc('jumlah')->values();
 
         // Jumlah total modal kerja
         $total_modal_kerja = (clone $baseQuery)->sum('modal_kerja');
