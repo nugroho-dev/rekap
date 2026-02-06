@@ -213,11 +213,12 @@ class SigumilangDashboardController extends Controller
             ->where('permasalahan', '!=', '')
             ->count();
 
-        // Statistik laporan per tahun (jumlah laporan, modal kerja, tki_l, tki_p, total tenaga kerja)
+        // Statistik laporan per tahun (jumlah laporan, modal kerja, modal tetap, tki_l, tki_p, total tenaga kerja)
         $statistik_tahun = (clone $baseQuery)->selectRaw('
                 tahun,
                 COUNT(*) as jumlah,
                 SUM(modal_kerja) as total_modal_kerja,
+                SUM(modal_tetap) as total_modal_tetap,
                 SUM(tki_l) as total_tki_l,
                 SUM(tki_p) as total_tki_p
             ')
@@ -231,6 +232,7 @@ class SigumilangDashboardController extends Controller
                 DATE(created_at) as tanggal,
                 COUNT(*) as jumlah,
                 SUM(modal_kerja) as total_modal_kerja,
+                SUM(modal_tetap) as total_modal_tetap,
                 SUM(tki_l) as total_tki_l,
                 SUM(tki_p) as total_tki_p
             ')
@@ -254,7 +256,7 @@ class SigumilangDashboardController extends Controller
         // Get aggregated data from second_db
         $sigData = DB::connection('second_db')->table('oss_rba_proyek_laps')
             ->whereIn('id_proyek', $sigumilangIds)
-            ->select('id_proyek', 'modal_kerja', 'tki_l', 'tki_p')
+            ->select('id_proyek', 'modal_kerja', 'modal_tetap', 'tki_l', 'tki_p')
             ->get()
             ->keyBy('id_proyek');
         
@@ -263,6 +265,7 @@ class SigumilangDashboardController extends Controller
         foreach ($proyeksData as $kecamatan => $items) {
             $jumlah = 0;
             $total_modal_kerja = 0;
+            $total_modal_tetap = 0;
             $total_tki_l = 0;
             $total_tki_p = 0;
             
@@ -270,6 +273,7 @@ class SigumilangDashboardController extends Controller
                 if (isset($sigData[$item->id_proyek])) {
                     $jumlah++;
                     $total_modal_kerja += $sigData[$item->id_proyek]->modal_kerja ?? 0;
+                    $total_modal_tetap += $sigData[$item->id_proyek]->modal_tetap ?? 0;
                     $total_tki_l += $sigData[$item->id_proyek]->tki_l ?? 0;
                     $total_tki_p += $sigData[$item->id_proyek]->tki_p ?? 0;
                 }
@@ -279,6 +283,7 @@ class SigumilangDashboardController extends Controller
                 'kecamatan' => $kecamatan,
                 'jumlah' => $jumlah,
                 'total_modal_kerja' => $total_modal_kerja,
+                'total_modal_tetap' => $total_modal_tetap,
                 'total_tki_l' => $total_tki_l,
                 'total_tki_p' => $total_tki_p,
             ]);
@@ -302,6 +307,7 @@ class SigumilangDashboardController extends Controller
         foreach ($proyeksKelurahanData as $key => $items) {
             $jumlah = 0;
             $total_modal_kerja = 0;
+            $total_modal_tetap = 0;
             $total_tki_l = 0;
             $total_tki_p = 0;
             
@@ -312,6 +318,7 @@ class SigumilangDashboardController extends Controller
                 if (isset($sigData[$item->id_proyek])) {
                     $jumlah++;
                     $total_modal_kerja += $sigData[$item->id_proyek]->modal_kerja ?? 0;
+                    $total_modal_tetap += $sigData[$item->id_proyek]->modal_tetap ?? 0;
                     $total_tki_l += $sigData[$item->id_proyek]->tki_l ?? 0;
                     $total_tki_p += $sigData[$item->id_proyek]->tki_p ?? 0;
                 }
@@ -322,6 +329,7 @@ class SigumilangDashboardController extends Controller
                 'kecamatan' => $kecamatan,
                 'jumlah' => $jumlah,
                 'total_modal_kerja' => $total_modal_kerja,
+                'total_modal_tetap' => $total_modal_tetap,
                 'total_tki_l' => $total_tki_l,
                 'total_tki_p' => $total_tki_p,
             ]);
@@ -331,6 +339,8 @@ class SigumilangDashboardController extends Controller
 
         // Jumlah total modal kerja
         $total_modal_kerja = (clone $baseQuery)->sum('modal_kerja');
+        // Jumlah total modal tetap
+        $total_modal_tetap = (clone $baseQuery)->sum('modal_tetap');
         // Jumlah total tenaga kerja (laki-laki + perempuan)
         $total_tki_l = (clone $baseQuery)->sum('tki_l');
         $total_tki_p = (clone $baseQuery)->sum('tki_p');
@@ -349,6 +359,7 @@ class SigumilangDashboardController extends Controller
             'statistik_kelurahan',
             'judul',
             'total_modal_kerja',
+            'total_modal_tetap',
             'total_tenaga_kerja',
             'month',
             'year',

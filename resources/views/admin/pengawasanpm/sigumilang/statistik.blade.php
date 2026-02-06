@@ -148,6 +148,23 @@
                         </div>
                     </div>
                 </div>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="card card-sm shadow-sm border-0" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                        <div class="card-body text-white">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <span class="bg-white text-warning avatar">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 21l18 0" /><path d="M9 8l1 0" /><path d="M9 12l1 0" /><path d="M9 16l1 0" /><path d="M14 8l1 0" /><path d="M14 12l1 0" /><path d="M14 16l1 0" /><path d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16" /></svg>
+                                    </span>
+                                </div>
+                                <div class="col">
+                                    <div class="font-weight-medium mb-1">Modal Tetap</div>
+                                    <div class="h4 mb-0 fw-bold">Rp {{ number_format($total_modal_tetap, 0, ',', '.') }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Statistik per Tanggal Input -->
@@ -163,17 +180,19 @@
                     <table class="table table-vcenter card-table">
                         <thead class="thead-light">
                             <tr>
-                                <th class="text-center" style="width: 5%;">#</th>
-                                <th style="width: 20%;">Tanggal Input</th>
-                                <th class="text-center" style="width: 10%;">Jumlah<br>Laporan</th>
-                                <th class="text-end" style="width: 25%;">Total Modal Kerja</th>
-                                <th class="text-center" style="width: 40%;" colspan="3">Tenaga Kerja</th>
+                                <th class="text-center" style="width: 5%;"></th>
+                                <th style="width: 15%;">Tanggal Input</th>
+                                <th class="text-center" style="width: 8%;">Jumlah<br>Laporan</th>
+                                <th class="text-end" style="width: 15%;">Modal Kerja</th>
+                                <th class="text-end" style="width: 15%;">Modal Tetap</th>
+                                <th class="text-end" style="width: 17%;">Total Modal</th>
+                                <th class="text-center" style="width: 25%;" colspan="3">Tenaga Kerja</th>
                             </tr>
                             <tr class="bg-light">
-                                <th colspan="4"></th>
-                                <th class="text-center" style="width: 13%; font-size: 0.875rem;">L</th>
-                                <th class="text-center" style="width: 13%; font-size: 0.875rem;">P</th>
-                                <th class="text-center" style="width: 14%; font-size: 0.875rem;">Total</th>
+                                <th colspan="6"></th>
+                                <th class="text-center" style="width: 8%; font-size: 0.875rem;">L</th>
+                                <th class="text-center" style="width: 8%; font-size: 0.875rem;">P</th>
+                                <th class="text-center" style="width: 9%; font-size: 0.875rem;">Total</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -197,8 +216,13 @@
                                         <span class="badge bg-primary badge-pill fs-5 px-3 py-2">{{ number_format($row->jumlah) }}</span>
                                     </td>
                                     <td class="text-end">
-                                        <div class="fw-bold text-azure fs-4">Rp {{ number_format($row->total_modal_kerja / 1000000, 0, ',', '.') }} Jt</div>
-                                        <small class="text-muted">{{ number_format($row->total_modal_kerja, 0, ',', '.') }}</small>
+                                        <div class="fw-bold text-success fs-6">Rp {{ number_format($row->total_modal_kerja, 0, ',', '.') }}</div>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="fw-bold text-warning fs-6">Rp {{ number_format($row->total_modal_tetap, 0, ',', '.') }}</div>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="fw-bold text-azure fs-5">Rp {{ number_format($row->total_modal_kerja + $row->total_modal_tetap, 0, ',', '.') }}</div>
                                     </td>
                                     <td class="text-center">
                                         <span class="badge bg-cyan-lt fs-5 px-2 py-2">{{ number_format($row->total_tki_l) }}</span>
@@ -213,7 +237,7 @@
                                 @endif
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center text-muted py-5">
+                                    <td colspan="9" class="text-center text-muted py-5">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-database-off mb-3" width="64" height="64" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12.983 8.978c3.955 -.182 7.017 -1.446 7.017 -2.978c0 -1.657 -3.582 -3 -8 -3c-1.661 0 -3.204 .19 -4.483 .515m-2.783 1.228c-.471 .382 -.734 .808 -.734 1.257c0 1.22 1.944 2.271 4.734 2.74" /><path d="M4 6v6c0 1.657 3.582 3 8 3c.986 0 1.93 -.067 2.802 -.19m3.187 -.82c1.251 -.53 2.011 -1.228 2.011 -1.99v-6" /><path d="M4 12v6c0 1.657 3.582 3 8 3c3.217 0 5.991 -.712 7.261 -1.74m.739 -3.26v-4" /><path d="M3 3l18 18" /></svg>
                                         <div class="h3">Tidak ada data untuk periode yang dipilih</div>
                                         <small>Silakan ubah filter tanggal atau periode untuk melihat data</small>
@@ -244,17 +268,19 @@
                     <table class="table table-vcenter card-table">
                         <thead class="thead-light">
                             <tr>
-                                <th class="text-center" style="width: 5%;">#</th>
-                                <th style="width: 15%;">Tahun Laporan</th>
-                                <th class="text-center" style="width: 12%;">Jumlah<br>Laporan</th>
-                                <th class="text-end" style="width: 28%;">Total Modal Kerja</th>
-                                <th class="text-center" style="width: 40%;" colspan="3">Tenaga Kerja</th>
+                                <th class="text-center" style="width: 5%;"></th>
+                                <th style="width: 12%;">Tahun Laporan</th>
+                                <th class="text-center" style="width: 8%;">Jumlah<br>Laporan</th>
+                                <th class="text-end" style="width: 15%;">Modal Kerja</th>
+                                <th class="text-end" style="width: 15%;">Modal Tetap</th>
+                                <th class="text-end" style="width: 18%;">Total Modal</th>
+                                <th class="text-center" style="width: 27%;" colspan="3">Tenaga Kerja</th>
                             </tr>
                             <tr class="bg-light">
-                                <th colspan="4"></th>
-                                <th class="text-center" style="width: 13%; font-size: 0.875rem;">L</th>
-                                <th class="text-center" style="width: 13%; font-size: 0.875rem;">P</th>
-                                <th class="text-center" style="width: 14%; font-size: 0.875rem;">Total</th>
+                                <th colspan="6"></th>
+                                <th class="text-center" style="width: 9%; font-size: 0.875rem;">L</th>
+                                <th class="text-center" style="width: 9%; font-size: 0.875rem;">P</th>
+                                <th class="text-center" style="width: 9%; font-size: 0.875rem;">Total</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -275,8 +301,13 @@
                                         <span class="badge bg-success badge-pill fs-5 px-3 py-2">{{ number_format($row->jumlah) }}</span>
                                     </td>
                                     <td class="text-end">
-                                        <div class="fw-bold text-success fs-4">Rp {{ number_format($row->total_modal_kerja / 1000000000, 2, ',', '.') }} M</div>
-                                        <small class="text-muted">{{ number_format($row->total_modal_kerja / 1000000, 0, ',', '.') }} Juta</small>
+                                        <div class="fw-bold text-success fs-6">Rp {{ number_format($row->total_modal_kerja, 0, ',', '.') }}</div>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="fw-bold text-warning fs-6">Rp {{ number_format($row->total_modal_tetap, 0, ',', '.') }}</div>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="fw-bold text-primary fs-5">Rp {{ number_format($row->total_modal_kerja + $row->total_modal_tetap, 0, ',', '.') }}</div>
                                     </td>
                                     <td class="text-center">
                                         <span class="badge bg-cyan-lt fs-5 px-2 py-2">{{ number_format($row->total_tki_l) }}</span>
@@ -308,17 +339,19 @@
                     <table class="table table-vcenter card-table">
                         <thead class="thead-light">
                             <tr>
-                                <th class="text-center" style="width: 5%;">#</th>
-                                <th style="width: 20%;">Kecamatan</th>
-                                <th class="text-center" style="width: 10%;">Jumlah<br>Laporan</th>
-                                <th class="text-end" style="width: 25%;">Total Modal Kerja</th>
-                                <th class="text-center" style="width: 40%;" colspan="3">Tenaga Kerja</th>
+                                <th class="text-center" style="width: 5%;"></th>
+                                <th style="width: 15%;">Kecamatan</th>
+                                <th class="text-center" style="width: 8%;">Jumlah<br>Laporan</th>
+                                <th class="text-end" style="width: 13%;">Modal Kerja</th>
+                                <th class="text-end" style="width: 13%;">Modal Tetap</th>
+                                <th class="text-end" style="width: 16%;">Total Modal</th>
+                                <th class="text-center" style="width: 30%;" colspan="3">Tenaga Kerja</th>
                             </tr>
                             <tr class="bg-light">
-                                <th colspan="4"></th>
-                                <th class="text-center" style="width: 13%; font-size: 0.875rem;">L</th>
-                                <th class="text-center" style="width: 13%; font-size: 0.875rem;">P</th>
-                                <th class="text-center" style="width: 14%; font-size: 0.875rem;">Total</th>
+                                <th colspan="6"></th>
+                                <th class="text-center" style="width: 10%; font-size: 0.875rem;">L</th>
+                                <th class="text-center" style="width: 10%; font-size: 0.875rem;">P</th>
+                                <th class="text-center" style="width: 10%; font-size: 0.875rem;">Total</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -338,8 +371,13 @@
                                         <span class="badge bg-purple badge-pill fs-5 px-3 py-2">{{ number_format($row->jumlah) }}</span>
                                     </td>
                                     <td class="text-end">
-                                        <div class="fw-bold text-purple fs-4">Rp {{ number_format($row->total_modal_kerja / 1000000, 0, ',', '.') }} Jt</div>
-                                        <small class="text-muted">{{ number_format($row->total_modal_kerja, 0, ',', '.') }}</small>
+                                        <div class="fw-bold text-success fs-6">Rp {{ number_format($row->total_modal_kerja, 0, ',', '.') }}</div>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="fw-bold text-warning fs-6">Rp {{ number_format($row->total_modal_tetap, 0, ',', '.') }}</div>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="fw-bold text-purple fs-5">Rp {{ number_format($row->total_modal_kerja + $row->total_modal_tetap, 0, ',', '.') }}</div>
                                     </td>
                                     <td class="text-center">
                                         <span class="badge bg-cyan-lt fs-5 px-2 py-2">{{ number_format($row->total_tki_l) }}</span>
@@ -353,7 +391,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center text-muted py-5">
+                                    <td colspan="9" class="text-center text-muted py-5">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-map-off mb-3" width="64" height="64" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8.32 4.34l.68 -.34l6 3l6 -3v13m-2.67 1.335l-3.33 1.665l-6 -3l-6 3v-13l2.665 -1.333" /><path d="M9 4v1m0 4v13" /><path d="M15 7v4m0 4v8" /><path d="M3 3l18 18" /></svg>
                                         <div class="h3">Tidak ada data kecamatan</div>
                                         <small>Data lokasi kecamatan tidak tersedia untuk periode yang dipilih</small>
@@ -378,18 +416,20 @@
                     <table class="table table-vcenter card-table">
                         <thead class="thead-light">
                             <tr>
-                                <th class="text-center" style="width: 5%;">#</th>
-                                <th style="width: 18%;">Kelurahan</th>
-                                <th style="width: 12%;">Kecamatan</th>
-                                <th class="text-center" style="width: 8%;">Jumlah<br>Laporan</th>
-                                <th class="text-end" style="width: 20%;">Total Modal Kerja</th>
-                                <th class="text-center" style="width: 37%;" colspan="3">Tenaga Kerja</th>
+                                <th class="text-center" style="width: 5%;"></th>
+                                <th style="width: 14%;">Kelurahan</th>
+                                <th style="width: 10%;">Kecamatan</th>
+                                <th class="text-center" style="width: 7%;">Jumlah<br>Laporan</th>
+                                <th class="text-end" style="width: 12%;">Modal Kerja</th>
+                                <th class="text-end" style="width: 12%;">Modal Tetap</th>
+                                <th class="text-end" style="width: 15%;">Total Modal</th>
+                                <th class="text-center" style="width: 25%;" colspan="3">Tenaga Kerja</th>
                             </tr>
                             <tr class="bg-light">
-                                <th colspan="5"></th>
-                                <th class="text-center" style="width: 12%; font-size: 0.875rem;">L</th>
-                                <th class="text-center" style="width: 12%; font-size: 0.875rem;">P</th>
-                                <th class="text-center" style="width: 13%; font-size: 0.875rem;">Total</th>
+                                <th colspan="7"></th>
+                                <th class="text-center" style="width: 8%; font-size: 0.875rem;">L</th>
+                                <th class="text-center" style="width: 8%; font-size: 0.875rem;">P</th>
+                                <th class="text-center" style="width: 9%; font-size: 0.875rem;">Total</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -412,8 +452,13 @@
                                         <span class="badge bg-orange badge-pill fs-5 px-3 py-2">{{ number_format($row->jumlah) }}</span>
                                     </td>
                                     <td class="text-end">
-                                        <div class="fw-bold text-orange fs-5">Rp {{ number_format($row->total_modal_kerja / 1000000, 0, ',', '.') }} Jt</div>
-                                        <small class="text-muted">{{ number_format($row->total_modal_kerja, 0, ',', '.') }}</small>
+                                        <div class="fw-bold text-success fs-6">Rp {{ number_format($row->total_modal_kerja, 0, ',', '.') }}</div>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="fw-bold text-warning fs-6">Rp {{ number_format($row->total_modal_tetap, 0, ',', '.') }}</div>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="fw-bold text-orange fs-5">Rp {{ number_format($row->total_modal_kerja + $row->total_modal_tetap, 0, ',', '.') }}</div>
                                     </td>
                                     <td class="text-center">
                                         <span class="badge bg-cyan-lt fs-6 px-2 py-1">{{ number_format($row->total_tki_l) }}</span>
@@ -427,7 +472,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="8" class="text-center text-muted py-5">
+                                    <td colspan="10" class="text-center text-muted py-5">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home-off mb-3" width="64" height="64" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12h-2l4.497 -4.497m2.503 -2.503l2 -2l9 9h-2" /><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2m0 -4v-3" /><path d="M9 21v-6a2 2 0 0 1 2 -2h2m2 2v6" /><path d="M3 3l18 18" /></svg>
                                         <div class="h3">Tidak ada data kelurahan</div>
                                         <small>Data lokasi kelurahan tidak tersedia untuk periode yang dipilih</small>
