@@ -130,7 +130,9 @@
                 </td>
                 <td>
                   <div>Semester {{ $item->periode ?? '-' }} Tahun {{ $item->tahun ?? '-' }}</div>
-                  <div>{{ 'Rp ' . number_format($item->modal_kerja, 0, ',', '.') }}</div>
+                  <div><strong>Modal Kerja:</strong> {{ 'Rp ' . number_format($item->modal_kerja, 0, ',', '.') }}</div>
+                  <div><strong>Modal Tetap:</strong> {{ 'Rp ' . number_format($item->modal_tetap ?? 0, 0, ',', '.') }}</div>
+                  <div class="text-primary"><strong>Total Modal:</strong> {{ 'Rp ' . number_format(($item->modal_kerja ?? 0) + ($item->modal_tetap ?? 0), 0, ',', '.') }}</div>
                   <div class="small text-muted">{{ $item->keterangan }}</div>
                   <div class="small text-muted">Dilaporkan Tanggal {{ $item->created_at->format('d-m-Y') }}</div>
                 </td>
