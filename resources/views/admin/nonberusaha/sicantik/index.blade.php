@@ -100,7 +100,7 @@
                               @csrf
                               @foreach ($items as $it)
                                 @if (!empty($it->file_signed_report))
-                                  <input type="hidden" name="batch[{{ $it->no_permohonan }}]" value="{{ $it->file_signed_report }}">
+                                  <input type="hidden" name="batch[{{ $it->permohonan_izin_id }}]" value="{{ $it->file_signed_report }}">
                                 @endif
                               @endforeach
                               <button type="submit" class="btn btn-warning d-none d-sm-inline-block" title="Singkron batch (halaman ini)">
@@ -387,16 +387,16 @@
                           </td>
                           <td class="text-center">
                             <div class="btn-group">
-                              <button type="button" class="btn btn-sm btn-outline-primary detailBtn" data-id="{{ $item->id_proses_permohonan ?? $item->id ?? $item->no_permohonan }}">Detail</button>
+                              <button type="button" class="btn btn-sm btn-outline-primary detailBtn" data-id="{{ $item->id_proses_permohonan ?? $item->id ?? $item->permohonan_izin_id }}">Detail</button>
                               <button type="button"
                                       class="btn btn-sm btn-outline-secondary viewPdfBtn"
-                                      data-id="{{ $item->id_proses_permohonan ?? $item->id ?? $item->no_permohonan }}"
+                                      data-id="{{ $item->id_proses_permohonan ?? $item->id ?? $item->permohonan_izin_id }}"
                                       data-file="{{ $item->file_signed_report ?? '' }}"
                                       title="Lihat Dokumen TTE">Lihat</button>
                               @php
                                 $signedFile = $item->file_signed_report ?? '';
                                 $baseSignedUrl = 'https://sicantik.go.id/api/view/webroot/files/signed/';
-                                $safeNo = preg_replace('/[^A-Za-z0-9_-]/','', (string)($item->no_permohonan ?? ''));
+                                $safeNo = preg_replace('/[^A-Za-z0-9_-]/','', (string)($item->permohonan_izin_id ?? ''));
                                 $serverRelPath = 'public/pdf/sicantik_' . $safeNo . '.pdf';
                                 $serverExists = \Illuminate\Support\Facades\Storage::exists($serverRelPath);
                                 $serverPublicUrl = asset('storage/pdf/sicantik_' . $safeNo . '.pdf');
@@ -405,7 +405,7 @@
                                 <form method="POST" action="{{ route('sicantik.downloadPdf') }}" class="d-inline ms-1">
                                   @csrf
                                   <input type="hidden" name="url" value="{{ $baseSignedUrl . $signedFile }}">
-                                  <input type="hidden" name="no_permohonan" value="{{ $item->no_permohonan }}">
+                                  <input type="hidden" name="no_permohonan" value="{{ $item->permohonan_izin_id }}">
                                   <button type="submit" class="btn btn-sm btn-warning" title="Singkron ke server">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-cloud-download"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19 18a3.5 3.5 0 0 0 -3 -3.45a5 5 0 0 0 -9 1.95h-1a3 3 0 0 0 0 6h13a2.5 2.5 0 0 0 0 -5z" /><path d="M12 13v7" /><path d="M9.5 16.5l2.5 2.5l2.5 -2.5" /></svg>
                                     Singkron
@@ -423,7 +423,7 @@
                           </td>
                         </tr>
                         @php
-                          $safeNo = preg_replace('/[^A-Za-z0-9_-]/','', (string)($item->no_permohonan ?? ''));
+                          $safeNo = preg_replace('/[^A-Za-z0-9_-]/','', (string)($item->permohonan_izin_id ?? ''));
                           $serverRelPath = 'public/pdf/sicantik_' . $safeNo . '.pdf';
                           $serverExists = \Illuminate\Support\Facades\Storage::exists($serverRelPath);
                           $serverPublicUrl = asset('storage/pdf/sicantik_' . $safeNo . '.pdf');

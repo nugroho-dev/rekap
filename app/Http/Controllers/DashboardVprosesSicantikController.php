@@ -1701,7 +1701,7 @@ public function show(Request $request, $id)
 				if (empty($batch) && !empty($nos)) {
 					foreach ($nos as $noPerm) {
 						try {
-							$latest = \App\Models\Proses::where('no_permohonan', $noPerm)
+							$latest = \App\Models\Proses::where('permohonan_izin_id', $noPerm)
 								->where('jenis_proses_id', 40)
 								->whereNotNull('file_signed_report')
 								->orderByDesc('id')
