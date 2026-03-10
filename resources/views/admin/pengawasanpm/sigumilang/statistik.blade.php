@@ -167,6 +167,60 @@
                 </div>
             </div>
 
+            <!-- Ringkasan Statistik -->
+            <div class="card shadow-sm mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table mb-0 text-white">
+                            <thead>
+                                <tr>
+                                    <th class="text-white text-center" style="background: rgba(255, 255, 255, 0.1); border: none;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chart-bar me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M15 9a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M9 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M4 20h14" /></svg>
+                                        <span class="fw-bold">Ringkasan Statistik Pelaporan</span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="hover-summary-row">
+                                    <td style="border: none; padding: 2rem 1.5rem;">
+                                        <div class="row g-4">
+                                            <div class="col-md-6">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="me-4">
+                                                        <span class="avatar avatar-lg rounded" style="background: rgba(255, 255, 255, 0.95);">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-analytics text-primary" width="32" height="32" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M9 17l0 -5" /><path d="M12 17l0 -1" /><path d="M15 17l0 -3" /></svg>
+                                                        </span>
+                                                    </div>
+                                                    <div class="flex-fill">
+                                                        <div class="text-white-50 mb-1" style="font-size: 0.875rem; font-weight: 500; letter-spacing: 0.5px;">TOTAL LAPORAN</div>
+                                                        <div class="display-6 fw-bold mb-0" style="text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);">{{ number_format($total) }}</div>
+                                                        <small class="text-white-50">Laporan yang tercatat</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="me-4">
+                                                        <span class="avatar avatar-lg rounded" style="background: rgba(255, 255, 255, 0.95);">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-building-factory-2 text-success" width="32" height="32" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 21h18" /><path d="M5 21v-12l5 4v-4l5 4h4" /><path d="M19 21v-8l-1.436 -9.574a.5 .5 0 0 0 -.495 -.426h-1.145a.5 .5 0 0 0 -.494 .418l-1.43 8.582" /><path d="M9 17h1" /><path d="M14 17h1" /></svg>
+                                                        </span>
+                                                    </div>
+                                                    <div class="flex-fill">
+                                                        <div class="text-white-50 mb-1" style="font-size: 0.875rem; font-weight: 500; letter-spacing: 0.5px;">JUMLAH PERUSAHAAN</div>
+                                                        <div class="display-6 fw-bold mb-0" style="text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);">{{ number_format($jumlah_perusahaan) }}</div>
+                                                        <small class="text-white-50">Perusahaan unik yang melapor</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <!-- Statistik per Tanggal Input -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-azure-lt">
@@ -486,4 +540,363 @@
         </div>
     </div>
 </div>
+
+<style>
+    /* Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    @keyframes shimmer {
+        0% {
+            background-position: -1000px 0;
+        }
+        100% {
+            background-position: 1000px 0;
+        }
+    }
+
+    /* Page transitions */
+    .page-header {
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    /* Card animations with stagger effect */
+    .col-sm-6.col-lg-3:nth-child(1) .card {
+        animation: fadeInUp 0.6s ease-out 0.1s backwards;
+    }
+    .col-sm-6.col-lg-3:nth-child(2) .card {
+        animation: fadeInUp 0.6s ease-out 0.2s backwards;
+    }
+    .col-sm-6.col-lg-3:nth-child(3) .card {
+        animation: fadeInUp 0.6s ease-out 0.3s backwards;
+    }
+    .col-sm-6.col-lg-3:nth-child(4) .card {
+        animation: fadeInUp 0.6s ease-out 0.4s backwards;
+    }
+    .col-sm-6.col-lg-3:nth-child(5) .card {
+        animation: fadeInUp 0.6s ease-out 0.5s backwards;
+    }
+
+    /* Enhanced card styles */
+    .card {
+        border-radius: 12px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+    }
+
+    .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    /* Summary cards enhancement */
+    .card-sm {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .card-sm::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .card-sm:hover::before {
+        left: 100%;
+    }
+
+    .card-sm:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    .card-sm .avatar {
+        transition: all 0.3s ease;
+    }
+
+    .card-sm:hover .avatar {
+        transform: rotate(360deg) scale(1.1);
+    }
+
+    /* Filter card enhancement */
+    .card-body form {
+        animation: fadeInUp 0.8s ease-out;
+    }
+
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: rgba(255, 255, 255, 0.5);
+        box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.1);
+        transform: translateY(-2px);
+    }
+
+    /* Button enhancements */
+    .btn {
+        border-radius: 8px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn:active {
+        transform: translateY(0);
+    }
+
+    /* Table enhancements */
+    .table-responsive {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .table thead th {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #dee2e6;
+        padding: 1rem 0.75rem;
+    }
+
+    .hover-row {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .hover-row:hover {
+        background: linear-gradient(90deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+        transform: scale(1.01);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Badge animations */
+    .badge {
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        font-weight: 600;
+    }
+
+    .hover-row:hover .badge {
+        animation: pulse 1s infinite;
+    }
+
+    /* Avatar styling */
+    .avatar {
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .hover-row:hover .avatar {
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Number animation on hover */
+    .h1, .h4, .fs-2, .fs-4, .fs-5, .fs-6 {
+        transition: all 0.3s ease;
+    }
+
+    .card-sm:hover .h1,
+    .card-sm:hover .h4 {
+        transform: scale(1.1);
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Card header styling */
+    .card-header {
+        border-bottom: 3px solid rgba(0, 0, 0, 0.05);
+        padding: 1.25rem 1.5rem;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.95) 100%);
+    }
+
+    .card-title {
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .card-subtitle {
+        font-size: 0.85rem;
+    }
+
+    /* Icon enhancements */
+    .icon {
+        transition: all 0.3s ease;
+    }
+
+    .card-sm:hover .icon,
+    .hover-row:hover .icon {
+        transform: scale(1.1);
+    }
+
+    /* Empty state styling */
+    .table tbody tr td[colspan] {
+        padding: 3rem 2rem !important;
+    }
+
+    .table tbody tr td[colspan] .icon {
+        opacity: 0.3;
+        animation: pulse 2s infinite;
+    }
+
+    /* Pagination styling */
+    .pagination {
+        gap: 0.25rem;
+    }
+
+    .page-link {
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        font-weight: 600;
+    }
+
+    .page-link:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Footer styling */
+    .card-footer {
+        background: linear-gradient(135deg, rgba(248, 249, 250, 0.9) 0%, rgba(233, 236, 239, 0.9) 100%);
+        border-top: 2px solid rgba(0, 0, 0, 0.05);
+        padding: 1rem 1.5rem;
+    }
+
+    /* Summary row styling */
+    .hover-summary-row {
+        transition: all 0.4s ease;
+    }
+
+    .hover-summary-row:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .hover-summary-row .avatar {
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .hover-summary-row:hover .avatar {
+        transform: scale(1.1) rotate(5deg);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .hover-summary-row .display-6 {
+        transition: all 0.3s ease;
+    }
+
+    .hover-summary-row:hover .display-6 {
+        transform: scale(1.05);
+    }
+
+    /* Responsive improvements */
+    @media (max-width: 768px) {
+        .card:hover {
+            transform: none;
+        }
+        
+        .hover-row:hover {
+            transform: none;
+        }
+
+        .hover-summary-row:hover .avatar {
+            transform: scale(1.05);
+        }
+
+        .hover-summary-row:hover .display-6 {
+            transform: none;
+        }
+    }
+
+    /* Scrollbar styling */
+    .table-responsive::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    }
+
+    /* Loading shimmer effect for better UX */
+    .card-body {
+        position: relative;
+    }
+
+    /* Enhanced shadow system */
+    .shadow-sm {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+    }
+
+    /* Text shadow for better readability */
+    .text-white {
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Gradient text effect */
+    .fw-bold.text-success, .fw-bold.text-warning, 
+    .fw-bold.text-azure, .fw-bold.text-primary,
+    .fw-bold.text-purple, .fw-bold.text-orange {
+        background: linear-gradient(135deg, currentColor 0%, currentColor 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
+
+    /* Page title enhancement */
+    .page-title {
+        font-weight: 800;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .page-pretitle {
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        color: #6c757d;
+    }
+</style>
 @endsection

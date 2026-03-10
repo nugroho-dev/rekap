@@ -346,6 +346,9 @@ class SigumilangDashboardController extends Controller
         $total_tki_p = (clone $baseQuery)->sum('tki_p');
         $total_tenaga_kerja = $total_tki_l + $total_tki_p;
 
+        // Jumlah perusahaan unik
+        $jumlah_perusahaan = (clone $baseQuery)->distinct('id_proyek')->count('id_proyek');
+
         // Dropdown options untuk filter
         $yearCreatedOptions = Sigumilang::query()->selectRaw('YEAR(created_at) as y')->distinct()->orderBy('y', 'desc')->pluck('y');
 
@@ -361,6 +364,7 @@ class SigumilangDashboardController extends Controller
             'total_modal_kerja',
             'total_modal_tetap',
             'total_tenaga_kerja',
+            'jumlah_perusahaan',
             'month',
             'year',
             'date_start',
