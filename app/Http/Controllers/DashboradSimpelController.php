@@ -46,21 +46,21 @@ class DashboradSimpelController extends Controller
             if (empty($month) || empty($year)) {
             return redirect('/simpel')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda');
             } else {
-            $query->whereMonth('rekomendasi', $month)
-                  ->whereYear('rekomendasi', $year)
+            $query->whereMonth('tte', $month)
+                  ->whereYear('tte', $year)
                   ->where('jasa', 'LIKE', "%{$search}%");
             }
         } elseif ($request->has('month') && $request->has('year')) {
             if (empty($month) || empty($year)) {
             return redirect('/simpel')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda');
             } else {
-            $query->whereMonth('rekomendasi', $month)
-                  ->whereYear('rekomendasi', $year);
+            $query->whereMonth('tte', $month)
+                  ->whereYear('tte', $year);
             }
         }
 
         if ($request->has('year')) {
-            $query->whereYear('rekomendasi', $year);
+            $query->whereYear('tte', $year);
         }
 
         $perPage = $request->input('perPage', 50);
@@ -85,9 +85,9 @@ class DashboradSimpelController extends Controller
          
             
             $terbit = DB::table('view_simpel')
-                ->selectRaw('month(rekomendasi) AS bulan, year(rekomendasi) AS tahun, count(rekomendasi) as jumlah_data, sum(jumlah_hari)as j_hari ')
-                ->whereYear('rekomendasi', $year)
-                ->groupByRaw('month(rekomendasi)')
+                ->selectRaw('month(tte) AS bulan, year(tte) AS tahun, count(tte) as jumlah_data, sum(jumlah_hari)as j_hari ')
+                ->whereYear('tte', $year)
+                ->groupByRaw('month(tte)')
                 ->orderBy('bulan', 'asc')
                 ->get();
 
@@ -105,9 +105,9 @@ class DashboradSimpelController extends Controller
 			$year = $now->year;
 			$jumlah_permohonan = Vsimpel::whereYear('daftar', [$year])->count();
             $terbit = DB::table('view_simpel')
-            ->selectRaw('month(rekomendasi) AS bulan, year(rekomendasi) AS tahun, count(rekomendasi) as jumlah_data,  sum(jumlah_hari)as j_hari')
-            ->whereYear('rekomendasi', $year)
-            ->groupByRaw('month(rekomendasi)')
+            ->selectRaw('month(tte) AS bulan, year(tte) AS tahun, count(tte) as jumlah_data,  sum(jumlah_hari)as j_hari')
+            ->whereYear('tte', $year)
+            ->groupByRaw('month(tte)')
             ->orderBy('bulan', 'asc')
             ->get();
                 $totalJumlahData = $terbit->sum('jumlah_data');
@@ -134,38 +134,38 @@ class DashboradSimpelController extends Controller
         elseif($semester === '2') { $monthStart = 7; $monthEnd = 12; }
         else { $monthStart = 1; $monthEnd = 12; }
 
-        $availableYears = Vsimpel::selectRaw('YEAR(rekomendasi) as year')
-            ->whereNotNull('rekomendasi')
+        $availableYears = Vsimpel::selectRaw('YEAR(tte) as year')
+            ->whereNotNull('tte')
             ->distinct()
             ->orderByDesc('year')
             ->pluck('year')
             ->toArray();
         if(empty($availableYears)) $availableYears = [$now->year];
 
-        $total = Vsimpel::whereYear('rekomendasi', $year)->count();
+        $total = Vsimpel::whereYear('tte', $year)->count();
 
         // alias jasa -> profesi so blade can reuse same templates
         $stats = Vsimpel::selectRaw('jasa as profesi, COUNT(*) as jumlah, MAX(updated_at) as last_update')
-            ->whereYear('rekomendasi', $year)
+            ->whereYear('tte', $year)
             ->groupBy('jasa')
             ->orderByDesc('jumlah')
             ->get();
 
         // monthly counts
-        $monthlyRaw = Vsimpel::selectRaw('MONTH(rekomendasi) as bulan, COUNT(*) as jumlah')
-            ->whereYear('rekomendasi', $year)
-            ->whereRaw('MONTH(rekomendasi) BETWEEN ? AND ?', [$monthStart, $monthEnd])
-            ->groupByRaw('MONTH(rekomendasi)')
+        $monthlyRaw = Vsimpel::selectRaw('MONTH(tte) as bulan, COUNT(*) as jumlah')
+            ->whereYear('tte', $year)
+            ->whereRaw('MONTH(tte) BETWEEN ? AND ?', [$monthStart, $monthEnd])
+            ->groupByRaw('MONTH(tte)')
             ->get();
         $monthlyCounts = [];
         foreach($monthlyRaw as $mr) { $monthlyCounts[(int)$mr->bulan] = $mr->jumlah; }
         $totalTerbit = array_sum($monthlyCounts);
 
         // daily counts by month
-        $dailyRaw = Vsimpel::selectRaw('MONTH(rekomendasi) as bulan, DAY(rekomendasi) as hari, COUNT(*) as jumlah')
-            ->whereYear('rekomendasi', $year)
-            ->whereRaw('MONTH(rekomendasi) BETWEEN ? AND ?', [$monthStart, $monthEnd])
-            ->groupByRaw('MONTH(rekomendasi), DAY(rekomendasi)')
+        $dailyRaw = Vsimpel::selectRaw('MONTH(tte) as bulan, DAY(tte) as hari, COUNT(*) as jumlah')
+            ->whereYear('tte', $year)
+            ->whereRaw('MONTH(tte) BETWEEN ? AND ?', [$monthStart, $monthEnd])
+            ->groupByRaw('MONTH(tte), DAY(tte)')
             ->get();
         $dailyCountsByMonth = [];
         foreach($dailyRaw as $dr) {
@@ -174,10 +174,10 @@ class DashboradSimpelController extends Controller
         }
 
         // jasa (profesi) daily by month for drilldown
-        $profesiDailyRaw = Vsimpel::selectRaw('MONTH(rekomendasi) as bulan, DAY(rekomendasi) as hari, jasa as profesi, COUNT(*) as jumlah')
-            ->whereYear('rekomendasi', $year)
-            ->whereRaw('MONTH(rekomendasi) BETWEEN ? AND ?', [$monthStart, $monthEnd])
-            ->groupByRaw('MONTH(rekomendasi), DAY(rekomendasi), jasa')
+        $profesiDailyRaw = Vsimpel::selectRaw('MONTH(tte) as bulan, DAY(tte) as hari, jasa as profesi, COUNT(*) as jumlah')
+            ->whereYear('tte', $year)
+            ->whereRaw('MONTH(tte) BETWEEN ? AND ?', [$monthStart, $monthEnd])
+            ->groupByRaw('MONTH(tte), DAY(tte), jasa')
             ->get();
         $profesiDailyByMonth = [];
         foreach($profesiDailyRaw as $pdr){
@@ -187,10 +187,10 @@ class DashboradSimpelController extends Controller
         }
 
         // jasa by month series
-        $profesiByMonthRaw = Vsimpel::selectRaw('MONTH(rekomendasi) as bulan, jasa as profesi, COUNT(*) as jumlah')
-            ->whereYear('rekomendasi', $year)
-            ->whereRaw('MONTH(rekomendasi) BETWEEN ? AND ?', [$monthStart, $monthEnd])
-            ->groupByRaw('MONTH(rekomendasi), jasa')
+        $profesiByMonthRaw = Vsimpel::selectRaw('MONTH(tte) as bulan, jasa as profesi, COUNT(*) as jumlah')
+            ->whereYear('tte', $year)
+            ->whereRaw('MONTH(tte) BETWEEN ? AND ?', [$monthStart, $monthEnd])
+            ->groupByRaw('MONTH(tte), jasa')
             ->get();
         $profesiByMonth = [];
         $allProfesi = [];
@@ -226,18 +226,18 @@ class DashboradSimpelController extends Controller
         foreach($stats->take(10) as $s){ $topProfesi[] = ['name' => $s->profesi ?: 'Tidak Diketahui', 'y' => $s->jumlah]; }
 
         // yearly counts
-        $yearlyRaw = Vsimpel::selectRaw('YEAR(rekomendasi) as tahun, COUNT(*) as jumlah')
-            ->whereNotNull('rekomendasi')
-            ->groupByRaw('YEAR(rekomendasi)')
+        $yearlyRaw = Vsimpel::selectRaw('YEAR(tte) as tahun, COUNT(*) as jumlah')
+            ->whereNotNull('tte')
+            ->groupByRaw('YEAR(tte)')
             ->orderBy('tahun')
             ->get();
         $yearlyCounts = [];
         foreach($yearlyRaw as $yr) { $yearlyCounts[$yr->tahun] = $yr->jumlah; }
 
         // profesi by year
-        $profesiByYearRaw = Vsimpel::selectRaw('YEAR(rekomendasi) as tahun, jasa as profesi, COUNT(*) as jumlah')
-            ->whereNotNull('rekomendasi')
-            ->groupByRaw('YEAR(rekomendasi), jasa')
+        $profesiByYearRaw = Vsimpel::selectRaw('YEAR(tte) as tahun, jasa as profesi, COUNT(*) as jumlah')
+            ->whereNotNull('tte')
+            ->groupByRaw('YEAR(tte), jasa')
             ->get();
         $profesiByYear = [];
         foreach($profesiByYearRaw as $pbyr){ if(!isset($profesiByYear[$pbyr->profesi])) $profesiByYear[$pbyr->profesi] = []; $profesiByYear[$pbyr->profesi][$pbyr->tahun] = $pbyr->jumlah; }
@@ -268,17 +268,17 @@ class DashboradSimpelController extends Controller
         if ($year) {
             if ($month !== null) {
                 $rincianterbit = DB::table('view_simpel')
-                    ->selectRaw('month(rekomendasi) AS bulan, year(rekomendasi) AS tahun, jasa as jenis_izin, jasa as jenis_izin_id, count(rekomendasi) as jumlah_izin, sum(jumlah_hari) as jumlah_hari')
-                    ->whereYear('rekomendasi', $year)
-                    ->whereMonth('rekomendasi', $month)
+                    ->selectRaw('month(tte) AS bulan, year(tte) AS tahun, jasa as jenis_izin, jasa as jenis_izin_id, count(tte) as jumlah_izin, sum(jumlah_hari) as jumlah_hari')
+                    ->whereYear('tte', $year)
+                    ->whereMonth('tte', $month)
                     ->groupBy('jasa')
                     ->orderBy('jumlah_izin', 'desc')
                     ->get();
             } else {
                 // Year-only aggregation by jasa
                 $rincianterbit = DB::table('view_simpel')
-                    ->selectRaw('year(rekomendasi) AS tahun, jasa as jenis_izin, jasa as jenis_izin_id, count(rekomendasi) as jumlah_izin, sum(jumlah_hari) as jumlah_hari')
-                    ->whereYear('rekomendasi', $year)
+                    ->selectRaw('year(tte) AS tahun, jasa as jenis_izin, jasa as jenis_izin_id, count(tte) as jumlah_izin, sum(jumlah_hari) as jumlah_hari')
+                    ->whereYear('tte', $year)
                     ->groupBy('jasa')
                     ->orderBy('jumlah_izin', 'desc')
                     ->get()->map(function($row) use($year){ $row->bulan = null; $row->tahun = (int)$year; return $row; });
@@ -304,9 +304,9 @@ class DashboradSimpelController extends Controller
         $monthInput = $request->input('month');
         $month = ($period === 'year') ? null : ($monthInput !== null ? (int)$monthInput : null);
 
-        $query = DB::table('view_simpel')->selectRaw('jasa as jenis_izin, COUNT(rekomendasi) as jumlah_izin, SUM(jumlah_hari) as jumlah_hari');
-        $query->whereYear('rekomendasi', $year);
-        if ($month !== null) { $query->whereMonth('rekomendasi', $month); }
+        $query = DB::table('view_simpel')->selectRaw('jasa as jenis_izin, COUNT(tte) as jumlah_izin, SUM(jumlah_hari) as jumlah_hari');
+        $query->whereYear('tte', $year);
+        if ($month !== null) { $query->whereMonth('tte', $month); }
         $query->groupBy('jasa')->orderByDesc('jumlah_izin');
         $items = $query->get()->map(function($row){
             $row->rata_rata_jumlah_hari = $row->jumlah_izin ? ($row->jumlah_hari / $row->jumlah_izin) : 0;
