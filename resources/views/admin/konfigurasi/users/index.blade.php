@@ -10,9 +10,11 @@
                 </div>
                 <div class="col-auto ms-auto d-print-none">
                   <div class="btn-list">
-                    <a href="{{ url('/konfigurasi/user/create') }}" class="btn btn-primary d-none d-sm-inline-block">
-                      Tambah
-                    </a>
+                    @can('user.create')
+                      <a href="{{ url('/konfigurasi/user/create') }}" class="btn btn-primary d-none d-sm-inline-block">
+                        Tambah
+                      </a>
+                    @endcan
                   </div>
                 </div>
             </div>
@@ -57,7 +59,13 @@
                   <span class="text-capitalize">{{ optional($item->pegawai)->nama ?? '— Pegawai terhapus' }}</span><br>
                   NIP. {{ optional($item->pegawai)->nip ?? '—' }}<br>
                   No HP. {{ optional($item->pegawai)->no_hp ?? '—' }}<br>
-                  E-mail. {{ $item->email }} <br> Role
+                  E-mail. {{ $item->email }} <br>
+                  Role.
+                  @forelse ($item->roles as $role)
+                    <span class="badge bg-azure-lt text-azure text-capitalize">{{ $role->name }}</span>
+                  @empty
+                    <span class="text-muted">Belum ada role</span>
+                  @endforelse
                 </p>
                 <div class="text-muted text-truncate mt-n1 text-capitalize">
                   {{ optional($item->pegawai->instansi)->nama_instansi ?? '-' }}
@@ -70,12 +78,19 @@
                 <span class="dropdown">
                   <button class="btn dropdown-toggle align-text-top" data-bs-boundary="viewport" data-bs-toggle="dropdown">Actions</button>
                   <div class="dropdown-menu dropdown-menu-end">
-                    <a class="dropdown-item" href="{{ url('/konfigurasi/user/'.$item->id.'/edit') }}">Edit</a>
-                    <form method="post" action="{{ url('/konfigurasi/user/'.$item->id) }}">
-                      @method('delete')
-                      @csrf
-                      <button class="dropdown-item">Hapus</button>
-                    </form>
+                    @can('user.update')
+                      <a class="dropdown-item" href="{{ url('/konfigurasi/user/'.$item->id.'/edit') }}">Edit</a>
+                    @endcan
+                    @can('user.access.manage')
+                      <a class="dropdown-item" href="{{ route('konfigurasi.user.access', $item) }}">Kelola Akses</a>
+                    @endcan
+                    @can('user.delete')
+                      <form method="post" action="{{ url('/konfigurasi/user/'.$item->id) }}">
+                        @method('delete')
+                        @csrf
+                        <button class="dropdown-item">Hapus</button>
+                      </form>
+                    @endcan
                   </div>
                 </span>
               </div>

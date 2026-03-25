@@ -139,6 +139,7 @@
           </div>
           <div class="collapse navbar-collapse" id="sidebar-menu">
             <ul class="navbar-nav pt-lg-3">
+              @can('dashboard.view')
               <li class="nav-item {{ Request::is('dashboard*')?'active':'' }}">
                 <a class="nav-link" href="{{ url('/dashboard') }}" >
                   <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/home -->
@@ -148,7 +149,9 @@
                     Home
                   </span>
                 </a>
-              </li>             
+              </li>
+              @endcan
+              @canany(['verification.view','lkpm.view','sigumilang.view'])
               <li class="nav-item {{ Request::is('realisasi*')?'active':'' }} {{ Request::is('lkpm*')?'active':'' }} {{ Request::is('proyek/realisasi*')?'active':'' }} dropdown">
                 <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="true" >
                   <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
@@ -160,18 +163,26 @@
                 </a>
                 <div class="dropdown-menu {{ Request::is('realisasi*')?'show':'close' }}  {{ Request::is('lkpm*')?'show':'close' }} {{ Request::is('proyek/realisasi*')?'show':'close' }}">
                   <div class="dropdown-menu-columns">
+                      @can('verification.view')
                       <a class="dropdown-item" href="{{ route('proyek.verification.index') }}">
                         Verifikasi Proyek
                       </a>
+                      @endcan
+                      @can('lkpm.view')
                       <a class="dropdown-item" href="{{ route('lkpm.index') }}">
                         Realisasi Investasi (LKPM)
                       </a>
+                      @endcan
+                      @can('sigumilang.view')
                        <a class="dropdown-item" href="{{ route('sigumilang.index') }}">
                         Sigumilang
                       </a>
+                      @endcan
                   </div>
                 </div>
               </li>
+              @endcanany
+              @can('kbli.view')
               <li class="nav-item {{ Request::is('admin/kbli*')?'active':'' }}">
                 <a class="nav-link" href="{{ url('/admin/kbli') }}" >
                   <span class="nav-link-icon d-md-none d-lg-inline-block">
@@ -182,6 +193,8 @@
                   </span>
                 </a>
               </li>
+              @endcan
+              @can('proyek.view')
               <li class="nav-item {{ Request::is('proyek*')?'active':'' }} dropdown">
                 <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="true" >
                   <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
@@ -199,6 +212,8 @@
                   </div>
                 </div>
               </li>
+              @endcan
+              @canany(['proyek.view','izin.view','nib.view'])
               <li class="nav-item {{ Request::is('berusaha*')?'active':'' }} dropdown">
                 <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="true" >
                   <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
@@ -210,22 +225,30 @@
                 </a>
                 <div class="dropdown-menu {{ Request::is('berusaha*')?'show':'close' }}">
                   <div class="dropdown-menu-columns">
+                      @can('proyek.view')
                       <a class="dropdown-item" href="{{ url('/berusaha/proyek') }}">
                         Data Proyek
                       </a>
+                      @endcan
                   </div>
                   <div class="dropdown-menu-columns">
+                      @can('izin.view')
                       <a class="dropdown-item" href="{{ url('/berusaha/izin') }}">
                         Data Izin
                       </a>
+                      @endcan
                   </div>
                   <div class="dropdown-menu-columns">
+                      @can('nib.view')
                       <a class="dropdown-item" href="{{ url('/berusaha/nib') }}">
                         Data NIB
                       </a>
+                      @endcan
                   </div>
                 </div>
               </li>
+              @endcanany
+              @canany(['sicantik.view','simpel.view','pbg.view','mppd.view'])
               <li class="nav-item {{ Request::is('sicantik*')?'active':'' }} {{ Request::is('simpel*')?'active':'' }} {{ Request::is('mppd*')?'active':'' }} {{ Request::is('pbg*')?'active':'' }} dropdown">
                 <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="true" >
                   <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
@@ -237,21 +260,31 @@
                 </a>
                 <div class="dropdown-menu {{ Request::is('sicantik*')?'show':'close' }} {{ Request::is('simpel*')?'show':'close' }} {{ Request::is('mppd*')?'show':'close' }} {{ Request::is('pbg*')?'show':'close' }}">
                   <div class="dropdown-menu-columns">
+                      @can('sicantik.view')
                       <a class="dropdown-item" href="{{ url('/sicantik') }}">
                         SiCantik
                       </a>
+                      @endcan
+                      @can('simpel.view')
                       <a class="dropdown-item" href="{{ url('/simpel') }}">
                         Simpel
                       </a>
+                      @endcan
+                      @can('pbg.view')
                       <a class="dropdown-item" href="{{ url('/pbg') }}">
                         SimBG
                       </a>
+                      @endcan
+                      @can('mppd.view')
                       <a class="dropdown-item" href="{{ url('/mppd') }}">
                         MPP Digital
                       </a>
+                      @endcan
                   </div>
                 </div>
               </li>
+              @endcanany
+              @canany(['konsultasi.view','commitment.view'])
               <li class="nav-item {{ Request::is('commitment*')?'active':'' }}{{ Request::is('konsultasi*')?'active':'' }} dropdown">
                 <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="true" >
                   <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
@@ -263,15 +296,21 @@
                 </a>
                 <div class="dropdown-menu {{ Request::is('commitment*')?'show':'close' }} {{ Request::is('konsultasi*')?'show':'close' }}">
                   <div class="dropdown-menu-columns">
+                      @can('konsultasi.view')
                       <a class="dropdown-item" href="{{ url('/konsultasi') }}">
                         Konsultasi
                       </a>
+                      @endcan
+                      @can('commitment.view')
                       <a class="dropdown-item" href="{{ url('/commitment') }}">
                         Komitmen
                       </a>
+                      @endcan
                   </div>
                 </div>
               </li>
+              @endcanany
+              @can('pengaduan.view')
               <li class="nav-item {{ Request::is('pengaduan*')?'active':'' }} dropdown">
                 <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="true" >
                   <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
@@ -289,6 +328,8 @@
                   </div>
                 </div>
               </li>
+              @endcan
+              @can('insentif.view')
               <li class="nav-item {{ Request::is('insentif*')?'active':'' }} dropdown">
                 <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="true" >
                   <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
@@ -307,6 +348,8 @@
                   </div>
                 </div>
               </li>
+              @endcan
+              @can('deregulasi.view')
               <li class="nav-item {{ Request::is('deregulasi*')?'active':'' }} dropdown">
                 <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="true" >
                   <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
@@ -325,6 +368,8 @@
                   </div>
                 </div>
               </li>
+              @endcan
+              @can('potensi.view')
               <li class="nav-item {{ Request::is('potensi*')?'active':'' }} dropdown">
                 <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="true" >
                   <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
@@ -343,6 +388,8 @@
                   </div>
                 </div>
               </li>
+              @endcan
+              @can('promosi.view')
               <li class="nav-item {{ Request::is('loi*')?'active':'' }}{{ Request::is('expo*')?'active':'' }}{{ Request::is('business*')?'active':'' }} dropdown">
                 <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="true" >
                   <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
@@ -367,6 +414,8 @@
                   </div>
                 </div>
               </li>
+              @endcan
+              @can('pengawasan.view')
               <li class="nav-item {{ Request::is('pengawasan*')?'active':'' }} dropdown">
                 <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="true" >
                   <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
@@ -384,6 +433,8 @@
                   </div>
                 </div>
               </li>
+              @endcan
+              @canany(['bimtek.view','fasilitasi.view'])
               <li class="nav-item {{ Request::is('bimtek*')?'active':'' }} {{ Request::is('fasilitasi*')?'active':'' }} dropdown">
                 <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="true" >
                   <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
@@ -395,15 +446,21 @@
                 </a>
                 <div class="dropdown-menu {{ Request::is('bimtek*')?'show':'close' }} {{ Request::is('fasilitasi*')?'show':'close' }}">
                   <div class="dropdown-menu-columns">
+                      @can('bimtek.view')
                       <a class="dropdown-item" href="{{ url('/bimtek') }}">
                        Bimbingan Teknis
                       </a>
+                      @endcan
+                      @can('fasilitasi.view')
                        <a class="dropdown-item" href="{{ url('/fasilitasi') }}">
                        Fasilitasi Permasalahan
                       </a>
+                      @endcan
                   </div>
                 </div>
               </li>
+              @endcanany
+              @canany(['konfigurasi.view','dayoff.view'])
               <li class="nav-item {{ Request::is('konfigurasi*')?'active':'' }}{{ Request::is('dayoff*')?'active':'' }} dropdown">
                 <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="true" >
                   <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
@@ -416,30 +473,43 @@
                 <div class="dropdown-menu {{ Request::is('konfigurasi*')?'show':'close' }}{{ Request::is('dayoff*')?'show':'close' }}">
                   <div class="dropdown-menu-columns">
                     <div class="dropdown-menu-column">
+                      @can('user.view')
                       <a class="dropdown-item" href="{{ url('/konfigurasi/user') }}">
                         User
                       </a>
+                      @endcan
+                      @can('pegawai.view')
                       <a class="dropdown-item" href="{{ url('/konfigurasi/pegawai') }}">
                         Data Pegawai
                       </a>
+                      @endcan
+                      @can('instansi.view')
                       <a class="dropdown-item" href="{{ url('/konfigurasi/instansi') }}">
                         Instansi
                       </a>
+                      @endcan
+                      @can('publikasi.view')
                       <a class="dropdown-item " href="{{ url('/konfigurasi/publikasi') }}">
                         Publikasi Data
                       </a>
+                      @endcan
+                      @can('kategori-informasi.view')
                       <a class="dropdown-item" href="{{ url('/konfigurasi/kategori-informasi') }}">
                         Kategori Informasi
                       </a>
+                      @endcan
+                      @can('dayoff.view')
                       <a class="dropdown-item" href="{{ url('/dayoff') }}">
                         Hari Libur
                       </a>
+                      @endcan
                     
                     </div>
                     
                   </div>
                 </div>
               </li>
+              @endcanany
             </ul>
           </div>
         </div>

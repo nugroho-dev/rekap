@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -16,14 +15,9 @@ class UsersSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create minimal related records if they don't exist, then create/update the user.
+        // Create minimal related records if they don't exist, then ensure the user has the admin role.
         DB::transaction(function () {
             $email = 'didik.ngr@gmail.com';
-
-            // If user already exists, skip
-            if (DB::table('users')->where('email', $email)->exists()) {
-                return;
-            }
 
             // Ensure an instansi exists
             $instansi = DB::table('instansi')->first();
@@ -59,16 +53,19 @@ class UsersSeeder extends Seeder
                 $pegawaiId = $pegawai->id;
             }
 
-            // Insert the user
-            DB::table('users')->insert([
-                'email' => $email,
-                'id_pegawai' => $pegawaiId,
-                'email_verified_at' => now(),
-                'password' => Hash::make('password'),
-                'remember_token' => Str::random(10),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            $user = User::query()->updateOrCreate(
+                ['email' => $email],
+                [
+                    'id_pegawai' => $pegawaiId,
+                    'email_verified_at' => now(),
+                    'password' => Hash::make('password'),
+                    'remember_token' => Str::random(10),
+                ]
+            );
+
+            if (! $user->hasRole('admin')) {
+                $user->assignRole('admin');
+            }
         });
     }
 }

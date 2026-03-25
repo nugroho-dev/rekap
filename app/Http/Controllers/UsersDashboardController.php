@@ -10,9 +10,20 @@ use Illuminate\Validation\Rules\Password as PasswordRule;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class UsersDashboardController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:user.view')->only(['index']);
+        $this->middleware('permission:user.create')->only(['create', 'store']);
+        $this->middleware('permission:user.update')->only(['edit', 'update']);
+        $this->middleware('permission:user.delete')->only(['destroy']);
+        $this->middleware('permission:user.access.manage')->only(['access', 'updateAccess']);
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -23,7 +34,7 @@ class UsersDashboardController extends Controller
         $instansiUuid = $request->query('instansi_uuid');
 
         // eager load pegawai + instansi
-        $query = User::with('pegawai.instansi');
+        $query = User::with(['pegawai.instansi', 'roles']);
 
         if ($q !== '') {
             $query->where(function ($sq) use ($q) {
@@ -129,6 +140,55 @@ class UsersDashboardController extends Controller
             ->get();
 
         return view('admin.konfigurasi.users.edit', compact('judul','user','items'));
+    }
+
+    /**
+     * Show the form for managing user access.
+     */
+    public function access(User $user)
+    {
+        $judul = 'Kelola Akses User';
+        $user->load(['pegawai.instansi', 'roles', 'permissions']);
+
+        $roles = Role::query()->orderBy('name')->get();
+        $permissions = Permission::query()->orderBy('name')->get();
+        $permissionGroups = $permissions->groupBy(function (Permission $permission) {
+            $prefix = preg_split('/[._-]/', $permission->name)[0] ?? 'lainnya';
+
+            return Str::headline($prefix);
+        });
+
+        $effectivePermissions = $user->getAllPermissions()->sortBy('name')->values();
+
+        return view('admin.konfigurasi.users.access', compact(
+            'judul',
+            'user',
+            'roles',
+            'permissionGroups',
+            'effectivePermissions'
+        ));
+    }
+
+    /**
+     * Update the specified user's access.
+     */
+    public function updateAccess(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'roles' => ['nullable', 'array'],
+            'roles.*' => ['string', 'exists:roles,name'],
+            'permissions' => ['nullable', 'array'],
+            'permissions.*' => ['string', 'exists:permissions,name'],
+        ]);
+
+        DB::transaction(function () use ($user, $validated) {
+            $user->syncRoles($validated['roles'] ?? []);
+            $user->syncPermissions($validated['permissions'] ?? []);
+        });
+
+        return redirect()
+            ->route('konfigurasi.user.access', $user)
+            ->with('success', 'Hak akses user berhasil diperbarui.');
     }
 
     /**
