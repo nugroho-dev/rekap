@@ -8,7 +8,6 @@ use App\Imports\ProyekImport;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
-use App\Models\Proses;
 use Illuminate\Support\Facades\Log;
 use App\Exports\ProyekListExport;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -199,6 +198,177 @@ class ProyekController extends Controller
 		// kept for backward compatibility; route to new export
 		return redirect()->route('proyek.export.excel');
 	}
+
+    public function statistik_public(Request $request)
+    {
+        $judul = 'Statistik Proyek Berusaha';
+        $now = Carbon::now();
+        $year = (int) $request->input('year', $now->year);
+        $semester = $request->input('semester');
+
+        if ($semester === '1') {
+            $monthStart = 1;
+            $monthEnd = 6;
+        } elseif ($semester === '2') {
+            $monthStart = 7;
+            $monthEnd = 12;
+        } else {
+            $monthStart = 1;
+            $monthEnd = 12;
+        }
+
+        $availableYears = Proyek::query()
+            ->selectRaw('YEAR(day_of_tanggal_pengajuan_proyek) as year')
+            ->whereNotNull('day_of_tanggal_pengajuan_proyek')
+            ->distinct()
+            ->orderByDesc('year')
+            ->pluck('year')
+            ->filter()
+            ->values()
+            ->toArray();
+
+        if (empty($availableYears)) {
+            $availableYears = [$now->year];
+        }
+
+        $normalizedScale = "COALESCE(NULLIF(TRIM(uraian_skala_usaha), ''), 'Tidak Diketahui')";
+        $normalizedRisk = "COALESCE(NULLIF(TRIM(uraian_risiko_proyek), ''), 'Tidak Diketahui')";
+        $normalizedSector = "COALESCE(NULLIF(TRIM(kl_sektor_pembina), ''), 'Tidak Diketahui')";
+
+        $baseYearQuery = Proyek::query()->whereYear('day_of_tanggal_pengajuan_proyek', $year);
+        $rangeQuery = Proyek::query()
+            ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
+            ->whereRaw('MONTH(day_of_tanggal_pengajuan_proyek) BETWEEN ? AND ?', [$monthStart, $monthEnd]);
+
+        $total = (clone $baseYearQuery)->count();
+        $totalTerbit = (clone $rangeQuery)->count();
+        $totalInvestasi = (float) (clone $rangeQuery)->sum('jumlah_investasi');
+        $totalTki = (int) (clone $rangeQuery)->sum('tki');
+        $totalNib = (clone $rangeQuery)->distinct('nib')->count('nib');
+
+        $stats = Proyek::query()
+            ->selectRaw("{$normalizedScale} as kategori, COUNT(*) as jumlah, MAX(updated_at) as last_update")
+            ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
+            ->groupByRaw($normalizedScale)
+            ->orderByDesc('jumlah')
+            ->get();
+
+        $secondaryStats = Proyek::query()
+            ->selectRaw("{$normalizedRisk} as label, COUNT(*) as jumlah, MAX(updated_at) as last_update")
+            ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
+            ->groupByRaw($normalizedRisk)
+            ->orderByDesc('jumlah')
+            ->get();
+
+        $monthlyRaw = Proyek::query()
+            ->selectRaw('MONTH(day_of_tanggal_pengajuan_proyek) as bulan, COUNT(*) as jumlah')
+            ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
+            ->whereRaw('MONTH(day_of_tanggal_pengajuan_proyek) BETWEEN ? AND ?', [$monthStart, $monthEnd])
+            ->groupByRaw('MONTH(day_of_tanggal_pengajuan_proyek)')
+            ->get();
+        $monthlyCounts = array_fill(1, 12, 0);
+        foreach ($monthlyRaw as $row) {
+            $monthlyCounts[(int) $row->bulan] = (int) $row->jumlah;
+        }
+
+        $yearlyRaw = Proyek::query()
+            ->selectRaw('YEAR(day_of_tanggal_pengajuan_proyek) as tahun, COUNT(*) as jumlah')
+            ->whereNotNull('day_of_tanggal_pengajuan_proyek')
+            ->groupByRaw('YEAR(day_of_tanggal_pengajuan_proyek)')
+            ->orderByRaw('YEAR(day_of_tanggal_pengajuan_proyek)')
+            ->get();
+        $yearlyCounts = [];
+        foreach ($availableYears as $availableYear) {
+            $yearlyCounts[$availableYear] = 0;
+        }
+        foreach ($yearlyRaw as $row) {
+            $yearlyCounts[(int) $row->tahun] = (int) $row->jumlah;
+        }
+
+        $kategoriByMonthRaw = Proyek::query()
+            ->selectRaw("MONTH(day_of_tanggal_pengajuan_proyek) as bulan, {$normalizedScale} as kategori, COUNT(*) as jumlah")
+            ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
+            ->whereRaw('MONTH(day_of_tanggal_pengajuan_proyek) BETWEEN ? AND ?', [$monthStart, $monthEnd])
+            ->groupByRaw("MONTH(day_of_tanggal_pengajuan_proyek), {$normalizedScale}")
+            ->get();
+        $kategoriByMonth = [];
+        $allKategori = [];
+        foreach ($kategoriByMonthRaw as $row) {
+            $kategoriByMonth[$row->kategori][(int) $row->bulan] = (int) $row->jumlah;
+            $allKategori[$row->kategori] = true;
+        }
+        $allKategori = array_keys($allKategori);
+        usort($allKategori, function ($left, $right) use ($kategoriByMonth, $monthStart, $monthEnd) {
+            $leftTotal = 0;
+            $rightTotal = 0;
+            for ($month = $monthStart; $month <= $monthEnd; $month++) {
+                $leftTotal += (int) ($kategoriByMonth[$left][$month] ?? 0);
+                $rightTotal += (int) ($kategoriByMonth[$right][$month] ?? 0);
+            }
+            return $rightTotal <=> $leftTotal;
+        });
+
+        $sectorByYearRaw = Proyek::query()
+            ->selectRaw("YEAR(day_of_tanggal_pengajuan_proyek) as tahun, {$normalizedSector} as label, COUNT(*) as jumlah")
+            ->whereNotNull('day_of_tanggal_pengajuan_proyek')
+            ->groupByRaw("YEAR(day_of_tanggal_pengajuan_proyek), {$normalizedSector}")
+            ->get();
+        $sectorByYear = [];
+        $sectorTotals = [];
+        foreach ($sectorByYearRaw as $row) {
+            $sectorByYear[$row->label][(int) $row->tahun] = (int) $row->jumlah;
+            $sectorTotals[$row->label] = ($sectorTotals[$row->label] ?? 0) + (int) $row->jumlah;
+        }
+        arsort($sectorTotals);
+        $allSecondary = array_slice(array_keys($sectorTotals), 0, 8);
+        $secondarySeriesByYear = [];
+        foreach ($allSecondary as $label) {
+            $series = [];
+            foreach ($availableYears as $availableYear) {
+                $series[] = (int) ($sectorByYear[$label][$availableYear] ?? 0);
+            }
+            $secondarySeriesByYear[$label] = $series;
+        }
+
+        $months = range($monthStart, $monthEnd);
+        $monthLabels = [];
+        foreach ($months as $month) {
+            $monthLabels[] = Carbon::create()->month($month)->translatedFormat('M');
+        }
+
+        $kategoriSeries = [];
+        foreach ($allKategori as $kategori) {
+            $series = [];
+            foreach ($months as $month) {
+                $series[] = (int) ($kategoriByMonth[$kategori][$month] ?? 0);
+            }
+            $kategoriSeries[$kategori] = $series;
+        }
+
+        $weekdayCounts = [0, 0, 0, 0, 0, 0, 0];
+        $weekdayItems = Proyek::query()
+            ->whereYear('day_of_tanggal_pengajuan_proyek', $year)
+            ->whereRaw('MONTH(day_of_tanggal_pengajuan_proyek) BETWEEN ? AND ?', [$monthStart, $monthEnd])
+            ->whereNotNull('day_of_tanggal_pengajuan_proyek')
+            ->pluck('day_of_tanggal_pengajuan_proyek');
+        foreach ($weekdayItems as $tanggal) {
+            $dow = Carbon::parse($tanggal)->dayOfWeek;
+            $weekdayCounts[$dow] = ($weekdayCounts[$dow] ?? 0) + 1;
+        }
+
+        $bulanNames = [1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'];
+
+        $topKategori = [];
+        foreach ($stats->take(10) as $row) {
+            $topKategori[] = ['name' => $row->kategori, 'y' => (int) $row->jumlah];
+        }
+
+        return view('publicviews.statistik.proyek', compact(
+            'judul', 'year', 'semester', 'availableYears', 'total', 'totalTerbit', 'totalInvestasi', 'totalTki', 'totalNib',
+            'stats', 'secondaryStats', 'monthlyCounts', 'yearlyCounts', 'allKategori', 'kategoriSeries', 'monthLabels', 'months',
+            'weekdayCounts', 'topKategori', 'secondarySeriesByYear', 'allSecondary', 'bulanNames', 'monthStart', 'monthEnd'
+        ));
+    }
 
     protected function buildFilteredQuery(Request $request)
     {

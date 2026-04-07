@@ -75,6 +75,12 @@ Route::get('/statistik-sicantik', [\App\Http\Controllers\PublicStatistikSicantik
 Route::get('/statistik-mppd', [\App\Http\Controllers\MppdController::class, 'statistik_public'])->name('public.statistik.mppd');
 // Public Statistik Simpel (Izin Pemakaman)
 Route::get('/statistik-simpel', [\App\Http\Controllers\DashboradSimpelController::class, 'statistik_public'])->name('public.statistik.simpel');
+// Public Statistik PBG
+Route::get('/statistik-pbg', [\App\Http\Controllers\DashboardPbgController::class, 'statistik_public'])->name('public.statistik.pbg');
+// Public Statistik Perizinan Berusaha
+Route::get('/statistik-proyek', [\App\Http\Controllers\ProyekController::class, 'statistik_public'])->name('public.statistik.proyek');
+Route::get('/statistik-nib', [\App\Http\Controllers\NibController::class, 'statistik_public'])->name('public.statistik.nib');
+Route::get('/statistik-izin', [\App\Http\Controllers\IzinController::class, 'statistik_public'])->name('public.statistik.izin');
 
 /*
 |--------------------------------------------------------------------------

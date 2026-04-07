@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Imports\PbgImport;
 use App\Models\Pbg;
-use App\Models\Tanah;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\PbgExport;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 
 class DashboardPbgController extends Controller
@@ -115,6 +115,231 @@ class DashboardPbgController extends Controller
 			->get();
 
 		return view('admin.nonberusaha.simbg.statistik', compact('judul','year','summary','monthly','klasifikasi','fungsi'));
+	}
+
+	public function statistik_public(Request $request)
+	{
+		$judul = 'Statistik PBG';
+		$now = Carbon::now();
+		$year = (int) $request->input('year', $now->year);
+		$semester = $request->input('semester');
+
+		if ($semester === '1') {
+			$monthStart = 1;
+			$monthEnd = 6;
+		} elseif ($semester === '2') {
+			$monthStart = 7;
+			$monthEnd = 12;
+		} else {
+			$monthStart = 1;
+			$monthEnd = 12;
+		}
+
+		$availableYears = Pbg::query()
+			->selectRaw('YEAR(tgl_terbit) as year')
+			->whereNotNull('tgl_terbit')
+			->distinct()
+			->orderByDesc('year')
+			->pluck('year')
+			->filter()
+			->values()
+			->toArray();
+
+		if (empty($availableYears)) {
+			$availableYears = [$now->year];
+		}
+
+		$normalizedKlasifikasi = "COALESCE(NULLIF(TRIM(klasifikasi), ''), 'Tidak Diketahui')";
+		$normalizedFungsi = "COALESCE(NULLIF(TRIM(fungsi), ''), 'Tidak Diketahui')";
+
+		$baseYearQuery = Pbg::query()->whereYear('tgl_terbit', $year);
+		$rangeQuery = Pbg::query()
+			->whereYear('tgl_terbit', $year)
+			->whereRaw('MONTH(tgl_terbit) BETWEEN ? AND ?', [$monthStart, $monthEnd]);
+
+		$total = (clone $baseYearQuery)->count();
+		$totalTerbit = (clone $rangeQuery)->count();
+		$totalRetribusi = (float) (clone $rangeQuery)->sum('retribusi');
+		$rataLuas = (float) ((clone $rangeQuery)->avg('luas_bangunan') ?? 0);
+		$fileTersedia = (clone $rangeQuery)->whereNotNull('file_pbg')->count();
+
+		$stats = Pbg::query()
+			->selectRaw("{$normalizedKlasifikasi} as klasifikasi, COUNT(*) as jumlah, MAX(updated_at) as last_update")
+			->whereYear('tgl_terbit', $year)
+			->groupByRaw($normalizedKlasifikasi)
+			->orderByDesc('jumlah')
+			->get();
+
+		$fungsiStats = Pbg::query()
+			->selectRaw("{$normalizedFungsi} as fungsi, COUNT(*) as jumlah, MAX(updated_at) as last_update")
+			->whereYear('tgl_terbit', $year)
+			->groupByRaw($normalizedFungsi)
+			->orderByDesc('jumlah')
+			->get();
+
+		$monthlyRaw = Pbg::query()
+			->selectRaw('MONTH(tgl_terbit) as bulan, COUNT(*) as jumlah')
+			->whereYear('tgl_terbit', $year)
+			->whereRaw('MONTH(tgl_terbit) BETWEEN ? AND ?', [$monthStart, $monthEnd])
+			->groupByRaw('MONTH(tgl_terbit)')
+			->get();
+		$monthlyCounts = array_fill(1, 12, 0);
+		foreach ($monthlyRaw as $row) {
+			$monthlyCounts[(int) $row->bulan] = (int) $row->jumlah;
+		}
+
+		$dailyRaw = Pbg::query()
+			->selectRaw('MONTH(tgl_terbit) as bulan, DAY(tgl_terbit) as hari, COUNT(*) as jumlah')
+			->whereYear('tgl_terbit', $year)
+			->whereRaw('MONTH(tgl_terbit) BETWEEN ? AND ?', [$monthStart, $monthEnd])
+			->groupByRaw('MONTH(tgl_terbit), DAY(tgl_terbit)')
+			->get();
+		$dailyCountsByMonth = [];
+		foreach ($dailyRaw as $row) {
+			$dailyCountsByMonth[(int) $row->bulan][(int) $row->hari] = (int) $row->jumlah;
+		}
+
+		$klasifikasiDailyRaw = Pbg::query()
+			->selectRaw("MONTH(tgl_terbit) as bulan, DAY(tgl_terbit) as hari, {$normalizedKlasifikasi} as klasifikasi, COUNT(*) as jumlah")
+			->whereYear('tgl_terbit', $year)
+			->whereRaw('MONTH(tgl_terbit) BETWEEN ? AND ?', [$monthStart, $monthEnd])
+			->groupByRaw("MONTH(tgl_terbit), DAY(tgl_terbit), {$normalizedKlasifikasi}")
+			->get();
+		$klasifikasiDailyByMonth = [];
+		foreach ($klasifikasiDailyRaw as $row) {
+			$bulan = (int) $row->bulan;
+			$hari = (int) $row->hari;
+			$klasifikasiDailyByMonth[$bulan][$hari][$row->klasifikasi] = (int) $row->jumlah;
+		}
+
+		$klasifikasiByMonthRaw = Pbg::query()
+			->selectRaw("MONTH(tgl_terbit) as bulan, {$normalizedKlasifikasi} as klasifikasi, COUNT(*) as jumlah")
+			->whereYear('tgl_terbit', $year)
+			->whereRaw('MONTH(tgl_terbit) BETWEEN ? AND ?', [$monthStart, $monthEnd])
+			->groupByRaw("MONTH(tgl_terbit), {$normalizedKlasifikasi}")
+			->get();
+		$klasifikasiByMonth = [];
+		$allKlasifikasi = [];
+		foreach ($klasifikasiByMonthRaw as $row) {
+			$klasifikasiByMonth[$row->klasifikasi][(int) $row->bulan] = (int) $row->jumlah;
+			$allKlasifikasi[$row->klasifikasi] = true;
+		}
+
+		$allKlasifikasi = array_keys($allKlasifikasi);
+		usort($allKlasifikasi, function ($left, $right) use ($klasifikasiByMonth, $monthStart, $monthEnd) {
+			$leftTotal = 0;
+			$rightTotal = 0;
+			for ($month = $monthStart; $month <= $monthEnd; $month++) {
+				$leftTotal += (int) ($klasifikasiByMonth[$left][$month] ?? 0);
+				$rightTotal += (int) ($klasifikasiByMonth[$right][$month] ?? 0);
+			}
+			return $rightTotal <=> $leftTotal;
+		});
+
+		$yearlyRaw = Pbg::query()
+			->selectRaw('YEAR(tgl_terbit) as tahun, COUNT(*) as jumlah')
+			->whereNotNull('tgl_terbit')
+			->groupByRaw('YEAR(tgl_terbit)')
+			->orderByRaw('YEAR(tgl_terbit)')
+			->get();
+		$yearlyCounts = [];
+		foreach ($availableYears as $availableYear) {
+			$yearlyCounts[$availableYear] = 0;
+		}
+		foreach ($yearlyRaw as $row) {
+			$yearlyCounts[(int) $row->tahun] = (int) $row->jumlah;
+		}
+
+		$fungsiByYearRaw = Pbg::query()
+			->selectRaw("YEAR(tgl_terbit) as tahun, {$normalizedFungsi} as fungsi, COUNT(*) as jumlah")
+			->whereNotNull('tgl_terbit')
+			->groupByRaw("YEAR(tgl_terbit), {$normalizedFungsi}")
+			->get();
+		$fungsiByYear = [];
+		$fungsiTotals = [];
+		foreach ($fungsiByYearRaw as $row) {
+			$fungsi = $row->fungsi;
+			$tahun = (int) $row->tahun;
+			$jumlah = (int) $row->jumlah;
+			$fungsiByYear[$fungsi][$tahun] = $jumlah;
+			$fungsiTotals[$fungsi] = ($fungsiTotals[$fungsi] ?? 0) + $jumlah;
+		}
+		arsort($fungsiTotals);
+		$allFungsi = array_slice(array_keys($fungsiTotals), 0, 8);
+		$fungsiSeriesByYear = [];
+		foreach ($allFungsi as $fungsi) {
+			$series = [];
+			foreach ($availableYears as $availableYear) {
+				$series[] = (int) ($fungsiByYear[$fungsi][$availableYear] ?? 0);
+			}
+			$fungsiSeriesByYear[$fungsi] = $series;
+		}
+
+		$months = range($monthStart, $monthEnd);
+		$monthLabels = [];
+		foreach ($months as $month) {
+			$monthLabels[] = Carbon::create()->month($month)->translatedFormat('M');
+		}
+
+		$klasifikasiSeries = [];
+		foreach ($allKlasifikasi as $klasifikasi) {
+			$series = [];
+			foreach ($months as $month) {
+				$series[] = (int) ($klasifikasiByMonth[$klasifikasi][$month] ?? 0);
+			}
+			$klasifikasiSeries[$klasifikasi] = $series;
+		}
+
+		$weekdayCounts = [0, 0, 0, 0, 0, 0, 0];
+		$weekdayItems = Pbg::query()
+			->whereYear('tgl_terbit', $year)
+			->whereRaw('MONTH(tgl_terbit) BETWEEN ? AND ?', [$monthStart, $monthEnd])
+			->whereNotNull('tgl_terbit')
+			->pluck('tgl_terbit');
+		foreach ($weekdayItems as $tglTerbit) {
+			$dow = Carbon::parse($tglTerbit)->dayOfWeek;
+			$weekdayCounts[$dow] = ($weekdayCounts[$dow] ?? 0) + 1;
+		}
+
+		$bulanNames = [1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'];
+
+		$topKlasifikasi = [];
+		foreach ($stats->take(10) as $row) {
+			$topKlasifikasi[] = [
+				'name' => $row->klasifikasi,
+				'y' => (int) $row->jumlah,
+			];
+		}
+
+		return view('publicviews.statistik.pbg', compact(
+			'stats',
+			'fungsiStats',
+			'total',
+			'judul',
+			'year',
+			'semester',
+			'monthStart',
+			'monthEnd',
+			'monthlyCounts',
+			'totalTerbit',
+			'bulanNames',
+			'availableYears',
+			'dailyCountsByMonth',
+			'yearlyCounts',
+			'klasifikasiByMonth',
+			'allKlasifikasi',
+			'klasifikasiDailyByMonth',
+			'months',
+			'monthLabels',
+			'klasifikasiSeries',
+			'weekdayCounts',
+			'topKlasifikasi',
+			'totalRetribusi',
+			'rataLuas',
+			'fileTersedia',
+			'allFungsi',
+			'fungsiSeriesByYear'
+		));
 	}
 
 	/**

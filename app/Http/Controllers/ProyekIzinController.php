@@ -8,7 +8,6 @@ use App\Models\Izin;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
-use App\Exports\ProyekListExport;
 use App\Exports\ProyekIzinQueryExport;
 
 class ProyekIzinController extends Controller
