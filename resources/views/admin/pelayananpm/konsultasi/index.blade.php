@@ -72,7 +72,7 @@
               <div class="col-12">
                 <div class="card">
                   <div class="card-header">
-                    <h3 class="card-title"> {{ $judul }} @if($date_start&&$date_end) : {{ Carbon\Carbon::parse($date_start)->translatedFormat('d F Y') }} Sampai Dengan {{ Carbon\Carbon::parse($date_end)->translatedFormat('d F Y') }}@endif @if($month) Bulan {{ Carbon\Carbon::createFromDate(null,$month,1)->translatedFormat('F') }}  @endif @if($year) Tahun {{ $year }}  @endif </h3>
+                    <h3 class="card-title"> {{ $judul }} @if($date_start&&$date_end) : {{ Carbon\Carbon::parse($date_start)->translatedFormat('d F Y') }} Sampai Dengan {{ Carbon\Carbon::parse($date_end)->translatedFormat('d F Y') }}@endif @if($month) Bulan {{ Carbon\Carbon::createFromDate(null,$month,1)->translatedFormat('F') }} @endif @if($year) Tahun {{ $year }} @endif @if($jenis) Jenis {{ $jenis }} @endif </h3>
                   </div>
                   <div class="card-body border-bottom py-3">
                     <div class="d-flex">
@@ -80,9 +80,13 @@
                         Menampilkan
                         <div class="mx-2 d-inline-block">
                           
-                          <form action="{{ url('/konsultasi')}}" method="POST">
-                            @csrf
-                            <input type="hidden" name="page" value="{{ request()->get('page', 1) }}">
+                          <form action="{{ url('/konsultasi')}}" method="GET">
+                            <input type="hidden" name="search" value="{{ $search }}">
+                            <input type="hidden" name="date_start" value="{{ $date_start }}">
+                            <input type="hidden" name="date_end" value="{{ $date_end }}">
+                            <input type="hidden" name="month" value="{{ $month }}">
+                            <input type="hidden" name="year" value="{{ $year }}">
+                            <input type="hidden" name="jenis" value="{{ $jenis }}">
                             <select name="perPage" id="myselect" onchange="this.form.submit()" class="form-control form-control-sm">
                               @foreach ([5, 10, 20, 50, 60, 80, 100] as $size)
                                 <option value="{{ $size }}" {{ $perPage == $size ? 'selected' : '' }}>
@@ -97,10 +101,15 @@
                       <div class="ms-auto text-muted">
                         Cari:
                         <div class="ms-2 d-inline-block ">
-                          <form action="{{ url('/konsultasi')}}" method="POST">
-                            @csrf
+                          <form action="{{ url('/konsultasi')}}" method="GET">
+                            <input type="hidden" name="perPage" value="{{ $perPage }}">
+                            <input type="hidden" name="date_start" value="{{ $date_start }}">
+                            <input type="hidden" name="date_end" value="{{ $date_end }}">
+                            <input type="hidden" name="month" value="{{ $month }}">
+                            <input type="hidden" name="year" value="{{ $year }}">
+                            <input type="hidden" name="jenis" value="{{ $jenis }}">
                             <div class="input-group">
-                              <input type="text" name="search" class="form-control form-control-sm" aria-label="cari" value="{{ old('search') }}">
+                              <input type="text" name="search" class="form-control form-control-sm" aria-label="cari" value="{{ $search }}">
                               <button type="submit" class="btn btn-icon btn-sm">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"></path><path d="M21 21l-6 -6"></path></svg>
                               </button>
@@ -166,7 +175,7 @@
                     </table>
                   </div>
                   <div class="card-footer d-flex align-items-center">
-                     {{ $items->appends(['perPage' => $perPage])->appends(['search' => $search])->appends(['date_start' => $date_start])->appends(['date_end' => $date_end])->appends(['month' => $month])->appends(['year' => $year])->links() }}
+                     {{ $items->appends(request()->except('page'))->links() }}
                   </div>
                 </div>
               </div>
@@ -230,29 +239,41 @@
                             <div class="tab-content">
                               <div class="tab-pane fade active show" id="tabs-home-8" role="tabpanel">
                                 <h4>Pilih Tanggal :</h4>
-                                <form method="post" action="{{ url('/konsultasi')}}" enctype="multipart/form-data">
-                                  @csrf
-                                <div class="input-group mb-2">
-                                  <input type="date" class="form-control" name="date_start" autocomplete="off">
-                                  <span class="input-group-text">
-                                    s/d
-                                  </span>
-                                  <input type="date" class="form-control" name="date_end" autocomplete="off">
-                                  <button type="submit" class="btn btn-primary">Tampilkan</button>
+                                <form method="GET" action="{{ url('/konsultasi')}}">
+                                  <input type="hidden" name="perPage" value="{{ $perPage }}">
+                                  <input type="hidden" name="search" value="{{ $search }}">
+                                <div class="row g-2">
+                                  <div class="col-md-4">
+                                    <input type="date" class="form-control" name="date_start" autocomplete="off" value="{{ $date_start }}">
+                                  </div>
+                                  <div class="col-md-4">
+                                    <input type="date" class="form-control" name="date_end" autocomplete="off" value="{{ $date_end }}">
+                                  </div>
+                                  <div class="col-md-3">
+                                    <select name="jenis" class="form-select">
+                                      <option value="">Semua Jenis</option>
+                                      <option value="Konsultasi" {{ $jenis === 'Konsultasi' ? 'selected' : '' }}>Konsultasi</option>
+                                      <option value="Informasi" {{ $jenis === 'Informasi' ? 'selected' : '' }}>Informasi</option>
+                                    </select>
+                                  </div>
+                                  <div class="col-md-1">
+                                    <button type="submit" class="btn btn-primary w-100">Tampilkan</button>
+                                  </div>
                                 </div>
                                 </form>
                               </div>
                               <div class="tab-pane fade" id="tabs-profile-8" role="tabpanel">
                                 <h4>Pilih Bulan :</h4>
                                 <div>
-                                  <form method="post" action="{{ url('/konsultasi')}}" enctype="multipart/form-data">
-                                    @csrf
+                                  <form method="GET" action="{{ url('/konsultasi')}}">
+                                    <input type="hidden" name="perPage" value="{{ $perPage }}">
+                                    <input type="hidden" name="search" value="{{ $search }}">
                                   <div class="row g-2">
                                     <div class="col-4">
                                       <select name="month" class="form-select">
                                         <option value="">Bulan</option>
                                         @foreach ($namaBulan as $index => $bulan)
-                                        <option value="{{ $index + 1 }}"> {{ $bulan }}</option>
+                                        <option value="{{ $index + 1 }}" {{ (string) $month === (string) ($index + 1) ? 'selected' : '' }}> {{ $bulan }}</option>
                                         @endforeach
                                       </select>
                                     </div>
@@ -260,12 +281,19 @@
                                       <select name="year" class="form-select">
                                         <option value="">Tahun</option>
                                         @for ($year = $startYear; $year <= $currentYear; $year++)
-                                        <option value="{{ $year }}">{{ $year }}</option>
+                                        <option value="{{ $year }}" {{ (string) request('year') === (string) $year ? 'selected' : '' }}>{{ $year }}</option>
                                         @endfor
                                       </select>
                                     </div>
-                                    <div class="col-2">
-                                      <button type="submit" class="btn btn-primary">Tampilkan</button>
+                                    <div class="col-3">
+                                      <select name="jenis" class="form-select">
+                                        <option value="">Semua Jenis</option>
+                                        <option value="Konsultasi" {{ $jenis === 'Konsultasi' ? 'selected' : '' }}>Konsultasi</option>
+                                        <option value="Informasi" {{ $jenis === 'Informasi' ? 'selected' : '' }}>Informasi</option>
+                                      </select>
+                                    </div>
+                                    <div class="col-1">
+                                      <button type="submit" class="btn btn-primary w-100">Tampilkan</button>
                                     </div>
                                   </div>
                                  </form>
@@ -274,19 +302,27 @@
                               <div class="tab-pane fade" id="tabs-activity-8" role="tabpanel">
                                 <h4>Pilih Tahun :</h4>
                                 <div>
-                                  <form method="post" action="{{ url('/konsultasi')}}" enctype="multipart/form-data">
-                                    @csrf
+                                  <form method="GET" action="{{ url('/konsultasi')}}">
+                                    <input type="hidden" name="perPage" value="{{ $perPage }}">
+                                    <input type="hidden" name="search" value="{{ $search }}">
                                   <div class="row g-2">
                                     <div class="col-4">
                                       <select name="year" class="form-select">
                                         <option value="">Tahun</option>
                                         @for ($year = $startYear; $year <= $currentYear; $year++)
-                                        <option value="{{ $year }}">{{ $year }}</option>
+                                        <option value="{{ $year }}" {{ (string) request('year') === (string) $year ? 'selected' : '' }}>{{ $year }}</option>
                                         @endfor
                                       </select>
                                     </div>
+                                    <div class="col-4">
+                                      <select name="jenis" class="form-select">
+                                        <option value="">Semua Jenis</option>
+                                        <option value="Konsultasi" {{ $jenis === 'Konsultasi' ? 'selected' : '' }}>Konsultasi</option>
+                                        <option value="Informasi" {{ $jenis === 'Informasi' ? 'selected' : '' }}>Informasi</option>
+                                      </select>
+                                    </div>
                                     <div class="col-2">
-                                      <button type="submit" class="btn btn-primary">Tampilkan</button>
+                                      <button type="submit" class="btn btn-primary w-100">Tampilkan</button>
                                     </div>
                                   </div>
                                  </form>

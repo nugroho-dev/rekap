@@ -14,57 +14,73 @@ class KonsultasiDashboardController extends Controller
      */
     public function index(Request $request)
     {
-        $judul='Data Konsultasi';
-		$query = Konsultasi::query();
-		$search = $request->input('search');
-		$date_start = $request->input('date_start');
-		$date_end = $request->input('date_end');
-		$month = $request->input('month');
-		$year = $request->input('year');
-		if ($request->has('search')) {
-			$search = $request->input('search');
-			$query ->where('nama_pemohon', 'LIKE', "%{$search}%")
-				   ->orWhere('nama_perusahaan', 'LIKE', "%{$search}%")
-				   ->orWhere('email', 'LIKE', "%{$search}%")
-                   ->orWhere('perihal', 'LIKE', "%{$search}%")
-                   ->orWhere('jenis', 'LIKE', "%{$search}%")
-                   ->orWhere('no_hp', 'LIKE', "%{$search}%")
-				   ->orderBy('tanggal', 'desc');
-		}
-		if ($request->has('date_start')&&$request->has('date_end')) {
-			$date_start = $request->input('date_start');
-			$date_end = $request->input('date_end');
-			if($date_start>$date_end ){
-				return redirect('/konsultasi')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda ');
-			}else{
-			$query ->whereBetween('tanggal', [$date_start,$date_end])
-				   ->orderBy('tanggal', 'desc');
-			}
-		}
-		if ($request->has('month')&&$request->has('year')) {
-			$month = $request->input('month');
-			$year = $request->input('year');
-			if(empty($month)&&empty($year)){
-				return redirect('/konsultasi')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
-			}if(empty($year)){
-				return redirect('/konsultasi')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
-			}if(empty($month)){
-				return redirect('/konsultasi')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
-			}else{
-			$query ->whereMonth('tanggal', [$month])
-				   ->whereYear('tanggal', [$year])
-				   ->orderBy('tanggal', 'desc');
-				}
-		}
-		if ($request->has('year')) {
-			$year = $request->input('year');
-			$query ->whereYear('tanggal', [$year])
-				   ->orderBy('tanggal', 'desc');
-		}
-		$perPage = $request->input('perPage', 50);
-		$items=$query->orderBy('tanggal', 'desc')->paginate($perPage);
-		$items->withPath(url('/konsultasi'));
-		return view('admin.pelayananpm.konsultasi.index',compact('judul','items','perPage','search','date_start','date_end','month','year'));
+        $judul = 'Data Konsultasi';
+        $query = Konsultasi::query();
+
+        $search = trim((string) $request->input('search', ''));
+        $date_start = $request->input('date_start');
+        $date_end = $request->input('date_end');
+        $month = $request->input('month');
+        $year = $request->input('year');
+        $jenis = $request->input('jenis');
+
+        if ($search !== '') {
+            $query->where(function ($subQuery) use ($search) {
+                $subQuery->where('nama_pemohon', 'LIKE', "%{$search}%")
+                    ->orWhere('nama_perusahaan', 'LIKE', "%{$search}%")
+                    ->orWhere('email', 'LIKE', "%{$search}%")
+                    ->orWhere('perihal', 'LIKE', "%{$search}%")
+                    ->orWhere('jenis', 'LIKE', "%{$search}%")
+                    ->orWhere('no_hp', 'LIKE', "%{$search}%");
+            });
+        }
+
+        if ($jenis) {
+            $query->where('jenis', $jenis);
+        }
+
+        if (($date_start && !$date_end) || (!$date_start && $date_end)) {
+            return redirect('/konsultasi')->with('error', 'Silakan lengkapi tanggal awal dan tanggal akhir.');
+        }
+
+        if ($date_start && $date_end) {
+            if ($date_start > $date_end) {
+                return redirect('/konsultasi')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda ');
+            }
+
+            $query->whereBetween('tanggal', [$date_start, $date_end]);
+        }
+
+        if ($month && !$year) {
+            return redirect('/konsultasi')->with('error', 'Silakan pilih bulan dan tahun dengan benar.');
+        }
+
+        if ($month && $year) {
+            $query->whereMonth('tanggal', $month)
+                ->whereYear('tanggal', $year);
+        } elseif ($year) {
+            $query->whereYear('tanggal', $year);
+        }
+
+        $perPage = (int) $request->input('perPage', 50);
+        if (!in_array($perPage, [5, 10, 20, 50, 60, 80, 100], true)) {
+            $perPage = 50;
+        }
+
+        $items = $query->orderBy('tanggal', 'desc')->paginate($perPage);
+        $items->withPath(url('/konsultasi'));
+
+        return view('admin.pelayananpm.konsultasi.index', compact(
+            'judul',
+            'items',
+            'perPage',
+            'search',
+            'date_start',
+            'date_end',
+            'month',
+            'year',
+            'jenis'
+        ));
     }
   
 
