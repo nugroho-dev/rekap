@@ -670,6 +670,20 @@ class LkpmController extends Controller
             $byStatusGrouped[$status][$jenis]['total_tka'] += (int) ($row->total_tka ?? 0);
         }
 
+        // Hitung total unique perusahaan di $byStatus SEBELUM perusahaan_keys di-unset
+        $totalPerusahaanByStatus = 0;
+        if (!empty($byStatusGrouped)) {
+            $allStatusCompanies = [];
+            foreach ($byStatusGrouped as $jenisList) {
+                foreach ($jenisList as $aggr) {
+                    foreach ($aggr['perusahaan_keys'] as $namaKey => $_) {
+                        $allStatusCompanies[$namaKey] = true;
+                    }
+                }
+            }
+            $totalPerusahaanByStatus = count($allStatusCompanies);
+        }
+
         foreach ($byStatusGrouped as &$jenisList) {
             foreach ($jenisList as &$aggr) {
                 $aggr['jumlah_perusahaan'] = count($aggr['perusahaan_keys']);
@@ -742,7 +756,7 @@ class LkpmController extends Controller
             })
             ->all();
 
-        // Tabel tren per periode
+        // Tabel tren per periode - SELALU breakdown PER SETIAP TRIWULAN (tidak disaring periode)
         $byPeriode = LkpmNonUmk::selectRaw('periode_laporan, tahun_laporan, COUNT(DISTINCT UPPER(TRIM(nama_pelaku_usaha))) as jumlah_perusahaan, COUNT(DISTINCT no_kode_proyek) as jumlah_proyek, SUM(nilai_total_investasi_rencana) as total_rencana, SUM(total_tambahan_investasi) as total_realisasi')
             ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
             ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
@@ -750,6 +764,12 @@ class LkpmController extends Controller
             ->orderBy('tahun_laporan', 'asc')
             ->orderBy('periode_laporan', 'asc')
             ->get();
+
+        // Hitung total unique perusahaan di Tabel Per Periode (dari SEMUA triwulan dalam tahun)
+        $totalPerusahaanByPeriode = LkpmNonUmk::selectRaw('COUNT(DISTINCT UPPER(TRIM(nama_pelaku_usaha))) as total')
+            ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
+            ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
+            ->first()?->total ?? 0;
 
         $byKbliKategori = (clone $query)
             ->whereRaw("NULLIF(TRIM(COALESCE(lkpm_non_umk.kbli, '')), '') IS NOT NULL")
@@ -765,6 +785,11 @@ class LkpmController extends Controller
             ->orderByDesc('total_realisasi')
             ->get();
 
+        // Hitung total unique perusahaan di Tabel KBLI Kategori (dengan filter tahun+periode)
+        $totalPerusahaanByKbliKategori = (clone $query)
+            ->select(DB::raw('COUNT(DISTINCT UPPER(TRIM(nama_pelaku_usaha))) as total'))
+            ->first()?->total ?? 0;
+
         $years = LkpmNonUmk::selectRaw('DISTINCT tahun_laporan')->whereNotNull('tahun_laporan')->pluck('tahun_laporan')->sort()->values();
 
         // Komponen lain (placeholder agar view kompatibel)
@@ -777,7 +802,8 @@ class LkpmController extends Controller
             'judul', 'tahun', 'periode',
             'totalProyekFiltered', 'totalProyekAll', 'totalLaporan', 'totalPerusahaanFiltered',
             'modalTetapStats', 'investasiStats', 'tenagaKerja',
-            'byPeriode', 'byStatus', 'byStatusDetails', 'byKbliKategori', 'years', 'topKbli', 'byTahun', 'modalKerjaStats', 'modalComponents'
+            'byPeriode', 'byStatus', 'byStatusDetails', 'byKbliKategori', 'years', 'topKbli', 'byTahun', 'modalKerjaStats', 'modalComponents',
+            'totalPerusahaanByStatus', 'totalPerusahaanByPeriode', 'totalPerusahaanByKbliKategori'
         ));
     }
 }

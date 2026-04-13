@@ -116,7 +116,7 @@
                       @endforeach
                     @endforeach
                     @php
-                      $totalPerusahaan = $byStatus->sum('jumlah_perusahaan');
+                      $totalPerusahaan = $totalPerusahaanByStatus ?? $byStatus->sum('jumlah_perusahaan');
                       $totalProyek = $byStatus->sum('jumlah_proyek');
                       $totalAkumRealisasi = $byStatus->sum('akumulasi_realisasi');
                       $totalRealisasi = $byStatus->sum('total_realisasi');
@@ -180,7 +180,7 @@
                     @if($byPeriode->count() > 0)
                       <tr class="table-active fw-bold">
                         <td colspan="2">TOTAL</td>
-                        <td class="text-end">{{ number_format($byPeriode->sum('jumlah_perusahaan'), 0, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format($totalPerusahaanByPeriode ?? 0, 0, ',', '.') }}</td>
                         <td class="text-end">{{ number_format($byPeriode->sum('jumlah_proyek'), 0, ',', '.') }}</td>
                         <td class="text-end">Rp {{ number_format($byPeriode->sum('total_realisasi'), 0, ',', '.') }}</td>
                       </tr>
@@ -220,7 +220,7 @@
                     @if($byKbliKategori->count() > 0)
                       <tr class="table-active fw-bold">
                         <td>TOTAL</td>
-                        <td class="text-end">{{ number_format($byKbliKategori->sum('jumlah_perusahaan'), 0, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format($totalPerusahaanByKbliKategori ?? 0, 0, ',', '.') }}</td>
                         <td class="text-end">{{ number_format($byKbliKategori->sum('jumlah_proyek'), 0, ',', '.') }}</td>
                         <td class="text-end">Rp {{ number_format($byKbliKategori->sum('total_realisasi'), 0, ',', '.') }}</td>
                       </tr>
