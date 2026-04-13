@@ -27,9 +27,10 @@
         <th>{!! $nlSort('periode_laporan','Periode') !!}</th>
         <th>{!! $nlSort('tahun_laporan','Tahun') !!}</th>
         <th>Tahap</th>
-        <th>{!! $nlSort('nilai_total_investasi_realisasi','Nilai Investasi (Rp)') !!}</th>
-        <th>{!! $nlSort('tki_realisasi','TKI') !!}</th>
-        <th>{!! $nlSort('tka_realisasi','TKA') !!}</th>
+        <th>{!! $nlSort('total_tambahan_investasi','Nilai Investasi (Rp)') !!}</th>
+        <th>{!! $nlSort('akumulasi_realisasi_investasi','Akumulasi Realisasi Investasi (Rp)') !!}</th>
+        <th>{!! $nlSort('jumlah_realisasi_tki','TKI') !!}</th>
+        <th>{!! $nlSort('jumlah_realisasi_tka','TKA') !!}</th>
         <th>{!! $nlSort('status_laporan','Status') !!}</th>
         <th class="w-1">Aksi</th>
       </tr>
@@ -58,15 +59,16 @@
             @endif
           </td>
           <td><strong>{{ $item->no_laporan }}</strong></td>
-          <td>{{ $item->tanggal_laporan ? $item->tanggal_laporan->format('d/m/Y') : '-' }}</td>
+          <td>{{ $item->normalized_tanggal_laporan ? $item->normalized_tanggal_laporan->format('d/m/Y') : '-' }}</td>
           <td>{{ $item->periode_laporan }}</td>
           <td>{{ $item->tahun_laporan }}</td>
           <td>
             <span class="badge bg-info">{{ $item->tahap_laporan ?? '-' }}</span>
           </td>
-          <td class="text-end">{{ $item->nilai_total_investasi_realisasi ? number_format($item->nilai_total_investasi_realisasi, 0, ',', '.') : '-' }}</td>
-          <td class="text-center">{{ $item->tki_realisasi ?? 0 }}</td>
-          <td class="text-center">{{ $item->tka_realisasi ?? 0 }}</td>
+          <td class="text-end">{{ $item->total_tambahan_investasi ? number_format($item->total_tambahan_investasi, 0, ',', '.') : '-' }}</td>
+          <td class="text-end">{{ $item->akumulasi_realisasi_investasi ? number_format($item->akumulasi_realisasi_investasi, 0, ',', '.') : '-' }}</td>
+          <td class="text-center">{{ $item->jumlah_realisasi_tki ?? 0 }}</td>
+          <td class="text-center">{{ $item->jumlah_realisasi_tka ?? 0 }}</td>
           <td>
             @if($item->status_laporan === 'Disetujui')
               <span class="badge bg-success">{{ $item->status_laporan }}</span>
@@ -114,7 +116,7 @@
                 </div>
                 <div class="col-md-6">
                   <label class="form-label fw-bold">Tanggal Laporan</label>
-                  <div>{{ $item->tanggal_laporan ? $item->tanggal_laporan->format('d F Y') : '-' }}</div>
+                  <div>{{ $item->normalized_tanggal_laporan ? $item->normalized_tanggal_laporan->translatedFormat('d F Y') : '-' }}</div>
                 </div>
                 <div class="col-md-3">
                   <label class="form-label fw-bold">Periode</label>
@@ -161,47 +163,39 @@
                 </div>
                 <div class="col-12"><h5 class="mb-0 mt-2">Investasi - Realisasi</h5></div>
                 <div class="col-md-6">
-                  <label class="form-label fw-bold">Tambahan Investasi</label>
-                  <div>Rp {{ $item->nilai_tambahan_investasi_realisasi ? number_format($item->nilai_tambahan_investasi_realisasi, 0, ',', '.') : '0' }}</div>
+                  <label class="form-label fw-bold">Tambahan Modal Tetap</label>
+                  <div>Rp {{ $item->tambahan_modal_tetap_realisasi ? number_format($item->tambahan_modal_tetap_realisasi, 0, ',', '.') : '0' }}</div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">Total Tambahan Investasi</label>
+                  <div>Rp {{ $item->total_tambahan_investasi ? number_format($item->total_tambahan_investasi, 0, ',', '.') : '0' }}</div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">Akumulasi Modal Tetap</label>
+                  <div>Rp {{ $item->akumulasi_realisasi_modal_tetap ? number_format($item->akumulasi_realisasi_modal_tetap, 0, ',', '.') : '0' }}</div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label fw-bold">Akumulasi Investasi</label>
-                  <div>Rp {{ $item->nilai_akumulasi_investasi_realisasi ? number_format($item->nilai_akumulasi_investasi_realisasi, 0, ',', '.') : '0' }}</div>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label fw-bold">Modal Tetap Realisasi</label>
-                  <div>Rp {{ $item->nilai_modal_tetap_realisasi ? number_format($item->nilai_modal_tetap_realisasi, 0, ',', '.') : '0' }}</div>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label fw-bold">Total Investasi Realisasi</label>
-                  <div>Rp {{ $item->nilai_total_investasi_realisasi ? number_format($item->nilai_total_investasi_realisasi, 0, ',', '.') : '0' }}</div>
+                  <div>Rp {{ $item->akumulasi_realisasi_investasi ? number_format($item->akumulasi_realisasi_investasi, 0, ',', '.') : '0' }}</div>
                 </div>
                 <div class="col-12"><hr></div>
                 <div class="col-12"><h5 class="mb-0">Tenaga Kerja Indonesia (TKI)</h5></div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                   <label class="form-label fw-bold">Rencana</label>
-                  <div>{{ $item->tki_rencana ?? 0 }} orang</div>
+                  <div>{{ $item->jumlah_rencana_tki ?? 0 }} orang</div>
                 </div>
-                <div class="col-md-4">
-                  <label class="form-label fw-bold">Tambahan</label>
-                  <div>{{ $item->tki_tambahan ?? 0 }} orang</div>
-                </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                   <label class="form-label fw-bold">Realisasi</label>
-                  <div>{{ $item->tki_realisasi ?? 0 }} orang</div>
+                  <div>{{ $item->jumlah_realisasi_tki ?? 0 }} orang</div>
                 </div>
                 <div class="col-12"><h5 class="mb-0 mt-2">Tenaga Kerja Asing (TKA)</h5></div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                   <label class="form-label fw-bold">Rencana</label>
-                  <div>{{ $item->tka_rencana ?? 0 }} orang</div>
+                  <div>{{ $item->jumlah_rencana_tka ?? 0 }} orang</div>
                 </div>
-                <div class="col-md-4">
-                  <label class="form-label fw-bold">Tambahan</label>
-                  <div>{{ $item->tka_tambahan ?? 0 }} orang</div>
-                </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                   <label class="form-label fw-bold">Realisasi</label>
-                  <div>{{ $item->tka_realisasi ?? 0 }} orang</div>
+                  <div>{{ $item->jumlah_realisasi_tka ?? 0 }} orang</div>
                 </div>
                 <div class="col-12"><hr></div>
                 <div class="col-12"><h5 class="mb-0">Lokasi</h5></div>
@@ -219,7 +213,7 @@
                 </div>
                 <div class="col-md-6">
                   <label class="form-label fw-bold">Kabupaten/Kota</label>
-                  <div>{{ $item->kab_kota ?? '-' }}</div>
+                  <div>{{ $item->kabupaten_kota ?? '-' }}</div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label fw-bold">Provinsi</label>
@@ -230,10 +224,10 @@
                   <label class="form-label fw-bold">Status Laporan</label>
                   <div>{{ $item->status_laporan ?? '-' }}</div>
                 </div>
-                @if($item->catatan_permasalahan)
+                @if($item->catatan_permasalahan_perusahaan)
                 <div class="col-12">
                   <label class="form-label fw-bold">Catatan Permasalahan</label>
-                  <div>{{ $item->catatan_permasalahan }}</div>
+                  <div>{{ $item->catatan_permasalahan_perusahaan }}</div>
                 </div>
                 @endif
                 <div class="col-12"><hr></div>
@@ -264,7 +258,7 @@
       </div>
       @empty
       <tr>
-        <td colspan="15" class="text-center text-muted py-4">
+        <td colspan="16" class="text-center text-muted py-4">
           <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon mb-2 text-secondary"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M9 14l6 0" /><path d="M12 11l0 6" /></svg>
           <div>Tidak ada data LKPM Non-UMK</div>
         </td>

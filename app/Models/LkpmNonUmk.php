@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -61,4 +62,33 @@ class LkpmNonUmk extends Model
         'jumlah_rencana_tka' => 'integer',
         'jumlah_realisasi_tka' => 'integer',
     ];
+
+    public function getNormalizedTanggalLaporanAttribute(): ?Carbon
+    {
+        $tanggal = $this->tanggal_laporan;
+        $maxYear = Carbon::now()->addYear()->year;
+
+        if ($tanggal instanceof Carbon && $tanggal->year >= 2000 && $tanggal->year <= $maxYear) {
+            return $tanggal->copy();
+        }
+
+        $tahun = (int) ($this->tahun_laporan ?? 0);
+        if ($tahun < 2000 || $tahun > $maxYear) {
+            return null;
+        }
+
+        $periodeMap = [
+            'Triwulan I' => [3, 31],
+            'Triwulan II' => [6, 30],
+            'Triwulan III' => [9, 30],
+            'Triwulan IV' => [12, 31],
+        ];
+
+        $periode = $periodeMap[$this->periode_laporan ?? ''] ?? null;
+        if (!$periode) {
+            return Carbon::create($tahun, 1, 1)->startOfDay();
+        }
+
+        return Carbon::create($tahun, $periode[0], $periode[1])->startOfDay();
+    }
 }

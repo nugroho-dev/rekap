@@ -43,4 +43,28 @@ class LkpmNonUmkImportTest extends TestCase
         $this->assertNotNull($model);
         $this->assertSame('Kab. Sleman', $model->getAttribute('kabupaten_kota'));
     }
+
+    public function test_parses_compact_numeric_dates_without_treating_them_as_excel_serials()
+    {
+        $import = new LkpmNonUmkImport();
+        $reflection = new \ReflectionClass($import);
+        $method = $reflection->getMethod('parseTanggal');
+        $method->setAccessible(true);
+
+        $parsed = $method->invoke($import, '20240929');
+
+        $this->assertSame('2024-09-29', $parsed);
+    }
+
+    public function test_parses_common_excel_tanggal_laporan_formats()
+    {
+        $import = new LkpmNonUmkImport();
+        $reflection = new \ReflectionClass($import);
+        $method = $reflection->getMethod('parseTanggal');
+        $method->setAccessible(true);
+
+        $this->assertSame('2024-09-29', $method->invoke($import, '29/09/2024'));
+        $this->assertSame('2024-09-29', $method->invoke($import, '2024-09-29'));
+        $this->assertSame('2024-09-29', $method->invoke($import, 45564));
+    }
 }

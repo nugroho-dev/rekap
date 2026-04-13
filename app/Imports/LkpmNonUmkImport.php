@@ -144,14 +144,39 @@ class LkpmNonUmkImport implements ToModel, WithHeadingRow, WithUpserts
      */
     private function parseTanggal($value)
     {
+        $maxYear = Carbon::now()->addYear()->year;
+
         if (empty($value)) {
             return null;
+        }
+
+        if (is_string($value)) {
+            $value = trim($value);
+        }
+
+        $digitsOnly = preg_replace('/\D+/', '', (string) $value);
+        if (strlen($digitsOnly) === 8) {
+            foreach (['Ymd', 'dmY'] as $format) {
+                try {
+                    $date = Carbon::createFromFormat($format, $digitsOnly);
+                    if ($date !== false && $date->year >= 2000 && $date->year <= $maxYear) {
+                        return $date->format('Y-m-d');
+                    }
+                } catch (\Exception $e) {
+                    continue;
+                }
+            }
         }
 
         // If numeric, it's Excel serial date
         if (is_numeric($value)) {
             try {
-                return Date::excelToDateTimeObject($value)->format('Y-m-d');
+                $date = Carbon::instance(Date::excelToDateTimeObject($value));
+                if ($date->year >= 2000 && $date->year <= $maxYear) {
+                    return $date->format('Y-m-d');
+                }
+
+                return null;
             } catch (\Exception $e) {
                 return null;
             }
