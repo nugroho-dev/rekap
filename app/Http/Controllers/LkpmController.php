@@ -617,11 +617,35 @@ class LkpmController extends Controller
             $prevQuery->whereRaw('1=0');
         }
 
-        $existingSet = array_flip(
-            $prevQuery->selectRaw("DISTINCT CONCAT(UPPER(TRIM(nama_pelaku_usaha)), '|||', TRIM(kbli)) as pair_key")
-                ->pluck('pair_key')
-                ->toArray()
-        );
+            $existingCompanySet = array_flip(
+                (clone $prevQuery)
+                    ->selectRaw("DISTINCT UPPER(TRIM(nama_pelaku_usaha)) as company_key")
+                    ->pluck('company_key')
+                    ->filter()
+                    ->toArray()
+            );
+
+            $existingKbliSet = array_flip(
+                (clone $prevQuery)
+                    ->selectRaw("DISTINCT TRIM(kbli) as kbli_key")
+                    ->pluck('kbli_key')
+                    ->filter()
+                    ->toArray()
+            );
+
+            $classifyInvestmentType = static function ($companyName, $kbli) use ($existingCompanySet, $existingKbliSet) {
+                $companyKey = strtoupper(trim((string) $companyName));
+                $kbliKey = trim((string) $kbli);
+
+                if ($companyKey === '' || $kbliKey === '') {
+                    return 'Penambahan Investasi';
+                }
+
+                $isNewCompany = !isset($existingCompanySet[$companyKey]);
+                $isNewKbli = !isset($existingKbliSet[$kbliKey]);
+
+                return ($isNewCompany && $isNewKbli) ? 'Investasi Baru' : 'Penambahan Investasi';
+            };
 
         // Get per-company data with kbli for classification
         $companyData = (clone $breakdownQuery)
@@ -641,8 +665,7 @@ class LkpmController extends Controller
         $byStatusGrouped = [];
         foreach ($companyData as $row) {
             $status = trim($row->status_penanaman_modal);
-            $pairKey = strtoupper(trim($row->nama_pelaku_usaha)) . '|||' . trim($row->kbli);
-            $jenis = isset($existingSet[$pairKey]) ? 'Penambahan Investasi' : 'Investasi Baru';
+            $jenis = $classifyInvestmentType($row->nama_pelaku_usaha, $row->kbli);
 
             if (!isset($byStatusGrouped[$status][$jenis])) {
                 $byStatusGrouped[$status][$jenis] = [
@@ -709,9 +732,8 @@ class LkpmController extends Controller
             ->orderBy('status_penanaman_modal')
             ->orderByDesc('total_realisasi')
             ->get()
-            ->groupBy(function ($row) use ($existingSet) {
-                $pairKey = strtoupper(trim($row->nama_pelaku_usaha)) . '|||' . trim($row->kbli);
-                $jenis = isset($existingSet[$pairKey]) ? 'Penambahan Investasi' : 'Investasi Baru';
+            ->groupBy(function ($row) use ($classifyInvestmentType) {
+                $jenis = $classifyInvestmentType($row->nama_pelaku_usaha, $row->kbli);
                 return trim($row->status_penanaman_modal) . '|||' . $jenis;
             })
             ->map(function ($rows) {
@@ -780,10 +802,28 @@ class LkpmController extends Controller
             ->leftJoin('kbli_groups as kg', 'kg.code', '=', 'kc.group_code')
             ->leftJoin('kbli_divisions as kd', 'kd.code', '=', 'kg.division_code')
             ->leftJoin('kbli_sections as ksec', 'ksec.code', '=', 'kd.section_code')
-            ->selectRaw("COALESCE(CONCAT(ksec.code, ' - ', ksec.name), 'Tidak Terklasifikasi') as kategori_kbli_section, COUNT(DISTINCT UPPER(TRIM(lkpm_non_umk.nama_pelaku_usaha))) as jumlah_perusahaan, COUNT(DISTINCT lkpm_non_umk.no_kode_proyek) as jumlah_proyek, SUM(lkpm_non_umk.total_tambahan_investasi) as total_realisasi")
+            ->selectRaw("COALESCE(CONCAT(ksec.code, ' - ', ksec.name), 'Tidak Terklasifikasi') as kategori_kbli_section, COUNT(DISTINCT UPPER(TRIM(lkpm_non_umk.nama_pelaku_usaha))) as jumlah_perusahaan, COUNT(DISTINCT lkpm_non_umk.no_kode_proyek) as jumlah_proyek, SUM(lkpm_non_umk.total_tambahan_investasi) as total_realisasi, SUM(lkpm_non_umk.jumlah_realisasi_tki) as total_tenaga_kerja_wni, SUM(lkpm_non_umk.jumlah_realisasi_tka) as total_tenaga_kerja_wna")
             ->groupByRaw("COALESCE(CONCAT(ksec.code, ' - ', ksec.name), 'Tidak Terklasifikasi')")
             ->orderByDesc('total_realisasi')
             ->get();
+
+        $byKbliKategoriDetails = (clone $query)
+            ->whereRaw("NULLIF(TRIM(COALESCE(lkpm_non_umk.kbli, '')), '') IS NOT NULL")
+            ->leftJoin('kbli_subclasses as ks', function ($join) {
+                $join->on('ks.code', '=', DB::raw("LEFT(TRIM(lkpm_non_umk.kbli), 5)"));
+            })
+            ->leftJoin('kbli_classes as kc', 'kc.code', '=', 'ks.class_code')
+            ->leftJoin('kbli_groups as kg', 'kg.code', '=', 'kc.group_code')
+            ->leftJoin('kbli_divisions as kd', 'kd.code', '=', 'kg.division_code')
+            ->leftJoin('kbli_sections as ksec', 'ksec.code', '=', 'kd.section_code')
+            ->selectRaw("COALESCE(CONCAT(ksec.code, ' - ', ksec.name), 'Tidak Terklasifikasi') as kategori_kbli_section, TRIM(lkpm_non_umk.nama_pelaku_usaha) as nama_pelaku_usaha, TRIM(lkpm_non_umk.kbli) as kbli, COUNT(DISTINCT lkpm_non_umk.no_kode_proyek) as jumlah_proyek, SUM(lkpm_non_umk.jumlah_realisasi_tki) as total_tenaga_kerja_wni, SUM(lkpm_non_umk.jumlah_realisasi_tka) as total_tenaga_kerja_wna, SUM(lkpm_non_umk.total_tambahan_investasi) as total_realisasi")
+            ->groupByRaw("COALESCE(CONCAT(ksec.code, ' - ', ksec.name), 'Tidak Terklasifikasi'), TRIM(lkpm_non_umk.nama_pelaku_usaha), TRIM(lkpm_non_umk.kbli)")
+            ->orderBy('kategori_kbli_section')
+            ->orderByDesc('total_realisasi')
+            ->get()
+            ->groupBy('kategori_kbli_section')
+            ->map(fn ($rows) => $rows->values()->all())
+            ->all();
 
         // Hitung total unique perusahaan di Tabel KBLI Kategori (dengan filter tahun+periode)
         $totalPerusahaanByKbliKategori = (clone $query)
@@ -802,7 +842,7 @@ class LkpmController extends Controller
             'judul', 'tahun', 'periode',
             'totalProyekFiltered', 'totalProyekAll', 'totalLaporan', 'totalPerusahaanFiltered',
             'modalTetapStats', 'investasiStats', 'tenagaKerja',
-            'byPeriode', 'byStatus', 'byStatusDetails', 'byKbliKategori', 'years', 'topKbli', 'byTahun', 'modalKerjaStats', 'modalComponents',
+            'byPeriode', 'byStatus', 'byStatusDetails', 'byKbliKategori', 'byKbliKategoriDetails', 'years', 'topKbli', 'byTahun', 'modalKerjaStats', 'modalComponents',
             'totalPerusahaanByStatus', 'totalPerusahaanByPeriode', 'totalPerusahaanByKbliKategori'
         ));
     }

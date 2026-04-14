@@ -201,7 +201,10 @@
                       <th>Kategori Section KBLI</th>
                       <th class="text-end">Jumlah Perusahaan</th>
                       <th class="text-end">Jumlah Proyek</th>
+                      <th class="text-end">Realisasi Tenaga Kerja WNI</th>
+                      <th class="text-end">Realisasi Tenaga Kerja WNA</th>
                       <th class="text-end">Nilai Realisasi</th>
+                      <th class="text-end">Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -210,11 +213,18 @@
                         <td>{{ $row->kategori_kbli_section }}</td>
                         <td class="text-end">{{ number_format($row->jumlah_perusahaan ?? 0, 0, ',', '.') }}</td>
                         <td class="text-end">{{ number_format($row->jumlah_proyek ?? 0, 0, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format($row->total_tenaga_kerja_wni ?? 0, 0, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format($row->total_tenaga_kerja_wna ?? 0, 0, ',', '.') }}</td>
                         <td class="text-end">Rp {{ number_format($row->total_realisasi ?? 0, 0, ',', '.') }}</td>
+                        <td class="text-end">
+                          <button type="button" class="btn btn-sm btn-outline-primary js-open-kbli-detail" data-key="{{ $row->kategori_kbli_section }}" data-bs-toggle="modal" data-bs-target="#modal-kbli-kategori-detail">
+                            Detail
+                          </button>
+                        </td>
                       </tr>
                     @empty
                       <tr>
-                        <td colspan="4" class="text-center text-muted py-4">Tidak ada data realisasi berdasarkan kategori KBLI.</td>
+                        <td colspan="7" class="text-center text-muted py-4">Tidak ada data realisasi berdasarkan kategori KBLI.</td>
                       </tr>
                     @endforelse
                     @if($byKbliKategori->count() > 0)
@@ -222,7 +232,10 @@
                         <td>TOTAL</td>
                         <td class="text-end">{{ number_format($totalPerusahaanByKbliKategori ?? 0, 0, ',', '.') }}</td>
                         <td class="text-end">{{ number_format($byKbliKategori->sum('jumlah_proyek'), 0, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format($byKbliKategori->sum('total_tenaga_kerja_wni'), 0, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format($byKbliKategori->sum('total_tenaga_kerja_wna'), 0, ',', '.') }}</td>
                         <td class="text-end">Rp {{ number_format($byKbliKategori->sum('total_realisasi'), 0, ',', '.') }}</td>
+                        <td></td>
                       </tr>
                     @endif
                   </tbody>
@@ -271,12 +284,46 @@
   </div>
 </div>
 
+<div class="modal modal-blur fade" id="modal-kbli-kategori-detail" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-full-width modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Detail Kategori KBLI: <span data-role="kbli-title">-</span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="table-responsive">
+          <table class="table table-vcenter mb-0">
+            <thead>
+              <tr>
+                <th style="width: 64px">No</th>
+                <th>Nama Perusahaan</th>
+                <th>KBLI</th>
+                <th class="text-end">Jumlah Proyek</th>
+                <th class="text-end">WNI</th>
+                <th class="text-end">WNA</th>
+                <th class="text-end">Nilai Realisasi</th>
+              </tr>
+            </thead>
+            <tbody data-role="kbli-body">
+              <tr>
+                <td colspan="7" class="text-center text-muted py-4">Pilih kategori KBLI untuk melihat detail.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const byPeriode = {!! json_encode($byPeriode) !!};
   const byStatusDetails = {!! json_encode($byStatusDetails) !!};
+  const byKbliKategoriDetails = {!! json_encode($byKbliKategoriDetails) !!};
   const lkpmHistoryBaseUrl = {!! json_encode(route('lkpm.index', ['tab' => 'non-umk'])) !!};
   const activeFilters = {
     tahun: {!! json_encode($tahun) !!},
@@ -382,6 +429,57 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
 
         statusBody.innerHTML = detailRows + totalRow;
+      });
+    });
+  }
+
+  const kbliModal = document.getElementById('modal-kbli-kategori-detail');
+  if (kbliModal) {
+    const kbliTitle = kbliModal.querySelector('[data-role="kbli-title"]');
+    const kbliBody = kbliModal.querySelector('[data-role="kbli-body"]');
+
+    document.querySelectorAll('.js-open-kbli-detail').forEach((button) => {
+      button.addEventListener('click', function() {
+        const key = this.dataset.key || '';
+        const rows = byKbliKategoriDetails[key] || [];
+
+        kbliTitle.textContent = key || '-';
+
+        if (!rows.length) {
+          kbliBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Tidak ada data detail.</td></tr>';
+          return;
+        }
+
+        const detailRows = rows.map((row, index) => `
+          <tr>
+            <td>${index + 1}</td>
+            <td><a href="${buildHistoryUrl(row.nama_pelaku_usaha)}" class="text-primary text-decoration-none" target="_blank" rel="noopener noreferrer">${escapeHtml(row.nama_pelaku_usaha)}</a></td>
+            <td>${escapeHtml(row.kbli || '-')}</td>
+            <td class="text-end">${formatter.format(Number(row.jumlah_proyek || 0))}</td>
+            <td class="text-end">${formatter.format(Number(row.total_tenaga_kerja_wni || 0))}</td>
+            <td class="text-end">${formatter.format(Number(row.total_tenaga_kerja_wna || 0))}</td>
+            <td class="text-end">Rp ${formatter.format(Number(row.total_realisasi || 0))}</td>
+          </tr>
+        `).join('');
+
+        const totals = rows.reduce((acc, row) => ({
+          jumlah_proyek: acc.jumlah_proyek + Number(row.jumlah_proyek || 0),
+          total_tenaga_kerja_wni: acc.total_tenaga_kerja_wni + Number(row.total_tenaga_kerja_wni || 0),
+          total_tenaga_kerja_wna: acc.total_tenaga_kerja_wna + Number(row.total_tenaga_kerja_wna || 0),
+          total_realisasi: acc.total_realisasi + Number(row.total_realisasi || 0)
+        }), { jumlah_proyek: 0, total_tenaga_kerja_wni: 0, total_tenaga_kerja_wna: 0, total_realisasi: 0 });
+
+        const totalRow = `
+          <tr class="table-active fw-bold">
+            <td colspan="3">TOTAL</td>
+            <td class="text-end">${formatter.format(totals.jumlah_proyek)}</td>
+            <td class="text-end">${formatter.format(totals.total_tenaga_kerja_wni)}</td>
+            <td class="text-end">${formatter.format(totals.total_tenaga_kerja_wna)}</td>
+            <td class="text-end">Rp ${formatter.format(totals.total_realisasi)}</td>
+          </tr>
+        `;
+
+        kbliBody.innerHTML = detailRows + totalRow;
       });
     });
   }
