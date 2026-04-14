@@ -405,6 +405,9 @@ class LkpmController extends Controller
         $periode = $request->get('periode');
 
         if ($tab === 'umk') {
+            $umkCompanyKeySql = "UPPER(TRIM(COALESCE(NULLIF(lkpm_umk.nomor_induk_berusaha, ''), NULLIF(lkpm_umk.nama_pelaku_usaha, ''))))";
+            $umkProjectCodeSql = "UPPER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(COALESCE(lkpm_umk.no_kode_proyek, '')), ' ', ''), CHAR(9), ''), CHAR(10), ''), CHAR(13), ''), CONVERT(0xC2A0 USING utf8mb4), ''))";
+            $proyekIdSql = "UPPER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(COALESCE(proyek_umk.id_proyek, '')), ' ', ''), CHAR(9), ''), CHAR(10), ''), CHAR(13), ''), CONVERT(0xC2A0 USING utf8mb4), ''))";
 
             $query = LkpmUmk::query()
                 ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
@@ -428,6 +431,7 @@ class LkpmController extends Controller
             $mkPelaporan = $capped->sum('modal_kerja_periode_pelaporan');
             $mtPelaporan = $capped->sum('modal_tetap_periode_pelaporan');
             $totalPelaporan = $mkPelaporan + $mtPelaporan;
+            $totalAkumulasiInvestasi = $capped->sum('akumulasi_modal_kerja') + $capped->sum('akumulasi_modal_tetap');
 
             $modalKerjaStats = [
                 'pelaporan' => $mkPelaporan,
@@ -444,6 +448,11 @@ class LkpmController extends Controller
                 'tetap_pelaporan' => $mtPelaporan,
                 'total_pelaporan' => $totalPelaporan,
             ];
+            $investasiStats = [
+                'rencana' => 0,
+                'realisasi' => $totalPelaporan,
+                'akumulasi' => $totalAkumulasiInvestasi,
+            ];
 
             $tenagaKerjaQuery = LkpmUmk::query()
                 ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
@@ -455,13 +464,141 @@ class LkpmController extends Controller
                 'total' => $tenagaKerjaQuery->sum('tambahan_tenaga_kerja_laki_laki') + $tenagaKerjaQuery->sum('tambahan_tenaga_kerja_wanita'),
             ];
 
-            $byPeriode = LkpmUmk::selectRaw('periode_laporan, tahun_laporan, COUNT(DISTINCT no_kode_proyek) as jumlah_proyek, SUM(modal_kerja_periode_pelaporan) as total_modal_kerja, SUM(modal_tetap_periode_pelaporan) as total_modal_tetap')
+            $byPeriode = LkpmUmk::selectRaw('periode_laporan, tahun_laporan, COUNT(DISTINCT no_kode_proyek) as jumlah_proyek, SUM(modal_kerja_periode_pelaporan) as total_modal_kerja, SUM(modal_tetap_periode_pelaporan) as total_modal_tetap, SUM(modal_kerja_periode_pelaporan + modal_tetap_periode_pelaporan) as total_realisasi')
                 ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
                 ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
+                ->selectRaw('COUNT(DISTINCT ' . $umkCompanyKeySql . ') as jumlah_perusahaan')
                 ->groupBy('periode_laporan', 'tahun_laporan')
                 ->orderBy('tahun_laporan', 'asc')
                 ->orderBy('periode_laporan', 'asc')
                 ->get();
+
+            $proyekStatusByNib = DB::table('proyek')
+                ->whereRaw("NULLIF(TRIM(COALESCE(nib, '')), '') IS NOT NULL")
+                ->selectRaw("TRIM(nib) as nib, MAX(CASE WHEN UPPER(TRIM(COALESCE(uraian_status_penanaman_modal, ''))) IN ('PMA', 'PMDN') THEN UPPER(TRIM(uraian_status_penanaman_modal)) END) as status_penanaman_modal")
+                ->groupByRaw('TRIM(nib)');
+
+            $statusBreakdownBase = LkpmUmk::query()
+                ->leftJoin('proyek as proyek_umk', function ($join) use ($umkProjectCodeSql, $proyekIdSql) {
+                    $join->whereRaw($proyekIdSql . ' = ' . $umkProjectCodeSql);
+                })
+                ->leftJoinSub($proyekStatusByNib, 'proyek_umk_nib', function ($join) {
+                    $join->on(DB::raw("TRIM(COALESCE(lkpm_umk.nomor_induk_berusaha, ''))"), '=', 'proyek_umk_nib.nib');
+                })
+                ->whereIn('lkpm_umk.status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
+                ->when($tahun, fn($q) => $q->where('lkpm_umk.tahun_laporan', $tahun))
+                ->when($periode, fn($q) => $q->where('lkpm_umk.periode_laporan', $periode))
+                ->whereRaw("NULLIF(TRIM(COALESCE(lkpm_umk.status_laporan, '')), '') IS NOT NULL")
+                ->whereRaw("COALESCE(NULLIF(TRIM(lkpm_umk.nomor_induk_berusaha), ''), NULLIF(TRIM(lkpm_umk.nama_pelaku_usaha), '')) IS NOT NULL")
+                ->whereRaw("NULLIF(TRIM(COALESCE(lkpm_umk.kbli, '')), '') IS NOT NULL");
+
+            $umkInvestmentStatusSql = "COALESCE(CASE WHEN UPPER(TRIM(COALESCE(proyek_umk.uraian_status_penanaman_modal, ''))) IN ('PMA', 'PMDN') THEN UPPER(TRIM(proyek_umk.uraian_status_penanaman_modal)) END, proyek_umk_nib.status_penanaman_modal, 'Tidak Diketahui')";
+
+            $byStatus = (clone $statusBreakdownBase)
+                ->selectRaw("TRIM(lkpm_umk.status_laporan) as status_laporan, {$umkInvestmentStatusSql} as status_penanaman_modal, COUNT(DISTINCT {$umkCompanyKeySql}) as jumlah_perusahaan, COUNT(DISTINCT lkpm_umk.no_kode_proyek) as jumlah_proyek, SUM(lkpm_umk.modal_kerja_periode_pelaporan + lkpm_umk.modal_tetap_periode_pelaporan) as total_realisasi, SUM(lkpm_umk.akumulasi_modal_kerja + lkpm_umk.akumulasi_modal_tetap) as akumulasi_realisasi, SUM(lkpm_umk.tambahan_tenaga_kerja_laki_laki) as total_tk_laki, SUM(lkpm_umk.tambahan_tenaga_kerja_wanita) as total_tk_wanita")
+                ->groupByRaw("TRIM(lkpm_umk.status_laporan), {$umkInvestmentStatusSql}")
+                ->orderBy('lkpm_umk.status_laporan')
+                ->orderByRaw("FIELD({$umkInvestmentStatusSql}, 'PMA', 'PMDN', 'Tidak Diketahui')")
+                ->get();
+
+            $totalPerusahaanByStatus = (clone $statusBreakdownBase)
+                ->selectRaw("COUNT(DISTINCT {$umkCompanyKeySql}) as total")
+                ->first()?->total ?? 0;
+
+            $byStatusDetails = (clone $statusBreakdownBase)
+                ->selectRaw("TRIM(lkpm_umk.status_laporan) as status_laporan, {$umkInvestmentStatusSql} as status_penanaman_modal, TRIM(COALESCE(lkpm_umk.nomor_induk_berusaha, '')) as nomor_induk_berusaha, TRIM(lkpm_umk.nama_pelaku_usaha) as nama_pelaku_usaha, TRIM(lkpm_umk.kbli) as kbli, COUNT(DISTINCT lkpm_umk.no_kode_proyek) as jumlah_proyek, SUM(lkpm_umk.akumulasi_modal_kerja + lkpm_umk.akumulasi_modal_tetap) as akumulasi_realisasi, SUM(lkpm_umk.modal_kerja_periode_pelaporan + lkpm_umk.modal_tetap_periode_pelaporan) as total_realisasi, SUM(lkpm_umk.tambahan_tenaga_kerja_laki_laki) as total_tk_laki, SUM(lkpm_umk.tambahan_tenaga_kerja_wanita) as total_tk_wanita")
+                ->groupByRaw("TRIM(lkpm_umk.status_laporan), {$umkInvestmentStatusSql}, TRIM(COALESCE(lkpm_umk.nomor_induk_berusaha, '')), TRIM(lkpm_umk.nama_pelaku_usaha), TRIM(lkpm_umk.kbli)")
+                ->orderBy('lkpm_umk.status_laporan')
+                ->orderByDesc('total_realisasi')
+                ->get()
+                ->groupBy(function ($row) {
+                    return trim((string) $row->status_laporan) . '|||' . trim((string) $row->status_penanaman_modal);
+                })
+                ->map(function ($rows) {
+                    $companyAgg = [];
+
+                    foreach ($rows as $row) {
+                        $companyKey = trim((string) ($row->nomor_induk_berusaha ?: $row->nama_pelaku_usaha));
+
+                        if (!isset($companyAgg[$companyKey])) {
+                            $companyAgg[$companyKey] = [
+                                'nomor_induk_berusaha' => trim((string) ($row->nomor_induk_berusaha ?? '')),
+                                'nama_pelaku_usaha' => trim((string) $row->nama_pelaku_usaha),
+                                'kbli_keys' => [],
+                                'jumlah_proyek' => 0,
+                                'akumulasi_realisasi' => 0.0,
+                                'total_realisasi' => 0.0,
+                                'total_tk_laki' => 0,
+                                'total_tk_wanita' => 0,
+                            ];
+                        }
+
+                        $kbli = trim((string) ($row->kbli ?? ''));
+                        if ($kbli !== '') {
+                            $companyAgg[$companyKey]['kbli_keys'][$kbli] = true;
+                        }
+
+                        $companyAgg[$companyKey]['jumlah_proyek'] += (int) ($row->jumlah_proyek ?? 0);
+                        $companyAgg[$companyKey]['akumulasi_realisasi'] += (float) ($row->akumulasi_realisasi ?? 0);
+                        $companyAgg[$companyKey]['total_realisasi'] += (float) ($row->total_realisasi ?? 0);
+                        $companyAgg[$companyKey]['total_tk_laki'] += (int) ($row->total_tk_laki ?? 0);
+                        $companyAgg[$companyKey]['total_tk_wanita'] += (int) ($row->total_tk_wanita ?? 0);
+                    }
+
+                    return collect($companyAgg)
+                        ->map(function ($item) {
+                            $item['kbli'] = implode(', ', array_keys($item['kbli_keys']));
+                            unset($item['kbli_keys']);
+                            return $item;
+                        })
+                        ->sortByDesc('total_realisasi')
+                        ->values()
+                        ->all();
+                })
+                ->all();
+
+            $totalPerusahaanByPeriode = LkpmUmk::query()
+                ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
+                ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
+                ->whereRaw("COALESCE(NULLIF(TRIM(nomor_induk_berusaha), ''), NULLIF(TRIM(nama_pelaku_usaha), '')) IS NOT NULL")
+                ->selectRaw("COUNT(DISTINCT {$umkCompanyKeySql}) as total")
+                ->first()?->total ?? 0;
+
+            $umkKbliCodeSql = "COALESCE(NULLIF(TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(TRIM(lkpm_umk.kbli), ')', 1), '(', -1)), ''), LEFT(TRIM(lkpm_umk.kbli), 5))";
+
+            $byKbliKategoriBase = LkpmUmk::query()
+                ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
+                ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
+                ->when($periode, fn($q) => $q->where('periode_laporan', $periode))
+                ->whereRaw("NULLIF(TRIM(COALESCE(lkpm_umk.kbli, '')), '') IS NOT NULL")
+                ->whereRaw("COALESCE(NULLIF(TRIM(lkpm_umk.nomor_induk_berusaha), ''), NULLIF(TRIM(lkpm_umk.nama_pelaku_usaha), '')) IS NOT NULL")
+                ->leftJoin('kbli_subclasses as ks', function ($join) use ($umkKbliCodeSql) {
+                    $join->on('ks.code', '=', DB::raw($umkKbliCodeSql));
+                })
+                ->leftJoin('kbli_classes as kc', 'kc.code', '=', 'ks.class_code')
+                ->leftJoin('kbli_groups as kg', 'kg.code', '=', 'kc.group_code')
+                ->leftJoin('kbli_divisions as kd', 'kd.code', '=', 'kg.division_code')
+                ->leftJoin('kbli_sections as ksec', 'ksec.code', '=', 'kd.section_code');
+
+            $byKbliKategori = (clone $byKbliKategoriBase)
+                ->selectRaw("COALESCE(CONCAT(ksec.code, ' - ', ksec.name), 'Tidak Terklasifikasi') as kategori_kbli_section, COUNT(DISTINCT {$umkCompanyKeySql}) as jumlah_perusahaan, COUNT(DISTINCT lkpm_umk.no_kode_proyek) as jumlah_proyek, SUM(lkpm_umk.tambahan_tenaga_kerja_laki_laki) as total_tenaga_kerja_laki, SUM(lkpm_umk.tambahan_tenaga_kerja_wanita) as total_tenaga_kerja_perempuan, SUM(lkpm_umk.modal_kerja_periode_pelaporan + lkpm_umk.modal_tetap_periode_pelaporan) as total_realisasi")
+                ->groupByRaw("COALESCE(CONCAT(ksec.code, ' - ', ksec.name), 'Tidak Terklasifikasi')")
+                ->orderByDesc('total_realisasi')
+                ->get();
+
+            $byKbliKategoriDetails = (clone $byKbliKategoriBase)
+                ->selectRaw("COALESCE(CONCAT(ksec.code, ' - ', ksec.name), 'Tidak Terklasifikasi') as kategori_kbli_section, TRIM(COALESCE(lkpm_umk.nomor_induk_berusaha, '')) as nomor_induk_berusaha, TRIM(lkpm_umk.nama_pelaku_usaha) as nama_pelaku_usaha, TRIM(lkpm_umk.kbli) as kbli, COUNT(DISTINCT lkpm_umk.no_kode_proyek) as jumlah_proyek, SUM(lkpm_umk.tambahan_tenaga_kerja_laki_laki) as total_tenaga_kerja_laki, SUM(lkpm_umk.tambahan_tenaga_kerja_wanita) as total_tenaga_kerja_perempuan, SUM(lkpm_umk.modal_kerja_periode_pelaporan + lkpm_umk.modal_tetap_periode_pelaporan) as total_realisasi")
+                ->groupByRaw("COALESCE(CONCAT(ksec.code, ' - ', ksec.name), 'Tidak Terklasifikasi'), TRIM(COALESCE(lkpm_umk.nomor_induk_berusaha, '')), TRIM(lkpm_umk.nama_pelaku_usaha), TRIM(lkpm_umk.kbli)")
+                ->orderBy('kategori_kbli_section')
+                ->orderByDesc('total_realisasi')
+                ->get()
+                ->groupBy('kategori_kbli_section')
+                ->map(fn ($rows) => $rows->values()->all())
+                ->all();
+
+            $totalPerusahaanByKbliKategori = (clone $byKbliKategoriBase)
+                ->selectRaw("COUNT(DISTINCT {$umkCompanyKeySql}) as total")
+                ->first()?->total ?? 0;
 
             $topKbli = LkpmUmk::selectRaw('kbli, COUNT(DISTINCT no_kode_proyek) as jumlah_proyek, SUM(modal_kerja_periode_pelaporan + modal_tetap_periode_pelaporan) as total_investasi')
                 ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
@@ -473,13 +610,21 @@ class LkpmController extends Controller
                 ->get();
 
             $years = LkpmUmk::selectRaw('DISTINCT tahun_laporan')->whereNotNull('tahun_laporan')->pluck('tahun_laporan')->sort()->values();
-            $byStatus = collect();
-            $investasiStats = ['rencana' => 0, 'realisasi' => 0];
+            $investasiStats = $investasiStats ?? ['rencana' => 0, 'realisasi' => 0, 'akumulasi' => 0];
             $byTahun = LkpmUmk::selectRaw('tahun_laporan, COUNT(DISTINCT no_kode_proyek) as jumlah_proyek, SUM(modal_kerja_periode_pelaporan) as total_modal_kerja, SUM(modal_tetap_periode_pelaporan) as total_modal_tetap, SUM(tambahan_tenaga_kerja_laki_laki) as total_tk_laki, SUM(tambahan_tenaga_kerja_wanita) as total_tk_wanita')
                 ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
                 ->groupBy('tahun_laporan')
                 ->orderBy('tahun_laporan', 'asc')
                 ->get();
+
+            return view('admin.lkpm.statistik_umk', compact(
+                'judul', 'tab', 'tahun', 'periode',
+                'totalProyekFiltered', 'totalProyekAll', 'totalLaporan', 'totalPerusahaanFiltered',
+                'modalKerjaStats', 'modalTetapStats', 'investasiStats', 'tenagaKerja',
+                'byPeriode', 'byStatus', 'byStatusDetails', 'byKbliKategori', 'byKbliKategoriDetails',
+                'years', 'topKbli', 'byTahun', 'modalComponents',
+                'totalPerusahaanByStatus', 'totalPerusahaanByPeriode', 'totalPerusahaanByKbliKategori'
+            ));
         }
         
         // Set default values untuk view compatibility

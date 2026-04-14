@@ -82,7 +82,7 @@ class LkpmUmkImport implements ToModel, WithHeadingRow, WithUpserts
             }
             $model = new LkpmUmk([
                 'id_laporan' => $currentId,
-                'no_kode_proyek' => $this->getValue($row, ['no_kode_proyek', 'no kode proyek', 'kode_proyek', 'kode proyek']),
+                'no_kode_proyek' => $this->normalizeProjectCode($this->getValue($row, ['no_kode_proyek', 'no kode proyek', 'kode_proyek', 'kode proyek'])),
                 'skala_risiko' => $this->getValue($row, ['skala_risiko', 'skala risiko']),
                 'kbli' => $this->getValue($row, ['kbli']),
                 'tanggal_laporan' => $this->parseTanggal($this->getValue($row, ['tanggal_laporan', 'tanggal laporan'])),
@@ -317,5 +317,17 @@ class LkpmUmkImport implements ToModel, WithHeadingRow, WithUpserts
             $normalized['kab_kota'] = $row['kab_kota'];
         }
         return $normalized;
+    }
+
+    private function normalizeProjectCode($value)
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $normalized = trim(preg_replace('/[\x00-\x1F\x7F\x{00A0}]+/u', '', (string) $value));
+        $normalized = preg_replace('/\s+/u', '', $normalized);
+
+        return $normalized === '' ? null : strtoupper($normalized);
     }
 }

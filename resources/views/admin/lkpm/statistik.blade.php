@@ -124,34 +124,34 @@
                     <span class="avatar bg-success-lt me-2">
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 20l9 -4l-9 -4l-9 4l9 4" /><path d="M12 4l9 4l-9 4l-9 -4l9 -4" /></svg>
                     </span>
-                    <div class="subheader">Total Modal (Pelaporan)</div>
+                    <div class="subheader">Realisasi Investasi</div>
                   </div>
-                  <span class="badge bg-success-lt">Pelaporan</span>
+                  <span class="badge bg-success-lt">UMK</span>
                 </div>
-                <div class="h1 mb-1 text-success">Rp {{ number_format($modalComponents['total_pelaporan'] ?? 0, 0, ',', '.') }}</div>
+                <div class="h1 mb-1 text-success">Rp {{ number_format($investasiStats['realisasi'] ?? ($modalComponents['total_pelaporan'] ?? 0), 0, ',', '.') }}</div>
                 <div class="mt-2">
                   @php
-                    $totalPel = $modalComponents['total_pelaporan'] ?? 0;
+                    $totalPel = $investasiStats['realisasi'] ?? ($modalComponents['total_pelaporan'] ?? 0);
                     $mkPel = $modalComponents['kerja_pelaporan'] ?? 0;
                     $mtPel = $modalComponents['tetap_pelaporan'] ?? 0;
                     $mkPct = $totalPel > 0 ? round(($mkPel / max(1, $totalPel)) * 100) : 0;
                     $mtPct = $totalPel > 0 ? round(($mtPel / max(1, $totalPel)) * 100) : 0;
                   @endphp
                   <div class="d-flex justify-content-between small mb-1">
-                    <span class="text-muted">Modal Kerja</span>
+                    <span class="text-muted">Modal Kerja Periode Pelaporan</span>
                     <span class="text-muted">Rp {{ number_format($mkPel, 0, ',', '.') }}</span>
                   </div>
                   <div class="progress progress-sm mb-2">
                     <div class="progress-bar bg-success" style="width: {{ $mkPct }}%" role="progressbar" aria-valuenow="{{ $mkPct }}" aria-valuemin="0" aria-valuemax="100"></div>
                   </div>
                   <div class="d-flex justify-content-between small mb-1">
-                    <span class="text-muted">Modal Tetap</span>
+                    <span class="text-muted">Modal Tetap Periode Pelaporan</span>
                     <span class="text-muted">Rp {{ number_format($mtPel, 0, ',', '.') }}</span>
                   </div>
                   <div class="progress progress-sm">
                     <div class="progress-bar bg-info" style="width: {{ $mtPct }}%" role="progressbar" aria-valuenow="{{ $mtPct }}" aria-valuemin="0" aria-valuemax="100"></div>
                   </div>
-                  <div class="small text-muted mt-2">Bagian dari total modal pelaporan</div>
+                  <div class="small text-muted mt-2">Realisasi investasi UMK = modal kerja + modal tetap periode pelaporan</div>
                 </div>
               </div>
             </div>
@@ -426,7 +426,7 @@
                     $sumTotalModal = ($sumMk ?? 0) + ($sumMt ?? 0);
                   @endphp
                   <div class="d-flex flex-wrap gap-2 small mb-2">
-                    <span class="badge bg-success-lt">Total: Rp {{ number_format($sumTotalModal, 0, ',', '.') }}</span>
+                    <span class="badge bg-success-lt">Realisasi: Rp {{ number_format($sumTotalModal, 0, ',', '.') }}</span>
                     <span class="badge bg-green-lt">Kerja: Rp {{ number_format($sumMk ?? 0, 0, ',', '.') }}</span>
                     <span class="badge bg-info-lt">Tetap: Rp {{ number_format($sumMt ?? 0, 0, ',', '.') }}</span>
                   </div>
@@ -463,7 +463,7 @@
                       <th class="text-center">Proyek</th>
                       <th class="text-end">Modal Kerja</th>
                       <th class="text-end">Modal Tetap</th>
-                      <th class="text-end">Total Modal</th>
+                      <th class="text-end">Realisasi Investasi</th>
                       <th class="text-center">TK Laki-laki</th>
                       <th class="text-center">TK Perempuan</th>
                       <th class="text-center">TK Total</th>
@@ -505,7 +505,7 @@
                   $sumTahunTotal = ($sumTahunKerja ?? 0) + ($sumTahunTetap ?? 0);
                 @endphp
                 <div class="d-flex flex-wrap gap-2 small mb-2">
-                  <span class="badge bg-success-lt">Total: Rp {{ number_format($sumTahunTotal, 0, ',', '.') }}</span>
+                  <span class="badge bg-success-lt">Realisasi: Rp {{ number_format($sumTahunTotal, 0, ',', '.') }}</span>
                   <span class="badge bg-green-lt">Kerja: Rp {{ number_format($sumTahunKerja ?? 0, 0, ',', '.') }}</span>
                   <span class="badge bg-info-lt">Tetap: Rp {{ number_format($sumTahunTetap ?? 0, 0, ',', '.') }}</span>
                 </div>
@@ -530,7 +530,7 @@
                       <th class="text-center">Proyek</th>
                       <th class="text-end">Modal Kerja</th>
                       <th class="text-end">Modal Tetap</th>
-                      <th class="text-end">Total Modal</th>
+                      <th class="text-end">Realisasi Investasi</th>
                     </tr>
                   </thead>
                   <tbody>

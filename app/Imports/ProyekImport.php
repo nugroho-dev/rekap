@@ -105,7 +105,7 @@ class ProyekImport implements ToCollection, WithHeadingRow, WithValidation, With
 
             // normalize id_proyek and skip duplicates seen before (across file / previous batches)
             $idProyekValue = (string) $get('id_proyek');
-            $idProyekTrim = trim($idProyekValue);
+            $idProyekTrim = $this->normalizeProjectCode($idProyekValue);
             if ($idProyekTrim === '') {
                 $this->skipped[] = [
                     'row_index' => $index + 1,
@@ -184,7 +184,7 @@ class ProyekImport implements ToCollection, WithHeadingRow, WithValidation, With
         // Dedupe rows in the incoming batch by id_proyek (keep first occurrence)
         $unique = [];
         foreach ($batch as $row) {
-            $key = isset($row['id_proyek']) ? trim((string)$row['id_proyek']) : '';
+            $key = isset($row['id_proyek']) ? $this->normalizeProjectCode((string) $row['id_proyek']) : '';
             if ($key === '') {
                 // safeguard: skip rows without id_proyek (should be caught earlier)
                 $this->skipped[] = ['row' => $row, 'reason' => 'empty id_proyek'];
@@ -206,14 +206,14 @@ class ProyekImport implements ToCollection, WithHeadingRow, WithValidation, With
         if (empty($batch)) return;
 
         // --- NEW: skip rows where id_proyek already exists in database ---
-        $ids = array_map(function($r){ return (string) $r['id_proyek']; }, $batch);
-        $existingIds = Proyek::whereIn('id_proyek', $ids)->pluck('id_proyek')->map(function($v){ return (string) $v; })->all();
+        $ids = array_map(function($r){ return $this->normalizeProjectCode((string) $r['id_proyek']); }, $batch);
+        $existingIds = Proyek::whereIn('id_proyek', $ids)->pluck('id_proyek')->map(function($v){ return $this->normalizeProjectCode((string) $v); })->all();
 
         if (!empty($existingIds)) {
             // remove existing from batch and record skipped entries
             $filtered = [];
             foreach ($batch as $row) {
-                if (in_array((string)$row['id_proyek'], $existingIds, true)) {
+                if (in_array($this->normalizeProjectCode((string) $row['id_proyek']), $existingIds, true)) {
                     $this->skipped[] = [
                         'row' => $row,
                         'reason' => 'id_proyek already exists in database - skipped'
@@ -319,6 +319,14 @@ class ProyekImport implements ToCollection, WithHeadingRow, WithValidation, With
             if (isset($normalized[$cand]) && $normalized[$cand] !== '') return $normalized[$cand];
         }
         return null;
+    }
+
+    protected function normalizeProjectCode($value)
+    {
+        $normalized = trim(preg_replace('/[\x00-\x1F\x7F\x{00A0}]+/u', '', (string) $value));
+        $normalized = preg_replace('/\s+/u', '', $normalized);
+
+        return strtoupper($normalized);
     }
 
     public function rules(): array
