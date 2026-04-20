@@ -209,6 +209,7 @@
                                     <thead>
                                         <tr>
                                             <th>Jenis Modal</th>
+                                            <th class="text-end">Jumlah Perusahaan</th>
                                             <th class="text-end">Jumlah Proyek</th>
                                             <th class="text-end">Total Modal</th>
                                             <th class="text-end">Total TK</th>
@@ -216,15 +217,19 @@
                                     </thead>
                                     <tbody>
                                         @forelse(($statistik_jenis_modal ?? collect()) as $row)
-                                            <tr>
+                                            <tr role="button" style="cursor:pointer"
+                                                data-bs-toggle="modal" data-bs-target="#detailModal"
+                                                data-title="Detail Jenis Modal: {{ $row['jenis_modal'] ?? '-' }}"
+                                                data-companies="{{ json_encode($row['companies'] ?? []) }}">
                                                 <td>{{ $row['jenis_modal'] ?? '-' }}</td>
+                                                <td class="text-end">{{ number_format($row['jumlah_perusahaan'] ?? 0, 0, ',', '.') }}</td>
                                                 <td class="text-end">{{ number_format($row['jumlah_proyek'] ?? 0, 0, ',', '.') }}</td>
                                                 <td class="text-end">Rp {{ number_format($row['total_modal'] ?? 0, 0, ',', '.') }}</td>
                                                 <td class="text-end">{{ number_format($row['total_tk'] ?? 0, 0, ',', '.') }}</td>
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="4" class="text-center text-muted py-4">Data PMA/PMDN belum tersedia.</td>
+                                                <td colspan="5" class="text-center text-muted py-4">Data PMA/PMDN belum tersedia.</td>
                                             </tr>
                                         @endforelse
                                     </tbody>
@@ -244,6 +249,7 @@
                                     <thead>
                                         <tr>
                                             <th>Kategori KBLI</th>
+                                            <th class="text-end">Jumlah Perusahaan</th>
                                             <th class="text-end">Jumlah Proyek</th>
                                             <th class="text-end">Total Modal</th>
                                             <th class="text-end">Total TK</th>
@@ -251,15 +257,19 @@
                                     </thead>
                                     <tbody>
                                         @forelse(($statistik_kbli_kategori ?? collect()) as $row)
-                                            <tr>
+                                            <tr role="button" style="cursor:pointer"
+                                                data-bs-toggle="modal" data-bs-target="#detailModal"
+                                                data-title="Detail Kategori KBLI: {{ $row['kategori_kbli'] ?? '-' }}"
+                                                data-companies="{{ json_encode($row['companies'] ?? []) }}">
                                                 <td>{{ $row['kategori_kbli'] ?? '-' }}</td>
+                                                <td class="text-end">{{ number_format($row['jumlah_perusahaan'] ?? 0, 0, ',', '.') }}</td>
                                                 <td class="text-end">{{ number_format($row['jumlah_proyek'] ?? 0, 0, ',', '.') }}</td>
                                                 <td class="text-end">Rp {{ number_format($row['total_modal'] ?? 0, 0, ',', '.') }}</td>
                                                 <td class="text-end">{{ number_format($row['total_tk'] ?? 0, 0, ',', '.') }}</td>
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="4" class="text-center text-muted py-4">Data kategori KBLI belum tersedia.</td>
+                                                <td colspan="5" class="text-center text-muted py-4">Data kategori KBLI belum tersedia.</td>
                                             </tr>
                                         @endforelse
                                     </tbody>
@@ -290,7 +300,11 @@
                                     </thead>
                                     <tbody>
                                         @forelse($yearSummary as $row)
-                                            <tr>
+                                            @php $rowCompanies = $tahunCompanies[$row->tahun] ?? [] @endphp
+                                            <tr role="button" style="cursor:pointer"
+                                                data-bs-toggle="modal" data-bs-target="#detailModal"
+                                                data-title="Detail Tahun: {{ $row->tahun ?? '-' }}"
+                                                data-companies="{{ json_encode($rowCompanies) }}">
                                                 <td>{{ $row->tahun }}</td>
                                                 <td class="text-end">{{ number_format($row->jumlah ?? 0, 0, ',', '.') }}</td>
                                                 <td class="text-end">Rp {{ number_format($row->total_modal_kerja ?? 0, 0, ',', '.') }}</td>
@@ -345,8 +359,15 @@
                                     </thead>
                                     <tbody>
                                         @forelse($tanggalCollection as $row)
-                                            <tr>
-                                                <td>{{ $row->tanggal ? \Carbon\Carbon::parse($row->tanggal)->translatedFormat('d F Y') : '-' }}</td>
+                                            @php
+                                                $tgl = $row->tanggal ? \Carbon\Carbon::parse($row->tanggal)->translatedFormat('d F Y') : '-';
+                                                $rowCompanies = $tanggalCompanies[$row->tanggal] ?? [];
+                                            @endphp
+                                            <tr role="button" style="cursor:pointer"
+                                                data-bs-toggle="modal" data-bs-target="#detailModal"
+                                                data-title="Detail Tanggal: {{ $tgl }}"
+                                                data-companies="{{ json_encode($rowCompanies) }}">
+                                                <td>{{ $tgl }}</td>
                                                 <td class="text-end">{{ number_format($row->jumlah ?? 0, 0, ',', '.') }}</td>
                                                 <td class="text-end">Rp {{ number_format($row->total_modal_kerja ?? 0, 0, ',', '.') }}</td>
                                                 <td class="text-end">Rp {{ number_format($row->total_modal_tetap ?? 0, 0, ',', '.') }}</td>
@@ -400,7 +421,10 @@
                                     </thead>
                                     <tbody>
                                         @forelse($kecamatanSummary as $row)
-                                            <tr>
+                                            <tr role="button" style="cursor:pointer"
+                                                data-bs-toggle="modal" data-bs-target="#detailModal"
+                                                data-title="Detail Kecamatan: {{ $row->kecamatan ?? '-' }}"
+                                                data-companies="{{ json_encode($row->companies ?? []) }}">
                                                 <td>{{ $row->kecamatan }}</td>
                                                 <td class="text-end">{{ number_format($row->jumlah ?? 0, 0, ',', '.') }}</td>
                                                 <td class="text-end">Rp {{ number_format(($row->total_modal_kerja ?? 0) + ($row->total_modal_tetap ?? 0), 0, ',', '.') }}</td>
@@ -436,7 +460,10 @@
                                     </thead>
                                     <tbody>
                                         @forelse($statistik_kelurahan as $row)
-                                            <tr>
+                                            <tr role="button" style="cursor:pointer"
+                                                data-bs-toggle="modal" data-bs-target="#detailModal"
+                                                data-title="Detail Kelurahan: {{ $row->kelurahan ?? '-' }}"
+                                                data-companies="{{ json_encode($row->companies ?? []) }}">
                                                 <td>{{ $row->kelurahan }}</td>
                                                 <td>{{ $row->kecamatan }}</td>
                                                 <td class="text-end">{{ number_format($row->jumlah ?? 0, 0, ',', '.') }}</td>
@@ -454,6 +481,30 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Modal Detail Perusahaan --}}
+<div class="modal modal-blur fade" id="detailModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detailModalLabel">Detail</h5>
+                <span class="badge bg-secondary ms-2" id="detailModalCount"></span>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm table-vcenter table-hover mb-0">
+                        <thead id="detailModalHead" class="table-light"></thead>
+                        <tbody id="detailModalBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
             </div>
         </div>
     </div>
@@ -526,6 +577,39 @@ document.addEventListener('DOMContentLoaded', function () {
             },
             noData: { text: 'Tidak ada data kecamatan.' }
         }).render();
+    }
+
+    const detailModal = document.getElementById('detailModal');
+    if (detailModal) {
+        detailModal.addEventListener('show.bs.modal', function (event) {
+            const trigger = event.relatedTarget;
+            if (!trigger) return;
+            const title = trigger.getAttribute('data-title') || 'Detail';
+            let companies = [];
+            try { companies = JSON.parse(trigger.getAttribute('data-companies') || '[]'); } catch (e) {}
+            document.getElementById('detailModalLabel').textContent = title;
+            document.getElementById('detailModalCount').textContent = companies.length + ' perusahaan';
+            document.getElementById('detailModalHead').innerHTML =
+                '<tr><th style="width:40px">No</th><th>NIB</th><th>Nama Perusahaan</th>' +
+                '<th class="text-end">Modal Kerja</th><th class="text-end">Modal Tetap</th>' +
+                '<th class="text-end">Total Modal</th><th class="text-end">TKI</th></tr>';
+            document.getElementById('detailModalBody').innerHTML = companies.length
+                ? companies.map(function (c, i) {
+                    const mk  = Number(c.modal_kerja || 0);
+                    const mt  = Number(c.modal_tetap || 0);
+                    const tot = (mk + mt).toLocaleString('id-ID');
+                    return '<tr>' +
+                        '<td class="text-muted">' + (i + 1) + '</td>' +
+                        '<td><code>' + (c.nib || '-') + '</code></td>' +
+                        '<td>' + (c.nama || '-') + '</td>' +
+                        '<td class="text-end">Rp ' + mk.toLocaleString('id-ID') + '</td>' +
+                        '<td class="text-end">Rp ' + mt.toLocaleString('id-ID') + '</td>' +
+                        '<td class="text-end fw-medium">Rp ' + tot + '</td>' +
+                        '<td class="text-end">' + Number(c.tki || 0).toLocaleString('id-ID') + '</td>' +
+                        '</tr>';
+                }).join('')
+                : '<tr><td colspan="7" class="text-center text-muted py-4">Tidak ada data perusahaan.</td></tr>';
+        });
     }
 });
 </script>
