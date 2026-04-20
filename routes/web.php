@@ -46,6 +46,8 @@ use App\Http\Controllers\ProyekVerificationController;
 use App\Http\Controllers\NibController;
 use App\Http\Controllers\IzinController;
 use App\Http\Controllers\Admin\PublikasiDataController;
+use App\Http\Controllers\Admin\ApiDocumentationController;
+use App\Http\Controllers\Admin\ApiAuditLogController;
 use App\Models\Proses;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\KbliController;
@@ -91,6 +93,10 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('permission:dashboard.view');
     Route::get('/maintenance', [MaintenanceController::class, 'index'])->middleware('permission:dashboard.view');
+    Route::get('/api/docs', [ApiDocumentationController::class, 'index'])->name('api.docs.index')->middleware('permission:api.docs.view');
+    Route::get('/api/audits', [ApiAuditLogController::class, 'index'])->name('api.audits.index')->middleware('permission:api.audit.view');
+    Route::get('/api/audits/export', [ApiAuditLogController::class, 'exportCsv'])->name('api.audits.export')->middleware('permission:api.audit.export');
+    Route::get('/api/audits/{apiAuditLog}', [ApiAuditLogController::class, 'show'])->name('api.audits.show')->middleware('permission:api.audit.view');
 
     // konfigurasi group (pegawai, instansi, user)
     Route::prefix('konfigurasi')->name('konfigurasi.')->middleware('permission:konfigurasi.view')->group(function () {
@@ -120,9 +126,13 @@ Route::middleware('auth')->group(function () {
         Route::delete('instansi/{instansi}/force-delete', [InstansiController::class, 'forceDelete'])->name('instansi.forceDelete');
 
         // User
+        Route::get('user/api-accounts', [UsersDashboardController::class, 'apiAccounts'])->name('user.api-accounts');
         Route::get('user/checkSlug', [UsersDashboardController::class, 'checkSlug'])->name('user.checkSlug');
         Route::get('user/{user}/access', [UsersDashboardController::class, 'access'])->name('user.access');
         Route::put('user/{user}/access', [UsersDashboardController::class, 'updateAccess'])->name('user.access.update');
+        Route::post('user/{user}/api-tokens', [UsersDashboardController::class, 'storeApiToken'])->name('user.api-tokens.store');
+        Route::post('user/{user}/api-tokens/quick', [UsersDashboardController::class, 'storeQuickApiToken'])->name('user.api-tokens.quick-store');
+        Route::delete('user/{user}/api-tokens/{tokenId}', [UsersDashboardController::class, 'destroyApiToken'])->name('user.api-tokens.destroy');
         Route::resource('user', UsersDashboardController::class)->names('user');
 
         // Publikasi Data
@@ -402,7 +412,7 @@ Route::middleware('auth')->group(function () {
     // Role / Permission helpers (protected)
     Route::get('/createrolepermission', function(){
         try{
-            Role::create(['name' => 'administrator']);
+            Role::query()->firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
             Permission::create(['name' => 'view-konsultasi']);
             return 'sukses';
         } catch(\Exception $th){
@@ -412,7 +422,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/give-user-role', function(){
         try {
             $user = User::findOrFail(1);
-            $user->assignRole('administrator');
+            $user->assignRole('admin');
             return 'sukses';
         } catch(\Exception $th) {
             return 'gagal';

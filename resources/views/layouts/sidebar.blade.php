@@ -151,6 +151,18 @@
                 </a>
               </li>
               @endcan
+              @can('api.docs.view')
+              <li class="nav-item {{ Request::is('api/docs*')?'active':'' }} {{ Request::is('api/audits*')?'active':'' }}">
+                <a class="nav-link" href="{{ route('api.docs.index') }}" >
+                  <span class="nav-link-icon d-md-none d-lg-inline-block">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 5m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v3a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" /><path d="M3 17m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" /><path d="M7 8l0 .01" /><path d="M7 17l0 .01" /><path d="M11 8h6" /><path d="M11 17h6" /></svg>
+                  </span>
+                  <span class="nav-link-title">
+                    REST API
+                  </span>
+                </a>
+              </li>
+              @endcan
               @canany(['verification.view','lkpm.view','sigumilang.view'])
               <li class="nav-item {{ Request::is('realisasi*')?'active':'' }} {{ Request::is('lkpm*')?'active':'' }} {{ Request::is('proyek/realisasi*')?'active':'' }} dropdown">
                 <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="true" >
@@ -476,6 +488,11 @@
                       @can('user.view')
                       <a class="dropdown-item" href="{{ url('/konfigurasi/user') }}">
                         User
+                      </a>
+                      @endcan
+                      @can('user.view')
+                      <a class="dropdown-item" href="{{ route('konfigurasi.user.api-accounts') }}">
+                        Akun API
                       </a>
                       @endcan
                       @can('pegawai.view')

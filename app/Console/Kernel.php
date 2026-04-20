@@ -15,6 +15,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('sych:sicantik')->everyMinute();
         $schedule->command('wa:cron')->everyMinute();
         $schedule->command('simpel:cron')->dailyAt('13:00');
+        $schedule->command('api-audit:prune --days=90')->dailyAt('01:00');
     }
 
     /**

@@ -18,6 +18,12 @@ class PermissionSeeder extends Seeder
 
         $permissions = [
             'view_admin',
+            'web.login',
+            'api.login',
+            'api.docs.view',
+            'api.audit.view',
+            'api.audit.export',
+            'api.token.manage',
             'dashboard.view',
             'konfigurasi.view',
             'user.view',
@@ -63,10 +69,16 @@ class PermissionSeeder extends Seeder
         $admin = Role::query()->firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
         $staf = Role::query()->firstOrCreate(['name' => 'staf', 'guard_name' => 'web']);
         $guest = Role::query()->firstOrCreate(['name' => 'guest', 'guard_name' => 'web']);
+        $apiClient = Role::query()->firstOrCreate(['name' => 'api-client', 'guard_name' => 'web']);
 
         $admin->syncPermissions($permissions);
         $staf->syncPermissions([
             'view_admin',
+            'web.login',
+            'api.docs.view',
+            'api.audit.view',
+            'api.audit.export',
+            'api.token.manage',
             'dashboard.view',
             'konfigurasi.view',
             'user.view',
@@ -98,6 +110,7 @@ class PermissionSeeder extends Seeder
             'bimtek.view',
             'fasilitasi.view',
         ]);
-        $guest->syncPermissions(['view_admin', 'dashboard.view']);
+        $guest->syncPermissions(['view_admin', 'dashboard.view', 'web.login']);
+        $apiClient->syncPermissions(['api.login']);
     }
 }

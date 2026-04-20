@@ -15,9 +15,16 @@ class UsersSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->call([
+            RoleSeeder::class,
+            PermissionSeeder::class,
+        ]);
+
         // Create minimal related records if they don't exist, then ensure the user has the admin role.
         DB::transaction(function () {
-            $email = 'didik.ngr@gmail.com';
+            $email = env('ADMIN_DEFAULT_EMAIL', 'didik.ngr@gmail.com');
+            $password = env('ADMIN_DEFAULT_PASSWORD', 'password');
+            $adminName = env('ADMIN_DEFAULT_NAME', 'Admin');
 
             // Ensure an instansi exists
             $instansi = DB::table('instansi')->first();
@@ -38,9 +45,9 @@ class UsersSeeder extends Seeder
             if (! $pegawai) {
                 $pegawaiId = DB::table('pegawai')->insertGetId([
                     'pegawai_token' => (string) Str::uuid(),
-                    'nama' => 'Admin',
+                    'nama' => $adminName,
                     'id_instansi' => $instansiId,
-                    'slug' => Str::slug('Admin'),
+                    'slug' => Str::slug($adminName),
                     'nip' => null,
                     'no_hp' => null,
                     'foto' => null,
@@ -58,7 +65,7 @@ class UsersSeeder extends Seeder
                 [
                     'id_pegawai' => $pegawaiId,
                     'email_verified_at' => now(),
-                    'password' => Hash::make('password'),
+                    'password' => Hash::make($password),
                     'remember_token' => Str::random(10),
                 ]
             );

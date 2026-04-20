@@ -128,7 +128,15 @@ class FortifyServiceProvider extends ServiceProvider
             if ($user) {
                 $ok = Hash::check($request->input('password'), $user->password);
                 Log::debug('login.hashcheck', ['ok' => $ok]);
-                if ($ok) return $user;
+                if ($ok) {
+                    if (! $user->can('web.login')) {
+                        Session::flash('loginError', 'Akun ini tidak diizinkan untuk login ke panel web.');
+
+                        return null;
+                    }
+
+                    return $user;
+                }
             }
 
             return null;
