@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Support\ApiTokenAbility;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -14,7 +14,7 @@ use Tests\TestCase;
 
 class ApiAuthTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     public function test_login_returns_bearer_token_for_valid_credentials(): void
     {

@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Support\ApiTokenAbility;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -13,7 +13,7 @@ use Tests\TestCase;
 
 class UserApiTokenManagementTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     public function test_admin_can_generate_and_revoke_token_for_api_user(): void
     {

@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\Models\Proyek;
 use App\Models\User;
 use App\Support\ApiTokenAbility;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\Sanctum;
@@ -13,7 +13,7 @@ use Tests\TestCase;
 
 class BerusahaStatistikApiTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     public function test_proyek_statistik_requires_authentication(): void
     {
