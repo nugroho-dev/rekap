@@ -8,9 +8,13 @@
         $topKecamatan = $kecamatanSummary->take(10)->values();
         $tanggalCollection = $statistik_tanggal->getCollection();
         $periodeLabel = ($periode ?? '') === '1' ? 'Semester I' : (($periode ?? '') === '2' ? 'Semester II' : null);
+        $dateRangeLabel = filled($date_start ?? null) && filled($date_end ?? null)
+            ? 'Tanggal Input ' . \Carbon\Carbon::parse($date_start)->translatedFormat('d M Y') . ' - ' . \Carbon\Carbon::parse($date_end)->translatedFormat('d M Y')
+            : null;
         $activeFilters = collect([
             filled($periodeLabel) ? 'Periode ' . $periodeLabel : null,
             filled($tahun) ? 'Tahun ' . $tahun : null,
+            $dateRangeLabel,
         ])->filter()->values();
 @endphp
 
@@ -61,13 +65,21 @@
                             </select>
                         </div>
                         <div class="col-md-3">
+                            <label class="form-label">Tanggal Input Mulai</label>
+                            <input type="date" name="date_start" class="form-control" value="{{ $date_start ?? '' }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Tanggal Input Akhir</label>
+                            <input type="date" name="date_end" class="form-control" value="{{ $date_end ?? '' }}">
+                        </div>
+                        <div class="col-md-12 col-lg-3">
                             <div class="btn-group w-100">
                                 <button type="submit" class="btn btn-primary">Filter</button>
                                 <a href="{{ url('/pengawasan/statistik/sigumilang') }}" class="btn btn-secondary">Reset</a>
                             </div>
                         </div>
                     </div>
-                    <div class="form-hint mt-2">Kolom periode menggunakan nilai angka: 1 (Semester I) dan 2 (Semester II).</div>
+                    <div class="form-hint mt-2">Kolom periode menggunakan nilai angka: 1 (Semester I) dan 2 (Semester II). Filter tanggal menggunakan tanggal input data.</div>
                 </form>
 
                 <div class="d-flex flex-wrap gap-2 small mb-4">
@@ -349,6 +361,9 @@
                                         <tr>
                                             <th>Tanggal Input</th>
                                             <th class="text-end">Jumlah Laporan</th>
+                                            <th class="text-end">Jumlah Perusahaan</th>
+                                            <th class="text-end">Jumlah PMA</th>
+                                            <th class="text-end">Jumlah PMDN</th>
                                             <th class="text-end">Modal Kerja</th>
                                             <th class="text-end">Modal Tetap</th>
                                             <th class="text-end">Total Modal</th>
@@ -369,6 +384,9 @@
                                                 data-companies="{{ json_encode($rowCompanies) }}">
                                                 <td>{{ $tgl }}</td>
                                                 <td class="text-end">{{ number_format($row->jumlah ?? 0, 0, ',', '.') }}</td>
+                                                <td class="text-end">{{ number_format(count($rowCompanies), 0, ',', '.') }}</td>
+                                                <td class="text-end">{{ number_format($row->jumlah_pma ?? 0, 0, ',', '.') }}</td>
+                                                <td class="text-end">{{ number_format($row->jumlah_pmdn ?? 0, 0, ',', '.') }}</td>
                                                 <td class="text-end">Rp {{ number_format($row->total_modal_kerja ?? 0, 0, ',', '.') }}</td>
                                                 <td class="text-end">Rp {{ number_format($row->total_modal_tetap ?? 0, 0, ',', '.') }}</td>
                                                 <td class="text-end">Rp {{ number_format(($row->total_modal_kerja ?? 0) + ($row->total_modal_tetap ?? 0), 0, ',', '.') }}</td>
@@ -378,13 +396,16 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="8" class="text-center text-muted py-4">Tidak ada data statistik per tanggal input.</td>
+                                                <td colspan="11" class="text-center text-muted py-4">Tidak ada data statistik per tanggal input.</td>
                                             </tr>
                                         @endforelse
                                         @if($tanggalCollection->isNotEmpty())
                                             <tr class="table-active fw-bold">
                                                 <td>TOTAL HALAMAN</td>
                                                 <td class="text-end">{{ number_format($tanggalCollection->sum('jumlah'), 0, ',', '.') }}</td>
+                                                <td class="text-end">{{ number_format($tanggalCollection->sum(function ($item) use ($tanggalCompanies) { return count($tanggalCompanies[$item->tanggal] ?? []); }), 0, ',', '.') }}</td>
+                                                <td class="text-end">{{ number_format($tanggalCollection->sum('jumlah_pma'), 0, ',', '.') }}</td>
+                                                <td class="text-end">{{ number_format($tanggalCollection->sum('jumlah_pmdn'), 0, ',', '.') }}</td>
                                                 <td class="text-end">Rp {{ number_format($tanggalCollection->sum('total_modal_kerja'), 0, ',', '.') }}</td>
                                                 <td class="text-end">Rp {{ number_format($tanggalCollection->sum('total_modal_tetap'), 0, ',', '.') }}</td>
                                                 <td class="text-end">Rp {{ number_format($tanggalCollection->sum('total_modal_kerja') + $tanggalCollection->sum('total_modal_tetap'), 0, ',', '.') }}</td>
@@ -587,28 +608,76 @@ document.addEventListener('DOMContentLoaded', function () {
             const title = trigger.getAttribute('data-title') || 'Detail';
             let companies = [];
             try { companies = JSON.parse(trigger.getAttribute('data-companies') || '[]'); } catch (e) {}
+            const multiProjectCompanies = companies.filter(function (c) {
+                return Number(c.jumlah_proyek || 0) > 1;
+            });
             document.getElementById('detailModalLabel').textContent = title;
-            document.getElementById('detailModalCount').textContent = companies.length + ' perusahaan';
+            document.getElementById('detailModalCount').textContent =
+                companies.length + ' perusahaan, ' + multiProjectCompanies.length + ' multi-proyek';
             document.getElementById('detailModalHead').innerHTML =
                 '<tr><th style="width:40px">No</th><th>NIB</th><th>Nama Perusahaan</th>' +
+                '<th class="text-end">Jumlah Proyek</th>' +
                 '<th class="text-end">Modal Kerja</th><th class="text-end">Modal Tetap</th>' +
-                '<th class="text-end">Total Modal</th><th class="text-end">TKI</th></tr>';
-            document.getElementById('detailModalBody').innerHTML = companies.length
-                ? companies.map(function (c, i) {
-                    const mk  = Number(c.modal_kerja || 0);
-                    const mt  = Number(c.modal_tetap || 0);
-                    const tot = (mk + mt).toLocaleString('id-ID');
-                    return '<tr>' +
+                '<th class="text-end">Total Modal</th><th class="text-end">TKI</th>' +
+                '<th></th></tr>';
+            if (companies.length) {
+                const totals = companies.reduce(function (acc, c) {
+                    acc.jumlah_proyek += Number(c.jumlah_proyek || 0);
+                    acc.modal_kerja += Number(c.modal_kerja || 0);
+                    acc.modal_tetap += Number(c.modal_tetap || 0);
+                    acc.tki += Number(c.tki || 0);
+                    return acc;
+                }, { jumlah_proyek: 0, modal_kerja: 0, modal_tetap: 0, tki: 0 });
+
+                const indexBaseUrl = '{{ url("/pengawasan/sigumilang") }}';
+
+                const rows = companies.map(function (c, i) {
+                    const mk = Number(c.modal_kerja || 0);
+                    const mt = Number(c.modal_tetap || 0);
+                    const tot = mk + mt;
+                    const jumlahProyek = Number(c.jumlah_proyek || 0);
+                    const isMultiProject = jumlahProyek > 1;
+                    const nameDetail = isMultiProject
+                        ? '<div class="text-muted small">Rincian: memiliki ' + jumlahProyek.toLocaleString('id-ID') + ' proyek.</div>'
+                        : '';
+                    const proyekCell = isMultiProject
+                        ? '<span class="badge bg-warning-lt text-warning">' + jumlahProyek.toLocaleString('id-ID') + ' proyek</span>'
+                        : jumlahProyek.toLocaleString('id-ID');
+
+                    const searchTerm = (c.nib && c.nib !== '-') ? c.nib : (c.nama || '');
+                    const indexUrl = searchTerm
+                        ? indexBaseUrl + '?search=' + encodeURIComponent(searchTerm)
+                        : indexBaseUrl;
+
+                    return '<tr' + (isMultiProject ? ' class="table-warning"' : '') + '>' +
                         '<td class="text-muted">' + (i + 1) + '</td>' +
                         '<td><code>' + (c.nib || '-') + '</code></td>' +
-                        '<td>' + (c.nama || '-') + '</td>' +
+                        '<td>' + (c.nama || '-') + nameDetail + '</td>' +
+                        '<td class="text-end">' + proyekCell + '</td>' +
                         '<td class="text-end">Rp ' + mk.toLocaleString('id-ID') + '</td>' +
                         '<td class="text-end">Rp ' + mt.toLocaleString('id-ID') + '</td>' +
-                        '<td class="text-end fw-medium">Rp ' + tot + '</td>' +
+                        '<td class="text-end fw-medium">Rp ' + tot.toLocaleString('id-ID') + '</td>' +
                         '<td class="text-end">' + Number(c.tki || 0).toLocaleString('id-ID') + '</td>' +
+                        '<td><a href="' + indexUrl + '" target="_blank" class="btn btn-sm btn-outline-primary" title="Lihat data di index">Lihat</a></td>' +
                         '</tr>';
-                }).join('')
-                : '<tr><td colspan="7" class="text-center text-muted py-4">Tidak ada data perusahaan.</td></tr>';
+                }).join('');
+
+                const totalModal = totals.modal_kerja + totals.modal_tetap;
+                const totalRow = '<tr class="table-light fw-bold">' +
+                    '<td colspan="3" class="text-end">TOTAL</td>' +
+                    '<td class="text-end">' + totals.jumlah_proyek.toLocaleString('id-ID') + '</td>' +
+                    '<td class="text-end">Rp ' + totals.modal_kerja.toLocaleString('id-ID') + '</td>' +
+                    '<td class="text-end">Rp ' + totals.modal_tetap.toLocaleString('id-ID') + '</td>' +
+                    '<td class="text-end">Rp ' + totalModal.toLocaleString('id-ID') + '</td>' +
+                    '<td class="text-end">' + totals.tki.toLocaleString('id-ID') + '</td>' +
+                    '<td></td>' +
+                    '</tr>';
+
+                document.getElementById('detailModalBody').innerHTML = rows + totalRow;
+            } else {
+                document.getElementById('detailModalBody').innerHTML =
+                    '<tr><td colspan="9" class="text-center text-muted py-4">Tidak ada data perusahaan.</td></tr>';
+            }
         });
     }
 });
