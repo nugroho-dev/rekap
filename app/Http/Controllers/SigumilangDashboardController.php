@@ -177,6 +177,8 @@ class SigumilangDashboardController extends Controller
         // Filter berdasarkan semester (kolom periode) dan tahun (kolom tahun)
         $periode = $request->input('periode');
         $tahun = $request->input('tahun');
+        $date_start = $request->input('date_start');
+        $date_end = $request->input('date_end');
 
         $baseQuery = Sigumilang::query();
 
@@ -197,6 +199,20 @@ class SigumilangDashboardController extends Controller
             if ($periodeFilter !== null) {
                 $baseQuery->where('periode', $periodeFilter);
                 $periode = $periodeFilter;
+            }
+        }
+
+        if (!empty($date_start) && !empty($date_end)) {
+            if ($date_start > $date_end) {
+                return redirect()->back()->withInput()->with('error', 'Silakan cek kembali range tanggal input Anda.');
+            }
+
+            try {
+                $start = Carbon::createFromFormat('Y-m-d', $date_start)->startOfDay();
+                $end = Carbon::createFromFormat('Y-m-d', $date_end)->endOfDay();
+                $baseQuery->whereBetween('created_at', [$start, $end]);
+            } catch (\Throwable $e) {
+                // Ignore invalid date format.
             }
         }
 
@@ -256,6 +272,36 @@ class SigumilangDashboardController extends Controller
         $statistik_kbli_kategori = collect();
         $tahunCompanies   = [];
         $tanggalCompanies = [];
+        $tanggalJenisModalCounts = [];
+        $jumlah_perusahaan = 0;
+
+        $normalizeCompanies = static function (array $companies) {
+            $normalized = [];
+
+            foreach ($companies as $company) {
+                $nib = trim((string) ($company['nib'] ?? ''));
+                $nama = trim((string) ($company['nama'] ?? '-')) ?: '-';
+                $key = $nib !== '' && $nib !== '-' ? 'nib:' . $nib : 'name:' . $nama;
+
+                if (!isset($normalized[$key])) {
+                    $normalized[$key] = [
+                        'nib'           => $nib !== '' ? $nib : '-',
+                        'nama'          => $nama,
+                        'modal_kerja'   => 0.0,
+                        'modal_tetap'   => 0.0,
+                        'tki'           => 0,
+                        'jumlah_proyek' => 0,
+                    ];
+                }
+
+                $normalized[$key]['modal_kerja']   += (float) ($company['modal_kerja'] ?? 0);
+                $normalized[$key]['modal_tetap']   += (float) ($company['modal_tetap'] ?? 0);
+                $normalized[$key]['tki']           += (int) ($company['tki'] ?? 0);
+                $normalized[$key]['jumlah_proyek'] += (int) ($company['jumlah_proyek'] ?? 1);
+            }
+
+            return array_values($normalized);
+        };
 
         if (!empty($sigumilangIds)) {
             // Ambil lokasi proyek sekali, lalu dipakai untuk agregasi kecamatan dan kelurahan.
@@ -263,6 +309,21 @@ class SigumilangDashboardController extends Controller
                 ->whereIn('id_proyek', $sigumilangIds)
                 ->select('id_proyek', 'nib', 'nama_perusahaan', 'kecamatan_usaha', 'kelurahan_usaha', 'kbli', 'uraian_status_penanaman_modal')
                 ->get();
+
+            $proyekStatusPenanamanModal = $proyeksLokasi
+                ->mapWithKeys(function ($row) {
+                    return [(string) $row->id_proyek => strtoupper(trim((string) ($row->uraian_status_penanaman_modal ?? '')))];
+                })
+                ->all();
+
+            $jumlah_perusahaan = $proyeksLokasi
+                ->pluck('nib')
+                ->map(function ($nib) {
+                    return trim((string) $nib);
+                })
+                ->filter()
+                ->unique()
+                ->count();
 
             // Agregasi per proyek di second_db agar ukuran data lebih kecil dan konsisten.
             $sigData = DB::connection('second_db')->table('oss_rba_proyek_laps')
@@ -294,11 +355,12 @@ class SigumilangDashboardController extends Controller
                         $total_tki_l += $sigData[$item->id_proyek]->tki_l ?? 0;
                         $total_tki_p += $sigData[$item->id_proyek]->tki_p ?? 0;
                         $kec_companies[] = [
-                            'nib'         => trim((string)($item->nib ?? '-')) ?: '-',
-                            'nama'        => trim((string)($item->nama_perusahaan ?? '-')) ?: '-',
-                            'modal_kerja' => (float)($sigData[$item->id_proyek]->modal_kerja ?? 0),
-                            'modal_tetap' => (float)($sigData[$item->id_proyek]->modal_tetap ?? 0),
-                            'tki'         => (int)($sigData[$item->id_proyek]->tki_l ?? 0) + (int)($sigData[$item->id_proyek]->tki_p ?? 0),
+                            'nib'           => trim((string)($item->nib ?? '-')) ?: '-',
+                            'nama'          => trim((string)($item->nama_perusahaan ?? '-')) ?: '-',
+                            'modal_kerja'   => (float)($sigData[$item->id_proyek]->modal_kerja ?? 0),
+                            'modal_tetap'   => (float)($sigData[$item->id_proyek]->modal_tetap ?? 0),
+                            'tki'           => (int)($sigData[$item->id_proyek]->tki_l ?? 0) + (int)($sigData[$item->id_proyek]->tki_p ?? 0),
+                            'jumlah_proyek' => 1,
                         ];
                     }
                 }
@@ -314,7 +376,14 @@ class SigumilangDashboardController extends Controller
                 ]);
             }
 
-            $statistik_kecamatan = $statistik_kecamatan->sortByDesc('jumlah')->values();
+            $statistik_kecamatan = $statistik_kecamatan
+                ->map(function ($row) use ($normalizeCompanies) {
+                    $row->companies = $normalizeCompanies($row->companies ?? []);
+
+                    return $row;
+                })
+                ->sortByDesc('jumlah')
+                ->values();
 
             $proyeksKelurahanData = $proyeksLokasi
                 ->filter(function ($item) {
@@ -343,11 +412,12 @@ class SigumilangDashboardController extends Controller
                         $total_tki_l += $sigData[$item->id_proyek]->tki_l ?? 0;
                         $total_tki_p += $sigData[$item->id_proyek]->tki_p ?? 0;
                         $kel_companies[] = [
-                            'nib'         => trim((string)($item->nib ?? '-')) ?: '-',
-                            'nama'        => trim((string)($item->nama_perusahaan ?? '-')) ?: '-',
-                            'modal_kerja' => (float)($sigData[$item->id_proyek]->modal_kerja ?? 0),
-                            'modal_tetap' => (float)($sigData[$item->id_proyek]->modal_tetap ?? 0),
-                            'tki'         => (int)($sigData[$item->id_proyek]->tki_l ?? 0) + (int)($sigData[$item->id_proyek]->tki_p ?? 0),
+                            'nib'           => trim((string)($item->nib ?? '-')) ?: '-',
+                            'nama'          => trim((string)($item->nama_perusahaan ?? '-')) ?: '-',
+                            'modal_kerja'   => (float)($sigData[$item->id_proyek]->modal_kerja ?? 0),
+                            'modal_tetap'   => (float)($sigData[$item->id_proyek]->modal_tetap ?? 0),
+                            'tki'           => (int)($sigData[$item->id_proyek]->tki_l ?? 0) + (int)($sigData[$item->id_proyek]->tki_p ?? 0),
+                            'jumlah_proyek' => 1,
                         ];
                     }
                 }
@@ -364,7 +434,14 @@ class SigumilangDashboardController extends Controller
                 ]);
             }
 
-            $statistik_kelurahan = $statistik_kelurahan->sortByDesc('jumlah')->values();
+            $statistik_kelurahan = $statistik_kelurahan
+                ->map(function ($row) use ($normalizeCompanies) {
+                    $row->companies = $normalizeCompanies($row->companies ?? []);
+
+                    return $row;
+                })
+                ->sortByDesc('jumlah')
+                ->values();
 
             // Ringkasan PMA/PMDN + kategori KBLI berdasarkan relasi proyek.id_proyek
             $jenisModalAgg = [
@@ -441,11 +518,12 @@ class SigumilangDashboardController extends Controller
                 $nib = trim((string) ($row->nib ?? ''));
 
                 $companyEntry = [
-                    'nib'         => $nib ?: '-',
-                    'nama'        => trim((string)($row->nama_perusahaan ?? '-')) ?: '-',
-                    'modal_kerja' => (float)($sigData[$row->id_proyek]->modal_kerja ?? 0),
-                    'modal_tetap' => (float)($sigData[$row->id_proyek]->modal_tetap ?? 0),
-                    'tki'         => (int)($sigData[$row->id_proyek]->tki_l ?? 0) + (int)($sigData[$row->id_proyek]->tki_p ?? 0),
+                    'nib'           => $nib ?: '-',
+                    'nama'          => trim((string)($row->nama_perusahaan ?? '-')) ?: '-',
+                    'modal_kerja'   => (float)($sigData[$row->id_proyek]->modal_kerja ?? 0),
+                    'modal_tetap'   => (float)($sigData[$row->id_proyek]->modal_tetap ?? 0),
+                    'tki'           => (int)($sigData[$row->id_proyek]->tki_l ?? 0) + (int)($sigData[$row->id_proyek]->tki_p ?? 0),
+                    'jumlah_proyek' => 1,
                 ];
 
                 $jenisModalAgg[$jenisModal]['jumlah_proyek']++;
@@ -483,12 +561,14 @@ class SigumilangDashboardController extends Controller
             // Hitung jumlah_perusahaan dari distinct NIB lalu buang nib_set
             foreach ($jenisModalAgg as &$jm) {
                 $jm['jumlah_perusahaan'] = count($jm['nib_set']);
+                $jm['companies'] = $normalizeCompanies($jm['companies']);
                 unset($jm['nib_set']);
             }
             unset($jm);
 
             foreach ($kbliKategoriAgg as &$kk) {
                 $kk['jumlah_perusahaan'] = count($kk['nib_set']);
+                $kk['companies'] = $normalizeCompanies($kk['companies']);
                 unset($kk['nib_set']);
             }
             unset($kk);
@@ -509,19 +589,57 @@ class SigumilangDashboardController extends Controller
                 if (!isset($sigData[$id])) {
                     continue;
                 }
+
+                if ($rm->tanggal) {
+                    if (!isset($tanggalJenisModalCounts[$rm->tanggal])) {
+                        $tanggalJenisModalCounts[$rm->tanggal] = ['pma' => 0, 'pmdn' => 0];
+                    }
+
+                    $statusPenanamanModal = $proyekStatusPenanamanModal[(string) $id] ?? '';
+                    if (str_contains($statusPenanamanModal, 'PMA')) {
+                        $tanggalJenisModalCounts[$rm->tanggal]['pma']++;
+                    } elseif (str_contains($statusPenanamanModal, 'PMDN')) {
+                        $tanggalJenisModalCounts[$rm->tanggal]['pmdn']++;
+                    }
+                }
+
                 $pd = $proyekDetailMap->get($id);
                 $entry = [
-                    'nib'         => trim((string)($pd->nib ?? '-')) ?: '-',
-                    'nama'        => trim((string)($pd->nama_perusahaan ?? '-')) ?: '-',
-                    'modal_kerja' => (float)($sigData[$id]->modal_kerja ?? 0),
-                    'modal_tetap' => (float)($sigData[$id]->modal_tetap ?? 0),
-                    'tki'         => (int)($sigData[$id]->tki_l ?? 0) + (int)($sigData[$id]->tki_p ?? 0),
+                    'nib'           => trim((string)($pd->nib ?? '-')) ?: '-',
+                    'nama'          => trim((string)($pd->nama_perusahaan ?? '-')) ?: '-',
+                    'modal_kerja'   => (float)($sigData[$id]->modal_kerja ?? 0),
+                    'modal_tetap'   => (float)($sigData[$id]->modal_tetap ?? 0),
+                    'tki'           => (int)($sigData[$id]->tki_l ?? 0) + (int)($sigData[$id]->tki_p ?? 0),
+                    'jumlah_proyek' => 1,
                 ];
-                if (!isset($tahunCompanies[$rm->tahun][$id])) {
-                    $tahunCompanies[$rm->tahun][$id] = $entry;
+                $tahunKey = trim((string) ($entry['nib'] ?? ''));
+                if ($tahunKey === '' || $tahunKey === '-') {
+                    $tahunKey = 'id:' . $id;
                 }
-                if ($rm->tanggal && !isset($tanggalCompanies[$rm->tanggal][$id])) {
-                    $tanggalCompanies[$rm->tanggal][$id] = $entry;
+
+                if (!isset($tahunCompanies[$rm->tahun][$tahunKey])) {
+                    $tahunCompanies[$rm->tahun][$tahunKey] = $entry;
+                } else {
+                    $tahunCompanies[$rm->tahun][$tahunKey]['modal_kerja']   += $entry['modal_kerja'];
+                    $tahunCompanies[$rm->tahun][$tahunKey]['modal_tetap']   += $entry['modal_tetap'];
+                    $tahunCompanies[$rm->tahun][$tahunKey]['tki']           += $entry['tki'];
+                    $tahunCompanies[$rm->tahun][$tahunKey]['jumlah_proyek'] += $entry['jumlah_proyek'];
+                }
+
+                if ($rm->tanggal) {
+                    $tanggalKey = trim((string) ($entry['nib'] ?? ''));
+                    if ($tanggalKey === '' || $tanggalKey === '-') {
+                        $tanggalKey = 'id:' . $id;
+                    }
+
+                    if (!isset($tanggalCompanies[$rm->tanggal][$tanggalKey])) {
+                        $tanggalCompanies[$rm->tanggal][$tanggalKey] = $entry;
+                    } else {
+                        $tanggalCompanies[$rm->tanggal][$tanggalKey]['modal_kerja']   += $entry['modal_kerja'];
+                        $tanggalCompanies[$rm->tanggal][$tanggalKey]['modal_tetap']   += $entry['modal_tetap'];
+                        $tanggalCompanies[$rm->tanggal][$tanggalKey]['tki']           += $entry['tki'];
+                        $tanggalCompanies[$rm->tanggal][$tanggalKey]['jumlah_proyek'] += $entry['jumlah_proyek'];
+                    }
                 }
             }
             foreach ($tahunCompanies as &$list) {
@@ -534,6 +652,16 @@ class SigumilangDashboardController extends Controller
             unset($list);
         }
 
+        $statistik_tanggal->setCollection(
+            $statistik_tanggal->getCollection()->map(function ($row) use ($tanggalJenisModalCounts) {
+                $counts = $tanggalJenisModalCounts[$row->tanggal] ?? ['pma' => 0, 'pmdn' => 0];
+                $row->jumlah_pma = (int) ($counts['pma'] ?? 0);
+                $row->jumlah_pmdn = (int) ($counts['pmdn'] ?? 0);
+
+                return $row;
+            })
+        );
+
         // Jumlah total modal kerja
         $total_modal_kerja = (clone $baseQuery)->sum('modal_kerja');
         // Jumlah total modal tetap
@@ -542,9 +670,6 @@ class SigumilangDashboardController extends Controller
         $total_tki_l = (clone $baseQuery)->sum('tki_l');
         $total_tki_p = (clone $baseQuery)->sum('tki_p');
         $total_tenaga_kerja = $total_tki_l + $total_tki_p;
-
-        // Jumlah perusahaan unik
-        $jumlah_perusahaan = (clone $baseQuery)->distinct('id_proyek')->count('id_proyek');
 
         // Dropdown options untuk filter
         $tahunOptions = Sigumilang::query()
@@ -571,6 +696,8 @@ class SigumilangDashboardController extends Controller
             'jumlah_perusahaan',
             'periode',
             'tahun',
+            'date_start',
+            'date_end',
             'tahunOptions',
             'statistik_jenis_modal',
             'statistik_kbli_kategori',
