@@ -93,9 +93,13 @@
                     </tr>
                   </thead>
                   <tbody>
-                    @forelse($byStatus as $row)
+                    @php $groupedByStatusPm = $byStatus->groupBy('status_penanaman_modal'); @endphp
+                    @forelse($groupedByStatusPm as $statusPm => $rows)
+                      @foreach($rows as $idx => $row)
                         <tr>
-                          <td>{{ $row->status_penanaman_modal }}</td>
+                          @if($idx === 0)
+                            <td rowspan="{{ $rows->count() }}" class="align-middle">{{ $statusPm }}</td>
+                          @endif
                           <td>{{ $row->jenis_investasi ?? '-' }}</td>
                           <td class="text-end">{{ number_format($row->jumlah_perusahaan ?? 0, 0, ',', '.') }}</td>
                           <td class="text-end">{{ number_format($row->jumlah_proyek ?? 0, 0, ',', '.') }}</td>
@@ -109,6 +113,7 @@
                             </button>
                           </td>
                         </tr>
+                      @endforeach
                     @empty
                       <tr>
                         <td colspan="9" class="text-center text-muted py-4">Tidak ada data breakdown status laporan.</td>
