@@ -381,6 +381,100 @@ class LkpmController extends Controller
     }
 
     /**
+     * Delete duplicate LKPM UMK records by id_laporan.
+     * Keeps the oldest row (smallest id) for each duplicate group.
+     */
+    public function deleteDuplicateUmk(Request $request)
+    {
+        try {
+            $normalizeToArray = static function ($value): array {
+                if (is_array($value)) {
+                    return array_values(array_filter($value, static fn ($v) => $v !== null && trim((string) $v) !== ''));
+                }
+                if ($value === null || trim((string) $value) === '') {
+                    return [];
+                }
+                return [trim((string) $value)];
+            };
+
+            $tahunArr = $normalizeToArray($request->input('tahun'));
+            $periodeArr = $normalizeToArray($request->input('periode'));
+            $isPreview = $request->boolean('preview');
+
+            $redirectParams = ['tab' => 'umk'];
+            if (!empty($tahunArr)) { $redirectParams['tahun'] = $tahunArr; }
+            if (!empty($periodeArr)) { $redirectParams['periode'] = $periodeArr; }
+
+            $baseQuery = LkpmUmk::query()
+                ->whereRaw("NULLIF(TRIM(COALESCE(id_laporan, '')), '') IS NOT NULL");
+
+            if (!empty($tahunArr)) {
+                $baseQuery->whereIn('tahun_laporan', $tahunArr);
+            }
+            if (!empty($periodeArr)) {
+                $baseQuery->whereIn('periode_laporan', $periodeArr);
+            }
+
+            $duplicateGroups = (clone $baseQuery)
+                ->selectRaw('TRIM(id_laporan) as id_laporan_key, COUNT(*) as total_rows')
+                ->groupByRaw('TRIM(id_laporan)')
+                ->havingRaw('COUNT(*) > 1')
+                ->get();
+
+            $groupCount = $duplicateGroups->count();
+            $candidateDeleteRows = (int) $duplicateGroups->sum(static fn ($row) => max(((int) $row->total_rows) - 1, 0));
+
+            if ($isPreview) {
+                return redirect()
+                    ->route('lkpm.index', $redirectParams)
+                    ->with('success', "Pratinjau duplikat selesai. Grup duplikat: {$groupCount}, kandidat terhapus: {$candidateDeleteRows}.")
+                    ->with('duplicate_preview', [
+                        'groups' => $groupCount,
+                        'rows' => $candidateDeleteRows,
+                        'tahun' => $tahunArr,
+                        'periode' => $periodeArr,
+                    ]);
+            }
+
+            if ($duplicateGroups->isEmpty()) {
+                return redirect()
+                    ->route('lkpm.index', $redirectParams)
+                    ->with('success', 'Tidak ada data duplikat berdasarkan ID Laporan.');
+            }
+
+            $deletedRows = 0;
+            $affectedGroups = 0;
+
+            foreach ($duplicateGroups as $group) {
+                $idsQuery = LkpmUmk::query()
+                    ->whereRaw('TRIM(id_laporan) = ?', [$group->id_laporan_key])
+                    ->orderBy('id', 'asc');
+
+                if (!empty($tahunArr)) { $idsQuery->whereIn('tahun_laporan', $tahunArr); }
+                if (!empty($periodeArr)) { $idsQuery->whereIn('periode_laporan', $periodeArr); }
+
+                $ids = $idsQuery->pluck('id');
+
+                if ($ids->count() <= 1) { continue; }
+
+                $idsToDelete = $ids->slice(1)->values();
+                if ($idsToDelete->isEmpty()) { continue; }
+
+                $deletedRows += LkpmUmk::whereIn('id', $idsToDelete->all())->delete();
+                $affectedGroups++;
+            }
+
+            return redirect()
+                ->route('lkpm.index', $redirectParams)
+                ->with('success', "Hapus duplikat UMK selesai. Grup duplikat: {$affectedGroups}, data terhapus: {$deletedRows}.");
+        } catch (\Throwable $e) {
+            return redirect()
+                ->route('lkpm.index', ['tab' => 'umk'])
+                ->with('error', 'Gagal menghapus data duplikat UMK: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Delete LKPM Non-UMK record
      */
     public function destroyNonUmk($id)
@@ -391,6 +485,125 @@ class LkpmController extends Controller
             return redirect()->route('lkpm.index', ['tab' => 'non-umk'])->with('success', 'Data berhasil dihapus');
         } catch (\Exception $e) {
             return redirect()->route('lkpm.index', ['tab' => 'non-umk'])->with('error', 'Gagal menghapus data');
+        }
+    }
+
+    /**
+     * Delete duplicate LKPM Non-UMK records with strict rules:
+     * 1) Duplicate no_laporan + same non-empty no_kode_proyek => keep oldest, delete the rest.
+     * 2) Same no_laporan with empty no_kode_proyek => delete empties when paired with non-empty rows,
+     *    or keep oldest empty row when all rows are empty.
+     * Rows with same no_laporan but different non-empty no_kode_proyek are preserved.
+     */
+    public function deleteDuplicateNonUmk(Request $request)
+    {
+        try {
+            $normalizeToArray = static function ($value): array {
+                if (is_array($value)) {
+                    return array_values(array_filter($value, static fn ($v) => $v !== null && trim((string) $v) !== ''));
+                }
+
+                if ($value === null || trim((string) $value) === '') {
+                    return [];
+                }
+
+                return [trim((string) $value)];
+            };
+
+            $tahunArr = $normalizeToArray($request->input('tahun'));
+            $periodeArr = $normalizeToArray($request->input('periode'));
+            $isPreview = $request->boolean('preview');
+
+            $redirectParams = ['tab' => 'non-umk'];
+            if (!empty($tahunArr)) { $redirectParams['tahun'] = $tahunArr; }
+            if (!empty($periodeArr)) { $redirectParams['periode'] = $periodeArr; }
+
+            $baseQuery = LkpmNonUmk::query()
+                ->whereRaw("NULLIF(TRIM(COALESCE(no_laporan, '')), '') IS NOT NULL");
+
+            if (!empty($tahunArr)) {
+                $baseQuery->whereIn('tahun_laporan', $tahunArr);
+            }
+            if (!empty($periodeArr)) {
+                $baseQuery->whereIn('periode_laporan', $periodeArr);
+            }
+
+            $groupedRows = (clone $baseQuery)
+                ->selectRaw('id, TRIM(no_laporan) as no_laporan_key, TRIM(COALESCE(no_kode_proyek, "")) as no_kode_proyek_key')
+                ->orderBy('id', 'asc')
+                ->get()
+                ->groupBy('no_laporan_key');
+
+            $candidateDeleteIds = [];
+            $affectedGroupKeys = [];
+
+            foreach ($groupedRows as $noLaporanKey => $rows) {
+                $blankRows = $rows->filter(static fn ($row) => $row->no_kode_proyek_key === '')->values();
+                $nonBlankRows = $rows->filter(static fn ($row) => $row->no_kode_proyek_key !== '')->values();
+
+                // Rule 1: duplicate no_laporan + same non-empty no_kode_proyek.
+                $sameCodeGroups = $nonBlankRows->groupBy('no_kode_proyek_key');
+                foreach ($sameCodeGroups as $codeRows) {
+                    if ($codeRows->count() > 1) {
+                        $idsToDelete = $codeRows->slice(1)->pluck('id')->all();
+                        foreach ($idsToDelete as $id) {
+                            $candidateDeleteIds[$id] = true;
+                        }
+                        $affectedGroupKeys[$noLaporanKey] = true;
+                    }
+                }
+
+                // Rule 2: same no_laporan + empty no_kode_proyek.
+                if ($blankRows->isNotEmpty()) {
+                    if ($nonBlankRows->isNotEmpty()) {
+                        // If there are valid project codes under the same no_laporan, remove all empty-code rows.
+                        foreach ($blankRows->pluck('id')->all() as $id) {
+                            $candidateDeleteIds[$id] = true;
+                        }
+                        $affectedGroupKeys[$noLaporanKey] = true;
+                    } elseif ($blankRows->count() > 1) {
+                        // If all rows are empty-code duplicates, keep oldest and delete the rest.
+                        $idsToDelete = $blankRows->slice(1)->pluck('id')->all();
+                        foreach ($idsToDelete as $id) {
+                            $candidateDeleteIds[$id] = true;
+                        }
+                        $affectedGroupKeys[$noLaporanKey] = true;
+                    }
+                }
+            }
+
+            $duplicateGroups = count($affectedGroupKeys);
+            $candidateDeleteRows = count($candidateDeleteIds);
+
+            if ($isPreview) {
+                return redirect()
+                    ->route('lkpm.index', $redirectParams)
+                    ->with('success', "Pratinjau duplikat selesai. Grup duplikat: {$duplicateGroups}, kandidat terhapus: {$candidateDeleteRows}.")
+                    ->with('duplicate_preview', [
+                        'groups' => $duplicateGroups,
+                        'rows' => $candidateDeleteRows,
+                        'tahun' => $tahunArr,
+                        'periode' => $periodeArr,
+                    ]);
+            }
+
+                if ($candidateDeleteRows === 0) {
+                return redirect()
+                    ->route('lkpm.index', $redirectParams)
+                        ->with('success', 'Tidak ada data duplikat sesuai kriteria (No Laporan + Kode Proyek sama, atau Kode Proyek kosong).');
+            }
+
+            $deletedRows = 0;
+                $deletedRows += LkpmNonUmk::whereIn('id', array_keys($candidateDeleteIds))->delete();
+                $affectedGroups = $duplicateGroups;
+
+            return redirect()
+                ->route('lkpm.index', $redirectParams)
+                ->with('success', "Hapus duplikat selesai. Grup duplikat: {$affectedGroups}, data terhapus: {$deletedRows}.");
+        } catch (\Throwable $e) {
+            return redirect()
+                ->route('lkpm.index', ['tab' => 'non-umk'])
+                ->with('error', 'Gagal menghapus data duplikat: ' . $e->getMessage());
         }
     }
 

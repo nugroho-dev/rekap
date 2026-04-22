@@ -406,6 +406,8 @@ Route::middleware('auth')->group(function () {
      // Dedicated Non-UMK statistik route
         Route::get('/lkpm/statistik/non-umk', [App\Http\Controllers\LkpmController::class, 'statistikNonUmk'])->name('lkpm.statistikNonUmk')->middleware('permission:lkpm.view');
     Route::post('/lkpm/import-non-umk', [App\Http\Controllers\LkpmController::class, 'importNonUmk'])->name('lkpm.import.non-umk')->middleware('permission:lkpm.view');
+    Route::post('/lkpm/non-umk/delete-duplicates', [App\Http\Controllers\LkpmController::class, 'deleteDuplicateNonUmk'])->name('lkpm.delete-duplicates.non-umk')->middleware('permission:lkpm.view');
+    Route::post('/lkpm/umk/delete-duplicates', [App\Http\Controllers\LkpmController::class, 'deleteDuplicateUmk'])->name('lkpm.delete-duplicates.umk')->middleware('permission:lkpm.view');
     Route::delete('/lkpm/umk/{id}', [App\Http\Controllers\LkpmController::class, 'destroyUmk'])->name('lkpm.destroy.umk')->middleware('permission:lkpm.view');
     Route::delete('/lkpm/non-umk/{id}', [App\Http\Controllers\LkpmController::class, 'destroyNonUmk'])->name('lkpm.destroy.non-umk')->middleware('permission:lkpm.view');
 

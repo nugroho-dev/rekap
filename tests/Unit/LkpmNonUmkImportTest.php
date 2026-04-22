@@ -67,4 +67,46 @@ class LkpmNonUmkImportTest extends TestCase
         $this->assertSame('2024-09-29', $method->invoke($import, '2024-09-29'));
         $this->assertSame('2024-09-29', $method->invoke($import, 45564));
     }
+
+    public function test_skips_duplicate_no_laporan_and_same_no_kode_proyek_in_file()
+    {
+        $import = new LkpmNonUmkImport();
+
+        $first = $import->model([
+            'no_laporan' => 'NL-10',
+            'no_kode_proyek' => 'PRJ-1',
+        ]);
+
+        $second = $import->model([
+            'no_laporan' => 'NL-10',
+            'no_kode_proyek' => 'PRJ-1',
+        ]);
+
+        $summary = $import->summary();
+
+        $this->assertNotNull($first);
+        $this->assertNull($second);
+        $this->assertCount(1, $summary['duplicates']);
+    }
+
+    public function test_skips_duplicate_when_no_kode_proyek_empty_with_same_no_laporan_in_file()
+    {
+        $import = new LkpmNonUmkImport();
+
+        $first = $import->model([
+            'no_laporan' => 'NL-20',
+            'no_kode_proyek' => 'PRJ-2',
+        ]);
+
+        $second = $import->model([
+            'no_laporan' => 'NL-20',
+            'no_kode_proyek' => '',
+        ]);
+
+        $summary = $import->summary();
+
+        $this->assertNotNull($first);
+        $this->assertNull($second);
+        $this->assertCount(1, $summary['duplicates']);
+    }
 }

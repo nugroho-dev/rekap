@@ -5,60 +5,15 @@ namespace App\Imports;
 use App\Models\LkpmUmk;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\WithUpserts;
 use Carbon\Carbon;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 
-class LkpmUmkImport implements ToModel, WithHeadingRow, WithUpserts
+class LkpmUmkImport implements ToModel, WithHeadingRow
 {
     private int $successCount = 0;
     private array $failedRows = [];
     private array $seenIds = [];
     private array $duplicates = [];
-
-    /**
-     * Unique identifier for upserts
-     */
-    public function uniqueBy()
-    {
-        return 'id_laporan';
-    }
-
-    /**
-     * Columns to update on duplicate
-     */
-    public function upsertColumns()
-    {
-        return [
-            'no_kode_proyek',
-            'skala_risiko',
-            'kbli',
-            'tanggal_laporan',
-            'periode_laporan',
-            'tahun_laporan',
-            'nama_pelaku_usaha',
-            'nomor_induk_berusaha',
-            'modal_kerja_periode_sebelum',
-            'modal_tetap_periode_sebelum',
-            'modal_tetap_periode_pelaporan',
-            'modal_kerja_periode_pelaporan',
-            'akumulasi_modal_kerja',
-            'akumulasi_modal_tetap',
-            'tambahan_tenaga_kerja_laki_laki',
-            'tambahan_tenaga_kerja_wanita',
-            'alamat',
-            'kecamatan',
-            'kelurahan',
-            'kab_kota',
-            'provinsi',
-            'status_laporan',
-            'catatan_permasalahan_perusahaan',
-            'nama_petugas',
-            'jabatan_petugas',
-            'no_telp_hp_petugas',
-            'email_petugas',
-        ];
-    }
 
     /**
      * @param array $row
@@ -69,19 +24,29 @@ class LkpmUmkImport implements ToModel, WithHeadingRow, WithUpserts
         try {
             // Normalize headers to handle variations like 'KABUPATEN/KOTA'
             $row = $this->normalizeHeaders($row);
-            $currentId = $this->getValue($row, ['id_laporan', 'id laporan']);
-            if ($currentId) {
-                if (isset($this->seenIds[$currentId])) {
-                    $this->duplicates[] = [
-                        'id' => $currentId,
-                        'reason' => 'Duplikat di file impor',
-                    ];
-                } else {
-                    $this->seenIds[$currentId] = true;
-                }
+            $currentId = $this->normalizeKey($this->getValue($row, ['id_laporan', 'id laporan']));
+
+            if ($currentId === null) {
+                $this->failedRows[] = [
+                    'id' => null,
+                    'error' => 'ID Laporan wajib diisi',
+                ];
+                return null;
             }
+
+            $duplicateReason = $this->detectDuplicateReason($currentId);
+            if ($duplicateReason !== null) {
+                $this->duplicates[] = [
+                    'id' => $currentId,
+                    'reason' => $duplicateReason,
+                ];
+                return null;
+            }
+
+            $this->seenIds[$currentId] = true;
+
             $model = new LkpmUmk([
-                'id_laporan' => $currentId,
+                'id_laporan' => (string) $currentId,
                 'no_kode_proyek' => $this->normalizeProjectCode($this->getValue($row, ['no_kode_proyek', 'no kode proyek', 'kode_proyek', 'kode proyek'])),
                 'skala_risiko' => $this->getValue($row, ['skala_risiko', 'skala risiko']),
                 'kbli' => $this->getValue($row, ['kbli']),
@@ -176,7 +141,7 @@ class LkpmUmkImport implements ToModel, WithHeadingRow, WithUpserts
             return $model;
         } catch (\Throwable $e) {
             $this->failedRows[] = [
-                'id' => $row['id_laporan'] ?? $this->getValue($row, ['id_laporan', 'id laporan']) ?? null,
+                'id' => $this->normalizeKey($this->getValue($row, ['id_laporan', 'id laporan'])) ?? null,
                 'error' => $e->getMessage(),
             ];
             return null;
@@ -329,5 +294,39 @@ class LkpmUmkImport implements ToModel, WithHeadingRow, WithUpserts
         $normalized = preg_replace('/\s+/u', '', $normalized);
 
         return $normalized === '' ? null : strtoupper($normalized);
+    }
+
+    private function detectDuplicateReason(string $idLaporan): ?string
+    {
+        if (isset($this->seenIds[$idLaporan])) {
+            return 'Duplikat di file impor (ID Laporan sama)';
+        }
+
+        if ($this->existsInDatabase($idLaporan)) {
+            return 'Duplikat data existing di database';
+        }
+
+        return null;
+    }
+
+    private function existsInDatabase(string $idLaporan): bool
+    {
+        try {
+            return LkpmUmk::query()
+                ->whereRaw('TRIM(COALESCE(id_laporan, "")) = ?', [$idLaporan])
+                ->exists();
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    private function normalizeKey($value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $normalized = trim((string) $value);
+        return $normalized === '' ? null : $normalized;
     }
 }

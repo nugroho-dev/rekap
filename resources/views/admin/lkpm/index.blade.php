@@ -21,6 +21,76 @@
           <button type="button" class="btn btn-primary d-sm-none btn-icon" data-bs-toggle="modal" data-bs-target="#modal-import-{{ $tab }}">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg>
           </button>
+          @if($tab === 'non-umk')
+            @php
+              $dupFilterTahun = request()->get('tahun');
+              $dupFilterPeriode = request()->get('periode');
+              $dupFilterTahunArr = is_array($dupFilterTahun) ? array_values(array_filter($dupFilterTahun)) : (blank($dupFilterTahun) ? [] : [$dupFilterTahun]);
+              $dupFilterPeriodeArr = is_array($dupFilterPeriode) ? array_values(array_filter($dupFilterPeriode)) : (blank($dupFilterPeriode) ? [] : [$dupFilterPeriode]);
+            @endphp
+            <form method="POST" action="{{ route('lkpm.delete-duplicates.non-umk') }}" class="d-inline">
+              @csrf
+              <input type="hidden" name="preview" value="1">
+              @foreach($dupFilterTahunArr as $th)
+                <input type="hidden" name="tahun[]" value="{{ $th }}">
+              @endforeach
+              @foreach($dupFilterPeriodeArr as $pr)
+                <input type="hidden" name="periode[]" value="{{ $pr }}">
+              @endforeach
+              <button type="submit" class="btn btn-warning d-none d-sm-inline-block" title="Cek duplikat: no_laporan + no_kode_proyek sama, atau no_kode_proyek kosong pada no_laporan yang sama">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4" /><path d="M12 16v.01" /><path d="M5.07 19h13.86a2 2 0 0 0 1.73 -3l-6.93 -12a2 2 0 0 0 -3.46 0l-6.93 12a2 2 0 0 0 1.73 3" /></svg>
+                Cek Duplikat Kriteria
+              </button>
+            </form>
+            <form method="POST" action="{{ route('lkpm.delete-duplicates.non-umk') }}" class="d-inline" onsubmit="return confirm('Hapus hanya data duplikat dengan kriteria: (1) no_laporan + no_kode_proyek sama, atau (2) no_laporan sama + no_kode_proyek kosong, sesuai filter aktif?');">
+              @csrf
+              @foreach($dupFilterTahunArr as $th)
+                <input type="hidden" name="tahun[]" value="{{ $th }}">
+              @endforeach
+              @foreach($dupFilterPeriodeArr as $pr)
+                <input type="hidden" name="periode[]" value="{{ $pr }}">
+              @endforeach
+              <button type="submit" class="btn btn-danger d-none d-sm-inline-block">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0" /><path d="M10 11l0 6" /><path d="M14 11l0 6" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>
+                Hapus Duplikat Kriteria
+              </button>
+            </form>
+          @endif
+          @if($tab === 'umk')
+            @php
+              $dupUmkTahun = request()->get('tahun');
+              $dupUmkPeriode = request()->get('periode');
+              $dupUmkTahunArr = is_array($dupUmkTahun) ? array_values(array_filter($dupUmkTahun)) : (blank($dupUmkTahun) ? [] : [$dupUmkTahun]);
+              $dupUmkPeriodeArr = is_array($dupUmkPeriode) ? array_values(array_filter($dupUmkPeriode)) : (blank($dupUmkPeriode) ? [] : [$dupUmkPeriode]);
+            @endphp
+            <form method="POST" action="{{ route('lkpm.delete-duplicates.umk') }}" class="d-inline">
+              @csrf
+              <input type="hidden" name="preview" value="1">
+              @foreach($dupUmkTahunArr as $th)
+                <input type="hidden" name="tahun[]" value="{{ $th }}">
+              @endforeach
+              @foreach($dupUmkPeriodeArr as $pr)
+                <input type="hidden" name="periode[]" value="{{ $pr }}">
+              @endforeach
+              <button type="submit" class="btn btn-warning d-none d-sm-inline-block" title="Cek duplikat: id_laporan sama">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4" /><path d="M12 16v.01" /><path d="M5.07 19h13.86a2 2 0 0 0 1.73 -3l-6.93 -12a2 2 0 0 0 -3.46 0l-6.93 12a2 2 0 0 0 1.73 3" /></svg>
+                Cek Duplikat UMK
+              </button>
+            </form>
+            <form method="POST" action="{{ route('lkpm.delete-duplicates.umk') }}" class="d-inline" onsubmit="return confirm('Hapus data duplikat UMK? Data dengan ID Laporan sama akan dihapus (kecuali yang paling lama). Sesuai filter aktif?');">
+              @csrf
+              @foreach($dupUmkTahunArr as $th)
+                <input type="hidden" name="tahun[]" value="{{ $th }}">
+              @endforeach
+              @foreach($dupUmkPeriodeArr as $pr)
+                <input type="hidden" name="periode[]" value="{{ $pr }}">
+              @endforeach
+              <button type="submit" class="btn btn-danger d-none d-sm-inline-block">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0" /><path d="M10 11l0 6" /><path d="M14 11l0 6" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>
+                Hapus Duplikat UMK
+              </button>
+            </form>
+          @endif
         </div>
       </div>
     </div>
@@ -81,6 +151,15 @@
       </div>
     @endif
 
+    @if(session('duplicate_preview'))
+      @php $dupPreview = session('duplicate_preview'); @endphp
+      <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <strong>Pratinjau Duplikat:</strong>
+        grup: {{ (int)($dupPreview['groups'] ?? 0) }}, kandidat terhapus: {{ number_format((int)($dupPreview['rows'] ?? 0), 0, ',', '.') }}.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    @endif
+
     <div class="card shadow-sm">
       <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs" role="tablist">
@@ -88,14 +167,14 @@
             <a href="{{ route('lkpm.index', ['tab' => 'umk']) }}" class="nav-link {{ $tab === 'umk' ? 'active' : '' }}">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-2"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 21l18 0" /><path d="M9 8l1 0" /><path d="M9 12l1 0" /><path d="M9 16l1 0" /><path d="M14 8l1 0" /><path d="M14 12l1 0" /><path d="M14 16l1 0" /><path d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16" /></svg>
               LKPM UMK (Semester)
-              <span class="badge bg-blue ms-2">{{ $tab === 'umk' ? $totalData : App\Models\LkpmUmk::withTrashed()->count() }}</span>
+              <span class="badge bg-blue ms-2">{{ $tab === 'umk' ? $totalData : App\Models\LkpmUmk::count() }}</span>
             </a>
           </li>
           <li class="nav-item" role="presentation">
             <a href="{{ route('lkpm.index', ['tab' => 'non-umk']) }}" class="nav-link {{ $tab === 'non-umk' ? 'active' : '' }}">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-2"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 21l18 0" /><path d="M5 21v-14l8 -4v18" /><path d="M19 21v-10l-6 -4" /><path d="M9 9l0 .01" /><path d="M9 12l0 .01" /><path d="M9 15l0 .01" /><path d="M9 18l0 .01" /></svg>
               LKPM Non-UMK (Triwulan)
-              <span class="badge bg-green ms-2">{{ $tab === 'non-umk' ? $totalData : App\Models\LkpmNonUmk::withTrashed()->count() }}</span>
+              <span class="badge bg-green ms-2">{{ $tab === 'non-umk' ? $totalData : App\Models\LkpmNonUmk::count() }}</span>
             </a>
           </li>
         </ul>
