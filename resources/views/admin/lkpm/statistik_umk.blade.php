@@ -81,8 +81,8 @@
                 <table class="table table-vcenter">
                   <thead>
                     <tr>
-                      <th>Status</th>
                       <th>Status Penanaman Modal</th>
+                      <th>Jenis Investasi</th>
                       <th class="text-end">Jumlah Perusahaan</th>
                       <th class="text-end">Proyek</th>
                       <th class="text-end">Akumulasi Realisasi Investasi</th>
@@ -93,14 +93,10 @@
                     </tr>
                   </thead>
                   <tbody>
-                    @php $groupedByStatus = $byStatus->groupBy('status_laporan'); @endphp
-                    @forelse($groupedByStatus as $status => $statusRows)
-                      @foreach($statusRows as $idx => $row)
+                    @forelse($byStatus as $row)
                         <tr>
-                          @if($idx === 0)
-                            <td rowspan="{{ $statusRows->count() }}" class="align-middle fw-semibold">{{ $row->status_laporan }}</td>
-                          @endif
                           <td>{{ $row->status_penanaman_modal }}</td>
+                          <td>{{ $row->jenis_investasi ?? '-' }}</td>
                           <td class="text-end">{{ number_format($row->jumlah_perusahaan ?? 0, 0, ',', '.') }}</td>
                           <td class="text-end">{{ number_format($row->jumlah_proyek ?? 0, 0, ',', '.') }}</td>
                           <td class="text-end">Rp {{ number_format($row->akumulasi_realisasi ?? 0, 0, ',', '.') }}</td>
@@ -108,12 +104,11 @@
                           <td class="text-end">{{ number_format($row->total_tk_laki ?? 0, 0, ',', '.') }}</td>
                           <td class="text-end">{{ number_format($row->total_tk_wanita ?? 0, 0, ',', '.') }}</td>
                           <td class="text-end">
-                            <button type="button" class="btn btn-sm btn-outline-primary js-open-status-detail" data-key="{{ $row->status_laporan . '|||' . $row->status_penanaman_modal }}" data-bs-toggle="modal" data-bs-target="#modal-status-detail">
+                            <button type="button" class="btn btn-sm btn-outline-primary js-open-status-detail" data-key="{{ $row->status_laporan . '|||' . $row->status_penanaman_modal . '|||' . ($row->jenis_investasi ?? '-') }}" data-bs-toggle="modal" data-bs-target="#modal-status-detail">
                               Detail
                             </button>
                           </td>
                         </tr>
-                      @endforeach
                     @empty
                       <tr>
                         <td colspan="9" class="text-center text-muted py-4">Tidak ada data breakdown status laporan.</td>
