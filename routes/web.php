@@ -402,9 +402,11 @@ Route::middleware('auth')->group(function () {
     // LKPM (Laporan Kegiatan Penanaman Modal)
     Route::get('/lkpm', [App\Http\Controllers\LkpmController::class, 'index'])->name('lkpm.index')->middleware('permission:lkpm.view');
     Route::get('/lkpm/statistik', [App\Http\Controllers\LkpmController::class, 'statistik'])->name('lkpm.statistik')->middleware('permission:lkpm.view');
+    Route::get('/lkpm/statistik/umk/rincian/export', [App\Http\Controllers\LkpmController::class, 'exportStatistikUmkRincian'])->name('lkpm.statistik.umk.rincian.export')->middleware('permission:lkpm.view');
     Route::post('/lkpm/import-umk', [App\Http\Controllers\LkpmController::class, 'importUmk'])->name('lkpm.import.umk')->middleware('permission:lkpm.view');
      // Dedicated Non-UMK statistik route
         Route::get('/lkpm/statistik/non-umk', [App\Http\Controllers\LkpmController::class, 'statistikNonUmk'])->name('lkpm.statistikNonUmk')->middleware('permission:lkpm.view');
+    Route::get('/lkpm/statistik/non-umk/rincian/export', [App\Http\Controllers\LkpmController::class, 'exportStatistikNonUmkRincian'])->name('lkpm.statistik.non-umk.rincian.export')->middleware('permission:lkpm.view');
     Route::post('/lkpm/import-non-umk', [App\Http\Controllers\LkpmController::class, 'importNonUmk'])->name('lkpm.import.non-umk')->middleware('permission:lkpm.view');
     Route::post('/lkpm/non-umk/delete-duplicates', [App\Http\Controllers\LkpmController::class, 'deleteDuplicateNonUmk'])->name('lkpm.delete-duplicates.non-umk')->middleware('permission:lkpm.view');
     Route::post('/lkpm/umk/delete-duplicates', [App\Http\Controllers\LkpmController::class, 'deleteDuplicateUmk'])->name('lkpm.delete-duplicates.umk')->middleware('permission:lkpm.view');

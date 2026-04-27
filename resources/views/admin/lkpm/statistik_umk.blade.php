@@ -251,6 +251,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Detail Status Laporan / Status PM: <span data-role="status-title">-</span></h5>
+        <a href="#" class="btn btn-sm btn-success" data-role="status-export-link" target="_blank" rel="noopener noreferrer">Unduh Excel</a>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body p-0">
@@ -286,6 +287,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Detail Kategori KBLI: <span data-role="kbli-title">-</span></h5>
+        <a href="#" class="btn btn-sm btn-success" data-role="kbli-export-link" target="_blank" rel="noopener noreferrer">Unduh Excel</a>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body p-0">
@@ -323,6 +325,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const byStatusDetails = {!! json_encode($byStatusDetails) !!};
   const byKbliKategoriDetails = {!! json_encode($byKbliKategoriDetails) !!};
   const lkpmHistoryBaseUrl = {!! json_encode(route('lkpm.index', ['tab' => 'umk'])) !!};
+  const statusExportBaseUrl = {!! json_encode(route('lkpm.statistik.umk.rincian.export')) !!};
+  const kbliExportBaseUrl = {!! json_encode(route('lkpm.statistik.umk.rincian.export')) !!};
   const activeFilters = {
     tahun: {!! json_encode($tahun) !!},
     periode: {!! json_encode($periode) !!}
@@ -372,11 +376,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
     return url.toString();
   };
+  const buildExportUrl = (baseUrl, jenis, key) => {
+    const url = new URL(baseUrl, window.location.origin);
+    url.searchParams.set('jenis', jenis);
+    url.searchParams.set('key', key || '');
+
+    if (activeFilters.tahun) {
+      url.searchParams.set('tahun', activeFilters.tahun);
+    }
+
+    if (activeFilters.periode) {
+      url.searchParams.set('periode', activeFilters.periode);
+    }
+
+    return url.toString();
+  };
 
   const statusModal = document.getElementById('modal-status-detail');
   if (statusModal) {
     const statusTitle = statusModal.querySelector('[data-role="status-title"]');
     const statusBody = statusModal.querySelector('[data-role="status-body"]');
+    const statusExportLink = statusModal.querySelector('[data-role="status-export-link"]');
 
     document.querySelectorAll('.js-open-status-detail').forEach((button) => {
       button.addEventListener('click', function() {
@@ -384,6 +404,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const rows = byStatusDetails[key] || [];
 
         statusTitle.textContent = key || '-';
+        statusExportLink.setAttribute('href', buildExportUrl(statusExportBaseUrl, 'status', key));
 
         if (!rows.length) {
           statusBody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4">Tidak ada data detail.</td></tr>';
@@ -432,6 +453,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (kbliModal) {
     const kbliTitle = kbliModal.querySelector('[data-role="kbli-title"]');
     const kbliBody = kbliModal.querySelector('[data-role="kbli-body"]');
+    const kbliExportLink = kbliModal.querySelector('[data-role="kbli-export-link"]');
 
     document.querySelectorAll('.js-open-kbli-detail').forEach((button) => {
       button.addEventListener('click', function() {
@@ -439,6 +461,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const rows = byKbliKategoriDetails[key] || [];
 
         kbliTitle.textContent = key || '-';
+        kbliExportLink.setAttribute('href', buildExportUrl(kbliExportBaseUrl, 'kbli', key));
 
         if (!rows.length) {
           kbliBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">Tidak ada data detail.</td></tr>';
