@@ -199,6 +199,7 @@
                   <thead>
                     <tr>
                       <th>Kategori Section KBLI</th>
+                      <th>Jenis Investasi</th>
                       <th class="text-end">Jumlah Perusahaan</th>
                       <th class="text-end">Jumlah Proyek</th>
                       <th class="text-end">Realisasi Tenaga Kerja WNI</th>
@@ -208,28 +209,34 @@
                     </tr>
                   </thead>
                   <tbody>
-                    @forelse($byKbliKategori as $row)
-                      <tr>
-                        <td>{{ $row->kategori_kbli_section }}</td>
-                        <td class="text-end">{{ number_format($row->jumlah_perusahaan ?? 0, 0, ',', '.') }}</td>
-                        <td class="text-end">{{ number_format($row->jumlah_proyek ?? 0, 0, ',', '.') }}</td>
-                        <td class="text-end">{{ number_format($row->total_tenaga_kerja_wni ?? 0, 0, ',', '.') }}</td>
-                        <td class="text-end">{{ number_format($row->total_tenaga_kerja_wna ?? 0, 0, ',', '.') }}</td>
-                        <td class="text-end">Rp {{ number_format($row->total_realisasi ?? 0, 0, ',', '.') }}</td>
-                        <td class="text-end">
-                          <button type="button" class="btn btn-sm btn-outline-primary js-open-kbli-detail" data-key="{{ $row->kategori_kbli_section }}" data-bs-toggle="modal" data-bs-target="#modal-kbli-kategori-detail">
-                            Detail
-                          </button>
-                        </td>
-                      </tr>
+                    @php $groupedByKbliKategori = $byKbliKategori->groupBy('kategori_kbli_section'); @endphp
+                    @forelse($groupedByKbliKategori as $kategori => $kategoriRows)
+                      @foreach($kategoriRows as $idx => $row)
+                        <tr>
+                          @if($idx === 0)
+                            <td rowspan="{{ $kategoriRows->count() }}" class="align-middle fw-semibold">{{ $row->kategori_kbli_section }}</td>
+                          @endif
+                          <td>{{ $row->jenis_investasi ?? '-' }}</td>
+                          <td class="text-end">{{ number_format($row->jumlah_perusahaan ?? 0, 0, ',', '.') }}</td>
+                          <td class="text-end">{{ number_format($row->jumlah_proyek ?? 0, 0, ',', '.') }}</td>
+                          <td class="text-end">{{ number_format($row->total_tenaga_kerja_wni ?? 0, 0, ',', '.') }}</td>
+                          <td class="text-end">{{ number_format($row->total_tenaga_kerja_wna ?? 0, 0, ',', '.') }}</td>
+                          <td class="text-end">Rp {{ number_format($row->total_realisasi ?? 0, 0, ',', '.') }}</td>
+                          <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-primary js-open-kbli-detail" data-key="{{ $row->kategori_kbli_section . '|||' . ($row->jenis_investasi ?? '-') }}" data-bs-toggle="modal" data-bs-target="#modal-kbli-kategori-detail">
+                              Detail
+                            </button>
+                          </td>
+                        </tr>
+                      @endforeach
                     @empty
                       <tr>
-                        <td colspan="7" class="text-center text-muted py-4">Tidak ada data realisasi berdasarkan kategori KBLI.</td>
+                        <td colspan="8" class="text-center text-muted py-4">Tidak ada data realisasi berdasarkan kategori KBLI.</td>
                       </tr>
                     @endforelse
                     @if($byKbliKategori->count() > 0)
                       <tr class="table-active fw-bold">
-                        <td>TOTAL</td>
+                        <td colspan="2">TOTAL</td>
                         <td class="text-end">{{ number_format($totalPerusahaanByKbliKategori ?? 0, 0, ',', '.') }}</td>
                         <td class="text-end">{{ number_format($byKbliKategori->sum('jumlah_proyek'), 0, ',', '.') }}</td>
                         <td class="text-end">{{ number_format($byKbliKategori->sum('total_tenaga_kerja_wni'), 0, ',', '.') }}</td>
@@ -463,9 +470,12 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.js-open-kbli-detail').forEach((button) => {
       button.addEventListener('click', function() {
         const key = this.dataset.key || '';
+        const parts = key.split('|||');
+        const kategori = parts[0] || '-';
+        const jenis = parts[1] || '';
         const rows = byKbliKategoriDetails[key] || [];
 
-        kbliTitle.textContent = key || '-';
+        kbliTitle.textContent = jenis ? (kategori + ' - ' + jenis) : kategori;
         kbliExportLink.setAttribute('href', buildExportUrl(kbliExportBaseUrl, 'kbli', key));
 
         if (!rows.length) {

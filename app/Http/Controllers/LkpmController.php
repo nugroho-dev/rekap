@@ -955,20 +955,108 @@ class LkpmController extends Controller
                 ->leftJoin('kbli_divisions as kd', 'kd.code', '=', 'kg.division_code')
                 ->leftJoin('kbli_sections as ksec', 'ksec.code', '=', 'kd.section_code');
 
-            $byKbliKategori = (clone $byKbliKategoriBase)
-                ->selectRaw("COALESCE(CONCAT(ksec.code, ' - ', ksec.name), 'Tidak Terklasifikasi') as kategori_kbli_section, COUNT(DISTINCT {$umkCompanyKeySql}) as jumlah_perusahaan, COUNT(DISTINCT lkpm_umk.no_kode_proyek) as jumlah_proyek, SUM(lkpm_umk.tambahan_tenaga_kerja_laki_laki) as total_tenaga_kerja_laki, SUM(lkpm_umk.tambahan_tenaga_kerja_wanita) as total_tenaga_kerja_perempuan, SUM(COALESCE(lkpm_umk.modal_kerja_periode_pelaporan, 0) + COALESCE(lkpm_umk.modal_tetap_periode_pelaporan, 0)) as total_realisasi")
-                ->groupByRaw("COALESCE(CONCAT(ksec.code, ' - ', ksec.name), 'Tidak Terklasifikasi')")
-                ->orderByDesc('total_realisasi')
-                ->get();
-
-            $byKbliKategoriDetails = (clone $byKbliKategoriBase)
+            $rawKbliRows = (clone $byKbliKategoriBase)
                 ->selectRaw("COALESCE(CONCAT(ksec.code, ' - ', ksec.name), 'Tidak Terklasifikasi') as kategori_kbli_section, TRIM(COALESCE(lkpm_umk.nomor_induk_berusaha, '')) as nomor_induk_berusaha, TRIM(lkpm_umk.nama_pelaku_usaha) as nama_pelaku_usaha, TRIM(lkpm_umk.kbli) as kbli, COUNT(DISTINCT lkpm_umk.no_kode_proyek) as jumlah_proyek, SUM(lkpm_umk.tambahan_tenaga_kerja_laki_laki) as total_tenaga_kerja_laki, SUM(lkpm_umk.tambahan_tenaga_kerja_wanita) as total_tenaga_kerja_perempuan, SUM(COALESCE(lkpm_umk.modal_kerja_periode_pelaporan, 0) + COALESCE(lkpm_umk.modal_tetap_periode_pelaporan, 0)) as total_realisasi")
                 ->groupByRaw("COALESCE(CONCAT(ksec.code, ' - ', ksec.name), 'Tidak Terklasifikasi'), TRIM(COALESCE(lkpm_umk.nomor_induk_berusaha, '')), TRIM(lkpm_umk.nama_pelaku_usaha), TRIM(lkpm_umk.kbli)")
                 ->orderBy('kategori_kbli_section')
                 ->orderByDesc('total_realisasi')
-                ->get()
-                ->groupBy('kategori_kbli_section')
-                ->map(fn ($rows) => $rows->values()->all())
+                ->get();
+
+            $byKbliKategoriGrouped = [];
+            foreach ($rawKbliRows as $row) {
+                $kategori = trim((string) $row->kategori_kbli_section);
+                $companyKey = $buildCompanyKey($row->nomor_induk_berusaha ?? '', $row->nama_pelaku_usaha ?? '');
+                $jenis = $classifyInvestmentType($companyKey, $row->kbli ?? '');
+
+                if (!isset($byKbliKategoriGrouped[$kategori][$jenis])) {
+                    $byKbliKategoriGrouped[$kategori][$jenis] = [
+                        'kategori_kbli_section' => $kategori,
+                        'jenis_investasi' => $jenis,
+                        'jumlah_perusahaan' => 0,
+                        'perusahaan_keys' => [],
+                        'jumlah_proyek' => 0,
+                        'total_tenaga_kerja_laki' => 0,
+                        'total_tenaga_kerja_perempuan' => 0,
+                        'total_realisasi' => 0.0,
+                    ];
+                }
+
+                if ($companyKey !== '') {
+                    $byKbliKategoriGrouped[$kategori][$jenis]['perusahaan_keys'][$companyKey] = true;
+                }
+
+                $byKbliKategoriGrouped[$kategori][$jenis]['jumlah_proyek'] += (int) ($row->jumlah_proyek ?? 0);
+                $byKbliKategoriGrouped[$kategori][$jenis]['total_tenaga_kerja_laki'] += (int) ($row->total_tenaga_kerja_laki ?? 0);
+                $byKbliKategoriGrouped[$kategori][$jenis]['total_tenaga_kerja_perempuan'] += (int) ($row->total_tenaga_kerja_perempuan ?? 0);
+                $byKbliKategoriGrouped[$kategori][$jenis]['total_realisasi'] += (float) ($row->total_realisasi ?? 0);
+            }
+
+            foreach ($byKbliKategoriGrouped as &$jenisList) {
+                foreach ($jenisList as &$aggr) {
+                    $aggr['jumlah_perusahaan'] = count($aggr['perusahaan_keys']);
+                    unset($aggr['perusahaan_keys']);
+                }
+            }
+            unset($jenisList, $aggr);
+
+            ksort($byKbliKategoriGrouped);
+
+            $byKbliKategori = collect();
+            foreach ($byKbliKategoriGrouped as $kategori => $jenisList) {
+                foreach ($jenisOrder as $jenis) {
+                    if (isset($jenisList[$jenis])) {
+                        $byKbliKategori->push((object) $jenisList[$jenis]);
+                    }
+                }
+            }
+
+            $byKbliKategoriDetails = $rawKbliRows
+                ->groupBy(function ($row) use ($buildCompanyKey, $classifyInvestmentType) {
+                    $kategori = trim((string) $row->kategori_kbli_section);
+                    $companyKey = $buildCompanyKey($row->nomor_induk_berusaha ?? '', $row->nama_pelaku_usaha ?? '');
+                    $jenis = $classifyInvestmentType($companyKey, $row->kbli ?? '');
+
+                    return $kategori . '|||' . $jenis;
+                })
+                ->map(function ($rows) {
+                    $companyAgg = [];
+
+                    foreach ($rows as $row) {
+                        $companyKey = trim((string) ($row->nomor_induk_berusaha ?: $row->nama_pelaku_usaha));
+
+                        if (!isset($companyAgg[$companyKey])) {
+                            $companyAgg[$companyKey] = [
+                                'nomor_induk_berusaha' => trim((string) ($row->nomor_induk_berusaha ?? '')),
+                                'nama_pelaku_usaha' => trim((string) $row->nama_pelaku_usaha),
+                                'kbli_keys' => [],
+                                'jumlah_proyek' => 0,
+                                'total_tenaga_kerja_laki' => 0,
+                                'total_tenaga_kerja_perempuan' => 0,
+                                'total_realisasi' => 0.0,
+                            ];
+                        }
+
+                        $kbli = trim((string) ($row->kbli ?? ''));
+                        if ($kbli !== '') {
+                            $companyAgg[$companyKey]['kbli_keys'][$kbli] = true;
+                        }
+
+                        $companyAgg[$companyKey]['jumlah_proyek'] += (int) ($row->jumlah_proyek ?? 0);
+                        $companyAgg[$companyKey]['total_tenaga_kerja_laki'] += (int) ($row->total_tenaga_kerja_laki ?? 0);
+                        $companyAgg[$companyKey]['total_tenaga_kerja_perempuan'] += (int) ($row->total_tenaga_kerja_perempuan ?? 0);
+                        $companyAgg[$companyKey]['total_realisasi'] += (float) ($row->total_realisasi ?? 0);
+                    }
+
+                    return collect($companyAgg)
+                        ->map(function ($item) {
+                            $item['kbli'] = implode(', ', array_keys($item['kbli_keys']));
+                            unset($item['kbli_keys']);
+                            return $item;
+                        })
+                        ->sortByDesc('total_realisasi')
+                        ->values()
+                        ->all();
+                })
                 ->all();
 
             $totalPerusahaanByKbliKategori = (clone $byKbliKategoriBase)
@@ -1321,7 +1409,8 @@ class LkpmController extends Controller
             ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
             ->first()?->total ?? 0;
 
-        $byKbliKategori = (clone $query)
+        $byKbliKategoriBase = (clone $query)
+            ->whereRaw("NULLIF(TRIM(COALESCE(lkpm_non_umk.nama_pelaku_usaha, '')), '') IS NOT NULL")
             ->whereRaw("NULLIF(TRIM(COALESCE(lkpm_non_umk.kbli, '')), '') IS NOT NULL")
             ->leftJoin('kbli_subclasses as ks', function ($join) {
                 $join->on('ks.code', '=', DB::raw("LEFT(TRIM(lkpm_non_umk.kbli), 5)"));
@@ -1329,28 +1418,106 @@ class LkpmController extends Controller
             ->leftJoin('kbli_classes as kc', 'kc.code', '=', 'ks.class_code')
             ->leftJoin('kbli_groups as kg', 'kg.code', '=', 'kc.group_code')
             ->leftJoin('kbli_divisions as kd', 'kd.code', '=', 'kg.division_code')
-            ->leftJoin('kbli_sections as ksec', 'ksec.code', '=', 'kd.section_code')
-            ->selectRaw("COALESCE(CONCAT(ksec.code, ' - ', ksec.name), 'Tidak Terklasifikasi') as kategori_kbli_section, COUNT(DISTINCT UPPER(TRIM(lkpm_non_umk.nama_pelaku_usaha))) as jumlah_perusahaan, COUNT(DISTINCT lkpm_non_umk.no_kode_proyek) as jumlah_proyek, SUM(lkpm_non_umk.total_tambahan_investasi) as total_realisasi, SUM(lkpm_non_umk.jumlah_realisasi_tki) as total_tenaga_kerja_wni, SUM(lkpm_non_umk.jumlah_realisasi_tka) as total_tenaga_kerja_wna")
-            ->groupByRaw("COALESCE(CONCAT(ksec.code, ' - ', ksec.name), 'Tidak Terklasifikasi')")
-            ->orderByDesc('total_realisasi')
-            ->get();
+            ->leftJoin('kbli_sections as ksec', 'ksec.code', '=', 'kd.section_code');
 
-        $byKbliKategoriDetails = (clone $query)
-            ->whereRaw("NULLIF(TRIM(COALESCE(lkpm_non_umk.kbli, '')), '') IS NOT NULL")
-            ->leftJoin('kbli_subclasses as ks', function ($join) {
-                $join->on('ks.code', '=', DB::raw("LEFT(TRIM(lkpm_non_umk.kbli), 5)"));
-            })
-            ->leftJoin('kbli_classes as kc', 'kc.code', '=', 'ks.class_code')
-            ->leftJoin('kbli_groups as kg', 'kg.code', '=', 'kc.group_code')
-            ->leftJoin('kbli_divisions as kd', 'kd.code', '=', 'kg.division_code')
-            ->leftJoin('kbli_sections as ksec', 'ksec.code', '=', 'kd.section_code')
+        $rawKbliRows = (clone $byKbliKategoriBase)
             ->selectRaw("COALESCE(CONCAT(ksec.code, ' - ', ksec.name), 'Tidak Terklasifikasi') as kategori_kbli_section, TRIM(lkpm_non_umk.nama_pelaku_usaha) as nama_pelaku_usaha, TRIM(lkpm_non_umk.kbli) as kbli, COUNT(DISTINCT lkpm_non_umk.no_kode_proyek) as jumlah_proyek, SUM(lkpm_non_umk.jumlah_realisasi_tki) as total_tenaga_kerja_wni, SUM(lkpm_non_umk.jumlah_realisasi_tka) as total_tenaga_kerja_wna, SUM(lkpm_non_umk.total_tambahan_investasi) as total_realisasi")
             ->groupByRaw("COALESCE(CONCAT(ksec.code, ' - ', ksec.name), 'Tidak Terklasifikasi'), TRIM(lkpm_non_umk.nama_pelaku_usaha), TRIM(lkpm_non_umk.kbli)")
             ->orderBy('kategori_kbli_section')
             ->orderByDesc('total_realisasi')
-            ->get()
-            ->groupBy('kategori_kbli_section')
-            ->map(fn ($rows) => $rows->values()->all())
+            ->get();
+
+        $byKbliKategoriGrouped = [];
+        foreach ($rawKbliRows as $row) {
+            $kategori = trim((string) $row->kategori_kbli_section);
+            $jenis = $classifyInvestmentType($row->nama_pelaku_usaha, $row->kbli);
+
+            if (!isset($byKbliKategoriGrouped[$kategori][$jenis])) {
+                $byKbliKategoriGrouped[$kategori][$jenis] = [
+                    'kategori_kbli_section' => $kategori,
+                    'jenis_investasi' => $jenis,
+                    'jumlah_perusahaan' => 0,
+                    'perusahaan_keys' => [],
+                    'jumlah_proyek' => 0,
+                    'total_tenaga_kerja_wni' => 0,
+                    'total_tenaga_kerja_wna' => 0,
+                    'total_realisasi' => 0.0,
+                ];
+            }
+
+            $namaKey = strtoupper(trim((string) $row->nama_pelaku_usaha));
+            if ($namaKey !== '') {
+                $byKbliKategoriGrouped[$kategori][$jenis]['perusahaan_keys'][$namaKey] = true;
+            }
+
+            $byKbliKategoriGrouped[$kategori][$jenis]['jumlah_proyek'] += (int) ($row->jumlah_proyek ?? 0);
+            $byKbliKategoriGrouped[$kategori][$jenis]['total_tenaga_kerja_wni'] += (int) ($row->total_tenaga_kerja_wni ?? 0);
+            $byKbliKategoriGrouped[$kategori][$jenis]['total_tenaga_kerja_wna'] += (int) ($row->total_tenaga_kerja_wna ?? 0);
+            $byKbliKategoriGrouped[$kategori][$jenis]['total_realisasi'] += (float) ($row->total_realisasi ?? 0);
+        }
+
+        foreach ($byKbliKategoriGrouped as &$jenisList) {
+            foreach ($jenisList as &$aggr) {
+                $aggr['jumlah_perusahaan'] = count($aggr['perusahaan_keys']);
+                unset($aggr['perusahaan_keys']);
+            }
+        }
+        unset($jenisList, $aggr);
+
+        ksort($byKbliKategoriGrouped);
+
+        $byKbliKategori = collect();
+        foreach ($byKbliKategoriGrouped as $kategori => $jenisList) {
+            foreach (['Investasi Baru', 'Penambahan KBLI / Penambahan Usaha', 'Penambahan Investasi'] as $jenis) {
+                if (isset($jenisList[$jenis])) {
+                    $byKbliKategori->push((object) $jenisList[$jenis]);
+                }
+            }
+        }
+
+        $byKbliKategoriDetails = $rawKbliRows
+            ->groupBy(function ($row) use ($classifyInvestmentType) {
+                $jenis = $classifyInvestmentType($row->nama_pelaku_usaha, $row->kbli);
+                return trim((string) $row->kategori_kbli_section) . '|||' . $jenis;
+            })
+            ->map(function ($rows) {
+                $companyAgg = [];
+
+                foreach ($rows as $row) {
+                    $nama = trim((string) $row->nama_pelaku_usaha);
+
+                    if (!isset($companyAgg[$nama])) {
+                        $companyAgg[$nama] = [
+                            'nama_pelaku_usaha' => $nama,
+                            'kbli_keys' => [],
+                            'jumlah_proyek' => 0,
+                            'total_tenaga_kerja_wni' => 0,
+                            'total_tenaga_kerja_wna' => 0,
+                            'total_realisasi' => 0.0,
+                        ];
+                    }
+
+                    $kbli = trim((string) ($row->kbli ?? ''));
+                    if ($kbli !== '') {
+                        $companyAgg[$nama]['kbli_keys'][$kbli] = true;
+                    }
+
+                    $companyAgg[$nama]['jumlah_proyek'] += (int) ($row->jumlah_proyek ?? 0);
+                    $companyAgg[$nama]['total_tenaga_kerja_wni'] += (int) ($row->total_tenaga_kerja_wni ?? 0);
+                    $companyAgg[$nama]['total_tenaga_kerja_wna'] += (int) ($row->total_tenaga_kerja_wna ?? 0);
+                    $companyAgg[$nama]['total_realisasi'] += (float) ($row->total_realisasi ?? 0);
+                }
+
+                return collect($companyAgg)
+                    ->map(function ($item) {
+                        $item['kbli'] = implode(', ', array_keys($item['kbli_keys']));
+                        unset($item['kbli_keys']);
+                        return $item;
+                    })
+                    ->sortByDesc('total_realisasi')
+                    ->values()
+                    ->all();
+            })
             ->all();
 
         // Hitung total unique perusahaan di Tabel KBLI Kategori (dengan filter tahun+periode)
@@ -1684,6 +1851,79 @@ class LkpmController extends Controller
     {
         $umkKbliCodeSql = "COALESCE(NULLIF(TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(TRIM(lkpm_umk.kbli), ')', 1), '(', -1)), ''), LEFT(TRIM(lkpm_umk.kbli), 5))";
 
+        $buildCompanyKey = static function ($nib, $name): string {
+            $nibKey = strtoupper(trim((string) ($nib ?? '')));
+            if ($nibKey !== '') {
+                return $nibKey;
+            }
+
+            return strtoupper(trim((string) ($name ?? '')));
+        };
+
+        $prevUmkQuery = LkpmUmk::query()
+            ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
+            ->whereRaw("NULLIF(TRIM(COALESCE(kbli, '')), '') IS NOT NULL")
+            ->whereRaw("COALESCE(NULLIF(TRIM(nomor_induk_berusaha), ''), NULLIF(TRIM(nama_pelaku_usaha), '')) IS NOT NULL");
+
+        if ($tahun && $periode) {
+            $periodeOrder = ['Semester I' => 1, 'Semester II' => 2];
+            $currentNum = $periodeOrder[$periode] ?? 0;
+            $prevPeriodes = array_keys(array_filter($periodeOrder, fn ($v) => $v < $currentNum));
+
+            $prevUmkQuery->where(function ($q) use ($tahun, $prevPeriodes) {
+                $q->where('tahun_laporan', '<', $tahun);
+
+                if (!empty($prevPeriodes)) {
+                    $q->orWhere(function ($q2) use ($tahun, $prevPeriodes) {
+                        $q2->where('tahun_laporan', $tahun)
+                            ->whereIn('periode_laporan', $prevPeriodes);
+                    });
+                }
+            });
+        } elseif ($tahun) {
+            $prevUmkQuery->where('tahun_laporan', '<', $tahun);
+        } else {
+            $prevUmkQuery->whereRaw('1=0');
+        }
+
+        $existingCompanySet = array_flip(
+            (clone $prevUmkQuery)
+                ->selectRaw("DISTINCT UPPER(TRIM(COALESCE(NULLIF(nomor_induk_berusaha, ''), NULLIF(nama_pelaku_usaha, '')))) as company_key")
+                ->pluck('company_key')
+                ->filter()
+                ->toArray()
+        );
+
+        $existingKbliSet = array_flip(
+            (clone $prevUmkQuery)
+                ->selectRaw("DISTINCT TRIM(kbli) as kbli_key")
+                ->pluck('kbli_key')
+                ->filter()
+                ->toArray()
+        );
+
+        $classifyInvestmentType = static function ($companyKey, $kbli) use ($existingCompanySet, $existingKbliSet) {
+            $company = strtoupper(trim((string) $companyKey));
+            $kbliKey = trim((string) $kbli);
+
+            if ($company === '' || $kbliKey === '') {
+                return 'Penambahan Investasi';
+            }
+
+            $isNewCompany = !isset($existingCompanySet[$company]);
+            $isNewKbli = !isset($existingKbliSet[$kbliKey]);
+
+            if ($isNewCompany && $isNewKbli) {
+                return 'Investasi Baru';
+            }
+
+            if (!$isNewCompany && $isNewKbli) {
+                return 'Penambahan KBLI / Penambahan Usaha';
+            }
+
+            return 'Penambahan Investasi';
+        };
+
         return LkpmUmk::query()
             ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
             ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
@@ -1702,8 +1942,52 @@ class LkpmController extends Controller
             ->orderBy('kategori_kbli_section')
             ->orderByDesc('total_realisasi')
             ->get()
-            ->groupBy('kategori_kbli_section')
-            ->map(fn ($rows) => $rows->values()->all())
+            ->groupBy(function ($row) use ($buildCompanyKey, $classifyInvestmentType) {
+                $kategori = trim((string) $row->kategori_kbli_section);
+                $companyKey = $buildCompanyKey($row->nomor_induk_berusaha ?? '', $row->nama_pelaku_usaha ?? '');
+                $jenis = $classifyInvestmentType($companyKey, $row->kbli ?? '');
+
+                return $kategori . '|||' . $jenis;
+            })
+            ->map(function ($rows) {
+                $companyAgg = [];
+
+                foreach ($rows as $row) {
+                    $companyKey = trim((string) ($row->nomor_induk_berusaha ?: $row->nama_pelaku_usaha));
+
+                    if (!isset($companyAgg[$companyKey])) {
+                        $companyAgg[$companyKey] = [
+                            'nomor_induk_berusaha' => trim((string) ($row->nomor_induk_berusaha ?? '')),
+                            'nama_pelaku_usaha' => trim((string) $row->nama_pelaku_usaha),
+                            'kbli_keys' => [],
+                            'jumlah_proyek' => 0,
+                            'total_tenaga_kerja_laki' => 0,
+                            'total_tenaga_kerja_perempuan' => 0,
+                            'total_realisasi' => 0.0,
+                        ];
+                    }
+
+                    $kbli = trim((string) ($row->kbli ?? ''));
+                    if ($kbli !== '') {
+                        $companyAgg[$companyKey]['kbli_keys'][$kbli] = true;
+                    }
+
+                    $companyAgg[$companyKey]['jumlah_proyek'] += (int) ($row->jumlah_proyek ?? 0);
+                    $companyAgg[$companyKey]['total_tenaga_kerja_laki'] += (int) ($row->total_tenaga_kerja_laki ?? 0);
+                    $companyAgg[$companyKey]['total_tenaga_kerja_perempuan'] += (int) ($row->total_tenaga_kerja_perempuan ?? 0);
+                    $companyAgg[$companyKey]['total_realisasi'] += (float) ($row->total_realisasi ?? 0);
+                }
+
+                return collect($companyAgg)
+                    ->map(function ($item) {
+                        $item['kbli'] = implode(', ', array_keys($item['kbli_keys']));
+                        unset($item['kbli_keys']);
+                        return $item;
+                    })
+                    ->sortByDesc('total_realisasi')
+                    ->values()
+                    ->all();
+            })
             ->all();
     }
 
@@ -1836,10 +2120,11 @@ class LkpmController extends Controller
 
     private function buildNonUmkKbliDetailsMap(?string $tahun, ?string $periode): array
     {
-        return LkpmNonUmk::query()
+        $baseQuery = LkpmNonUmk::query()
             ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
             ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
             ->when($periode, fn($q) => $q->where('periode_laporan', $periode))
+            ->whereRaw("NULLIF(TRIM(COALESCE(lkpm_non_umk.nama_pelaku_usaha, '')), '') IS NOT NULL")
             ->whereRaw("NULLIF(TRIM(COALESCE(lkpm_non_umk.kbli, '')), '') IS NOT NULL")
             ->leftJoin('kbli_subclasses as ks', function ($join) {
                 $join->on('ks.code', '=', DB::raw("LEFT(TRIM(lkpm_non_umk.kbli), 5)"));
@@ -1847,14 +2132,120 @@ class LkpmController extends Controller
             ->leftJoin('kbli_classes as kc', 'kc.code', '=', 'ks.class_code')
             ->leftJoin('kbli_groups as kg', 'kg.code', '=', 'kc.group_code')
             ->leftJoin('kbli_divisions as kd', 'kd.code', '=', 'kg.division_code')
-            ->leftJoin('kbli_sections as ksec', 'ksec.code', '=', 'kd.section_code')
+            ->leftJoin('kbli_sections as ksec', 'ksec.code', '=', 'kd.section_code');
+
+        $prevQuery = LkpmNonUmk::query()
+            ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
+            ->whereRaw("NULLIF(TRIM(COALESCE(nama_pelaku_usaha, '')), '') IS NOT NULL")
+            ->whereRaw("NULLIF(TRIM(COALESCE(kbli, '')), '') IS NOT NULL");
+
+        if ($tahun && $periode) {
+            $periodeOrder = ['Triwulan I' => 1, 'Triwulan II' => 2, 'Triwulan III' => 3, 'Triwulan IV' => 4];
+            $currentNum = $periodeOrder[$periode] ?? 0;
+            $prevPeriodes = array_keys(array_filter($periodeOrder, fn ($v) => $v < $currentNum));
+
+            $prevQuery->where(function ($q) use ($tahun, $prevPeriodes) {
+                $q->where('tahun_laporan', '<', $tahun);
+
+                if (!empty($prevPeriodes)) {
+                    $q->orWhere(function ($q2) use ($tahun, $prevPeriodes) {
+                        $q2->where('tahun_laporan', $tahun)
+                            ->whereIn('periode_laporan', $prevPeriodes);
+                    });
+                }
+            });
+        } elseif ($tahun) {
+            $prevQuery->where('tahun_laporan', '<', $tahun);
+        } else {
+            $prevQuery->whereRaw('1=0');
+        }
+
+        $existingCompanySet = array_flip(
+            (clone $prevQuery)
+                ->selectRaw("DISTINCT UPPER(TRIM(nama_pelaku_usaha)) as company_key")
+                ->pluck('company_key')
+                ->filter()
+                ->toArray()
+        );
+
+        $existingKbliSet = array_flip(
+            (clone $prevQuery)
+                ->selectRaw("DISTINCT TRIM(kbli) as kbli_key")
+                ->pluck('kbli_key')
+                ->filter()
+                ->toArray()
+        );
+
+        $classifyInvestmentType = static function ($companyName, $kbli) use ($existingCompanySet, $existingKbliSet) {
+            $companyKey = strtoupper(trim((string) $companyName));
+            $kbliKey = trim((string) $kbli);
+
+            if ($companyKey === '' || $kbliKey === '') {
+                return 'Penambahan Investasi';
+            }
+
+            $isNewCompany = !isset($existingCompanySet[$companyKey]);
+            $isNewKbli = !isset($existingKbliSet[$kbliKey]);
+
+            if ($isNewCompany && $isNewKbli) {
+                return 'Investasi Baru';
+            }
+
+            if (!$isNewCompany && $isNewKbli) {
+                return 'Penambahan KBLI / Penambahan Usaha';
+            }
+
+            return 'Penambahan Investasi';
+        };
+
+        return (clone $baseQuery)
             ->selectRaw("COALESCE(CONCAT(ksec.code, ' - ', ksec.name), 'Tidak Terklasifikasi') as kategori_kbli_section, TRIM(lkpm_non_umk.nama_pelaku_usaha) as nama_pelaku_usaha, TRIM(lkpm_non_umk.kbli) as kbli, COUNT(DISTINCT lkpm_non_umk.no_kode_proyek) as jumlah_proyek, SUM(lkpm_non_umk.jumlah_realisasi_tki) as total_tenaga_kerja_wni, SUM(lkpm_non_umk.jumlah_realisasi_tka) as total_tenaga_kerja_wna, SUM(lkpm_non_umk.total_tambahan_investasi) as total_realisasi")
             ->groupByRaw("COALESCE(CONCAT(ksec.code, ' - ', ksec.name), 'Tidak Terklasifikasi'), TRIM(lkpm_non_umk.nama_pelaku_usaha), TRIM(lkpm_non_umk.kbli)")
             ->orderBy('kategori_kbli_section')
             ->orderByDesc('total_realisasi')
             ->get()
-            ->groupBy('kategori_kbli_section')
-            ->map(fn ($rows) => $rows->values()->all())
+            ->groupBy(function ($row) use ($classifyInvestmentType) {
+                $jenis = $classifyInvestmentType($row->nama_pelaku_usaha, $row->kbli);
+                return trim((string) $row->kategori_kbli_section) . '|||' . $jenis;
+            })
+            ->map(function ($rows) {
+                $companyAgg = [];
+
+                foreach ($rows as $row) {
+                    $nama = trim((string) $row->nama_pelaku_usaha);
+
+                    if (!isset($companyAgg[$nama])) {
+                        $companyAgg[$nama] = [
+                            'nama_pelaku_usaha' => $nama,
+                            'kbli_keys' => [],
+                            'jumlah_proyek' => 0,
+                            'total_tenaga_kerja_wni' => 0,
+                            'total_tenaga_kerja_wna' => 0,
+                            'total_realisasi' => 0.0,
+                        ];
+                    }
+
+                    $kbli = trim((string) ($row->kbli ?? ''));
+                    if ($kbli !== '') {
+                        $companyAgg[$nama]['kbli_keys'][$kbli] = true;
+                    }
+
+                    $companyAgg[$nama]['jumlah_proyek'] += (int) ($row->jumlah_proyek ?? 0);
+                    $companyAgg[$nama]['total_tenaga_kerja_wni'] += (int) ($row->total_tenaga_kerja_wni ?? 0);
+                    $companyAgg[$nama]['total_tenaga_kerja_wna'] += (int) ($row->total_tenaga_kerja_wna ?? 0);
+                    $companyAgg[$nama]['total_realisasi'] += (float) ($row->total_realisasi ?? 0);
+                }
+
+                return collect($companyAgg)
+                    ->map(function ($item) {
+                        $item['kbli'] = implode(', ', array_keys($item['kbli_keys']));
+                        unset($item['kbli_keys']);
+                        return $item;
+                    })
+                    ->sortByDesc('total_realisasi')
+                    ->values()
+                    ->all();
+            })
             ->all();
     }
 }
