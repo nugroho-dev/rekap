@@ -195,7 +195,14 @@
             @endphp
             <div class="col-lg-12 mb-4">
               <div class="card">
-                <div class="card-header">Nilai Realisasi Investasi Berdasarkan Kategori Section KBLI - {{ $statusPm }}</div>
+                <div class="card-header d-flex align-items-center justify-content-between">
+                  <span>Nilai Realisasi Investasi Berdasarkan Kategori Section KBLI - {{ $statusPm }}</span>
+                  @if($rowsByStatusPm->count() > 0)
+                    <a href="{{ route('lkpm.statistik.umk.kbli.export', array_merge(request()->query(), ['status' => $statusPm])) }}" class="btn btn-sm btn-success" target="_blank">
+                      <i class="bi bi-download"></i> Unduh Excel
+                    </a>
+                  @endif
+                </div>
                 <div class="table-responsive">
                   <table class="table table-vcenter mb-0">
                     <thead>
@@ -212,23 +219,42 @@
                     </thead>
                     <tbody>
                       @forelse($groupedByKbliKategori as $kategori => $kategoriRows)
-                        @foreach($kategoriRows as $idx => $row)
-                          <tr>
-                            @if($idx === 0)
-                              <td rowspan="{{ $kategoriRows->count() }}" class="align-middle fw-semibold">{{ $row->kategori_kbli_section }}</td>
-                            @endif
-                            <td>{{ $row->jenis_investasi ?? '-' }}</td>
-                            <td class="text-end">{{ number_format($row->jumlah_perusahaan ?? 0, 0, ',', '.') }}</td>
-                            <td class="text-end">{{ number_format($row->jumlah_proyek ?? 0, 0, ',', '.') }}</td>
-                            <td class="text-end">{{ number_format($row->total_tenaga_kerja_laki ?? 0, 0, ',', '.') }}</td>
-                            <td class="text-end">{{ number_format($row->total_tenaga_kerja_perempuan ?? 0, 0, ',', '.') }}</td>
-                            <td class="text-end">Rp {{ number_format($row->total_realisasi ?? 0, 0, ',', '.') }}</td>
-                            <td class="text-end">
-                              <button type="button" class="btn btn-sm btn-outline-primary js-open-kbli-detail" data-key="{{ $statusPm . '|||' . $row->kategori_kbli_section . '|||' . ($row->jenis_investasi ?? '-') }}" data-bs-toggle="modal" data-bs-target="#modal-kbli-kategori-detail">
-                                Detail
-                              </button>
-                            </td>
-                          </tr>
+                        @php
+                          $jenisGrouped = $kategoriRows->groupBy('jenis_investasi');
+                          $rowCount = 0;
+                        @endphp
+                        @foreach($jenisGrouped as $jenis => $jenisRows)
+                          @foreach($jenisRows as $idx => $row)
+                            <tr>
+                              @if($idx === 0 && $rowCount === 0)
+                                <td rowspan="{{ $kategoriRows->count() }}" class="align-middle fw-semibold">{{ $row->kategori_kbli_section }}</td>
+                              @endif
+                              <td>{{ $row->jenis_investasi ?? '-' }}</td>
+                              <td class="text-end">{{ number_format($row->jumlah_perusahaan ?? 0, 0, ',', '.') }}</td>
+                              <td class="text-end">{{ number_format($row->jumlah_proyek ?? 0, 0, ',', '.') }}</td>
+                              <td class="text-end">{{ number_format($row->total_tenaga_kerja_laki ?? 0, 0, ',', '.') }}</td>
+                              <td class="text-end">{{ number_format($row->total_tenaga_kerja_perempuan ?? 0, 0, ',', '.') }}</td>
+                              <td class="text-end">Rp {{ number_format($row->total_realisasi ?? 0, 0, ',', '.') }}</td>
+                              <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-primary js-open-kbli-detail" data-key="{{ $statusPm . '|||' . $row->kategori_kbli_section . '|||' . ($row->jenis_investasi ?? '-') }}" data-bs-toggle="modal" data-bs-target="#modal-kbli-kategori-detail">
+                                  Detail
+                                </button>
+                              </td>
+                            </tr>
+                            @php $rowCount++; @endphp
+                          @endforeach
+                          @if($jenisRows->count() > 1)
+                            <tr class="table-light fw-semibold" style="font-size: 0.9rem;">
+                              <td></td>
+                              <td>Subtotal {{ $jenis }}</td>
+                              <td class="text-end">{{ number_format($jenisRows->sum('jumlah_perusahaan'), 0, ',', '.') }}</td>
+                              <td class="text-end">{{ number_format($jenisRows->sum('jumlah_proyek'), 0, ',', '.') }}</td>
+                              <td class="text-end">{{ number_format($jenisRows->sum('total_tenaga_kerja_laki'), 0, ',', '.') }}</td>
+                              <td class="text-end">{{ number_format($jenisRows->sum('total_tenaga_kerja_perempuan'), 0, ',', '.') }}</td>
+                              <td class="text-end">Rp {{ number_format($jenisRows->sum('total_realisasi'), 0, ',', '.') }}</td>
+                              <td></td>
+                            </tr>
+                          @endif
                         @endforeach
                       @empty
                         <tr>
@@ -236,8 +262,27 @@
                         </tr>
                       @endforelse
                       @if($rowsByStatusPm->count() > 0)
+                        @php
+                          $jenisOrder = ['Investasi Baru', 'Penambahan KBLI / Penambahan Usaha', 'Penambahan Investasi'];
+                          $totalByJenis = $rowsByStatusPm->groupBy('jenis_investasi');
+                        @endphp
+                        @foreach($jenisOrder as $jenis)
+                          @if(isset($totalByJenis[$jenis]))
+                            <tr class="table-warning fw-semibold" style="font-size: 0.9rem;">
+                              <td>TOTAL</td>
+                              <td>{{ $jenis }}</td>
+                              <td class="text-end">{{ number_format($totalByJenis[$jenis]->sum('jumlah_perusahaan'), 0, ',', '.') }}</td>
+                              <td class="text-end">{{ number_format($totalByJenis[$jenis]->sum('jumlah_proyek'), 0, ',', '.') }}</td>
+                              <td class="text-end">{{ number_format($totalByJenis[$jenis]->sum('total_tenaga_kerja_laki'), 0, ',', '.') }}</td>
+                              <td class="text-end">{{ number_format($totalByJenis[$jenis]->sum('total_tenaga_kerja_perempuan'), 0, ',', '.') }}</td>
+                              <td class="text-end">Rp {{ number_format($totalByJenis[$jenis]->sum('total_realisasi'), 0, ',', '.') }}</td>
+                              <td></td>
+                            </tr>
+                          @endif
+                        @endforeach
                         <tr class="table-active fw-bold">
-                          <td colspan="2">TOTAL</td>
+                          <td>TOTAL</td>
+                          <td>-</td>
                           <td class="text-end">{{ number_format($totalPerusahaanByKbliKategori[$statusPm] ?? 0, 0, ',', '.') }}</td>
                           <td class="text-end">{{ number_format($rowsByStatusPm->sum('jumlah_proyek'), 0, ',', '.') }}</td>
                           <td class="text-end">{{ number_format($rowsByStatusPm->sum('total_tenaga_kerja_laki'), 0, ',', '.') }}</td>
