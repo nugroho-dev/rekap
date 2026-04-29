@@ -181,7 +181,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/pengawasan/sigumilang/', [SigumilangDashboardController::class,'index'])->name('sigumilang.index')->middleware('permission:sigumilang.view');
     Route::get('/pengawasan/sigumilang/{id_proyek}/histori/{nib}', [SigumilangDashboardController::class,'histori'])->middleware('permission:sigumilang.view');
     Route::get('/pengawasan/laporan/sigumilang', [SigumilangDashboardController::class,'laporan'])->middleware('permission:sigumilang.view');
-    Route::get('/pengawasan/statistik/sigumilang', [SigumilangDashboardController::class,'statistik'])->middleware('permission:sigumilang.view');
+    Route::get('/pengawasan/statistik/sigumilang', [SigumilangDashboardController::class,'statistik'])->name('sigumilang.statistik')->middleware('permission:sigumilang.view');
+    Route::get('/pengawasan/statistik/sigumilang/export/jenis-modal', [SigumilangDashboardController::class,'exportStatistikJenisModal'])->name('sigumilang.statistik.jenis-modal.export')->middleware('permission:sigumilang.view');
+    Route::get('/pengawasan/statistik/sigumilang/export/kbli', [SigumilangDashboardController::class,'exportStatistikKbliKategori'])->name('sigumilang.statistik.kbli.export')->middleware('permission:sigumilang.view');
 
     // Produk hukum / deregulasi
     Route::match(['get','post'], '/deregulasi', [ProdukHukumDashboardController::class, 'index'])->middleware('permission:deregulasi.view');

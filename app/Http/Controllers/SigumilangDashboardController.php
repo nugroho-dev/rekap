@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use App\Exports\LkpmStatistikRincianExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 
 class SigumilangDashboardController extends Controller
@@ -444,11 +446,108 @@ class SigumilangDashboardController extends Controller
                 ->values();
 
             // Ringkasan PMA/PMDN + kategori KBLI berdasarkan relasi proyek.id_proyek
-            $jenisModalAgg = [
-                'PMA'            => ['jenis_modal' => 'PMA',            'jumlah_proyek' => 0, 'jumlah_perusahaan' => 0, 'nib_set' => [], 'companies' => [], 'total_modal' => 0.0, 'total_tk' => 0],
-                'PMDN'           => ['jenis_modal' => 'PMDN',           'jumlah_proyek' => 0, 'jumlah_perusahaan' => 0, 'nib_set' => [], 'companies' => [], 'total_modal' => 0.0, 'total_tk' => 0],
-                'TIDAK DIKETAHUI'=> ['jenis_modal' => 'TIDAK DIKETAHUI','jumlah_proyek' => 0, 'jumlah_perusahaan' => 0, 'nib_set' => [], 'companies' => [], 'total_modal' => 0.0, 'total_tk' => 0],
+            $buildCompanyKey = static function ($nib, $nama): string {
+                $nibKey = strtoupper(trim((string) $nib));
+                if ($nibKey !== '' && $nibKey !== '-') {
+                    return 'NIB:' . $nibKey;
+                }
+
+                $namaKey = strtoupper(trim((string) $nama));
+
+                return $namaKey !== '' && $namaKey !== '-' ? 'NAMA:' . $namaKey : '';
+            };
+
+            $semMap = [
+                '1' => 1,
+                '2' => 2,
+                'SEMESTER I' => 1,
+                'SEMESTER II' => 2,
             ];
+
+            $existingCompanySet = [];
+            $existingKbliSet = [];
+
+            $prevSigQuery = Sigumilang::query();
+            if (!empty($tahun) && !empty($periode)) {
+                $currentSem = $semMap[strtoupper(trim((string) $periode))] ?? null;
+                if ($currentSem !== null) {
+                    $prevSigQuery->where(function ($q) use ($tahun, $currentSem) {
+                        $q->where('tahun', '<', $tahun)
+                          ->orWhere(function ($sub) use ($tahun, $currentSem) {
+                              $sub->where('tahun', $tahun)
+                                  ->whereIn('periode', array_map('strval', range(1, max($currentSem - 1, 0))));
+                          });
+                    });
+                } else {
+                    $prevSigQuery->where('tahun', '<', $tahun);
+                }
+            } elseif (!empty($tahun)) {
+                $prevSigQuery->where('tahun', '<', $tahun);
+            } elseif (!empty($periode)) {
+                $prevSigQuery->whereRaw('1=0');
+            } else {
+                $prevSigQuery->whereRaw('1=0');
+            }
+
+            $prevProyekIds = (clone $prevSigQuery)
+                ->whereNotNull('id_proyek')
+                ->distinct()
+                ->pluck('id_proyek')
+                ->filter()
+                ->values()
+                ->all();
+
+            if (!empty($prevProyekIds)) {
+                $prevProyeks = DB::table('proyek')
+                    ->whereIn('id_proyek', $prevProyekIds)
+                    ->select('nib', 'nama_perusahaan', 'kbli')
+                    ->get();
+
+                $existingCompanySet = array_flip(
+                    $prevProyeks
+                        ->map(function ($row) use ($buildCompanyKey) {
+                            return $buildCompanyKey($row->nib ?? '', $row->nama_perusahaan ?? '');
+                        })
+                        ->filter()
+                        ->values()
+                        ->all()
+                );
+
+                $existingKbliSet = array_flip(
+                    $prevProyeks
+                        ->map(function ($row) {
+                            return trim((string) ($row->kbli ?? ''));
+                        })
+                        ->filter()
+                        ->values()
+                        ->all()
+                );
+            }
+
+            $classifyInvestmentType = static function ($companyKey, $kbli) use ($existingCompanySet, $existingKbliSet) {
+                $company = strtoupper(trim((string) $companyKey));
+                $kbliKey = trim((string) $kbli);
+
+                if ($company === '' || $kbliKey === '') {
+                    return 'Penambahan Investasi';
+                }
+
+                $isNewCompany = !isset($existingCompanySet[$company]);
+                $isNewKbli = !isset($existingKbliSet[$kbliKey]);
+
+                if ($isNewCompany && $isNewKbli) {
+                    return 'Investasi Baru';
+                }
+
+                if (!$isNewCompany && $isNewKbli) {
+                    return 'Penambahan KBLI / Penambahan Usaha';
+                }
+
+                return 'Penambahan Investasi';
+            };
+
+            $jenisOrder = ['Investasi Baru', 'Penambahan KBLI / Penambahan Usaha', 'Penambahan Investasi'];
+            $jenisModalAgg = [];
 
             $extractKbliCode = static function ($kbliRaw) {
                 $kbli = trim((string) $kbliRaw);
@@ -516,6 +615,8 @@ class SigumilangDashboardController extends Controller
                 $tk = (int) (($sigData[$row->id_proyek]->tki_l ?? 0) + ($sigData[$row->id_proyek]->tki_p ?? 0));
 
                 $nib = trim((string) ($row->nib ?? ''));
+                $companyKey = $buildCompanyKey($row->nib ?? '', $row->nama_perusahaan ?? '');
+                $jenisInvestasi = $classifyInvestmentType($companyKey, $row->kbli ?? '');
 
                 $companyEntry = [
                     'nib'           => $nib ?: '-',
@@ -524,22 +625,39 @@ class SigumilangDashboardController extends Controller
                     'modal_tetap'   => (float)($sigData[$row->id_proyek]->modal_tetap ?? 0),
                     'tki'           => (int)($sigData[$row->id_proyek]->tki_l ?? 0) + (int)($sigData[$row->id_proyek]->tki_p ?? 0),
                     'jumlah_proyek' => 1,
+                    'jenis_investasi' => $jenisInvestasi,
                 ];
 
-                $jenisModalAgg[$jenisModal]['jumlah_proyek']++;
-                $jenisModalAgg[$jenisModal]['total_modal'] += $modal;
-                $jenisModalAgg[$jenisModal]['total_tk'] += $tk;
-                $jenisModalAgg[$jenisModal]['companies'][] = $companyEntry;
+                $jenisModalKey = $jenisModal . '|' . $jenisInvestasi;
+                if (!isset($jenisModalAgg[$jenisModalKey])) {
+                    $jenisModalAgg[$jenisModalKey] = [
+                        'jenis_modal' => $jenisModal,
+                        'jenis_investasi' => $jenisInvestasi,
+                        'jumlah_proyek' => 0,
+                        'jumlah_perusahaan' => 0,
+                        'nib_set' => [],
+                        'companies' => [],
+                        'total_modal' => 0.0,
+                        'total_tk' => 0,
+                    ];
+                }
+
+                $jenisModalAgg[$jenisModalKey]['jumlah_proyek']++;
+                $jenisModalAgg[$jenisModalKey]['total_modal'] += $modal;
+                $jenisModalAgg[$jenisModalKey]['total_tk'] += $tk;
+                $jenisModalAgg[$jenisModalKey]['companies'][] = $companyEntry;
                 if ($nib !== '') {
-                    $jenisModalAgg[$jenisModal]['nib_set'][$nib] = true;
+                    $jenisModalAgg[$jenisModalKey]['nib_set'][$nib] = true;
                 }
 
                 $kbliCode = $extractKbliCode($row->kbli ?? null);
                 $kategoriKbli = $kbliCode ? ($kbliKategoriMap[$kbliCode] ?? 'Tidak Terklasifikasi') : 'Tidak Terisi';
+                $kbliKategoriKey = $kategoriKbli . '|' . $jenisInvestasi;
 
-                if (!isset($kbliKategoriAgg[$kategoriKbli])) {
-                    $kbliKategoriAgg[$kategoriKbli] = [
+                if (!isset($kbliKategoriAgg[$kbliKategoriKey])) {
+                    $kbliKategoriAgg[$kbliKategoriKey] = [
                         'kategori_kbli'    => $kategoriKbli,
+                        'jenis_investasi'  => $jenisInvestasi,
                         'jumlah_proyek'    => 0,
                         'jumlah_perusahaan'=> 0,
                         'nib_set'          => [],
@@ -549,12 +667,12 @@ class SigumilangDashboardController extends Controller
                     ];
                 }
 
-                $kbliKategoriAgg[$kategoriKbli]['jumlah_proyek']++;
-                $kbliKategoriAgg[$kategoriKbli]['total_modal'] += $modal;
-                $kbliKategoriAgg[$kategoriKbli]['total_tk'] += $tk;
-                $kbliKategoriAgg[$kategoriKbli]['companies'][] = $companyEntry;
+                $kbliKategoriAgg[$kbliKategoriKey]['jumlah_proyek']++;
+                $kbliKategoriAgg[$kbliKategoriKey]['total_modal'] += $modal;
+                $kbliKategoriAgg[$kbliKategoriKey]['total_tk'] += $tk;
+                $kbliKategoriAgg[$kbliKategoriKey]['companies'][] = $companyEntry;
                 if ($nib !== '') {
-                    $kbliKategoriAgg[$kategoriKbli]['nib_set'][$nib] = true;
+                    $kbliKategoriAgg[$kbliKategoriKey]['nib_set'][$nib] = true;
                 }
             }
 
@@ -573,8 +691,40 @@ class SigumilangDashboardController extends Controller
             }
             unset($kk);
 
-            $statistik_jenis_modal = collect(array_values($jenisModalAgg))->sortByDesc('jumlah_proyek')->values();
-            $statistik_kbli_kategori = collect(array_values($kbliKategoriAgg))->sortByDesc('total_modal')->values();
+            $jenisOrderMap = array_flip($jenisOrder);
+            $modalOrderMap = ['PMA' => 0, 'PMDN' => 1, 'TIDAK DIKETAHUI' => 2];
+
+            $statistik_jenis_modal = collect(array_values($jenisModalAgg))
+                ->sort(function ($a, $b) use ($modalOrderMap, $jenisOrderMap) {
+                    $modalCompare = ($modalOrderMap[$a['jenis_modal']] ?? 99) <=> ($modalOrderMap[$b['jenis_modal']] ?? 99);
+                    if ($modalCompare !== 0) {
+                        return $modalCompare;
+                    }
+
+                    $jenisCompare = ($jenisOrderMap[$a['jenis_investasi']] ?? 99) <=> ($jenisOrderMap[$b['jenis_investasi']] ?? 99);
+                    if ($jenisCompare !== 0) {
+                        return $jenisCompare;
+                    }
+
+                    return ($b['jumlah_proyek'] ?? 0) <=> ($a['jumlah_proyek'] ?? 0);
+                })
+                ->values();
+
+            $statistik_kbli_kategori = collect(array_values($kbliKategoriAgg))
+                ->sort(function ($a, $b) use ($jenisOrderMap) {
+                    $kategoriCompare = strcmp((string) ($a['kategori_kbli'] ?? ''), (string) ($b['kategori_kbli'] ?? ''));
+                    if ($kategoriCompare !== 0) {
+                        return $kategoriCompare;
+                    }
+
+                    $jenisCompare = ($jenisOrderMap[$a['jenis_investasi']] ?? 99) <=> ($jenisOrderMap[$b['jenis_investasi']] ?? 99);
+                    if ($jenisCompare !== 0) {
+                        return $jenisCompare;
+                    }
+
+                    return ($b['total_modal'] ?? 0) <=> ($a['total_modal'] ?? 0);
+                })
+                ->values();
 
             // Build per-tahun and per-tanggal company detail maps
             $proyekDetailMap = $proyeksLokasi->keyBy('id_proyek');
@@ -725,5 +875,540 @@ class SigumilangDashboardController extends Controller
         $items = Sigumilang::paginate(15);
         $items->withPath(url('/pengawasan/laporan/sigumilang'));
         return view('admin.pengawasanpm.sigumilang.laporan', compact('judul','items'));
+    }
+
+    /**
+     * Export statistik Jenis Penanaman Modal ke Excel.
+     */
+    public function exportStatistikJenisModal(Request $request)
+    {
+        $tahun      = $request->input('tahun');
+        $periode    = $request->input('periode');
+        $date_start = $request->input('date_start');
+        $date_end   = $request->input('date_end');
+
+        [$statistik_jenis_modal] = $this->buildSigumilangModalKbliStats($tahun, $periode, $date_start, $date_end);
+
+        $jenisOrder = ['Investasi Baru', 'Penambahan KBLI / Penambahan Usaha', 'Penambahan Investasi'];
+        $grouped    = $statistik_jenis_modal->groupBy('jenis_investasi');
+
+        $filterLabel = implode(' | ', array_filter([
+            $tahun                       ? 'Tahun: ' . $tahun      : null,
+            $periode                     ? 'Periode: ' . $periode  : null,
+            ($date_start && $date_end)   ? 'Tanggal: ' . $date_start . ' s/d ' . $date_end : null,
+        ])) ?: 'Semua data';
+
+        $cols = 10;
+        $empty = array_fill(0, $cols, '');
+
+        $rows = collect();
+        $rows->push(array_replace($empty, [0 => 'Rincian Jenis Penanaman Modal - SiGumilang']));
+        $rows->push(array_replace($empty, [0 => 'Filter: ' . $filterLabel]));
+        $rows->push($empty);
+        $rows->push(['No', 'NIB', 'Nama Perusahaan', 'Jenis Modal', 'Jenis Investasi',
+            'Modal Kerja (Rp)', 'Modal Tetap (Rp)', 'Total Modal (Rp)', 'TK', 'Jumlah Proyek']);
+
+        $grandTotals = ['modal_kerja' => 0.0, 'modal_tetap' => 0.0, 'total_modal' => 0.0, 'tk' => 0, 'proyek' => 0, 'perusahaan' => 0];
+
+        foreach ($jenisOrder as $jenis) {
+            if (!isset($grouped[$jenis])) {
+                continue;
+            }
+
+            $subTotals = ['modal_kerja' => 0.0, 'modal_tetap' => 0.0, 'total_modal' => 0.0, 'tk' => 0, 'proyek' => 0, 'perusahaan' => 0];
+            $no = 1;
+
+            // Section header per Jenis Investasi
+            $rows->push(array_replace($empty, [0 => '--- ' . $jenis . ' ---']));
+
+            foreach ($grouped[$jenis] as $group) {
+                $jenisModal = $group['jenis_modal'];
+
+                foreach ($group['companies'] ?? [] as $company) {
+                    $modalKerja = (float) ($company['modal_kerja'] ?? 0);
+                    $modalTetap = (float) ($company['modal_tetap'] ?? 0);
+                    $totalModal = $modalKerja + $modalTetap;
+                    $tk         = (int) ($company['tki'] ?? 0);
+                    $proyek     = (int) ($company['jumlah_proyek'] ?? 0);
+
+                    $rows->push([
+                        $no++,
+                        (string) ($company['nib'] ?? '-'),
+                        (string) ($company['nama'] ?? '-'),
+                        $jenisModal,
+                        $jenis,
+                        $modalKerja,
+                        $modalTetap,
+                        $totalModal,
+                        $tk,
+                        $proyek,
+                    ]);
+
+                    $subTotals['modal_kerja']  += $modalKerja;
+                    $subTotals['modal_tetap']  += $modalTetap;
+                    $subTotals['total_modal']  += $totalModal;
+                    $subTotals['tk']           += $tk;
+                    $subTotals['proyek']       += $proyek;
+                }
+                $subTotals['perusahaan'] += (int) ($group['jumlah_perusahaan'] ?? 0);
+            }
+
+            // Subtotal per Jenis Investasi
+            $rows->push(array_replace($empty, [
+                0 => 'Subtotal ' . $jenis,
+                7 => $subTotals['total_modal'],
+                8 => $subTotals['tk'],
+                9 => $subTotals['proyek'],
+            ]));
+            $rows->push($empty);
+
+            foreach ($subTotals as $k => $v) {
+                $grandTotals[$k] += $v;
+            }
+        }
+
+        // Grand Total
+        $rows->push(array_replace($empty, [
+            0 => 'TOTAL',
+            7 => $grandTotals['total_modal'],
+            8 => $grandTotals['tk'],
+            9 => $grandTotals['proyek'],
+        ]));
+
+        $headings = array_fill(0, $cols, '');
+        $formats  = ['F' => '#,##0', 'G' => '#,##0', 'H' => '#,##0'];
+
+        return Excel::download(
+            new LkpmStatistikRincianExport($rows, $headings, $formats),
+            'sigumilang_jenis_modal_rincian_' . now()->format('Ymd_His') . '.xlsx'
+        );
+    }
+
+    /**
+     * Export statistik Kategori KBLI ke Excel.
+     */
+    public function exportStatistikKbliKategori(Request $request)
+    {
+        $tahun      = $request->input('tahun');
+        $periode    = $request->input('periode');
+        $date_start = $request->input('date_start');
+        $date_end   = $request->input('date_end');
+
+        [, $statistik_kbli_kategori] = $this->buildSigumilangModalKbliStats($tahun, $periode, $date_start, $date_end);
+
+        $jenisOrder = ['Investasi Baru', 'Penambahan KBLI / Penambahan Usaha', 'Penambahan Investasi'];
+        $grouped    = $statistik_kbli_kategori->groupBy('jenis_investasi');
+
+        $filterLabel = implode(' | ', array_filter([
+            $tahun                       ? 'Tahun: ' . $tahun      : null,
+            $periode                     ? 'Periode: ' . $periode  : null,
+            ($date_start && $date_end)   ? 'Tanggal: ' . $date_start . ' s/d ' . $date_end : null,
+        ])) ?: 'Semua data';
+
+        $cols = 10;
+        $empty = array_fill(0, $cols, '');
+
+        $rows = collect();
+        $rows->push(array_replace($empty, [0 => 'Rincian Kategori KBLI - SiGumilang']));
+        $rows->push(array_replace($empty, [0 => 'Filter: ' . $filterLabel]));
+        $rows->push($empty);
+        $rows->push(['No', 'NIB', 'Nama Perusahaan', 'Kategori KBLI', 'Jenis Investasi',
+            'Modal Kerja (Rp)', 'Modal Tetap (Rp)', 'Total Modal (Rp)', 'TK', 'Jumlah Proyek']);
+
+        $grandTotals = ['modal_kerja' => 0.0, 'modal_tetap' => 0.0, 'total_modal' => 0.0, 'tk' => 0, 'proyek' => 0, 'perusahaan' => 0];
+
+        foreach ($jenisOrder as $jenis) {
+            if (!isset($grouped[$jenis])) {
+                continue;
+            }
+
+            $subTotals = ['modal_kerja' => 0.0, 'modal_tetap' => 0.0, 'total_modal' => 0.0, 'tk' => 0, 'proyek' => 0, 'perusahaan' => 0];
+            $no = 1;
+
+            // Section header per Jenis Investasi
+            $rows->push(array_replace($empty, [0 => '--- ' . $jenis . ' ---']));
+
+            foreach ($grouped[$jenis] as $group) {
+                $kategoriKbli = $group['kategori_kbli'];
+
+                foreach ($group['companies'] ?? [] as $company) {
+                    $modalKerja = (float) ($company['modal_kerja'] ?? 0);
+                    $modalTetap = (float) ($company['modal_tetap'] ?? 0);
+                    $totalModal = $modalKerja + $modalTetap;
+                    $tk         = (int) ($company['tki'] ?? 0);
+                    $proyek     = (int) ($company['jumlah_proyek'] ?? 0);
+
+                    $rows->push([
+                        $no++,
+                        (string) ($company['nib'] ?? '-'),
+                        (string) ($company['nama'] ?? '-'),
+                        $kategoriKbli,
+                        $jenis,
+                        $modalKerja,
+                        $modalTetap,
+                        $totalModal,
+                        $tk,
+                        $proyek,
+                    ]);
+
+                    $subTotals['modal_kerja']  += $modalKerja;
+                    $subTotals['modal_tetap']  += $modalTetap;
+                    $subTotals['total_modal']  += $totalModal;
+                    $subTotals['tk']           += $tk;
+                    $subTotals['proyek']       += $proyek;
+                }
+                $subTotals['perusahaan'] += (int) ($group['jumlah_perusahaan'] ?? 0);
+            }
+
+            // Subtotal per Jenis Investasi
+            $rows->push(array_replace($empty, [
+                0 => 'Subtotal ' . $jenis,
+                7 => $subTotals['total_modal'],
+                8 => $subTotals['tk'],
+                9 => $subTotals['proyek'],
+            ]));
+            $rows->push($empty);
+
+            foreach ($subTotals as $k => $v) {
+                $grandTotals[$k] += $v;
+            }
+        }
+
+        // Grand Total
+        $rows->push(array_replace($empty, [
+            0 => 'TOTAL',
+            7 => $grandTotals['total_modal'],
+            8 => $grandTotals['tk'],
+            9 => $grandTotals['proyek'],
+        ]));
+
+        $headings = array_fill(0, $cols, '');
+        $formats  = ['F' => '#,##0', 'G' => '#,##0', 'H' => '#,##0'];
+
+        return Excel::download(
+            new LkpmStatistikRincianExport($rows, $headings, $formats),
+            'sigumilang_kbli_rincian_' . now()->format('Ymd_His') . '.xlsx'
+        );
+    }
+
+    /**
+     * Build agregasi Jenis Modal dan Kategori KBLI untuk statistik SiGumilang.
+     * Digunakan oleh method statistik() dan export.
+     */
+    private function buildSigumilangModalKbliStats(?string $tahun, ?string $periode, ?string $date_start, ?string $date_end): array
+    {
+        $periodeMap = [
+            '1' => '1', '2' => '2',
+            'Semester I' => '1', 'Semester II' => '2',
+        ];
+
+        $baseQuery = Sigumilang::query();
+
+        if (!empty($tahun)) {
+            $baseQuery->where('tahun', $tahun);
+        }
+
+        if (!empty($periode)) {
+            $periodeFilter = $periodeMap[$periode] ?? null;
+            if ($periodeFilter !== null) {
+                $baseQuery->where('periode', $periodeFilter);
+                $periode = $periodeFilter;
+            }
+        }
+
+        if (!empty($date_start) && !empty($date_end)) {
+            try {
+                $start = Carbon::createFromFormat('Y-m-d', $date_start)->startOfDay();
+                $end   = Carbon::createFromFormat('Y-m-d', $date_end)->endOfDay();
+                $baseQuery->whereBetween('created_at', [$start, $end]);
+            } catch (\Throwable $e) {
+                // ignore
+            }
+        }
+
+        $sigumilangIds = (clone $baseQuery)
+            ->whereNotNull('id_proyek')
+            ->distinct()
+            ->pluck('id_proyek')
+            ->filter()
+            ->values()
+            ->all();
+
+        $emptyResult = [collect(), collect()];
+
+        if (empty($sigumilangIds)) {
+            return $emptyResult;
+        }
+
+        $proyeksLokasi = DB::table('proyek')
+            ->whereIn('id_proyek', $sigumilangIds)
+            ->select('id_proyek', 'nib', 'nama_perusahaan', 'kbli', 'uraian_status_penanaman_modal')
+            ->get();
+
+        $sigData = DB::connection('second_db')->table('oss_rba_proyek_laps')
+            ->whereIn('id_proyek', $sigumilangIds)
+            ->selectRaw('id_proyek, SUM(modal_kerja) as modal_kerja, SUM(modal_tetap) as modal_tetap, SUM(tki_l) as tki_l, SUM(tki_p) as tki_p')
+            ->groupBy('id_proyek')
+            ->get()
+            ->keyBy('id_proyek');
+
+        $normalizeCompanies = static function (array $companies) {
+            $normalized = [];
+            foreach ($companies as $company) {
+                $nib  = trim((string) ($company['nib'] ?? ''));
+                $nama = trim((string) ($company['nama'] ?? '-')) ?: '-';
+                $key  = $nib !== '' && $nib !== '-' ? 'nib:' . $nib : 'name:' . $nama;
+                if (!isset($normalized[$key])) {
+                    $normalized[$key] = ['nib' => $nib !== '' ? $nib : '-', 'nama' => $nama, 'modal_kerja' => 0.0, 'modal_tetap' => 0.0, 'tki' => 0, 'jumlah_proyek' => 0];
+                }
+                $normalized[$key]['modal_kerja']   += (float) ($company['modal_kerja'] ?? 0);
+                $normalized[$key]['modal_tetap']   += (float) ($company['modal_tetap'] ?? 0);
+                $normalized[$key]['tki']           += (int) ($company['tki'] ?? 0);
+                $normalized[$key]['jumlah_proyek'] += (int) ($company['jumlah_proyek'] ?? 1);
+            }
+            return array_values($normalized);
+        };
+
+        $buildCompanyKey = static function ($nib, $nama): string {
+            $nibKey = strtoupper(trim((string) $nib));
+            if ($nibKey !== '' && $nibKey !== '-') {
+                return 'NIB:' . $nibKey;
+            }
+            $namaKey = strtoupper(trim((string) $nama));
+            return $namaKey !== '' && $namaKey !== '-' ? 'NAMA:' . $namaKey : '';
+        };
+
+        $semMap = ['1' => 1, '2' => 2, 'SEMESTER I' => 1, 'SEMESTER II' => 2];
+        $existingCompanySet = [];
+        $existingKbliSet    = [];
+
+        $prevSigQuery = Sigumilang::query();
+        if (!empty($tahun) && !empty($periode)) {
+            $currentSem = $semMap[strtoupper(trim((string) $periode))] ?? null;
+            if ($currentSem !== null) {
+                $prevSigQuery->where(function ($q) use ($tahun, $currentSem) {
+                    $q->where('tahun', '<', $tahun)
+                      ->orWhere(function ($sub) use ($tahun, $currentSem) {
+                          $sub->where('tahun', $tahun)
+                              ->whereIn('periode', array_map('strval', range(1, max($currentSem - 1, 0))));
+                      });
+                });
+            } else {
+                $prevSigQuery->where('tahun', '<', $tahun);
+            }
+        } elseif (!empty($tahun)) {
+            $prevSigQuery->where('tahun', '<', $tahun);
+        } elseif (!empty($periode)) {
+            $prevSigQuery->whereRaw('1=0');
+        } else {
+            $prevSigQuery->whereRaw('1=0');
+        }
+
+        $prevProyekIds = (clone $prevSigQuery)
+            ->whereNotNull('id_proyek')
+            ->distinct()
+            ->pluck('id_proyek')
+            ->filter()
+            ->values()
+            ->all();
+
+        if (!empty($prevProyekIds)) {
+            $prevProyeks = DB::table('proyek')
+                ->whereIn('id_proyek', $prevProyekIds)
+                ->select('nib', 'nama_perusahaan', 'kbli')
+                ->get();
+
+            $existingCompanySet = array_flip(
+                $prevProyeks
+                    ->map(fn ($r) => $buildCompanyKey($r->nib ?? '', $r->nama_perusahaan ?? ''))
+                    ->filter()->values()->all()
+            );
+
+            $existingKbliSet = array_flip(
+                $prevProyeks
+                    ->map(fn ($r) => trim((string) ($r->kbli ?? '')))
+                    ->filter()->values()->all()
+            );
+        }
+
+        $classifyInvestmentType = static function ($companyKey, $kbli) use ($existingCompanySet, $existingKbliSet) {
+            $company = strtoupper(trim((string) $companyKey));
+            $kbliKey = trim((string) $kbli);
+            if ($company === '' || $kbliKey === '') {
+                return 'Penambahan Investasi';
+            }
+            $isNewCompany = !isset($existingCompanySet[$company]);
+            $isNewKbli    = !isset($existingKbliSet[$kbliKey]);
+            if ($isNewCompany && $isNewKbli) {
+                return 'Investasi Baru';
+            }
+            if (!$isNewCompany && $isNewKbli) {
+                return 'Penambahan KBLI / Penambahan Usaha';
+            }
+            return 'Penambahan Investasi';
+        };
+
+        $jenisOrder    = ['Investasi Baru', 'Penambahan KBLI / Penambahan Usaha', 'Penambahan Investasi'];
+        $jenisOrderMap = array_flip($jenisOrder);
+        $jenisModalAgg = [];
+
+        $extractKbliCode = static function ($kbliRaw) {
+            $kbli = trim((string) $kbliRaw);
+            if ($kbli === '') {
+                return null;
+            }
+            if (preg_match('/\((\d{5})\)/', $kbli, $m)) {
+                return $m[1];
+            }
+            if (preg_match('/\b(\d{5})\b/', $kbli, $m)) {
+                return $m[1];
+            }
+            $digitsOnly = preg_replace('/\D+/', '', $kbli);
+            if (!empty($digitsOnly) && strlen($digitsOnly) >= 5) {
+                return substr($digitsOnly, 0, 5);
+            }
+            return null;
+        };
+
+        $kbliCodes = collect($proyeksLokasi)
+            ->map(fn ($r) => $extractKbliCode($r->kbli ?? null))
+            ->filter()->unique()->values()->all();
+
+        $kbliKategoriMap  = [];
+        $kbliMasterReady  =
+            Schema::hasTable('kbli_subclasses') &&
+            Schema::hasTable('kbli_classes') &&
+            Schema::hasTable('kbli_groups') &&
+            Schema::hasTable('kbli_divisions') &&
+            Schema::hasTable('kbli_sections');
+
+        if (!empty($kbliCodes) && $kbliMasterReady) {
+            $kbliKategoriMap = DB::table('kbli_subclasses as ks')
+                ->leftJoin('kbli_classes as kc', 'kc.code', '=', 'ks.class_code')
+                ->leftJoin('kbli_groups as kg', 'kg.code', '=', 'kc.group_code')
+                ->leftJoin('kbli_divisions as kd', 'kd.code', '=', 'kg.division_code')
+                ->leftJoin('kbli_sections as ksec', 'ksec.code', '=', 'kd.section_code')
+                ->whereIn('ks.code', $kbliCodes)
+                ->selectRaw("ks.code as kbli_code, COALESCE(CONCAT(ksec.code, ' - ', ksec.name), 'Tidak Terklasifikasi') as kategori_kbli")
+                ->pluck('kategori_kbli', 'kbli_code')
+                ->toArray();
+        }
+
+        $kbliKategoriAgg = [];
+
+        foreach ($proyeksLokasi as $row) {
+            if (!isset($sigData[$row->id_proyek])) {
+                continue;
+            }
+
+            $statusRaw    = strtoupper(trim((string) ($row->uraian_status_penanaman_modal ?? '')));
+            $jenisModal   = str_contains($statusRaw, 'PMA') ? 'PMA' : (str_contains($statusRaw, 'PMDN') ? 'PMDN' : 'TIDAK DIKETAHUI');
+            $modal        = (float) (($sigData[$row->id_proyek]->modal_kerja ?? 0) + ($sigData[$row->id_proyek]->modal_tetap ?? 0));
+            $tk           = (int) (($sigData[$row->id_proyek]->tki_l ?? 0) + ($sigData[$row->id_proyek]->tki_p ?? 0));
+            $nib          = trim((string) ($row->nib ?? ''));
+            $companyKey   = $buildCompanyKey($row->nib ?? '', $row->nama_perusahaan ?? '');
+            $jenisInvestasi = $classifyInvestmentType($companyKey, $row->kbli ?? '');
+
+            $companyEntry = [
+                'nib'             => $nib ?: '-',
+                'nama'            => trim((string)($row->nama_perusahaan ?? '-')) ?: '-',
+                'modal_kerja'     => (float)($sigData[$row->id_proyek]->modal_kerja ?? 0),
+                'modal_tetap'     => (float)($sigData[$row->id_proyek]->modal_tetap ?? 0),
+                'tki'             => (int)($sigData[$row->id_proyek]->tki_l ?? 0) + (int)($sigData[$row->id_proyek]->tki_p ?? 0),
+                'jumlah_proyek'   => 1,
+                'jenis_investasi' => $jenisInvestasi,
+            ];
+
+            $jenisModalKey = $jenisModal . '|' . $jenisInvestasi;
+            if (!isset($jenisModalAgg[$jenisModalKey])) {
+                $jenisModalAgg[$jenisModalKey] = [
+                    'jenis_modal'      => $jenisModal,
+                    'jenis_investasi'  => $jenisInvestasi,
+                    'jumlah_proyek'    => 0,
+                    'jumlah_perusahaan'=> 0,
+                    'nib_set'          => [],
+                    'companies'        => [],
+                    'total_modal'      => 0.0,
+                    'total_tk'         => 0,
+                ];
+            }
+            $jenisModalAgg[$jenisModalKey]['jumlah_proyek']++;
+            $jenisModalAgg[$jenisModalKey]['total_modal'] += $modal;
+            $jenisModalAgg[$jenisModalKey]['total_tk']    += $tk;
+            $jenisModalAgg[$jenisModalKey]['companies'][]  = $companyEntry;
+            if ($nib !== '') {
+                $jenisModalAgg[$jenisModalKey]['nib_set'][$nib] = true;
+            }
+
+            $kbliCode        = $extractKbliCode($row->kbli ?? null);
+            $kategoriKbli    = $kbliCode ? ($kbliKategoriMap[$kbliCode] ?? 'Tidak Terklasifikasi') : 'Tidak Terisi';
+            $kbliKategoriKey = $kategoriKbli . '|' . $jenisInvestasi;
+
+            if (!isset($kbliKategoriAgg[$kbliKategoriKey])) {
+                $kbliKategoriAgg[$kbliKategoriKey] = [
+                    'kategori_kbli'    => $kategoriKbli,
+                    'jenis_investasi'  => $jenisInvestasi,
+                    'jumlah_proyek'    => 0,
+                    'jumlah_perusahaan'=> 0,
+                    'nib_set'          => [],
+                    'companies'        => [],
+                    'total_modal'      => 0.0,
+                    'total_tk'         => 0,
+                ];
+            }
+            $kbliKategoriAgg[$kbliKategoriKey]['jumlah_proyek']++;
+            $kbliKategoriAgg[$kbliKategoriKey]['total_modal'] += $modal;
+            $kbliKategoriAgg[$kbliKategoriKey]['total_tk']    += $tk;
+            $kbliKategoriAgg[$kbliKategoriKey]['companies'][]  = $companyEntry;
+            if ($nib !== '') {
+                $kbliKategoriAgg[$kbliKategoriKey]['nib_set'][$nib] = true;
+            }
+        }
+
+        foreach ($jenisModalAgg as &$jm) {
+            $jm['jumlah_perusahaan'] = count($jm['nib_set']);
+            $jm['companies']         = $normalizeCompanies($jm['companies']);
+            unset($jm['nib_set']);
+        }
+        unset($jm);
+
+        foreach ($kbliKategoriAgg as &$kk) {
+            $kk['jumlah_perusahaan'] = count($kk['nib_set']);
+            $kk['companies']         = $normalizeCompanies($kk['companies']);
+            unset($kk['nib_set']);
+        }
+        unset($kk);
+
+        $modalOrderMap = ['PMA' => 0, 'PMDN' => 1, 'TIDAK DIKETAHUI' => 2];
+
+        $statistik_jenis_modal = collect(array_values($jenisModalAgg))
+            ->sort(function ($a, $b) use ($modalOrderMap, $jenisOrderMap) {
+                $mc = ($modalOrderMap[$a['jenis_modal']] ?? 99) <=> ($modalOrderMap[$b['jenis_modal']] ?? 99);
+                if ($mc !== 0) {
+                    return $mc;
+                }
+                $jc = ($jenisOrderMap[$a['jenis_investasi']] ?? 99) <=> ($jenisOrderMap[$b['jenis_investasi']] ?? 99);
+                if ($jc !== 0) {
+                    return $jc;
+                }
+                return ($b['jumlah_proyek'] ?? 0) <=> ($a['jumlah_proyek'] ?? 0);
+            })
+            ->values();
+
+        $statistik_kbli_kategori = collect(array_values($kbliKategoriAgg))
+            ->sort(function ($a, $b) use ($jenisOrderMap) {
+                $kc = strcmp((string) ($a['kategori_kbli'] ?? ''), (string) ($b['kategori_kbli'] ?? ''));
+                if ($kc !== 0) {
+                    return $kc;
+                }
+                $jc = ($jenisOrderMap[$a['jenis_investasi']] ?? 99) <=> ($jenisOrderMap[$b['jenis_investasi']] ?? 99);
+                if ($jc !== 0) {
+                    return $jc;
+                }
+                return ($b['total_modal'] ?? 0) <=> ($a['total_modal'] ?? 0);
+            })
+            ->values();
+
+        return [$statistik_jenis_modal, $statistik_kbli_kategori];
     }
 }

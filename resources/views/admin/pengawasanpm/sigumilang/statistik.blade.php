@@ -214,36 +214,70 @@
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h3 class="card-title">Jenis Penanaman Modal (Relasi Proyek)</h3>
-                                <span class="text-muted small">Berdasarkan kolom uraian_status_penanaman_modal</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="text-muted small">Berdasarkan kolom uraian_status_penanaman_modal</span>
+                                    <a href="{{ route('sigumilang.statistik.jenis-modal.export', request()->query()) }}" class="btn btn-sm btn-success" target="_blank">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"/><polyline points="7 11 12 16 17 11"/><line x1="12" y1="4" x2="12" y2="16"/></svg>
+                                        Unduh Excel
+                                    </a>
+                                </div>
                             </div>
                             <div class="table-responsive">
                                 <table class="table table-vcenter card-table table-hover">
                                     <thead>
                                         <tr>
                                             <th>Jenis Modal</th>
+                                            <th>Jenis Investasi</th>
                                             <th class="text-end">Jumlah Perusahaan</th>
                                             <th class="text-end">Jumlah Proyek</th>
                                             <th class="text-end">Total Modal</th>
                                             <th class="text-end">Total TK</th>
                                         </tr>
                                     </thead>
+                                    @php
+                                        $jenisModalCollection = collect($statistik_jenis_modal ?? collect());
+                                        $jenisOrderList = ['Investasi Baru', 'Penambahan KBLI / Penambahan Usaha', 'Penambahan Investasi'];
+                                        $jenisModalByJenis = $jenisModalCollection->groupBy('jenis_investasi');
+                                    @endphp
                                     <tbody>
-                                        @forelse(($statistik_jenis_modal ?? collect()) as $row)
-                                            <tr role="button" style="cursor:pointer"
-                                                data-bs-toggle="modal" data-bs-target="#detailModal"
-                                                data-title="Detail Jenis Modal: {{ $row['jenis_modal'] ?? '-' }}"
-                                                data-companies="{{ json_encode($row['companies'] ?? []) }}">
-                                                <td>{{ $row['jenis_modal'] ?? '-' }}</td>
-                                                <td class="text-end">{{ number_format($row['jumlah_perusahaan'] ?? 0, 0, ',', '.') }}</td>
-                                                <td class="text-end">{{ number_format($row['jumlah_proyek'] ?? 0, 0, ',', '.') }}</td>
-                                                <td class="text-end">Rp {{ number_format($row['total_modal'] ?? 0, 0, ',', '.') }}</td>
-                                                <td class="text-end">{{ number_format($row['total_tk'] ?? 0, 0, ',', '.') }}</td>
-                                            </tr>
-                                        @empty
+                                        @if($jenisModalCollection->isEmpty())
                                             <tr>
-                                                <td colspan="5" class="text-center text-muted py-4">Data PMA/PMDN belum tersedia.</td>
+                                                <td colspan="6" class="text-center text-muted py-4">Data PMA/PMDN belum tersedia.</td>
                                             </tr>
-                                        @endforelse
+                                        @else
+                                            @foreach($jenisOrderList as $jenis)
+                                                @if(isset($jenisModalByJenis[$jenis]))
+                                                    @foreach($jenisModalByJenis[$jenis] as $row)
+                                                        <tr role="button" style="cursor:pointer"
+                                                            data-bs-toggle="modal" data-bs-target="#detailModal"
+                                                            data-title="Detail Jenis Modal: {{ $row['jenis_modal'] ?? '-' }} | {{ $row['jenis_investasi'] ?? '-' }}"
+                                                            data-companies="{{ json_encode($row['companies'] ?? []) }}">
+                                                            <td>{{ $row['jenis_modal'] ?? '-' }}</td>
+                                                            <td>{{ $row['jenis_investasi'] ?? '-' }}</td>
+                                                            <td class="text-end">{{ number_format($row['jumlah_perusahaan'] ?? 0, 0, ',', '.') }}</td>
+                                                            <td class="text-end">{{ number_format($row['jumlah_proyek'] ?? 0, 0, ',', '.') }}</td>
+                                                            <td class="text-end">Rp {{ number_format($row['total_modal'] ?? 0, 0, ',', '.') }}</td>
+                                                            <td class="text-end">{{ number_format($row['total_tk'] ?? 0, 0, ',', '.') }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                    <tr class="table-warning">
+                                                        <td class="fw-semibold">Subtotal</td>
+                                                        <td class="fw-semibold">{{ $jenis }}</td>
+                                                        <td class="text-end fw-semibold">{{ number_format($jenisModalByJenis[$jenis]->sum('jumlah_perusahaan'), 0, ',', '.') }}</td>
+                                                        <td class="text-end fw-semibold">{{ number_format($jenisModalByJenis[$jenis]->sum('jumlah_proyek'), 0, ',', '.') }}</td>
+                                                        <td class="text-end fw-semibold">Rp {{ number_format($jenisModalByJenis[$jenis]->sum('total_modal'), 0, ',', '.') }}</td>
+                                                        <td class="text-end fw-semibold">{{ number_format($jenisModalByJenis[$jenis]->sum('total_tk'), 0, ',', '.') }}</td>
+                                                    </tr>
+                                                @endif
+                                            @endforeach
+                                            <tr class="table-active fw-bold">
+                                                <td colspan="2">TOTAL</td>
+                                                <td class="text-end">{{ number_format($jenisModalCollection->sum('jumlah_perusahaan'), 0, ',', '.') }}</td>
+                                                <td class="text-end">{{ number_format($jenisModalCollection->sum('jumlah_proyek'), 0, ',', '.') }}</td>
+                                                <td class="text-end">Rp {{ number_format($jenisModalCollection->sum('total_modal'), 0, ',', '.') }}</td>
+                                                <td class="text-end">{{ number_format($jenisModalCollection->sum('total_tk'), 0, ',', '.') }}</td>
+                                            </tr>
+                                        @endif
                                     </tbody>
                                 </table>
                             </div>
@@ -254,36 +288,69 @@
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h3 class="card-title">Kategori KBLI (Relasi Proyek)</h3>
-                                <span class="text-muted small">Jumlah modal per kategori KBLI</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="text-muted small">Jumlah modal per kategori KBLI</span>
+                                    <a href="{{ route('sigumilang.statistik.kbli.export', request()->query()) }}" class="btn btn-sm btn-success" target="_blank">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"/><polyline points="7 11 12 16 17 11"/><line x1="12" y1="4" x2="12" y2="16"/></svg>
+                                        Unduh Excel
+                                    </a>
+                                </div>
                             </div>
                             <div class="table-responsive">
                                 <table class="table table-vcenter card-table table-hover">
                                     <thead>
                                         <tr>
                                             <th>Kategori KBLI</th>
+                                            <th>Jenis Investasi</th>
                                             <th class="text-end">Jumlah Perusahaan</th>
                                             <th class="text-end">Jumlah Proyek</th>
                                             <th class="text-end">Total Modal</th>
                                             <th class="text-end">Total TK</th>
                                         </tr>
                                     </thead>
+                                    @php
+                                        $kbliKategoriCollection = collect($statistik_kbli_kategori ?? collect());
+                                        $kbliByJenis = $kbliKategoriCollection->groupBy('jenis_investasi');
+                                    @endphp
                                     <tbody>
-                                        @forelse(($statistik_kbli_kategori ?? collect()) as $row)
-                                            <tr role="button" style="cursor:pointer"
-                                                data-bs-toggle="modal" data-bs-target="#detailModal"
-                                                data-title="Detail Kategori KBLI: {{ $row['kategori_kbli'] ?? '-' }}"
-                                                data-companies="{{ json_encode($row['companies'] ?? []) }}">
-                                                <td>{{ $row['kategori_kbli'] ?? '-' }}</td>
-                                                <td class="text-end">{{ number_format($row['jumlah_perusahaan'] ?? 0, 0, ',', '.') }}</td>
-                                                <td class="text-end">{{ number_format($row['jumlah_proyek'] ?? 0, 0, ',', '.') }}</td>
-                                                <td class="text-end">Rp {{ number_format($row['total_modal'] ?? 0, 0, ',', '.') }}</td>
-                                                <td class="text-end">{{ number_format($row['total_tk'] ?? 0, 0, ',', '.') }}</td>
-                                            </tr>
-                                        @empty
+                                        @if($kbliKategoriCollection->isEmpty())
                                             <tr>
-                                                <td colspan="5" class="text-center text-muted py-4">Data kategori KBLI belum tersedia.</td>
+                                                <td colspan="6" class="text-center text-muted py-4">Data kategori KBLI belum tersedia.</td>
                                             </tr>
-                                        @endforelse
+                                        @else
+                                            @foreach($jenisOrderList as $jenis)
+                                                @if(isset($kbliByJenis[$jenis]))
+                                                    @foreach($kbliByJenis[$jenis] as $row)
+                                                        <tr role="button" style="cursor:pointer"
+                                                            data-bs-toggle="modal" data-bs-target="#detailModal"
+                                                            data-title="Detail Kategori KBLI: {{ $row['kategori_kbli'] ?? '-' }} | {{ $row['jenis_investasi'] ?? '-' }}"
+                                                            data-companies="{{ json_encode($row['companies'] ?? []) }}">
+                                                            <td>{{ $row['kategori_kbli'] ?? '-' }}</td>
+                                                            <td>{{ $row['jenis_investasi'] ?? '-' }}</td>
+                                                            <td class="text-end">{{ number_format($row['jumlah_perusahaan'] ?? 0, 0, ',', '.') }}</td>
+                                                            <td class="text-end">{{ number_format($row['jumlah_proyek'] ?? 0, 0, ',', '.') }}</td>
+                                                            <td class="text-end">Rp {{ number_format($row['total_modal'] ?? 0, 0, ',', '.') }}</td>
+                                                            <td class="text-end">{{ number_format($row['total_tk'] ?? 0, 0, ',', '.') }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                    <tr class="table-warning">
+                                                        <td class="fw-semibold">Subtotal</td>
+                                                        <td class="fw-semibold">{{ $jenis }}</td>
+                                                        <td class="text-end fw-semibold">{{ number_format($kbliByJenis[$jenis]->sum('jumlah_perusahaan'), 0, ',', '.') }}</td>
+                                                        <td class="text-end fw-semibold">{{ number_format($kbliByJenis[$jenis]->sum('jumlah_proyek'), 0, ',', '.') }}</td>
+                                                        <td class="text-end fw-semibold">Rp {{ number_format($kbliByJenis[$jenis]->sum('total_modal'), 0, ',', '.') }}</td>
+                                                        <td class="text-end fw-semibold">{{ number_format($kbliByJenis[$jenis]->sum('total_tk'), 0, ',', '.') }}</td>
+                                                    </tr>
+                                                @endif
+                                            @endforeach
+                                            <tr class="table-active fw-bold">
+                                                <td colspan="2">TOTAL</td>
+                                                <td class="text-end">{{ number_format($kbliKategoriCollection->sum('jumlah_perusahaan'), 0, ',', '.') }}</td>
+                                                <td class="text-end">{{ number_format($kbliKategoriCollection->sum('jumlah_proyek'), 0, ',', '.') }}</td>
+                                                <td class="text-end">Rp {{ number_format($kbliKategoriCollection->sum('total_modal'), 0, ',', '.') }}</td>
+                                                <td class="text-end">{{ number_format($kbliKategoriCollection->sum('total_tk'), 0, ',', '.') }}</td>
+                                            </tr>
+                                        @endif
                                     </tbody>
                                 </table>
                             </div>
