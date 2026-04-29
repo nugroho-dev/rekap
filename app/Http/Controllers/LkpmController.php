@@ -1603,7 +1603,6 @@ class LkpmController extends Controller
                     $index + 1,
                     (string) ($row['nomor_induk_berusaha'] ?? '-'),
                     (string) ($row['nama_pelaku_usaha'] ?? '-'),
-                    (string) ($row['kbli'] ?? '-'),
                     (int) ($row['jumlah_proyek'] ?? 0),
                     (int) ($row['total_tenaga_kerja_laki'] ?? 0),
                     (int) ($row['total_tenaga_kerja_perempuan'] ?? 0),
@@ -1611,13 +1610,13 @@ class LkpmController extends Controller
                 ];
             });
 
-            $headings = ['No', 'NIB', 'Nama Perusahaan', 'KBLI', 'Jumlah Proyek', 'TK Laki-laki', 'TK Perempuan', 'Nilai Realisasi'];
+            $headings = ['No', 'NIB', 'Nama Perusahaan', 'Jumlah Proyek', 'TK Laki-laki', 'TK Perempuan', 'Nilai Realisasi'];
             $formats = [
                 'B' => '@',
+                'D' => NumberFormat::FORMAT_NUMBER,
                 'E' => NumberFormat::FORMAT_NUMBER,
                 'F' => NumberFormat::FORMAT_NUMBER,
-                'G' => NumberFormat::FORMAT_NUMBER,
-                'H' => '"Rp"#,##0',
+                'G' => '"Rp"#,##0',
             ];
             $fileTag = 'kbli';
         }
@@ -1671,7 +1670,6 @@ class LkpmController extends Controller
                 return [
                     $index + 1,
                     (string) ($row['nama_pelaku_usaha'] ?? '-'),
-                    (string) ($row['kbli'] ?? '-'),
                     (int) ($row['jumlah_proyek'] ?? 0),
                     (int) ($row['total_tenaga_kerja_wni'] ?? 0),
                     (int) ($row['total_tenaga_kerja_wna'] ?? 0),
@@ -1679,12 +1677,12 @@ class LkpmController extends Controller
                 ];
             });
 
-            $headings = ['No', 'Nama Perusahaan', 'KBLI', 'Jumlah Proyek', 'WNI', 'WNA', 'Nilai Realisasi'];
+            $headings = ['No', 'Nama Perusahaan', 'Jumlah Proyek', 'WNI', 'WNA', 'Nilai Realisasi'];
             $formats = [
+                'C' => NumberFormat::FORMAT_NUMBER,
                 'D' => NumberFormat::FORMAT_NUMBER,
                 'E' => NumberFormat::FORMAT_NUMBER,
-                'F' => NumberFormat::FORMAT_NUMBER,
-                'G' => '"Rp"#,##0',
+                'F' => '"Rp"#,##0',
             ];
             $fileTag = 'kbli';
         }
@@ -1707,52 +1705,64 @@ class LkpmController extends Controller
             abort(422, 'Status penanaman modal tidak valid.');
         }
 
-        // Build KBLI aggregation data
-        $byKbliKategori = $this->buildUmkKbliAggregation($tahun, $periode);
-        
-        // Filter by status
-        $rowsByStatus = collect($byKbliKategori)->filter(function ($item) use ($status) {
-            return $item->status_penanaman_modal === $status;
-        })->values();
+        $detailsMap = $this->buildUmkKbliDetailsMap($tahun, $periode);
 
-        // Transform to export format grouped by kategori and jenis
         $rows = collect();
-        $kategoriRows = $rowsByStatus->groupBy('kategori_kbli_section');
-        
-        foreach ($kategoriRows as $kategori => $items) {
-            foreach ($items as $row) {
+        $totalProyek = 0;
+        $totalTkLaki = 0;
+        $totalTkPerempuan = 0;
+        $totalRealisasi = 0.0;
+
+        foreach ($detailsMap as $key => $companies) {
+            $parts = explode('|||', $key);
+            if (count($parts) < 3) continue;
+            [$statusKey, $kategori, $jenis] = $parts;
+            if ($statusKey !== $status) continue;
+
+            foreach ($companies as $company) {
+                $jumlahProyek = (int) ($company['jumlah_proyek'] ?? 0);
+                $tkLaki = (int) ($company['total_tenaga_kerja_laki'] ?? 0);
+                $tkPerempuan = (int) ($company['total_tenaga_kerja_perempuan'] ?? 0);
+                $realisasi = (float) ($company['total_realisasi'] ?? 0);
+
                 $rows->push([
                     (string) $kategori,
-                    (string) ($row->jenis_investasi ?? '-'),
-                    (int) ($row->jumlah_perusahaan ?? 0),
-                    (int) ($row->jumlah_proyek ?? 0),
-                    (int) ($row->total_tenaga_kerja_laki ?? 0),
-                    (int) ($row->total_tenaga_kerja_perempuan ?? 0),
-                    (float) ($row->total_realisasi ?? 0),
+                    (string) $jenis,
+                    (string) ($company['nomor_induk_berusaha'] ?? ''),
+                    (string) ($company['nama_pelaku_usaha'] ?? ''),
+                    $jumlahProyek,
+                    $tkLaki,
+                    $tkPerempuan,
+                    $realisasi,
                 ]);
+
+                $totalProyek += $jumlahProyek;
+                $totalTkLaki += $tkLaki;
+                $totalTkPerempuan += $tkPerempuan;
+                $totalRealisasi += $realisasi;
             }
         }
 
-        // Add total row
         if ($rows->count() > 0) {
-            $rows->push([
-                'TOTAL',
-                '',
-                (int) $rowsByStatus->sum('jumlah_perusahaan'),
-                (int) $rowsByStatus->sum('jumlah_proyek'),
-                (int) $rowsByStatus->sum('total_tenaga_kerja_laki'),
-                (int) $rowsByStatus->sum('total_tenaga_kerja_perempuan'),
-                (float) $rowsByStatus->sum('total_realisasi'),
-            ]);
+            $rows->push(['TOTAL', '', '', '', $totalProyek, $totalTkLaki, $totalTkPerempuan, $totalRealisasi]);
         }
 
-        $headings = ['Kategori Section KBLI', 'Jenis Investasi', 'Jumlah Perusahaan', 'Jumlah Proyek', 'TK Laki-laki', 'TK Perempuan', 'Nilai Realisasi'];
+        $periodeLabel = trim((string) ($periode ?? '-'));
+        $tahunLabel = trim((string) ($tahun ?? '-'));
+        $rows = collect([
+            ['Jenis Data', 'UMK', '', '', '', '', '', ''],
+            ['Status Penanaman Modal', $status, '', '', '', '', '', ''],
+            ['Periode', $periodeLabel . ' ' . $tahunLabel, '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['Kategori Section KBLI', 'Jenis Investasi', 'NIB', 'Nama Perusahaan', 'Jumlah Proyek', 'TK Laki-laki', 'TK Perempuan', 'Nilai Realisasi'],
+        ])->concat($rows);
+
+        $headings = ['Laporan Nilai Realisasi Investasi Berdasarkan Kategori Section KBLI', '', '', '', '', '', '', ''];
         $formats = [
-            'C' => NumberFormat::FORMAT_NUMBER,
-            'D' => NumberFormat::FORMAT_NUMBER,
             'E' => NumberFormat::FORMAT_NUMBER,
             'F' => NumberFormat::FORMAT_NUMBER,
-            'G' => '"Rp"#,##0',
+            'G' => NumberFormat::FORMAT_NUMBER,
+            'H' => '"Rp"#,##0',
         ];
 
         $filename = 'lkpm_umk_kbli_' . strtolower($status) . '_' . now()->format('Ymd_His') . '.xlsx';
@@ -1773,48 +1783,59 @@ class LkpmController extends Controller
             abort(422, 'Status penanaman modal tidak valid.');
         }
 
-        // Build KBLI aggregation data
-        $byKbliKategori = $this->buildNonUmkKbliAggregation($tahun, $periode);
-        
-        // Filter by status
-        $rowsByStatus = collect($byKbliKategori)->filter(function ($item) use ($status) {
-            return $item->status_penanaman_modal === $status;
-        })->values();
+        $detailsMap = $this->buildNonUmkKbliDetailsMap($tahun, $periode);
 
-        // Transform to export format grouped by kategori and jenis
         $rows = collect();
-        $kategoriRows = $rowsByStatus->groupBy('kategori_kbli_section');
-        
-        foreach ($kategoriRows as $kategori => $items) {
-            foreach ($items as $row) {
+        $totalProyek = 0;
+        $totalWni = 0;
+        $totalWna = 0;
+        $totalRealisasi = 0.0;
+
+        foreach ($detailsMap as $key => $companies) {
+            $parts = explode('|||', $key);
+            if (count($parts) < 3) continue;
+            [$statusKey, $kategori, $jenis] = $parts;
+            if ($statusKey !== $status) continue;
+
+            foreach ($companies as $company) {
+                $jumlahProyek = (int) ($company['jumlah_proyek'] ?? 0);
+                $wni = (int) ($company['total_tenaga_kerja_wni'] ?? 0);
+                $wna = (int) ($company['total_tenaga_kerja_wna'] ?? 0);
+                $realisasi = (float) ($company['total_realisasi'] ?? 0);
+
                 $rows->push([
                     (string) $kategori,
-                    (string) ($row->jenis_investasi ?? '-'),
-                    (int) ($row->jumlah_perusahaan ?? 0),
-                    (int) ($row->jumlah_proyek ?? 0),
-                    (int) ($row->total_tenaga_kerja_wni ?? 0),
-                    (int) ($row->total_tenaga_kerja_wna ?? 0),
-                    (float) ($row->total_realisasi ?? 0),
+                    (string) $jenis,
+                    (string) ($company['nama_pelaku_usaha'] ?? ''),
+                    $jumlahProyek,
+                    $wni,
+                    $wna,
+                    $realisasi,
                 ]);
+
+                $totalProyek += $jumlahProyek;
+                $totalWni += $wni;
+                $totalWna += $wna;
+                $totalRealisasi += $realisasi;
             }
         }
 
-        // Add total row
         if ($rows->count() > 0) {
-            $rows->push([
-                'TOTAL',
-                '',
-                (int) $rowsByStatus->sum('jumlah_perusahaan'),
-                (int) $rowsByStatus->sum('jumlah_proyek'),
-                (int) $rowsByStatus->sum('total_tenaga_kerja_wni'),
-                (int) $rowsByStatus->sum('total_tenaga_kerja_wna'),
-                (float) $rowsByStatus->sum('total_realisasi'),
-            ]);
+            $rows->push(['TOTAL', '', '', $totalProyek, $totalWni, $totalWna, $totalRealisasi]);
         }
 
-        $headings = ['Kategori Section KBLI', 'Jenis Investasi', 'Jumlah Perusahaan', 'Jumlah Proyek', 'WNI', 'WNA', 'Nilai Realisasi'];
+        $periodeLabel = trim((string) ($periode ?? '-'));
+        $tahunLabel = trim((string) ($tahun ?? '-'));
+        $rows = collect([
+            ['Jenis Data', 'Non-UMK', '', '', '', '', ''],
+            ['Status Penanaman Modal', $status, '', '', '', '', ''],
+            ['Periode', $periodeLabel . ' ' . $tahunLabel, '', '', '', '', ''],
+            ['', '', '', '', '', '', ''],
+            ['Kategori Section KBLI', 'Jenis Investasi', 'Nama Perusahaan', 'Jumlah Proyek', 'WNI', 'WNA', 'Nilai Realisasi'],
+        ])->concat($rows);
+
+        $headings = ['Laporan Nilai Realisasi Investasi Berdasarkan Kategori Section KBLI', '', '', '', '', '', ''];
         $formats = [
-            'C' => NumberFormat::FORMAT_NUMBER,
             'D' => NumberFormat::FORMAT_NUMBER,
             'E' => NumberFormat::FORMAT_NUMBER,
             'F' => NumberFormat::FORMAT_NUMBER,
@@ -1973,6 +1994,7 @@ class LkpmController extends Controller
                     'jenis_investasi' => $jenis,
                     'jumlah_perusahaan' => 0,
                     'perusahaan_keys' => [],
+                    'perusahaan_names' => [],
                     'jumlah_proyek' => 0,
                     'total_tenaga_kerja_laki' => 0,
                     'total_tenaga_kerja_perempuan' => 0,
@@ -1982,6 +2004,10 @@ class LkpmController extends Controller
 
             if ($companyKey !== '') {
                 $byKbliKategoriGrouped[$statusPm][$kategori][$jenis]['perusahaan_keys'][$companyKey] = true;
+            }
+            $companyName = trim((string) ($row->nama_pelaku_usaha ?? ''));
+            if ($companyName !== '') {
+                $byKbliKategoriGrouped[$statusPm][$kategori][$jenis]['perusahaan_names'][$companyName] = true;
             }
 
             $byKbliKategoriGrouped[$statusPm][$kategori][$jenis]['jumlah_proyek'] += (int) ($row->jumlah_proyek ?? 0);
@@ -1994,7 +2020,11 @@ class LkpmController extends Controller
             foreach ($statusRows as &$kategoriRows) {
                 foreach ($kategoriRows as &$aggr) {
                     $aggr['jumlah_perusahaan'] = count($aggr['perusahaan_keys']);
+                    $companyNames = array_keys($aggr['perusahaan_names']);
+                    sort($companyNames);
+                    $aggr['nama_perusahaan'] = implode(', ', $companyNames);
                     unset($aggr['perusahaan_keys']);
+                    unset($aggr['perusahaan_names']);
                 }
             }
         }
@@ -2126,6 +2156,7 @@ class LkpmController extends Controller
                     'jenis_investasi' => $jenis,
                     'jumlah_perusahaan' => 0,
                     'perusahaan_keys' => [],
+                    'perusahaan_names' => [],
                     'jumlah_proyek' => 0,
                     'total_tenaga_kerja_wni' => 0,
                     'total_tenaga_kerja_wna' => 0,
@@ -2136,6 +2167,10 @@ class LkpmController extends Controller
             $companyKey = strtoupper(trim((string) $row->nama_pelaku_usaha));
             if ($companyKey !== '') {
                 $byKbliKategoriGrouped[$statusPm][$kategori][$jenis]['perusahaan_keys'][$companyKey] = true;
+            }
+            $companyName = trim((string) ($row->nama_pelaku_usaha ?? ''));
+            if ($companyName !== '') {
+                $byKbliKategoriGrouped[$statusPm][$kategori][$jenis]['perusahaan_names'][$companyName] = true;
             }
 
             $byKbliKategoriGrouped[$statusPm][$kategori][$jenis]['jumlah_proyek'] += (int) ($row->jumlah_proyek ?? 0);
@@ -2148,7 +2183,11 @@ class LkpmController extends Controller
             foreach ($statusRows as &$kategoriRows) {
                 foreach ($kategoriRows as &$aggr) {
                     $aggr['jumlah_perusahaan'] = count($aggr['perusahaan_keys']);
+                    $companyNames = array_keys($aggr['perusahaan_names']);
+                    sort($companyNames);
+                    $aggr['nama_perusahaan'] = implode(', ', $companyNames);
                     unset($aggr['perusahaan_keys']);
+                    unset($aggr['perusahaan_names']);
                 }
             }
         }
