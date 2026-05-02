@@ -64,6 +64,7 @@
                           <a href="{{ route('proyek.export.pdf', ['search' => $search, 'date_start' => $date_start, 'date_end' => $date_end, 'month' => $month, 'year' => $year, 'kbli' => $kbli]) }}" target="_blank" class="btn btn-secondary d-sm-none btn-icon" aria-label="Export PDF">
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M5 12v-5a2 2 0 0 1 2 -2h7l5 5v7a2 2 0 0 1 -2 2h-6"/><path d="M3 21l6 -7"/><path d="M9 21h-6v-6"/></svg>
                           </a>
+                          @can('proyek.import')
                           <a href="#" class="btn btn-primary d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#modal-team">
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-table-import"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 21h-7a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v8" /><path d="M3 10h18" /><path d="M10 3v18" /><path d="M19 22v-6" /><path d="M22 19l-3 -3l-3 3" /></svg>
@@ -77,6 +78,7 @@
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-table-import"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 21h-7a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v8" /><path d="M3 10h18" /><path d="M10 3v18" /><path d="M19 22v-6" /><path d="M22 19l-3 -3l-3 3" /></svg>
                           </a>
+                          @endcan
                         </div>
                       </div>
                     
@@ -218,6 +220,7 @@
               $startYear = 2018;
               $currentYear = date('Y'); // Tahun sekarang
               @endphp
+              @can('proyek.import')
               <div class="modal  fade" id="modal-team" tabindex="-1" role="dialog" aria-hidden="true">
                 <form method="post" action="{{ url('/berusaha/proyek/import_excel')}}" enctype="multipart/form-data">
                   {{ csrf_field() }}
@@ -241,6 +244,7 @@
                 </div>
                 </form>
               </div>
+              @endcan
               <div class="modal  fade" id="modal-team-stat" tabindex="-1" role="dialog" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered" role="document">
                   <div class="modal-content">

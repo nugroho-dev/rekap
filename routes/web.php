@@ -150,7 +150,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/konsultasi/create', [KonsultasiDashboardController::class, 'create'])->name('konsultasi.create')->middleware('permission:konsultasi.view');
     Route::post('/konsultasi', [KonsultasiDashboardController::class, 'store'])->name('konsultasi.store')->middleware('permission:konsultasi.view');
     Route::get('/konsultasi/statistik', [KonsultasiDashboardController::class, 'statistik'])->middleware('permission:konsultasi.view');
-    Route::post('/konsultasi/import_excel', [KonsultasiDashboardController::class, 'import_excel'])->middleware('permission:konsultasi.view');
+    Route::post('/konsultasi/import_excel', [KonsultasiDashboardController::class, 'import_excel'])->middleware('permission:konsultasi.import');
     Route::post('/konsultasicari', [KonsultasiDashboardController::class, 'index'])->middleware('permission:konsultasi.view');
     // Edit konsultasi
     Route::get('/konsultasi/{konsultasi}/edit', [KonsultasiDashboardController::class, 'edit'])->name('konsultasi.edit')->middleware('permission:konsultasi.view');
@@ -161,7 +161,7 @@ Route::middleware('auth')->group(function () {
     // Commitment / Komitmen
     Route::match(['get','post'],'/commitment', [DashboardKomitmenController::class, 'index'])->middleware('permission:commitment.view');
     Route::get('/commitment/statistik', [DashboardKomitmenController::class, 'statistik'])->middleware('permission:commitment.view');
-    Route::post('/commitment/import_excel', [DashboardKomitmenController::class, 'import_excel'])->middleware('permission:commitment.view');
+    Route::post('/commitment/import_excel', [DashboardKomitmenController::class, 'import_excel'])->middleware('permission:commitment.import');
     Route::post('/komitmensort', [DashboardKomitmenController::class, 'index'])->middleware('permission:commitment.view');
 
     // Pengaduan
@@ -187,7 +187,7 @@ Route::middleware('auth')->group(function () {
 
     // Produk hukum / deregulasi
     Route::match(['get','post'], '/deregulasi', [ProdukHukumDashboardController::class, 'index'])->middleware('permission:deregulasi.view');
-    Route::post('/deregulasi/import_excel', [ProdukHukumDashboardController::class, 'import_excel'])->middleware('permission:deregulasi.view');
+    Route::post('/deregulasi/import_excel', [ProdukHukumDashboardController::class, 'import_excel'])->middleware('permission:deregulasi.import');
     Route::get('/deregulasi/statistik', [ProdukHukumDashboardController::class, 'statistik'])->middleware('permission:deregulasi.view');
     Route::get('/deregulasi/create', [ProdukHukumDashboardController::class, 'create'])->middleware('permission:deregulasi.view');
     Route::post('/deregulasi', [ProdukHukumDashboardController::class, 'store'])->middleware('permission:deregulasi.view');   
@@ -199,7 +199,7 @@ Route::middleware('auth')->group(function () {
 
     // Insentif
     Route::match(['get','post'], '/insentif', [InsentifController::class, 'index'])->middleware('permission:insentif.view');
-    Route::post('/insentif/import_excel', [InsentifController::class, 'import_excel'])->middleware('permission:insentif.view');
+    Route::post('/insentif/import_excel', [InsentifController::class, 'import_excel'])->middleware('permission:insentif.import');
     Route::get('/insentif/statistik', [InsentifController::class, 'statistik'])->middleware('permission:insentif.view');
     Route::get('/insentif/create', [InsentifController::class, 'create'])->middleware('permission:insentif.view');
     Route::post('/insentif', [InsentifController::class, 'store'])->middleware('permission:insentif.view');
@@ -256,7 +256,7 @@ Route::middleware('auth')->group(function () {
     //bimtek
     Route::match(['get','post'], '/bimtek', [DashboardBimtekController::class, 'index'])->middleware('permission:bimtek.view');
     Route::get('/bimtek/statistik', [DashboardBimtekController::class, 'statistik'])->middleware('permission:bimtek.view');
-    Route::post('/bimtek/import_excel', [DashboardBimtekController::class, 'import_excel'])->middleware('permission:bimtek.view');
+    Route::post('/bimtek/import_excel', [DashboardBimtekController::class, 'import_excel'])->middleware('permission:bimtek.import');
     Route::get('/bimtek/{bimtek}', [DashboardBimtekController::class, 'show'])->middleware('permission:bimtek.view');
     Route::get('/bimtek/{bimtek}/edit', [DashboardBimtekController::class, 'edit'])->middleware('permission:bimtek.view');
     Route::put('/bimtek/{bimtek}', [DashboardBimtekController::class, 'update'])->middleware('permission:bimtek.view');
@@ -265,7 +265,7 @@ Route::middleware('auth')->group(function () {
     //pengawasan
     Route::match(['get','post'], '/pengawasan', [DashboardPengawasanController::class, 'index'])->middleware('permission:pengawasan.view');
     Route::get('/pengawasan/statistik', [DashboardPengawasanController::class, 'statistik'])->middleware('permission:pengawasan.view');
-    Route::post('/pengawasan/import_excel', [DashboardPengawasanController::class, 'import_excel'])->middleware('permission:pengawasan.view');
+    Route::post('/pengawasan/import_excel', [DashboardPengawasanController::class, 'import_excel'])->middleware('permission:pengawasan.import');
     Route::get('/pengawasan/{pengawasan}',[DashboardPengawasanController::class, 'show'])->middleware('permission:pengawasan.view');
     Route::get('/pengawasan/{pengawasan}/edit',[DashboardPengawasanController::class, 'edit'])->middleware('permission:pengawasan.view');
     Route::put('/pengawasan/{pengawasan}',[DashboardPengawasanController::class, 'update'])->middleware('permission:pengawasan.view');
@@ -314,10 +314,10 @@ Route::middleware('auth')->group(function () {
 
     // MPPD
     Route::match(['get','post'], '/mppd', [MppdController::class, 'index'])->middleware('permission:mppd.view');
-    Route::post('/mppd/import_excel', [MppdController::class, 'import_excel'])->middleware('permission:mppd.view');
+    Route::post('/mppd/import_excel', [MppdController::class, 'import_excel'])->middleware('permission:mppd.import');
     // Alias legacy /mppdigital/import_excel ke import handler yang benar
-    Route::post('/mppdigital/import_excel', [MppdController::class, 'import_excel'])->middleware('permission:mppd.view');
-    Route::get('/mppdigital/import_excel', function(){ return redirect('/mppd'); })->middleware('permission:mppd.view');
+    Route::post('/mppdigital/import_excel', [MppdController::class, 'import_excel'])->middleware('permission:mppd.import');
+    Route::get('/mppdigital/import_excel', function(){ return redirect('/mppd'); })->middleware('permission:mppd.import');
     Route::get('/mppd/export_excel', [MppdController::class, 'export_excel'])->middleware('permission:mppd.view');
     Route::get('/mppd/audits', [MppdController::class, 'audits'])->middleware('permission:mppd.view');
     Route::get('/mppd/statistik', [MppdController::class, 'statistik'])->middleware('permission:mppd.view');
@@ -345,7 +345,7 @@ Route::middleware('auth')->group(function () {
 
     // Proyek
     Route::match(['get','post'], '/berusaha/proyek', [ProyekController::class, 'index'])->middleware('permission:proyek.view');
-    Route::post('/berusaha/proyek/import_excel', [ProyekController::class, 'import_excel'])->middleware('permission:proyek.view');
+    Route::post('/berusaha/proyek/import_excel', [ProyekController::class, 'import_excel'])->middleware('permission:proyek.import');
     Route::get('/berusaha/proyek/statistik', [ProyekController::class, 'statistik'])->middleware('permission:proyek.view');
     Route::post('/berusaha/proyek/statistik', [ProyekController::class, 'statistik'])->middleware('permission:proyek.view');
     // Proyek statistik berdasarkan kategori
@@ -364,7 +364,7 @@ Route::middleware('auth')->group(function () {
     // PBG
     Route::get('/pbg', [DashboardPbgController::class, 'index'])->middleware('permission:pbg.view');
     Route::post('/pbgsort', [DashboardPbgController::class, 'index'])->middleware('permission:pbg.view');
-    Route::post('/pbg/import_excel', [DashboardPbgController::class, 'import_excel'])->middleware('permission:pbg.view');
+    Route::post('/pbg/import_excel', [DashboardPbgController::class, 'import_excel'])->middleware('permission:pbg.import');
     Route::get('/pbg/export/excel', [DashboardPbgController::class, 'exportExcel'])->name('pbg.export.excel')->middleware('permission:pbg.view');
     Route::post('/pbg', [DashboardPbgController::class, 'store'])->middleware('permission:pbg.view');
     // Statistik PBG (register before parameterized /pbg/{pbg})
@@ -379,11 +379,11 @@ Route::middleware('auth')->group(function () {
 
     // NIB listing, import, and export
     Route::get('/nib', [NibController::class, 'index'])->name('nib.index')->middleware('permission:nib.view');
-    Route::post('/nib/import', [NibController::class, 'import'])->name('nib.import')->middleware('permission:nib.view');
+    Route::post('/nib/import', [NibController::class, 'import'])->name('nib.import')->middleware('permission:nib.import');
     Route::get('/nib/export', [NibController::class, 'export'])->name('nib.export')->middleware('permission:nib.view');
     // Alternate path under /berusaha
     Route::get('/berusaha/nib', [NibController::class, 'index'])->name('nib.index.berusaha')->middleware('permission:nib.view');
-    Route::post('/berusaha/nib/import', [NibController::class, 'import'])->name('nib.import.berusaha')->middleware('permission:nib.view');
+    Route::post('/berusaha/nib/import', [NibController::class, 'import'])->name('nib.import.berusaha')->middleware('permission:nib.import');
     Route::get('/berusaha/nib/export', [NibController::class, 'export'])->name('nib.export.berusaha')->middleware('permission:nib.view');
     // NIB statistik
     Route::get('/nib/statistik', [NibController::class, 'statistik'])->name('nib.statistik')->middleware('permission:nib.view');
@@ -391,10 +391,10 @@ Route::middleware('auth')->group(function () {
 
     // Izin listing and import
     Route::get('/izin', [IzinController::class, 'index'])->name('izin.index')->middleware('permission:izin.view');
-    Route::post('/izin/import', [IzinController::class, 'import'])->name('izin.import')->middleware('permission:izin.view');
+    Route::post('/izin/import', [IzinController::class, 'import'])->name('izin.import')->middleware('permission:izin.import');
     // Alternate path under /berusaha
     Route::get('/berusaha/izin', [IzinController::class, 'index'])->name('izin.index.berusaha')->middleware('permission:izin.view');
-    Route::post('/berusaha/izin/import', [IzinController::class, 'import'])->name('izin.import.berusaha')->middleware('permission:izin.view');
+    Route::post('/berusaha/izin/import', [IzinController::class, 'import'])->name('izin.import.berusaha')->middleware('permission:izin.import');
     // Izin export
     Route::get('/izin/export/excel', [IzinController::class, 'exportExcel'])->name('izin.export.excel')->middleware('permission:izin.view');
     Route::get('/izin/export/pdf', [IzinController::class, 'exportPdf'])->name('izin.export.pdf')->middleware('permission:izin.view');
@@ -406,12 +406,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/lkpm/statistik', [App\Http\Controllers\LkpmController::class, 'statistik'])->name('lkpm.statistik')->middleware('permission:lkpm.view');
     Route::get('/lkpm/statistik/umk/rincian/export', [App\Http\Controllers\LkpmController::class, 'exportStatistikUmkRincian'])->name('lkpm.statistik.umk.rincian.export')->middleware('permission:lkpm.view');
     Route::get('/lkpm/statistik/umk/kbli/export', [App\Http\Controllers\LkpmController::class, 'exportStatistikUmkKbliByStatus'])->name('lkpm.statistik.umk.kbli.export')->middleware('permission:lkpm.view');
-    Route::post('/lkpm/import-umk', [App\Http\Controllers\LkpmController::class, 'importUmk'])->name('lkpm.import.umk')->middleware('permission:lkpm.view');
+    Route::post('/lkpm/import-umk', [App\Http\Controllers\LkpmController::class, 'importUmk'])->name('lkpm.import.umk')->middleware('permission:lkpm.import');
      // Dedicated Non-UMK statistik route
         Route::get('/lkpm/statistik/non-umk', [App\Http\Controllers\LkpmController::class, 'statistikNonUmk'])->name('lkpm.statistikNonUmk')->middleware('permission:lkpm.view');
     Route::get('/lkpm/statistik/non-umk/rincian/export', [App\Http\Controllers\LkpmController::class, 'exportStatistikNonUmkRincian'])->name('lkpm.statistik.non-umk.rincian.export')->middleware('permission:lkpm.view');
     Route::get('/lkpm/statistik/non-umk/kbli/export', [App\Http\Controllers\LkpmController::class, 'exportStatistikNonUmkKbliByStatus'])->name('lkpm.statistik.non-umk.kbli.export')->middleware('permission:lkpm.view');
-    Route::post('/lkpm/import-non-umk', [App\Http\Controllers\LkpmController::class, 'importNonUmk'])->name('lkpm.import.non-umk')->middleware('permission:lkpm.view');
+    Route::post('/lkpm/import-non-umk', [App\Http\Controllers\LkpmController::class, 'importNonUmk'])->name('lkpm.import.non-umk')->middleware('permission:lkpm.import');
     Route::post('/lkpm/non-umk/delete-duplicates', [App\Http\Controllers\LkpmController::class, 'deleteDuplicateNonUmk'])->name('lkpm.delete-duplicates.non-umk')->middleware('permission:lkpm.view');
     Route::post('/lkpm/umk/delete-duplicates', [App\Http\Controllers\LkpmController::class, 'deleteDuplicateUmk'])->name('lkpm.delete-duplicates.umk')->middleware('permission:lkpm.view');
     Route::delete('/lkpm/umk/{id}', [App\Http\Controllers\LkpmController::class, 'destroyUmk'])->name('lkpm.destroy.umk')->middleware('permission:lkpm.view');
@@ -453,9 +453,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/realisasi/verifikasi', [ProyekVerificationController::class, 'store'])->name('proyek.verification.store');
     Route::post('/realisasi/verifikasi/apply-recommendations', [ProyekVerificationController::class, 'applyRecommendations'])->name('proyek.verification.applyRecommendations');
         // import verification from excel
-        Route::post('/realisasi/verifikasi/import', [ProyekVerificationController::class, 'importVerifiedExcel'])->name('proyek.verification.import');
+        Route::post('/realisasi/verifikasi/import', [ProyekVerificationController::class, 'importVerifiedExcel'])->name('proyek.verification.import')->middleware('permission:verification.import');
         // download template for excel import
-        Route::get('/realisasi/verifikasi/template', [ProyekVerificationController::class, 'downloadImportTemplate'])->name('proyek.verification.template');
+        Route::get('/realisasi/verifikasi/template', [ProyekVerificationController::class, 'downloadImportTemplate'])->name('proyek.verification.template')->middleware('permission:verification.import');
         Route::post('/realisasi/verifikasi/{proyekVerification}/status', [ProyekVerificationController::class, 'updateStatus'])->name('proyek.verification.updateStatus');
         Route::delete('/realisasi/verifikasi/{proyekVerification}', [ProyekVerificationController::class, 'destroy'])->name('proyek.verification.destroy');
         // export verified list (xlsx | pdf)
@@ -470,6 +470,6 @@ Route::middleware('auth')->group(function () {
 
 // KBLI Master
     Route::get('/admin/kbli', [KbliController::class, 'index'])->name('kbli.index')->middleware(['auth', 'permission:kbli.view']);
-    Route::get('/admin/kbli/import', [KbliController::class, 'importForm'])->name('kbli.import')->middleware(['auth', 'permission:kbli.view']);
-    Route::post('/admin/kbli/import', [KbliController::class, 'import'])->name('kbli.import.post')->middleware(['auth', 'permission:kbli.view']);
-    Route::get('/admin/kbli/import/template', [KbliController::class, 'downloadTemplate'])->name('kbli.import.template')->middleware(['auth', 'permission:kbli.view']);
+    Route::get('/admin/kbli/import', [KbliController::class, 'importForm'])->name('kbli.import')->middleware(['auth', 'permission:kbli.import']);
+    Route::post('/admin/kbli/import', [KbliController::class, 'import'])->name('kbli.import.post')->middleware(['auth', 'permission:kbli.import']);
+    Route::get('/admin/kbli/import/template', [KbliController::class, 'downloadTemplate'])->name('kbli.import.template')->middleware(['auth', 'permission:kbli.import']);

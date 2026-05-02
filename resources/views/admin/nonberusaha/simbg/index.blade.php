@@ -59,6 +59,7 @@
                       </div>
                       <div class="col-auto ms-auto d-print-none">
                         <div class="btn-list">
+                          @can('pbg.import')
                           <a href="#" class="btn btn-primary d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#modal-import">
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-table-import"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 21h-7a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v8" /><path d="M3 10h18" /><path d="M10 3v18" /><path d="M19 22v-6" /><path d="M22 19l-3 -3l-3 3" /></svg>
                             Import Data
@@ -73,6 +74,7 @@
                           <a href="#" class="btn btn-primary d-sm-none btn-icon" data-bs-toggle="modal" data-bs-target="#modal-import">
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-table-import"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 21h-7a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v8" /><path d="M3 10h18" /><path d="M10 3v18" /><path d="M19 22v-6" /><path d="M22 19l-3 -3l-3 3" /></svg>
                           </a>
+                          @endcan
                           <a href="#" class="btn btn-success d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#modal-create">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-plus"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg>
                             Tambah Data
@@ -236,6 +238,7 @@
               $startYear = 2018;
               $currentYear = date('Y'); // Tahun sekarang
               @endphp
+              @can('pbg.import')
               <div class="modal  fade" id="modal-import" tabindex="-1" role="dialog" aria-hidden="true">
                 <form method="post" action="{{ url('/pbg/import_excel')}}" enctype="multipart/form-data">
                   {{ csrf_field() }}
@@ -258,6 +261,7 @@
                   </div>
                 </div>
                 </form>
+              @endcan
               </div>
               <div class="modal fade" id="modal-create" tabindex="-1" role="dialog" aria-hidden="true">
                 <form method="post" action="{{ url('/pbg') }}" enctype="multipart/form-data">

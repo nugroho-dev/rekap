@@ -10,7 +10,9 @@
       </div>
       <div class="col-auto ms-auto d-print-none">
         <div class="btn-list">
+          @can('kbli.import')
           <a href="{{ route('kbli.import') }}" class="btn btn-primary">Import CSV</a>
+          @endcan
         </div>
       </div>
     </div>

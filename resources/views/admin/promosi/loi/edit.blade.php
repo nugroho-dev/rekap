@@ -238,29 +238,6 @@
               $startYear = 2018;
               $currentYear = date('Y'); // Tahun sekarang
               @endphp
-              <div class="modal  fade" id="modal-team" tabindex="-1" role="dialog" aria-hidden="true">
-                <form method="post" action="{{ url('/imporpengawasan/import_excel')}}" enctype="multipart/form-data">
-                  {{ csrf_field() }}
-                <div class="modal-dialog modal-dialog-centered" role="document">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h5 class="modal-title">Impor Data Pengawasan</h5>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                      <div>
-                        <label class="form-label">File Data Pengawasan</label>
-                        <input type="file" name="file" required="required" class="form-control">
-                      </div>
-                    </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn me-auto" data-bs-dismiss="modal">Tutup</button>
-                      <button type="submit" class="btn btn-primary" >Impor</button>
-                    </div>
-                  </div>
-                </div>
-                </form>
-              </div>
               <div class="modal  fade" id="modal-team-stat" tabindex="-1" role="dialog" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered" role="document">
                   <div class="modal-content">

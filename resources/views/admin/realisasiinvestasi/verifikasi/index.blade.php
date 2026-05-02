@@ -26,7 +26,9 @@
           <h3 class="card-title">Proyek ({{ $items->total() }})</h3>
           <div class="card-actions">
             <button id="applyRecsBtn" class="btn btn-sm btn-primary">Terapkan Rekomendasi</button>
+            @can('verification.import')
             <button id="importExcelBtn" class="btn btn-sm btn-success ms-2" data-bs-toggle="modal" data-bs-target="#importExcelModal">Impor Verifikasi</button>
+            @endcan
           </div>
         </div>
 
@@ -53,6 +55,7 @@
           </div>
         </div>
 
+        @can('verification.import')
         <!-- Modal: import verification from Excel -->
         <div class="modal" id="importExcelModal" tabindex="-1" style="display:none;">
           <div class="modal-dialog">
@@ -82,6 +85,7 @@
             </div>
           </div>
         </div>
+        @endcan
 
         <div class="card-body border-bottom py-2">
           <div class="d-flex">
