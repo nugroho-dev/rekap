@@ -211,11 +211,16 @@ class UsersDashboardController extends Controller
 
         $roles = Role::query()->orderBy('name')->get();
         $permissions = Permission::query()->orderBy('name')->get();
-        $permissionGroups = $permissions->groupBy(function (Permission $permission) {
+        $importPermissions = $permissions
+            ->filter(fn (Permission $permission) => Str::endsWith($permission->name, '.import'))
+            ->values();
+        $permissionGroups = $permissions
+            ->reject(fn (Permission $permission) => Str::endsWith($permission->name, '.import'))
+            ->groupBy(function (Permission $permission) {
             $prefix = preg_split('/[._-]/', $permission->name)[0] ?? 'lainnya';
 
             return Str::headline($prefix);
-        });
+            });
 
         $effectivePermissions = $user->getAllPermissions()->sortBy('name')->values();
         $apiTokensQuery = PersonalAccessToken::query()
@@ -241,6 +246,7 @@ class UsersDashboardController extends Controller
             'judul',
             'user',
             'roles',
+            'importPermissions',
             'permissionGroups',
             'effectivePermissions',
             'apiTokens',

@@ -149,6 +149,39 @@
                         </div>
 
                         <div>
+                            <label class="form-label">Permission Import</label>
+                            <div class="text-secondary small mb-3">
+                                Kelola hak impor data modul. Gunakan tombol cepat untuk mencentang atau menghapus semua permission impor.
+                            </div>
+
+                            <div class="d-flex flex-wrap gap-2 mb-3">
+                                <button type="button" class="btn btn-sm btn-outline-primary" data-import-toggle="check-all">Centang Semua Import</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-import-toggle="uncheck-all">Hapus Semua Import</button>
+                            </div>
+
+                            <div class="card card-sm mb-4">
+                                <div class="card-body">
+                                    <div class="row g-2">
+                                        @forelse ($importPermissions as $permission)
+                                            <div class="col-12 col-md-6 col-lg-4">
+                                                <label class="form-check mb-0">
+                                                    <input
+                                                        class="form-check-input import-permission-checkbox"
+                                                        type="checkbox"
+                                                        name="permissions[]"
+                                                        value="{{ $permission->name }}"
+                                                        {{ in_array($permission->name, old('permissions', $user->permissions->pluck('name')->all()), true) ? 'checked' : '' }}
+                                                    >
+                                                    <span class="form-check-label">{{ $permission->name }}</span>
+                                                </label>
+                                            </div>
+                                        @empty
+                                            <div class="col-12 text-muted">Belum ada permission import.</div>
+                                        @endforelse
+                                    </div>
+                                </div>
+                            </div>
+
                             <label class="form-label">Permission Langsung</label>
                             <div class="text-secondary small mb-3">
                                 Gunakan permission langsung hanya untuk pengecualian. Akses utama sebaiknya tetap lewat role.
@@ -375,6 +408,30 @@
             });
         </script>
     @endif
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const importCheckboxes = document.querySelectorAll('.import-permission-checkbox');
+            const checkAllButton = document.querySelector('[data-import-toggle="check-all"]');
+            const uncheckAllButton = document.querySelector('[data-import-toggle="uncheck-all"]');
+
+            if (checkAllButton) {
+                checkAllButton.addEventListener('click', function () {
+                    importCheckboxes.forEach(function (checkbox) {
+                        checkbox.checked = true;
+                    });
+                });
+            }
+
+            if (uncheckAllButton) {
+                uncheckAllButton.addEventListener('click', function () {
+                    importCheckboxes.forEach(function (checkbox) {
+                        checkbox.checked = false;
+                    });
+                });
+            }
+        });
+    </script>
 
     @include('admin.partials.copy-feedback')
 @endsection
