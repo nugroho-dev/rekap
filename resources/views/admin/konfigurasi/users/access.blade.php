@@ -183,167 +183,6 @@
                             </div>
                         </div>
 
-                        @can('api.token.manage')
-                            <hr class="my-4">
-
-                            <div id="api-token-manager">
-                                <label class="form-label">Token API</label>
-                                <div class="text-secondary small mb-3">
-                                    Gunakan untuk akun integrasi API. User target harus memiliki permission <code>api.login</code> atau role <code>api-client</code>.
-                                </div>
-
-                                @if ($generatedApiToken)
-                                    <div class="alert alert-warning" role="alert">
-                                        <div class="fw-bold mb-2">Token API baru berhasil dibuat.</div>
-                                        <div class="small text-secondary mb-1">Simpan token ini sekarang karena setelah halaman ditutup token tidak bisa dilihat lagi.</div>
-                                        <div><strong>Nama Token:</strong> {{ data_get($generatedApiToken, 'name') }}</div>
-                                        <div>
-                                            <strong>Ability:</strong>
-                                            @foreach ((array) data_get($generatedApiToken, 'abilities', []) as $ability)
-                                                <span class="badge bg-azure-lt text-azure">{{ $ability }}</span>
-                                            @endforeach
-                                        </div>
-                                        <div><strong>Kedaluwarsa:</strong> {{ data_get($generatedApiToken, 'expires_at') ?? 'Tidak dibatasi' }}</div>
-                                        <div class="copy-token-block mt-2">
-                                            <div class="copy-token-actions">
-                                                <button type="button" class="btn btn-sm btn-outline-secondary" data-copy-variant="secondary" data-copy-label="token API" data-copy-text="{{ data_get($generatedApiToken, 'plain_text') }}">Copy Token</button>
-                                                <button type="button" class="btn btn-sm btn-outline-primary" data-download-label="token API" data-download-filename="token-api-{{ data_get($generatedApiToken, 'name') }}.txt" data-download-text="{{ data_get($generatedApiToken, 'plain_text') }}">Download TXT</button>
-                                            </div>
-                                            <pre class="bg-light border rounded p-2 mb-0"><code>{{ data_get($generatedApiToken, 'plain_text') }}</code></pre>
-                                        </div>
-                                    </div>
-                                @endif
-
-                                <div class="card card-sm mb-3">
-                                    <div class="card-body">
-                                        <form method="post" action="{{ route('konfigurasi.user.api-tokens.store', $user) }}" class="row g-3">
-                                            @csrf
-                                            <div class="col-12 col-md-6">
-                                                <label class="form-label required">Nama Token</label>
-                                                <input type="text" name="token_name" class="form-control" value="{{ old('token_name') }}" placeholder="mis. integrasi-dashboard" required>
-                                            </div>
-                                            <div class="col-12 col-md-4">
-                                                <label class="form-label">Kedaluwarsa</label>
-                                                <input type="datetime-local" name="expires_at" class="form-control" value="{{ old('expires_at') }}">
-                                            </div>
-                                            <div class="col-12 col-md-2 d-flex align-items-end">
-                                                <button type="submit" class="btn btn-primary w-100">Buat Token</button>
-                                            </div>
-                                            <div class="col-12">
-                                                <label class="form-label required">Ability Token</label>
-                                                <div class="row g-2">
-                                                    @foreach ($availableTokenAbilities as $ability => $label)
-                                                        <div class="col-12 col-md-4">
-                                                            <label class="form-selectgroup-item">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    name="abilities[]"
-                                                                    value="{{ $ability }}"
-                                                                    class="form-selectgroup-input"
-                                                                    {{ in_array($ability, old('abilities', array_keys($availableTokenAbilities)), true) ? 'checked' : '' }}
-                                                                >
-                                                                <span class="form-selectgroup-label d-flex flex-column align-items-start gap-1">
-                                                                    <span class="fw-semibold">{{ $ability }}</span>
-                                                                    <span class="text-secondary small">{{ $label }}</span>
-                                                                </span>
-                                                            </label>
-                                                        </div>
-                                                    @endforeach
-                                                </div>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-
-                                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                                    <div class="text-secondary small">
-                                        Gunakan filter untuk melihat token yang masih aktif atau yang sudah kedaluwarsa.
-                                    </div>
-                                    <form method="get" action="{{ route('konfigurasi.user.access', $user) }}#api-token-manager" class="d-flex align-items-center gap-2">
-                                        <label for="token_status" class="form-label mb-0 small text-secondary">Status</label>
-                                        <select id="token_status" name="token_status" class="form-select form-select-sm">
-                                            <option value="" {{ ($tokenStatus ?? '') === '' ? 'selected' : '' }}>Semua</option>
-                                            <option value="active" {{ ($tokenStatus ?? '') === 'active' ? 'selected' : '' }}>Aktif</option>
-                                            <option value="expired" {{ ($tokenStatus ?? '') === 'expired' ? 'selected' : '' }}>Kedaluwarsa</option>
-                                        </select>
-                                        <button type="submit" class="btn btn-sm btn-outline-primary">Terapkan</button>
-                                        @if(!empty($tokenStatus))
-                                            <a href="{{ route('konfigurasi.user.access', $user) }}#api-token-manager" class="btn btn-sm btn-outline-secondary">Reset</a>
-                                        @endif
-                                    </form>
-                                </div>
-
-                                <div class="table-responsive">
-                                    <table class="table table-vcenter">
-                                        <thead>
-                                            <tr>
-                                                <th>Nama</th>
-                                                <th>Token</th>
-                                                <th>Ability</th>
-                                                <th>Status</th>
-                                                <th>Terakhir Dipakai</th>
-                                                <th>Kedaluwarsa</th>
-                                                <th>Dibuat</th>
-                                                <th class="text-end">Aksi</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @forelse ($apiTokens as $token)
-                                                <tr @if ((int) $token->id === (int) data_get($generatedApiToken, 'id')) id="new-api-token-row" class="new-token-row" @endif>
-                                                    <td>
-                                                        {{ $token->name }}
-                                                        @if ((int) $token->id === (int) data_get($generatedApiToken, 'id'))
-                                                            <span class="badge bg-success-lt text-success ms-1">BARU</span>
-                                                        @endif
-                                                    </td>
-                                                    <td>
-                                                        @if ((int) $token->id === (int) data_get($generatedApiToken, 'id'))
-                                                            <div class="copy-token-block">
-                                                                <div class="copy-token-actions">
-                                                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-copy-variant="secondary" data-copy-label="token API {{ $token->name }}" data-copy-text="{{ data_get($generatedApiToken, 'plain_text') }}">Copy Token</button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-primary" data-download-label="token API {{ $token->name }}" data-download-filename="token-api-{{ $token->name }}.txt" data-download-text="{{ data_get($generatedApiToken, 'plain_text') }}">Download TXT</button>
-                                                                </div>
-                                                                <pre class="bg-light border rounded p-2 mb-0"><code>{{ data_get($generatedApiToken, 'plain_text') }}</code></pre>
-                                                            </div>
-                                                        @else
-                                                            <span class="text-muted small">Token plain text tidak tersedia lagi.</span>
-                                                        @endif
-                                                    </td>
-                                                    <td>
-                                                        @forelse (($token->abilities ?? []) as $ability)
-                                                            <span class="badge bg-azure-lt text-azure">{{ $ability }}</span>
-                                                        @empty
-                                                            <span class="text-muted small">Tidak ada ability.</span>
-                                                        @endforelse
-                                                    </td>
-                                                    <td>
-                                                        @if (is_null($token->expires_at) || $token->expires_at->isFuture())
-                                                            <span class="badge bg-success-lt text-success">AKTIF</span>
-                                                        @else
-                                                            <span class="badge bg-danger-lt text-danger">KEDALUWARSA</span>
-                                                        @endif
-                                                    </td>
-                                                    <td>{{ optional($token->last_used_at)->format('d-m-Y H:i') ?? '-' }}</td>
-                                                    <td>{{ optional($token->expires_at)->format('d-m-Y H:i') ?? 'Tidak dibatasi' }}</td>
-                                                    <td>{{ optional($token->created_at)->format('d-m-Y H:i') ?? '-' }}</td>
-                                                    <td class="text-end">
-                                                        <form method="post" action="{{ route('konfigurasi.user.api-tokens.destroy', [$user, $token->id]) }}" onsubmit="return confirm('Cabut token API ini?');">
-                                                            @csrf
-                                                            @method('delete')
-                                                            <button type="submit" class="btn btn-outline-danger btn-sm">Cabut</button>
-                                                        </form>
-                                                    </td>
-                                                </tr>
-                                            @empty
-                                                <tr>
-                                                    <td colspan="8" class="text-muted">Belum ada token API untuk filter yang dipilih.</td>
-                                                </tr>
-                                            @endforelse
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        @endcan
                     </div>
 
                     <div class="card-footer text-end">
@@ -351,6 +190,170 @@
                         <button type="submit" class="btn btn-primary">Simpan Akses</button>
                     </div>
                 </form>
+
+                @can('api.token.manage')
+                    <div class="card mt-3" id="api-token-manager">
+                        <div class="card-header">
+                            <h3 class="card-title">Token API</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-secondary small mb-3">
+                                Gunakan untuk akun integrasi API. User target harus memiliki permission <code>api.login</code> atau role <code>api-client</code>.
+                            </div>
+
+                            @if ($generatedApiToken)
+                                <div class="alert alert-warning" role="alert">
+                                    <div class="fw-bold mb-2">Token API baru berhasil dibuat.</div>
+                                    <div class="small text-secondary mb-1">Simpan token ini sekarang karena setelah halaman ditutup token tidak bisa dilihat lagi.</div>
+                                    <div><strong>Nama Token:</strong> {{ data_get($generatedApiToken, 'name') }}</div>
+                                    <div>
+                                        <strong>Ability:</strong>
+                                        @foreach ((array) data_get($generatedApiToken, 'abilities', []) as $ability)
+                                            <span class="badge bg-azure-lt text-azure">{{ $ability }}</span>
+                                        @endforeach
+                                    </div>
+                                    <div><strong>Kedaluwarsa:</strong> {{ data_get($generatedApiToken, 'expires_at') ?? 'Tidak dibatasi' }}</div>
+                                    <div class="copy-token-block mt-2">
+                                        <div class="copy-token-actions">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" data-copy-variant="secondary" data-copy-label="token API" data-copy-text="{{ data_get($generatedApiToken, 'plain_text') }}">Copy Token</button>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" data-download-label="token API" data-download-filename="token-api-{{ data_get($generatedApiToken, 'name') }}.txt" data-download-text="{{ data_get($generatedApiToken, 'plain_text') }}">Download TXT</button>
+                                        </div>
+                                        <pre class="bg-light border rounded p-2 mb-0"><code>{{ data_get($generatedApiToken, 'plain_text') }}</code></pre>
+                                    </div>
+                                </div>
+                            @endif
+
+                            <div class="card card-sm mb-3">
+                                <div class="card-body">
+                                    <form method="post" action="{{ route('konfigurasi.user.api-tokens.store', $user) }}" class="row g-3">
+                                        @csrf
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label required">Nama Token</label>
+                                            <input type="text" name="token_name" class="form-control" value="{{ old('token_name') }}" placeholder="mis. integrasi-dashboard" required>
+                                        </div>
+                                        <div class="col-12 col-md-4">
+                                            <label class="form-label">Kedaluwarsa</label>
+                                            <input type="datetime-local" name="expires_at" class="form-control" value="{{ old('expires_at') }}">
+                                        </div>
+                                        <div class="col-12 col-md-2 d-flex align-items-end">
+                                            <button type="submit" class="btn btn-primary w-100">Buat Token</button>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label required">Ability Token</label>
+                                            <div class="row g-2">
+                                                @foreach ($availableTokenAbilities as $ability => $label)
+                                                    <div class="col-12 col-md-4">
+                                                        <label class="form-selectgroup-item">
+                                                            <input
+                                                                type="checkbox"
+                                                                name="abilities[]"
+                                                                value="{{ $ability }}"
+                                                                class="form-selectgroup-input"
+                                                                {{ in_array($ability, old('abilities', array_keys($availableTokenAbilities)), true) ? 'checked' : '' }}
+                                                            >
+                                                            <span class="form-selectgroup-label d-flex flex-column align-items-start gap-1">
+                                                                <span class="fw-semibold">{{ $ability }}</span>
+                                                                <span class="text-secondary small">{{ $label }}</span>
+                                                            </span>
+                                                        </label>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                                <div class="text-secondary small">
+                                    Gunakan filter untuk melihat token yang masih aktif atau yang sudah kedaluwarsa.
+                                </div>
+                                <form method="get" action="{{ route('konfigurasi.user.access', $user) }}#api-token-manager" class="d-flex align-items-center gap-2">
+                                    <label for="token_status" class="form-label mb-0 small text-secondary">Status</label>
+                                    <select id="token_status" name="token_status" class="form-select form-select-sm">
+                                        <option value="" {{ ($tokenStatus ?? '') === '' ? 'selected' : '' }}>Semua</option>
+                                        <option value="active" {{ ($tokenStatus ?? '') === 'active' ? 'selected' : '' }}>Aktif</option>
+                                        <option value="expired" {{ ($tokenStatus ?? '') === 'expired' ? 'selected' : '' }}>Kedaluwarsa</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">Terapkan</button>
+                                    @if(!empty($tokenStatus))
+                                        <a href="{{ route('konfigurasi.user.access', $user) }}#api-token-manager" class="btn btn-sm btn-outline-secondary">Reset</a>
+                                    @endif
+                                </form>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table table-vcenter">
+                                    <thead>
+                                        <tr>
+                                            <th>Nama</th>
+                                            <th>Token</th>
+                                            <th>Ability</th>
+                                            <th>Status</th>
+                                            <th>Terakhir Dipakai</th>
+                                            <th>Kedaluwarsa</th>
+                                            <th>Dibuat</th>
+                                            <th class="text-end">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($apiTokens as $token)
+                                            <tr @if ((int) $token->id === (int) data_get($generatedApiToken, 'id')) id="new-api-token-row" class="new-token-row" @endif>
+                                                <td>
+                                                    {{ $token->name }}
+                                                    @if ((int) $token->id === (int) data_get($generatedApiToken, 'id'))
+                                                        <span class="badge bg-success-lt text-success ms-1">BARU</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if ((int) $token->id === (int) data_get($generatedApiToken, 'id'))
+                                                        <div class="copy-token-block">
+                                                            <div class="copy-token-actions">
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary" data-copy-variant="secondary" data-copy-label="token API {{ $token->name }}" data-copy-text="{{ data_get($generatedApiToken, 'plain_text') }}">Copy Token</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-primary" data-download-label="token API {{ $token->name }}" data-download-filename="token-api-{{ $token->name }}.txt" data-download-text="{{ data_get($generatedApiToken, 'plain_text') }}">Download TXT</button>
+                                                            </div>
+                                                            <pre class="bg-light border rounded p-2 mb-0"><code>{{ data_get($generatedApiToken, 'plain_text') }}</code></pre>
+                                                        </div>
+                                                    @else
+                                                        <span class="text-muted small">Token plain text tidak tersedia lagi.</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @forelse (($token->abilities ?? []) as $ability)
+                                                        <span class="badge bg-azure-lt text-azure">{{ $ability }}</span>
+                                                    @empty
+                                                        <span class="text-muted small">Tidak ada ability.</span>
+                                                    @endforelse
+                                                </td>
+                                                <td>
+                                                    @if (is_null($token->expires_at) || $token->expires_at->isFuture())
+                                                        <span class="badge bg-success-lt text-success">AKTIF</span>
+                                                    @else
+                                                        <span class="badge bg-danger-lt text-danger">KEDALUWARSA</span>
+                                                    @endif
+                                                </td>
+                                                <td>{{ optional($token->last_used_at)->format('d-m-Y H:i') ?? '-' }}</td>
+                                                <td>{{ optional($token->expires_at)->format('d-m-Y H:i') ?? 'Tidak dibatasi' }}</td>
+                                                <td>{{ optional($token->created_at)->format('d-m-Y H:i') ?? '-' }}</td>
+                                                <td class="text-end">
+                                                    <form method="post" action="{{ route('konfigurasi.user.api-tokens.destroy', [$user, $token->id]) }}" onsubmit="return confirm('Cabut token API ini?');">
+                                                        @csrf
+                                                        @method('delete')
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm">Cabut</button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="8" class="text-muted">Belum ada token API untuk filter yang dipilih.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                @endcan
             </div>
         </div>
     </div>
