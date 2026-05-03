@@ -1705,38 +1705,35 @@ class LkpmController extends Controller
             abort(422, 'Status penanaman modal tidak valid.');
         }
 
-        $detailsMap = $this->buildUmkKbliDetailsMap($tahun, $periode);
+        $detailsMap = $this->buildUmkKbliProjectDetailsMap($tahun, $periode);
 
         $rows = collect();
-        $totalProyek = 0;
         $totalTkLaki = 0;
         $totalTkPerempuan = 0;
         $totalRealisasi = 0.0;
 
-        foreach ($detailsMap as $key => $companies) {
+        foreach ($detailsMap as $key => $projects) {
             $parts = explode('|||', $key);
             if (count($parts) < 3) continue;
             [$statusKey, $kategori, $jenis] = $parts;
             if ($statusKey !== $status) continue;
 
-            foreach ($companies as $company) {
-                $jumlahProyek = (int) ($company['jumlah_proyek'] ?? 0);
-                $tkLaki = (int) ($company['total_tenaga_kerja_laki'] ?? 0);
-                $tkPerempuan = (int) ($company['total_tenaga_kerja_perempuan'] ?? 0);
-                $realisasi = (float) ($company['total_realisasi'] ?? 0);
+            foreach ($projects as $project) {
+                $tkLaki = (int) ($project['total_tenaga_kerja_laki'] ?? 0);
+                $tkPerempuan = (int) ($project['total_tenaga_kerja_perempuan'] ?? 0);
+                $realisasi = (float) ($project['total_realisasi'] ?? 0);
 
                 $rows->push([
                     (string) $kategori,
                     (string) $jenis,
-                    (string) ($company['nomor_induk_berusaha'] ?? ''),
-                    (string) ($company['nama_pelaku_usaha'] ?? ''),
-                    $jumlahProyek,
+                    (string) ($project['no_kode_proyek'] ?? ''),
+                    (string) ($project['nomor_induk_berusaha'] ?? ''),
+                    (string) ($project['nama_pelaku_usaha'] ?? ''),
                     $tkLaki,
                     $tkPerempuan,
                     $realisasi,
                 ]);
 
-                $totalProyek += $jumlahProyek;
                 $totalTkLaki += $tkLaki;
                 $totalTkPerempuan += $tkPerempuan;
                 $totalRealisasi += $realisasi;
@@ -1744,7 +1741,7 @@ class LkpmController extends Controller
         }
 
         if ($rows->count() > 0) {
-            $rows->push(['TOTAL', '', '', '', $totalProyek, $totalTkLaki, $totalTkPerempuan, $totalRealisasi]);
+            $rows->push(['TOTAL', '', '', '', '', $totalTkLaki, $totalTkPerempuan, $totalRealisasi]);
         }
 
         $periodeLabel = trim((string) ($periode ?? '-'));
@@ -1754,12 +1751,11 @@ class LkpmController extends Controller
             ['Status Penanaman Modal', $status, '', '', '', '', '', ''],
             ['Periode', $periodeLabel . ' ' . $tahunLabel, '', '', '', '', '', ''],
             ['', '', '', '', '', '', '', ''],
-            ['Kategori Section KBLI', 'Jenis Investasi', 'NIB', 'Nama Perusahaan', 'Jumlah Proyek', 'TK Laki-laki', 'TK Perempuan', 'Nilai Realisasi'],
+            ['Kategori Section KBLI', 'Jenis Investasi', 'Kode Proyek', 'NIB', 'Nama Perusahaan', 'TK Laki-laki', 'TK Perempuan', 'Nilai Realisasi'],
         ])->concat($rows);
 
         $headings = ['Laporan Nilai Realisasi Investasi Berdasarkan Kategori Section KBLI', '', '', '', '', '', '', ''];
         $formats = [
-            'E' => NumberFormat::FORMAT_NUMBER,
             'F' => NumberFormat::FORMAT_NUMBER,
             'G' => NumberFormat::FORMAT_NUMBER,
             'H' => '"Rp"#,##0',
@@ -1783,37 +1779,34 @@ class LkpmController extends Controller
             abort(422, 'Status penanaman modal tidak valid.');
         }
 
-        $detailsMap = $this->buildNonUmkKbliDetailsMap($tahun, $periode);
+        $detailsMap = $this->buildNonUmkKbliProjectDetailsMap($tahun, $periode);
 
         $rows = collect();
-        $totalProyek = 0;
         $totalWni = 0;
         $totalWna = 0;
         $totalRealisasi = 0.0;
 
-        foreach ($detailsMap as $key => $companies) {
+        foreach ($detailsMap as $key => $projects) {
             $parts = explode('|||', $key);
             if (count($parts) < 3) continue;
             [$statusKey, $kategori, $jenis] = $parts;
             if ($statusKey !== $status) continue;
 
-            foreach ($companies as $company) {
-                $jumlahProyek = (int) ($company['jumlah_proyek'] ?? 0);
-                $wni = (int) ($company['total_tenaga_kerja_wni'] ?? 0);
-                $wna = (int) ($company['total_tenaga_kerja_wna'] ?? 0);
-                $realisasi = (float) ($company['total_realisasi'] ?? 0);
+            foreach ($projects as $project) {
+                $wni = (int) ($project['total_tenaga_kerja_wni'] ?? 0);
+                $wna = (int) ($project['total_tenaga_kerja_wna'] ?? 0);
+                $realisasi = (float) ($project['total_realisasi'] ?? 0);
 
                 $rows->push([
                     (string) $kategori,
                     (string) $jenis,
-                    (string) ($company['nama_pelaku_usaha'] ?? ''),
-                    $jumlahProyek,
+                    (string) ($project['no_kode_proyek'] ?? ''),
+                    (string) ($project['nama_pelaku_usaha'] ?? ''),
                     $wni,
                     $wna,
                     $realisasi,
                 ]);
 
-                $totalProyek += $jumlahProyek;
                 $totalWni += $wni;
                 $totalWna += $wna;
                 $totalRealisasi += $realisasi;
@@ -1821,7 +1814,7 @@ class LkpmController extends Controller
         }
 
         if ($rows->count() > 0) {
-            $rows->push(['TOTAL', '', '', $totalProyek, $totalWni, $totalWna, $totalRealisasi]);
+            $rows->push(['TOTAL', '', '', '', $totalWni, $totalWna, $totalRealisasi]);
         }
 
         $periodeLabel = trim((string) ($periode ?? '-'));
@@ -1831,7 +1824,7 @@ class LkpmController extends Controller
             ['Status Penanaman Modal', $status, '', '', '', '', ''],
             ['Periode', $periodeLabel . ' ' . $tahunLabel, '', '', '', '', ''],
             ['', '', '', '', '', '', ''],
-            ['Kategori Section KBLI', 'Jenis Investasi', 'Nama Perusahaan', 'Jumlah Proyek', 'WNI', 'WNA', 'Nilai Realisasi'],
+            ['Kategori Section KBLI', 'Jenis Investasi', 'Kode Proyek', 'Nama Perusahaan', 'WNI', 'WNA', 'Nilai Realisasi'],
         ])->concat($rows);
 
         $headings = ['Laporan Nilai Realisasi Investasi Berdasarkan Kategori Section KBLI', '', '', '', '', '', ''];
@@ -1845,6 +1838,261 @@ class LkpmController extends Controller
         $filename = 'lkpm_non_umk_kbli_' . strtolower($status) . '_' . now()->format('Ymd_His') . '.xlsx';
 
         return Excel::download(new LkpmStatistikRincianExport($rows, $headings, $formats), $filename);
+    }
+
+    /**
+     * Build UMK KBLI project-level details map for export per sektor.
+     */
+    private function buildUmkKbliProjectDetailsMap(?string $tahun, ?string $periode): array
+    {
+        $umkKbliCodeSql = "COALESCE(NULLIF(TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(TRIM(lkpm_umk.kbli), ')', 1), '(', -1)), ''), LEFT(TRIM(lkpm_umk.kbli), 5))";
+        $umkProjectCodeSql = "UPPER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(COALESCE(lkpm_umk.no_kode_proyek, '')), ' ', ''), CHAR(9), ''), CHAR(10), ''), CHAR(13), ''), CONVERT(0xC2A0 USING utf8mb4), ''))";
+        $proyekIdSql = "UPPER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(COALESCE(proyek_umk.id_proyek, '')), ' ', ''), CHAR(9), ''), CHAR(10), ''), CHAR(13), ''), CONVERT(0xC2A0 USING utf8mb4), ''))";
+
+        $proyekStatusByNib = DB::table('proyek')
+            ->whereRaw("NULLIF(TRIM(COALESCE(nib, '')), '') IS NOT NULL")
+            ->selectRaw("TRIM(nib) as nib, MAX(CASE WHEN UPPER(TRIM(COALESCE(uraian_status_penanaman_modal, ''))) IN ('PMA', 'PMDN') THEN UPPER(TRIM(uraian_status_penanaman_modal)) END) as status_penanaman_modal")
+            ->groupByRaw('TRIM(nib)');
+
+        $umkInvestmentStatusSql = "COALESCE(CASE WHEN UPPER(TRIM(COALESCE(proyek_umk.uraian_status_penanaman_modal, ''))) IN ('PMA', 'PMDN') THEN UPPER(TRIM(proyek_umk.uraian_status_penanaman_modal)) END, proyek_umk_nib.status_penanaman_modal, 'Tidak Diketahui')";
+
+        $buildCompanyKey = static function ($nib, $name): string {
+            $nibKey = strtoupper(trim((string) ($nib ?? '')));
+            if ($nibKey !== '') {
+                return $nibKey;
+            }
+
+            return strtoupper(trim((string) ($name ?? '')));
+        };
+
+        $prevUmkQuery = LkpmUmk::query()
+            ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
+            ->whereRaw("NULLIF(TRIM(COALESCE(kbli, '')), '') IS NOT NULL")
+            ->whereRaw("COALESCE(NULLIF(TRIM(nomor_induk_berusaha), ''), NULLIF(TRIM(nama_pelaku_usaha), '')) IS NOT NULL");
+
+        if ($tahun && $periode) {
+            $periodeOrder = ['Semester I' => 1, 'Semester II' => 2];
+            $currentNum = $periodeOrder[$periode] ?? 0;
+            $prevPeriodes = array_keys(array_filter($periodeOrder, fn ($v) => $v < $currentNum));
+
+            $prevUmkQuery->where(function ($q) use ($tahun, $prevPeriodes) {
+                $q->where('tahun_laporan', '<', $tahun);
+
+                if (!empty($prevPeriodes)) {
+                    $q->orWhere(function ($q2) use ($tahun, $prevPeriodes) {
+                        $q2->where('tahun_laporan', $tahun)
+                            ->whereIn('periode_laporan', $prevPeriodes);
+                    });
+                }
+            });
+        } elseif ($tahun) {
+            $prevUmkQuery->where('tahun_laporan', '<', $tahun);
+        } else {
+            $prevUmkQuery->whereRaw('1=0');
+        }
+
+        $existingCompanySet = array_flip(
+            (clone $prevUmkQuery)
+                ->selectRaw("DISTINCT UPPER(TRIM(COALESCE(NULLIF(nomor_induk_berusaha, ''), NULLIF(nama_pelaku_usaha, '')))) as company_key")
+                ->pluck('company_key')
+                ->filter()
+                ->toArray()
+        );
+
+        $existingKbliSet = array_flip(
+            (clone $prevUmkQuery)
+                ->selectRaw("DISTINCT TRIM(kbli) as kbli_key")
+                ->pluck('kbli_key')
+                ->filter()
+                ->toArray()
+        );
+
+        $classifyInvestmentType = static function ($companyKey, $kbli) use ($existingCompanySet, $existingKbliSet) {
+            $company = strtoupper(trim((string) $companyKey));
+            $kbliKey = trim((string) $kbli);
+
+            if ($company === '' || $kbliKey === '') {
+                return 'Penambahan Investasi';
+            }
+
+            $isNewCompany = !isset($existingCompanySet[$company]);
+            $isNewKbli = !isset($existingKbliSet[$kbliKey]);
+
+            if ($isNewCompany && $isNewKbli) {
+                return 'Investasi Baru';
+            }
+
+            if (!$isNewCompany && $isNewKbli) {
+                return 'Penambahan KBLI / Penambahan Usaha';
+            }
+
+            return 'Penambahan Investasi';
+        };
+
+        return LkpmUmk::query()
+            ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
+            ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
+            ->when($periode, fn($q) => $q->where('periode_laporan', $periode))
+            ->whereRaw("NULLIF(TRIM(COALESCE(lkpm_umk.no_kode_proyek, '')), '') IS NOT NULL")
+            ->whereRaw("NULLIF(TRIM(COALESCE(lkpm_umk.kbli, '')), '') IS NOT NULL")
+            ->whereRaw("COALESCE(NULLIF(TRIM(lkpm_umk.nomor_induk_berusaha), ''), NULLIF(TRIM(lkpm_umk.nama_pelaku_usaha), '')) IS NOT NULL")
+            ->leftJoin('proyek as proyek_umk', function ($join) use ($umkProjectCodeSql, $proyekIdSql) {
+                $join->whereRaw($proyekIdSql . ' = ' . $umkProjectCodeSql);
+            })
+            ->leftJoinSub($proyekStatusByNib, 'proyek_umk_nib', function ($join) {
+                $join->on(DB::raw("TRIM(COALESCE(lkpm_umk.nomor_induk_berusaha, ''))"), '=', 'proyek_umk_nib.nib');
+            })
+            ->leftJoin('kbli_subclasses as ks', function ($join) use ($umkKbliCodeSql) {
+                $join->on('ks.code', '=', DB::raw($umkKbliCodeSql));
+            })
+            ->leftJoin('kbli_classes as kc', 'kc.code', '=', 'ks.class_code')
+            ->leftJoin('kbli_groups as kg', 'kg.code', '=', 'kc.group_code')
+            ->leftJoin('kbli_divisions as kd', 'kd.code', '=', 'kg.division_code')
+            ->leftJoin('kbli_sections as ksec', 'ksec.code', '=', 'kd.section_code')
+            ->whereRaw("{$umkInvestmentStatusSql} IN ('PMA', 'PMDN')")
+            ->selectRaw("{$umkInvestmentStatusSql} as status_penanaman_modal, COALESCE(CONCAT(ksec.code, ' - ', ksec.name), 'Tidak Terklasifikasi') as kategori_kbli_section, TRIM(COALESCE(lkpm_umk.no_kode_proyek, '')) as no_kode_proyek, TRIM(COALESCE(lkpm_umk.nomor_induk_berusaha, '')) as nomor_induk_berusaha, TRIM(lkpm_umk.nama_pelaku_usaha) as nama_pelaku_usaha, TRIM(lkpm_umk.kbli) as kbli, SUM(lkpm_umk.tambahan_tenaga_kerja_laki_laki) as total_tenaga_kerja_laki, SUM(lkpm_umk.tambahan_tenaga_kerja_wanita) as total_tenaga_kerja_perempuan, SUM(COALESCE(lkpm_umk.modal_kerja_periode_pelaporan, 0) + COALESCE(lkpm_umk.modal_tetap_periode_pelaporan, 0)) as total_realisasi")
+            ->groupByRaw("{$umkInvestmentStatusSql}, COALESCE(CONCAT(ksec.code, ' - ', ksec.name), 'Tidak Terklasifikasi'), TRIM(COALESCE(lkpm_umk.no_kode_proyek, '')), TRIM(COALESCE(lkpm_umk.nomor_induk_berusaha, '')), TRIM(lkpm_umk.nama_pelaku_usaha), TRIM(lkpm_umk.kbli)")
+            ->orderBy('kategori_kbli_section')
+            ->orderByDesc('total_realisasi')
+            ->get()
+            ->groupBy(function ($row) use ($buildCompanyKey, $classifyInvestmentType) {
+                $statusPm = trim((string) ($row->status_penanaman_modal ?? ''));
+                $kategori = trim((string) $row->kategori_kbli_section);
+                $companyKey = $buildCompanyKey($row->nomor_induk_berusaha ?? '', $row->nama_pelaku_usaha ?? '');
+                $jenis = $classifyInvestmentType($companyKey, $row->kbli ?? '');
+
+                return $statusPm . '|||' . $kategori . '|||' . $jenis;
+            })
+            ->map(function ($rows) {
+                return collect($rows)
+                    ->map(function ($row) {
+                        return [
+                            'no_kode_proyek' => trim((string) ($row->no_kode_proyek ?? '')),
+                            'nomor_induk_berusaha' => trim((string) ($row->nomor_induk_berusaha ?? '')),
+                            'nama_pelaku_usaha' => trim((string) ($row->nama_pelaku_usaha ?? '')),
+                            'total_tenaga_kerja_laki' => (int) ($row->total_tenaga_kerja_laki ?? 0),
+                            'total_tenaga_kerja_perempuan' => (int) ($row->total_tenaga_kerja_perempuan ?? 0),
+                            'total_realisasi' => (float) ($row->total_realisasi ?? 0),
+                        ];
+                    })
+                    ->values()
+                    ->all();
+            })
+            ->all();
+    }
+
+    /**
+     * Build Non-UMK KBLI project-level details map for export per sektor.
+     */
+    private function buildNonUmkKbliProjectDetailsMap(?string $tahun, ?string $periode): array
+    {
+        $baseQuery = LkpmNonUmk::query()
+            ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
+            ->when($tahun, fn($q) => $q->where('tahun_laporan', $tahun))
+            ->when($periode, fn($q) => $q->where('periode_laporan', $periode))
+            ->whereRaw("NULLIF(TRIM(COALESCE(lkpm_non_umk.no_kode_proyek, '')), '') IS NOT NULL")
+            ->whereRaw("NULLIF(TRIM(COALESCE(lkpm_non_umk.nama_pelaku_usaha, '')), '') IS NOT NULL")
+            ->whereRaw("NULLIF(TRIM(COALESCE(lkpm_non_umk.kbli, '')), '') IS NOT NULL")
+            ->whereRaw("UPPER(TRIM(COALESCE(lkpm_non_umk.status_penanaman_modal, ''))) IN ('PMA', 'PMDN')")
+            ->leftJoin('kbli_subclasses as ks', function ($join) {
+                $join->on('ks.code', '=', DB::raw("LEFT(TRIM(lkpm_non_umk.kbli), 5)"));
+            })
+            ->leftJoin('kbli_classes as kc', 'kc.code', '=', 'ks.class_code')
+            ->leftJoin('kbli_groups as kg', 'kg.code', '=', 'kc.group_code')
+            ->leftJoin('kbli_divisions as kd', 'kd.code', '=', 'kg.division_code')
+            ->leftJoin('kbli_sections as ksec', 'ksec.code', '=', 'kd.section_code');
+
+        $prevQuery = LkpmNonUmk::query()
+            ->whereIn('status_laporan', ['DISETUJUI', 'SUDAH DIPERBAIKI'])
+            ->whereRaw("NULLIF(TRIM(COALESCE(nama_pelaku_usaha, '')), '') IS NOT NULL")
+            ->whereRaw("NULLIF(TRIM(COALESCE(kbli, '')), '') IS NOT NULL");
+
+        if ($tahun && $periode) {
+            $periodeOrder = ['Triwulan I' => 1, 'Triwulan II' => 2, 'Triwulan III' => 3, 'Triwulan IV' => 4];
+            $currentNum = $periodeOrder[$periode] ?? 0;
+            $prevPeriodes = array_keys(array_filter($periodeOrder, fn ($v) => $v < $currentNum));
+
+            $prevQuery->where(function ($q) use ($tahun, $prevPeriodes) {
+                $q->where('tahun_laporan', '<', $tahun);
+
+                if (!empty($prevPeriodes)) {
+                    $q->orWhere(function ($q2) use ($tahun, $prevPeriodes) {
+                        $q2->where('tahun_laporan', $tahun)
+                            ->whereIn('periode_laporan', $prevPeriodes);
+                    });
+                }
+            });
+        } elseif ($tahun) {
+            $prevQuery->where('tahun_laporan', '<', $tahun);
+        } else {
+            $prevQuery->whereRaw('1=0');
+        }
+
+        $existingCompanySet = array_flip(
+            (clone $prevQuery)
+                ->selectRaw("DISTINCT UPPER(TRIM(nama_pelaku_usaha)) as company_key")
+                ->pluck('company_key')
+                ->filter()
+                ->toArray()
+        );
+
+        $existingKbliSet = array_flip(
+            (clone $prevQuery)
+                ->selectRaw("DISTINCT TRIM(kbli) as kbli_key")
+                ->pluck('kbli_key')
+                ->filter()
+                ->toArray()
+        );
+
+        $classifyInvestmentType = static function ($companyName, $kbli) use ($existingCompanySet, $existingKbliSet) {
+            $companyKey = strtoupper(trim((string) $companyName));
+            $kbliKey = trim((string) $kbli);
+
+            if ($companyKey === '' || $kbliKey === '') {
+                return 'Penambahan Investasi';
+            }
+
+            $isNewCompany = !isset($existingCompanySet[$companyKey]);
+            $isNewKbli = !isset($existingKbliSet[$kbliKey]);
+
+            if ($isNewCompany && $isNewKbli) {
+                return 'Investasi Baru';
+            }
+
+            if (!$isNewCompany && $isNewKbli) {
+                return 'Penambahan KBLI / Penambahan Usaha';
+            }
+
+            return 'Penambahan Investasi';
+        };
+
+        return (clone $baseQuery)
+            ->selectRaw("UPPER(TRIM(lkpm_non_umk.status_penanaman_modal)) as status_penanaman_modal, COALESCE(CONCAT(ksec.code, ' - ', ksec.name), 'Tidak Terklasifikasi') as kategori_kbli_section, TRIM(COALESCE(lkpm_non_umk.no_kode_proyek, '')) as no_kode_proyek, TRIM(lkpm_non_umk.nama_pelaku_usaha) as nama_pelaku_usaha, TRIM(lkpm_non_umk.kbli) as kbli, SUM(lkpm_non_umk.jumlah_realisasi_tki) as total_tenaga_kerja_wni, SUM(lkpm_non_umk.jumlah_realisasi_tka) as total_tenaga_kerja_wna, SUM(lkpm_non_umk.total_tambahan_investasi) as total_realisasi")
+            ->groupByRaw("UPPER(TRIM(lkpm_non_umk.status_penanaman_modal)), COALESCE(CONCAT(ksec.code, ' - ', ksec.name), 'Tidak Terklasifikasi'), TRIM(COALESCE(lkpm_non_umk.no_kode_proyek, '')), TRIM(lkpm_non_umk.nama_pelaku_usaha), TRIM(lkpm_non_umk.kbli)")
+            ->orderBy('status_penanaman_modal')
+            ->orderBy('kategori_kbli_section')
+            ->orderByDesc('total_realisasi')
+            ->get()
+            ->groupBy(function ($row) use ($classifyInvestmentType) {
+                $statusPm = trim((string) ($row->status_penanaman_modal ?? ''));
+                $jenis = $classifyInvestmentType($row->nama_pelaku_usaha, $row->kbli);
+                return $statusPm . '|||' . trim((string) $row->kategori_kbli_section) . '|||' . $jenis;
+            })
+            ->map(function ($rows) {
+                return collect($rows)
+                    ->map(function ($row) {
+                        return [
+                            'no_kode_proyek' => trim((string) ($row->no_kode_proyek ?? '')),
+                            'nama_pelaku_usaha' => trim((string) ($row->nama_pelaku_usaha ?? '')),
+                            'total_tenaga_kerja_wni' => (int) ($row->total_tenaga_kerja_wni ?? 0),
+                            'total_tenaga_kerja_wna' => (int) ($row->total_tenaga_kerja_wna ?? 0),
+                            'total_realisasi' => (float) ($row->total_realisasi ?? 0),
+                        ];
+                    })
+                    ->values()
+                    ->all();
+            })
+            ->all();
     }
 
     private function normalizeFilterValue($value): ?string
