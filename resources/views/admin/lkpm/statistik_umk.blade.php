@@ -188,7 +188,15 @@
             </div>
           </div>
 
-          @foreach(['PMA', 'PMDN'] as $statusPm)
+          @php
+            $kbliStatusSections = collect(['PMA', 'PMDN', 'Tidak Diketahui'])
+              ->filter(function ($statusPm) use ($byKbliKategori) {
+                return in_array($statusPm, ['PMA', 'PMDN'], true)
+                  || $byKbliKategori->contains('status_penanaman_modal', $statusPm);
+              })
+              ->values();
+          @endphp
+          @foreach($kbliStatusSections as $statusPm)
             @php
               $rowsByStatusPm = $byKbliKategori->where('status_penanaman_modal', $statusPm)->values();
               $groupedByKbliKategori = $rowsByStatusPm->groupBy('kategori_kbli_section');
@@ -197,7 +205,7 @@
               <div class="card">
                 <div class="card-header d-flex align-items-center justify-content-between">
                   <span>Nilai Realisasi Investasi Berdasarkan Kategori Section KBLI - {{ $statusPm }}</span>
-                  @if($rowsByStatusPm->count() > 0)
+                  @if($rowsByStatusPm->count() > 0 && in_array($statusPm, ['PMA', 'PMDN'], true))
                     <a href="{{ route('lkpm.statistik.umk.kbli.export', array_merge(request()->query(), ['status' => $statusPm])) }}" class="btn btn-sm btn-success" target="_blank">
                       <i class="bi bi-download"></i> Unduh Excel
                     </a>

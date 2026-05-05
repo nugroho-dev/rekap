@@ -948,8 +948,7 @@ class LkpmController extends Controller
                 ->leftJoin('kbli_classes as kc', 'kc.code', '=', 'ks.class_code')
                 ->leftJoin('kbli_groups as kg', 'kg.code', '=', 'kc.group_code')
                 ->leftJoin('kbli_divisions as kd', 'kd.code', '=', 'kg.division_code')
-                ->leftJoin('kbli_sections as ksec', 'ksec.code', '=', 'kd.section_code')
-                ->whereRaw("{$umkInvestmentStatusSql} IN ('PMA', 'PMDN')");
+                ->leftJoin('kbli_sections as ksec', 'ksec.code', '=', 'kd.section_code');
 
             $rawKbliRows = (clone $byKbliKategoriBase)
                 ->selectRaw("{$umkInvestmentStatusSql} as status_penanaman_modal, COALESCE(CONCAT(ksec.code, ' - ', ksec.name), 'Tidak Terklasifikasi') as kategori_kbli_section, TRIM(COALESCE(lkpm_umk.nomor_induk_berusaha, '')) as nomor_induk_berusaha, TRIM(lkpm_umk.nama_pelaku_usaha) as nama_pelaku_usaha, TRIM(lkpm_umk.kbli) as kbli, COUNT(DISTINCT lkpm_umk.no_kode_proyek) as jumlah_proyek, SUM(lkpm_umk.tambahan_tenaga_kerja_laki_laki) as total_tenaga_kerja_laki, SUM(lkpm_umk.tambahan_tenaga_kerja_wanita) as total_tenaga_kerja_perempuan, SUM(COALESCE(lkpm_umk.modal_kerja_periode_pelaporan, 0) + COALESCE(lkpm_umk.modal_tetap_periode_pelaporan, 0)) as total_realisasi")
@@ -960,9 +959,9 @@ class LkpmController extends Controller
                 ->get();
 
             $byKbliKategoriGrouped = [];
-            $totalPerusahaanByKbliKategori = ['PMA' => [], 'PMDN' => []];
+            $totalPerusahaanByKbliKategori = [];
             foreach ($rawKbliRows as $row) {
-                $statusPm = trim((string) ($row->status_penanaman_modal ?? ''));
+                $statusPm = trim((string) ($row->status_penanaman_modal ?? 'Tidak Diketahui'));
                 $kategori = trim((string) $row->kategori_kbli_section);
                 $companyKey = $buildCompanyKey($row->nomor_induk_berusaha ?? '', $row->nama_pelaku_usaha ?? '');
                 $jenis = $classifyInvestmentType($companyKey, $row->kbli ?? '');
@@ -983,6 +982,9 @@ class LkpmController extends Controller
 
                 if ($companyKey !== '') {
                     $byKbliKategoriGrouped[$statusPm][$kategori][$jenis]['perusahaan_keys'][$companyKey] = true;
+                    if (!isset($totalPerusahaanByKbliKategori[$statusPm])) {
+                        $totalPerusahaanByKbliKategori[$statusPm] = [];
+                    }
                     $totalPerusahaanByKbliKategori[$statusPm][$companyKey] = true;
                 }
 
@@ -1008,8 +1010,23 @@ class LkpmController extends Controller
                 ->all();
 
             $byKbliKategori = collect();
-            foreach (['PMA', 'PMDN'] as $statusPm) {
+            $statusPmOrder = ['PMA', 'PMDN', 'Tidak Diketahui'];
+            foreach ($statusPmOrder as $statusPm) {
                 foreach ($byKbliKategoriGrouped[$statusPm] ?? [] as $kategori => $jenisList) {
+                    foreach ($jenisOrder as $jenis) {
+                        if (isset($jenisList[$jenis])) {
+                            $byKbliKategori->push((object) $jenisList[$jenis]);
+                        }
+                    }
+                }
+            }
+
+            foreach ($byKbliKategoriGrouped as $statusPm => $kategoriGroups) {
+                if (in_array($statusPm, $statusPmOrder, true)) {
+                    continue;
+                }
+
+                foreach ($kategoriGroups as $kategori => $jenisList) {
                     foreach ($jenisOrder as $jenis) {
                         if (isset($jenisList[$jenis])) {
                             $byKbliKategori->push((object) $jenisList[$jenis]);
