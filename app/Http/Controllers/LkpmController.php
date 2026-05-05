@@ -1733,7 +1733,7 @@ class LkpmController extends Controller
             $parts = explode('|||', $key);
             if (count($parts) < 3) continue;
             [$statusKey, $kategori, $jenis] = $parts;
-            if ($statusKey !== $status) continue;
+            if (strtoupper(trim((string) $statusKey)) !== $status) continue;
 
             foreach ($projects as $project) {
                 $tkLaki = (int) ($project['total_tenaga_kerja_laki'] ?? 0);
