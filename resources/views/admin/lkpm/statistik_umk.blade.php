@@ -205,7 +205,7 @@
               <div class="card">
                 <div class="card-header d-flex align-items-center justify-content-between">
                   <span>Nilai Realisasi Investasi Berdasarkan Kategori Section KBLI - {{ $statusPm }}</span>
-                  @if($rowsByStatusPm->count() > 0 && in_array($statusPm, ['PMA', 'PMDN'], true))
+                  @if($rowsByStatusPm->count() > 0)
                     <a href="{{ route('lkpm.statistik.umk.kbli.export', array_merge(request()->query(), ['status' => $statusPm])) }}" class="btn btn-sm btn-success" target="_blank">
                       <i class="bi bi-download"></i> Unduh Excel
                     </a>

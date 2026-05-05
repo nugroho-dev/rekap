@@ -1710,7 +1710,7 @@ class LkpmController extends Controller
     }
 
     /**
-     * Export KBLI statistik UMK (agregat per status PMA/PMDN) ke Excel.
+     * Export KBLI statistik UMK (agregat per status penanaman modal) ke Excel.
      */
     public function exportStatistikUmkKbliByStatus(Request $request)
     {
@@ -1718,7 +1718,7 @@ class LkpmController extends Controller
         $tahun = $this->normalizeFilterValue($request->get('tahun'));
         $periode = $this->normalizeFilterValue($request->get('periode'));
 
-        if (!in_array($status, ['PMA', 'PMDN'], true)) {
+        if (!in_array($status, ['PMA', 'PMDN', 'TIDAK DIKETAHUI'], true)) {
             abort(422, 'Status penanaman modal tidak valid.');
         }
 
@@ -1778,7 +1778,8 @@ class LkpmController extends Controller
             'H' => '"Rp"#,##0',
         ];
 
-        $filename = 'lkpm_umk_kbli_' . strtolower($status) . '_' . now()->format('Ymd_His') . '.xlsx';
+        $statusSlug = trim((string) preg_replace('/[^a-z0-9]+/i', '_', strtolower($status)), '_');
+        $filename = 'lkpm_umk_kbli_' . $statusSlug . '_' . now()->format('Ymd_His') . '.xlsx';
 
         return Excel::download(new LkpmStatistikRincianExport($rows, $headings, $formats), $filename);
     }
@@ -1966,7 +1967,6 @@ class LkpmController extends Controller
             ->leftJoin('kbli_groups as kg', 'kg.code', '=', 'kc.group_code')
             ->leftJoin('kbli_divisions as kd', 'kd.code', '=', 'kg.division_code')
             ->leftJoin('kbli_sections as ksec', 'ksec.code', '=', 'kd.section_code')
-            ->whereRaw("{$umkInvestmentStatusSql} IN ('PMA', 'PMDN')")
             ->selectRaw("{$umkInvestmentStatusSql} as status_penanaman_modal, COALESCE(CONCAT(ksec.code, ' - ', ksec.name), 'Tidak Terklasifikasi') as kategori_kbli_section, TRIM(COALESCE(lkpm_umk.no_kode_proyek, '')) as no_kode_proyek, TRIM(COALESCE(lkpm_umk.nomor_induk_berusaha, '')) as nomor_induk_berusaha, TRIM(lkpm_umk.nama_pelaku_usaha) as nama_pelaku_usaha, TRIM(lkpm_umk.kbli) as kbli, SUM(lkpm_umk.tambahan_tenaga_kerja_laki_laki) as total_tenaga_kerja_laki, SUM(lkpm_umk.tambahan_tenaga_kerja_wanita) as total_tenaga_kerja_perempuan, SUM(COALESCE(lkpm_umk.modal_kerja_periode_pelaporan, 0) + COALESCE(lkpm_umk.modal_tetap_periode_pelaporan, 0)) as total_realisasi")
             ->groupByRaw("{$umkInvestmentStatusSql}, COALESCE(CONCAT(ksec.code, ' - ', ksec.name), 'Tidak Terklasifikasi'), TRIM(COALESCE(lkpm_umk.no_kode_proyek, '')), TRIM(COALESCE(lkpm_umk.nomor_induk_berusaha, '')), TRIM(lkpm_umk.nama_pelaku_usaha), TRIM(lkpm_umk.kbli)")
             ->orderBy('kategori_kbli_section')
