@@ -10,6 +10,7 @@
                             </div>
                             <h2 class="page-title">
                                 {{ $judul }} Tahun {{ $year}}</h2>
+                            <div class="text-muted">Basis tanggal: <strong>{{ $date_basis === 'rekomendasi' ? 'Rekomendasi' : 'TTE' }}</strong></div>
                             
                         </div>
                         <!-- Page title actions   --> 
@@ -19,12 +20,12 @@
                           <span class="d-none d-sm-inline">
                           
                           </span>
-                          <a href="{{ url('/simpel/statistik')}}" class="btn btn-info d-none d-sm-inline-block">
+                          <a href="{{ url('/simpel/statistik?date_basis='.$date_basis)}}" class="btn btn-info d-none d-sm-inline-block">
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-chart-infographic"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M7 3v4h4" /><path d="M9 17l0 4" /><path d="M17 14l0 7" /><path d="M13 13l0 8" /><path d="M21 12l0 9" /></svg>
                             Statistik
                           </a>
-                          <a href="{{ url('/simpel/statistik')}}" class="btn btn-info d-sm-none btn-icon">
+                          <a href="{{ url('/simpel/statistik?date_basis='.$date_basis)}}" class="btn btn-info d-sm-none btn-icon">
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-chart-infographic"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M7 3v4h4" /><path d="M9 17l0 4" /><path d="M17 14l0 7" /><path d="M13 13l0 8" /><path d="M21 12l0 9" /></svg>
                           </a>
@@ -271,6 +272,7 @@
                                   @csrf
                                 <input type="hidden" name="month" value="{{ $data->bulan }}">
                                 <input type="hidden" name="year" value="{{ $year }}">
+                                <input type="hidden" name="date_basis" value="{{ $date_basis }}">
                                 <button type="submit" class="dropdown-item">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-list-details me-2"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M13 5h8" /><path d="M13 9h5" /><path d="M13 15h8" /><path d="M13 19h5" /><path d="M3 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M3 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /></svg>
                                   Lihat Rincian Perjenis Izin
@@ -279,6 +281,7 @@
                                 <form method="get" action="{{ url('/simpel')}}" enctype="multipart/form-data">
                                 <input type="hidden" name="month" value="{{ $data->bulan }}">
                                 <input type="hidden" name="year" value="{{ $year }}">
+                                <input type="hidden" name="date_basis" value="{{ $date_basis }}">
                                 <button type="submit" class="dropdown-item">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-file-text me-2"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M9 9l1 0" /><path d="M9 13l6 0" /><path d="M9 17l6 0" /></svg>
                                   Lihat Rincian Izin Terbit
@@ -387,6 +390,12 @@
                         <form method="post" action="{{ url('/simpel/statistik') }}" enctype="multipart/form-data">
                         @csrf
                         <div class="row g-2">
+                          <div class="col-4">
+                          <select name="date_basis" class="form-select">
+                            <option value="tte" {{ $date_basis === 'tte' ? 'selected' : '' }}>TTE</option>
+                            <option value="rekomendasi" {{ $date_basis === 'rekomendasi' ? 'selected' : '' }}>Rekomendasi</option>
+                          </select>
+                          </div>
                         
                           <div class="col-4">
                           <select name="year" class="form-select">

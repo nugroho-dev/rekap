@@ -18,7 +18,7 @@
                           <span class="d-none d-sm-inline">
                           
                           </span>
-                          <a href="{{ url('/simpel/print?month='.$month.'&year='.$year.'&search='.$search.'')}}" class="btn btn-secondary d-none d-sm-inline-block" target="_blank">
+                          <a href="{{ url('/simpel/print?month='.$month.'&year='.$year.'&search='.$search.'&date_basis='.$date_basis)}}" class="btn btn-secondary d-none d-sm-inline-block" target="_blank">
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-printer"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2" /><path d="M17 9v-4a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v4" /><path d="M7 13m0 2a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2z" /></svg>
                             Cetak
@@ -34,12 +34,12 @@
                           <span class="d-none d-sm-inline">
                           
                           </span>
-                          <a href="{{ url('/simpel/statistik')}}" class="btn btn-info d-none d-sm-inline-block">
+                          <a href="{{ url('/simpel/statistik?date_basis='.$date_basis)}}" class="btn btn-info d-none d-sm-inline-block">
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-chart-infographic"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M7 3v4h4" /><path d="M9 17l0 4" /><path d="M17 14l0 7" /><path d="M13 13l0 8" /><path d="M21 12l0 9" /></svg>
                             Statistik
                           </a>
-                          <a href="{{ url('/simpel/statistik')}}" class="btn btn-info d-sm-none btn-icon">
+                          <a href="{{ url('/simpel/statistik?date_basis='.$date_basis)}}" class="btn btn-info d-sm-none btn-icon">
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
                             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-chart-infographic"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M7 3v4h4" /><path d="M9 17l0 4" /><path d="M17 14l0 7" /><path d="M13 13l0 8" /><path d="M21 12l0 9" /></svg>
                           </a>
@@ -125,6 +125,7 @@
                           <form action="{{ url('/simpel')}}" method="POST">
                             @csrf
                             <input type="hidden" name="page" value="{{ request()->get('page', 1) }}">
+                            <input type="hidden" name="date_basis" value="{{ $date_basis }}">
                             <select name="perPage" id="myselect" onchange="this.form.submit()" class="form-control form-control-sm">
                               @foreach ([5, 10, 20, 50, 60, 80, 100] as $size)
                                 <option value="{{ $size }}" {{ $perPage == $size ? 'selected' : '' }}>
@@ -142,6 +143,7 @@
                           <form action="{{ url('/simpel')}}" method="POST">
                             @csrf
                             <div class="input-group">
+                              <input type="hidden" name="date_basis" value="{{ $date_basis }}">
                               <input type="text" name="search" class="form-control form-control-sm" aria-label="cari" value="{{ old('search') }}">
                               <button type="submit" class="btn btn-icon btn-sm">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"></path><path d="M21 21l-6 -6"></path></svg>
@@ -446,7 +448,7 @@
                     </table>
                   </div>
                   <div class="card-footer d-flex align-items-center">
-                     {{ $items->appends(['perPage' => $perPage])->appends(['search' => $search])->appends(['date_start' => $date_start])->appends(['date_end' => $date_end])->appends(['month' => $month])->appends(['year' => $year])->links() }}
+                     {{ $items->appends(['perPage' => $perPage])->appends(['search' => $search])->appends(['date_start' => $date_start])->appends(['date_end' => $date_end])->appends(['month' => $month])->appends(['year' => $year])->appends(['date_basis' => $date_basis])->links() }}
                   </div>
                 </div>
               </div>
@@ -489,6 +491,13 @@
                                 <h4>Pilih Tanggal :</h4>
                                 <form method="post" action="{{ url('/simpel')}}" enctype="multipart/form-data">
                                   @csrf
+                                <div class="mb-2">
+                                  <label class="form-label">Basis Tanggal</label>
+                                  <select name="date_basis" class="form-select">
+                                    <option value="tte" {{ $date_basis === 'tte' ? 'selected' : '' }}>TTE</option>
+                                    <option value="rekomendasi" {{ $date_basis === 'rekomendasi' ? 'selected' : '' }}>Rekomendasi</option>
+                                  </select>
+                                </div>
                                 <div class="input-group mb-2">
                                   <input type="date" class="form-control" name="date_start" autocomplete="off">
                                   <span class="input-group-text">
@@ -504,6 +513,13 @@
                                 <div>
                                   <form method="post" action="{{ url('/simpel')}}" enctype="multipart/form-data">
                                     @csrf
+                                  <div class="col-12">
+                                    <label class="form-label">Basis Tanggal</label>
+                                    <select name="date_basis" class="form-select">
+                                      <option value="tte" {{ $date_basis === 'tte' ? 'selected' : '' }}>TTE</option>
+                                      <option value="rekomendasi" {{ $date_basis === 'rekomendasi' ? 'selected' : '' }}>Rekomendasi</option>
+                                    </select>
+                                  </div>
                                   <div class="row g-2">
                                     <div class="col-4">
                                       <select name="month" class="form-select">
@@ -534,6 +550,12 @@
                                   <form method="post" action="{{ url('/simpel')}}" enctype="multipart/form-data">
                                     @csrf
                                   <div class="row g-2">
+                                    <div class="col-4">
+                                      <select name="date_basis" class="form-select">
+                                        <option value="tte" {{ $date_basis === 'tte' ? 'selected' : '' }}>TTE</option>
+                                        <option value="rekomendasi" {{ $date_basis === 'rekomendasi' ? 'selected' : '' }}>Rekomendasi</option>
+                                      </select>
+                                    </div>
                                     <div class="col-4">
                                       <select name="year" class="form-select">
                                         <option value="">Tahun</option>
