@@ -38,7 +38,7 @@ class DashboradSimpelController extends Controller
             if ($date_start > $date_end) {
             return redirect('/simpel')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda');
             } else {
-            $query->whereBetween('tte', [$date_start, $date_end]);
+            $query->whereBetween('rekomendasi', [$date_start, $date_end]);
             }
         }
 
@@ -46,21 +46,21 @@ class DashboradSimpelController extends Controller
             if (empty($month) || empty($year)) {
             return redirect('/simpel')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda');
             } else {
-            $query->whereMonth('tte', $month)
-                  ->whereYear('tte', $year)
+            $query->whereMonth('rekomendasi', $month)
+                  ->whereYear('rekomendasi', $year)
                   ->where('jasa', 'LIKE', "%{$search}%");
             }
         } elseif ($request->has('month') && $request->has('year')) {
             if (empty($month) || empty($year)) {
             return redirect('/simpel')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda');
             } else {
-            $query->whereMonth('tte', $month)
-                  ->whereYear('tte', $year);
+            $query->whereMonth('rekomendasi', $month)
+                  ->whereYear('rekomendasi', $year);
             }
         }
 
         if ($request->has('year')) {
-            $query->whereYear('tte', $year);
+            $query->whereYear('rekomendasi', $year);
         }
 
         $perPage = $request->input('perPage', 50);
