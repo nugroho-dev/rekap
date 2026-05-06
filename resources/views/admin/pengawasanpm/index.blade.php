@@ -50,6 +50,12 @@
                           <span class="d-none d-sm-inline">
                           
                           </span>
+                          <a href="{{ url('/pengawasan/arsip') }}" class="btn btn-warning d-none d-sm-inline-block">
+                            Arsip Pengawasan
+                          </a>
+                          <a href="{{ url('/pengawasan/arsip') }}" class="btn btn-warning d-sm-none btn-icon" title="Arsip Pengawasan">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icon-tabler-archive"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 4m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v2h-18z"/><path d="M5 10v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-8"/><path d="M10 12l4 0"/></svg>
+                          </a>
                           @can('pengawasan.import')
                           <a href="#" class="btn btn-primary d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#modal-team">
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
@@ -197,6 +203,12 @@
                       <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
+                      <div class="mb-3">
+                        <a href="{{ asset('templates/template_import_pengawasan.csv') }}" class="btn btn-outline-success" download>
+                          Unduh Template Import
+                        </a>
+                        <div class="form-text">Template berformat CSV dan dapat dibuka di Excel. Gunakan header sesuai template.</div>
+                      </div>
                       <div>
                         <label class="form-label">File Data Pengawasan</label>
                         <input type="file" name="file" required="required" class="form-control">

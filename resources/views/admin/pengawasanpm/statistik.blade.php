@@ -6,7 +6,7 @@
         <div class="row align-items-center">
             <div class="col">
                 <h2 class="page-title">{{ $judul }} Tahun {{ $year }}</h2>
-                <div class="text-muted mt-1">Statistik Pengawasan berdasarkan status dan tren bulanan.</div>
+                <div class="text-muted mt-1">Statistik pengawasan terhubung data proyek (berdasarkan nomor_kode_proyek = id_proyek).</div>
             </div>
             <div class="col-auto ms-auto d-print-none">
                 <form method="get" class="mb-3">
@@ -35,14 +35,14 @@
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-list" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="#206bc4" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><line x1="9" y1="6" x2="20" y2="6" /><line x1="9" y1="12" x2="20" y2="12" /><line x1="9" y1="18" x2="20" y2="18" /><line x1="5" y1="6" x2="5" y2="6.01" /><line x1="5" y1="12" x2="5" y2="12.01" /><line x1="5" y1="18" x2="5" y2="18.01" /></svg>
                     </span>
                     <div class="h1 mb-1">{{ number_format($total) }}</div>
-                    <div class="text-muted">Total Pengawasan</div>
+                    <div class="text-muted">Total Data Pengawasan</div>
                 </div>
             </div>
         </div>
         <div class="col-md-4 col-sm-6">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-body text-center">
-                    <div class="fw-bold mb-2">Jumlah Investasi</div>
+                    <div class="fw-bold mb-2">Jumlah Investasi Proyek</div>
                     <div class="h3 mb-1">Total: Rp{{ number_format($jumlahInvestasi['total'] ?? 0, 0, ',', '.') }}</div>
                     <div class="h3">Rata-rata: Rp{{ number_format($jumlahInvestasi['rata'] ?? 0, 0, ',', '.') }}</div>
                 </div>
@@ -51,7 +51,7 @@
         <div class="col-md-4 col-sm-6">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-body text-center">
-                    <div class="fw-bold mb-2">Jumlah Tenaga Kerja</div>
+                    <div class="fw-bold mb-2">Tenaga Kerja Proyek</div>
                     <div class="h3 mb-1">TKI L: {{ $tenagaKerja['tki_l'] ?? 0 }}, TKI P: {{ $tenagaKerja['tki_p'] ?? 0 }}</div>
                     <div class="h3">TKA L: {{ $tenagaKerja['tka_l'] ?? 0 }}, TKA P: {{ $tenagaKerja['tka_p'] ?? 0 }}</div>
                 </div>
@@ -62,7 +62,7 @@
         <div class="col-md-12 mb-4">
                             <div class="card shadow-sm border-0 h-100">
                                 <div class="card-header bg-success-lt d-flex align-items-center justify-content-between">
-                                    <h3 class="card-title mb-0">Jumlah Perusahaan Per Bulan</h3>
+                                    <h3 class="card-title mb-0">Jumlah Perusahaan/NIB Terhubung Per Bulan</h3>
                                 </div>
                                 <div class="card-body">
                                     <div class="table-responsive mb-3">
@@ -70,7 +70,7 @@
                                             <thead class="bg-light">
                                                 <tr>
                                                     <th class="text-center">Bulan</th>
-                                                    <th class="text-center">Jumlah Perusahaan</th>
+                                                    <th class="text-center">Jumlah Perusahaan/NIB</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -83,7 +83,7 @@
                                             </tbody>
                                         </table>
                                     </div>
-                                    <div class="fw-bold mb-1">Grafik Perusahaan Per Bulan</div>
+                                    <div class="fw-bold mb-1">Grafik Perusahaan/NIB Per Bulan</div>
                                     <div id="perusahaanPerBulanChart" style="height: 220px;"></div>
                                 </div>
                             </div>
@@ -105,7 +105,7 @@
         <div class="col-5 mb-4">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-header bg-primary-lt d-flex align-items-center justify-content-between">
-                    <h3 class="card-title mb-0">Tabel 10 Sektor Teratas</h3>
+                    <h3 class="card-title mb-0">Tabel 10 Sektor Pembina Teratas</h3>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive mb-3">
@@ -129,7 +129,7 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="fw-bold mb-1">Grafik Sektor</div>
+                    <div class="fw-bold mb-1">Grafik Sektor Pembina</div>
                     <div id="sektorChart" style="height: 180px;"></div>
                 </div>
             </div>
@@ -137,7 +137,7 @@
         <div class="col-7 mb-4">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-header bg-primary-lt d-flex align-items-center justify-content-between">
-                    <h3 class="card-title mb-0">Tabel 10 KBLI Teratas</h3>
+                    <h3 class="card-title mb-0">Tabel 10 KBLI Proyek Teratas</h3>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive mb-3">
@@ -182,7 +182,7 @@
                 <div class="card-body">
                     <div class="row g-3">
                         <div class="col-md-6 mb-3">
-                            <div class="fw-bold mb-1">Status Penanaman Modal</div>
+                            <div class="fw-bold mb-1">Status Penanaman Modal Proyek</div>
                             <div id="statusPenanamanModalChart" style="height: 180px;"></div>
                         </div>
                         <div class="col-md-6 mb-3">
@@ -190,15 +190,15 @@
                             <div id="skalaUsahaProyekChart" style="height: 220px;"></div>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <div class="fw-bold mb-1">Skala Usaha Perusahaan</div>
+                            <div class="fw-bold mb-1">Jenis Perusahaan</div>
                             <div id="skalaUsahaPerusahaanChart" style="height: 220px;"></div>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <div class="fw-bold mb-1">10 Resiko Teratas</div>
+                            <div class="fw-bold mb-1">10 Risiko Proyek Teratas</div>
                             <div id="resikoChart" style="height: 220px;"></div>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <div class="fw-bold mb-1">Jumlah Tenaga Kerja</div>
+                            <div class="fw-bold mb-1">Jumlah Tenaga Kerja Proyek</div>
                             <div id="tenagaKerjaChart" style="height: 220px;"></div>
                         </div>
                     </div>

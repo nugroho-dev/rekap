@@ -8,36 +8,69 @@ use App\Imports\PengawasanImport;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
 
 class DashboardPengawasanController extends Controller
 {
     public function index(Request $request)
 	{
         $judul='Data Pengawasan';
-		$query = Pengawasan::query();
+		$query = Pengawasan::query()
+			->leftJoin('proyek', 'proyek.id_proyek', '=', 'pengawasan.nomor_kode_proyek')
+			->select([
+				'pengawasan.*',
+				'proyek.nama_perusahaan',
+				DB::raw('proyek.alamat_usaha as alamat_perusahaan'),
+				DB::raw('proyek.uraian_status_penanaman_modal as status_penanaman_modal'),
+				DB::raw('proyek.uraian_jenis_perusahaan as jenis_perusahaan'),
+				'proyek.nib',
+				'proyek.kbli',
+				DB::raw('proyek.judul_kbli as uraian_kbli'),
+				DB::raw('proyek.kl_sektor_pembina as sektor'),
+				DB::raw('proyek.alamat_usaha as alamat_proyek'),
+				DB::raw('NULL as propinsi_proyek'),
+				DB::raw('proyek.kab_kota_usaha as daerah_kabupaten_proyek'),
+				DB::raw('proyek.kecamatan_usaha as kecamatan_proyek'),
+				DB::raw('proyek.kelurahan_usaha as kelurahan_proyek'),
+				'proyek.luas_tanah',
+				DB::raw('proyek.satuan_tanah as satuan_luas_tanah'),
+				DB::raw('proyek.tki as jumlah_tki_l'),
+				DB::raw('0 as jumlah_tki_p'),
+				DB::raw('0 as jumlah_tka_l'),
+				DB::raw('0 as jumlah_tka_p'),
+				DB::raw('proyek.uraian_risiko_proyek as resiko'),
+				DB::raw('NULL as sumber_data'),
+				'proyek.jumlah_investasi',
+				DB::raw('proyek.uraian_skala_usaha as skala_usaha_perusahaan'),
+				DB::raw('proyek.uraian_skala_usaha as skala_usaha_proyek'),
+				DB::raw('proyek.day_of_tanggal_pengajuan_proyek as hari_penjadwalan'),
+				DB::raw('NULL as kewenangan_koordinator'),
+				DB::raw('NULL as kewenangan_pengawasan'),
+			]);
 		$search = $request->input('search');
 		$date_start = $request->input('date_start');
 		$date_end = $request->input('date_end');
 		$month = $request->input('month');
 		$year = $request->input('year');
-		if ($request->has('search')) {
-			$search = $request->input('search');
-			$query ->where('nama_perusahaan', 'LIKE', "%{$search}%")
-				   ->orWhere('nib', 'LIKE', "%{$search}%")
-				   ->orWhere('uraian_kbli', 'LIKE', "%{$search}%")
-                   ->orWhere('kbli', 'LIKE', "%{$search}%")
-				   ->orWhere('nomor_kode_proyek', 'LIKE', "%{$search}%")
-				   ->orWhere('sektor', 'LIKE', "%{$search}%")
-				   ->orWhere('alamat_proyek', 'LIKE', "%{$search}%")
-				   ->orWhere('daerah_kabupaten_proyek', 'LIKE', "%{$search}%")
-				   ->orWhere('propinsi_proyek', 'LIKE', "%{$search}%")
-				   ->orWhere('kecamatan_proyek', 'LIKE', "%{$search}%")
-				   ->orWhere('kelurahan_proyek', 'LIKE', "%{$search}%")
-				   ->orWhere('resiko', 'LIKE', "%{$search}%")
-				   ->orWhere('sumber_data', 'LIKE', "%{$search}%")
-				   ->orWhere('skala_usaha_perusahaan', 'LIKE', "%{$search}%")
-				   ->orWhere('skala_usaha_proyek', 'LIKE', "%{$search}%")
-				   ->orderBy('hari_penjadwalan', 'asc');
+		if ($request->filled('search')) {
+			$query->where(function ($q) use ($search) {
+				$q->where('pengawasan.nomor_kode_proyek', 'LIKE', "%{$search}%")
+					->orWhere('pengawasan.kesesuaian', 'LIKE', "%{$search}%")
+					->orWhere('pengawasan.pembinaan', 'LIKE', "%{$search}%")
+					->orWhere('pengawasan.perbaikan', 'LIKE', "%{$search}%")
+					->orWhere('pengawasan.sanksi', 'LIKE', "%{$search}%")
+					->orWhere('pengawasan.hasil_pengawasan', 'LIKE', "%{$search}%")
+					->orWhere('pengawasan.persyaratan_dasar', 'LIKE', "%{$search}%")
+					->orWhere('pengawasan.pemenuhan_pb', 'LIKE', "%{$search}%")
+					->orWhere('pengawasan.csr', 'LIKE', "%{$search}%")
+					->orWhere('pengawasan.lkpm', 'LIKE', "%{$search}%")
+					->orWhere('pengawasan.permasalahan', 'LIKE', "%{$search}%")
+					->orWhere('pengawasan.rekomendasi', 'LIKE', "%{$search}%")
+					->orWhere('proyek.nama_perusahaan', 'LIKE', "%{$search}%")
+					->orWhere('proyek.nib', 'LIKE', "%{$search}%")
+					->orWhere('proyek.kbli', 'LIKE', "%{$search}%")
+					->orWhere('proyek.judul_kbli', 'LIKE', "%{$search}%");
+			});
 		}
 		if ($request->has('date_start')&&$request->has('date_end')) {
 			$date_start = $request->input('date_start');
@@ -45,8 +78,7 @@ class DashboardPengawasanController extends Controller
 			if($date_start>$date_end ){
 				return redirect('/pengawasan')->with('error', 'Silakan Cek Kembali Pilihan Range Tanggal Anda ');
 			}else{
-			$query ->whereBetween('hari_penjadwalan', [$date_start,$date_end])
-				   ->orderBy('hari_penjadwalan', 'asc');
+			$query->whereBetween('pengawasan.created_at', [$date_start, $date_end]);
 			}
 		}
 		if ($request->has('month')&&$request->has('year')) {
@@ -59,19 +91,16 @@ class DashboardPengawasanController extends Controller
 			}if(empty($month)){
 				return redirect('/pengawasan')->with('error', 'Silakan Cek Kembali Pilihan Bulan dan Tahun Anda ');
 			}else{
-			$query ->whereMonth('hari_penjadwalan', [$month])
-				   ->whereYear('hari_penjadwalan', [$year])
-				   ->orderBy('hari_penjadwalan', 'asc');
+			$query->whereMonth('pengawasan.created_at', [$month])
+				   ->whereYear('pengawasan.created_at', [$year]);
 				}
 		}
 		if ($request->has('year')) {
 			$year = $request->input('year');
-			$query ->where('del', 0)
-				   ->whereYear('hari_penjadwalan', [$year])
-				   ->orderBy('hari_penjadwalan', 'asc');
+			$query->whereYear('pengawasan.created_at', [$year]);
 		}
 		$perPage = $request->input('perPage', 50);
-		$items=$query->orderBy('hari_penjadwalan', 'asc')->paginate($perPage);
+		$items=$query->orderBy('pengawasan.created_at', 'desc')->paginate($perPage);
 		$items->withPath(url('/pengawasan'));
 		return view('admin.pengawasanpm.index',compact('judul','items','perPage','search','date_start','date_end','month','year'));
     }
@@ -84,33 +113,16 @@ class DashboardPengawasanController extends Controller
 	public function update(Request $request, Pengawasan $pengawasan)
     {
 		$rules=[
-		'nama_perusahaan'=>'required',
-		'alamat_perusahaan'=>'required',
-		'status_penanaman_modal'=>'required',
-		'jenis_perusahaan'=>'required',
-		'nib'=>'required',
-		'kbli'=>'required',
-		'uraian_kbli'=>'required',
-		'sektor'=>'required',
-		'alamat_proyek'=>'required',
-		'propinsi_proyek'=>'required',
-		'daerah_kabupaten_proyek'=>'required',
-		'kecamatan_proyek'=>'required',
-		'kelurahan_proyek'=>'required',
-		'luas_tanah'=>'required',
-		'satuan_luas_tanah'=>'required',
-		'jumlah_tki_l'=>'required',
-		'jumlah_tki_p'=>'required',
-		'jumlah_tka_l'=>'required',
-		'jumlah_tka_p'=>'required',
-		'resiko'=>'required',
-		'sumber_data'=>'required',
-		'jumlah_investasi'=>'required',
-		'skala_usaha_perusahaan'=>'required',
-		'skala_usaha_proyek'=>'required',
-		'hari_penjadwalan'=>'required' , 
-		'kewenangan_koordinator'=>'required',
-		'kewenangan_pengawasan'=>'required',
+		'nomor_kode_proyek'=>'required',
+		'kesesuaian'=>'string|nullable',
+		'pembinaan'=>'string|nullable',
+		'perbaikan'=>'string|nullable',
+		'sanksi'=>'string|nullable',
+		'hasil_pengawasan'=>'string|nullable',
+		'persyaratan_dasar'=>'string|nullable',
+		'pemenuhan_pb'=>'string|nullable',
+		'csr'=>'string|nullable',
+		'lkpm'=>'string|nullable',
 		'permasalahan'=>'string|nullable',
 		'rekomendasi'=>'string|nullable',
 		'file'=>'file|mimes:pdf|nullable',];
@@ -124,8 +136,7 @@ class DashboardPengawasanController extends Controller
             }
             $validatedData['file'] = $request->file('file')->store('public/pengawasan-files');
         }
-		
-        $validatedData['del'] = 0;
+
         Pengawasan::where('nomor_kode_proyek', $pengawasan->nomor_kode_proyek)->update($validatedData);
         return redirect('/pengawasan/'.$pengawasan->nomor_kode_proyek.'')->with('success', 'Berhasil di Ubah !');
 	}
@@ -178,35 +189,133 @@ class DashboardPengawasanController extends Controller
 		// alihkan halaman kembali
 		return redirect('/pengawasan')->with('success', 'Data Berhasil Diimport !');
 	}
+
+	public function arsip(Request $request)
+	{
+		$judul = 'Arsip Pengawasan';
+
+		if (!Schema::hasTable('pengawasan_arsip')) {
+			return redirect('/pengawasan')->with('error', 'Tabel arsip pengawasan belum tersedia.');
+		}
+
+		$search = $request->input('search');
+		$status = $request->input('status', 'aktif');
+
+		$query = DB::table('pengawasan_arsip');
+
+		if ($status === 'aktif') {
+			$query->whereNull('restored_at');
+		} elseif ($status === 'restored') {
+			$query->whereNotNull('restored_at');
+		}
+
+		if (!empty($search)) {
+			$query->where(function ($q) use ($search) {
+				$q->where('nomor_kode_proyek', 'LIKE', "%{$search}%")
+					->orWhere('hasil_pengawasan', 'LIKE', "%{$search}%")
+					->orWhere('permasalahan', 'LIKE', "%{$search}%")
+					->orWhere('rekomendasi', 'LIKE', "%{$search}%");
+			});
+		}
+
+		$items = $query
+			->orderByDesc('archived_at')
+			->orderByDesc('id')
+			->paginate(20)
+			->appends(['search' => $search, 'status' => $status]);
+
+		return view('admin.pengawasanpm.arsip', compact('judul', 'items', 'search', 'status'));
+	}
+
+	public function restoreArsip(int $id)
+	{
+		if (!Schema::hasTable('pengawasan_arsip')) {
+			return redirect('/pengawasan')->with('error', 'Tabel arsip pengawasan belum tersedia.');
+		}
+
+		$arsip = DB::table('pengawasan_arsip')->where('id', $id)->first();
+		if (!$arsip) {
+			return redirect('/pengawasan/arsip')->with('error', 'Data arsip tidak ditemukan.');
+		}
+
+		if ($arsip->restored_at !== null) {
+			return redirect('/pengawasan/arsip')->with('error', 'Data arsip sudah pernah direstore.');
+		}
+
+		$exists = DB::table('pengawasan')
+			->where('nomor_kode_proyek', $arsip->nomor_kode_proyek)
+			->exists();
+
+		if ($exists) {
+			return redirect('/pengawasan/arsip')->with('error', 'Restore dibatalkan: nomor_kode_proyek sudah ada di tabel pengawasan.');
+		}
+
+		DB::transaction(function () use ($arsip) {
+			DB::table('pengawasan')->insert([
+				'nomor_kode_proyek' => $arsip->nomor_kode_proyek,
+				'kesesuaian' => $arsip->kesesuaian,
+				'pembinaan' => $arsip->pembinaan,
+				'perbaikan' => $arsip->perbaikan,
+				'sanksi' => $arsip->sanksi,
+				'hasil_pengawasan' => $arsip->hasil_pengawasan,
+				'persyaratan_dasar' => $arsip->persyaratan_dasar,
+				'pemenuhan_pb' => $arsip->pemenuhan_pb,
+				'csr' => $arsip->csr,
+				'lkpm' => $arsip->lkpm,
+				'permasalahan' => $arsip->permasalahan,
+				'rekomendasi' => $arsip->rekomendasi,
+				'file' => $arsip->file,
+				'created_at' => $arsip->original_created_at ?? now(),
+				'updated_at' => $arsip->original_updated_at ?? now(),
+				'deleted_at' => $arsip->original_deleted_at,
+			]);
+
+			DB::table('pengawasan_arsip')
+				->where('id', $arsip->id)
+				->update([
+					'restored_at' => now(),
+					'updated_at' => now(),
+				]);
+		});
+
+		return redirect('/pengawasan/arsip')->with('success', 'Data arsip berhasil direstore ke tabel pengawasan.');
+	}
+
 	public function statistik(Request $request)
 	{
-		// Statistik jumlah perusahaan per bulan (1 perusahaan 1 NIB)
-		$years = Pengawasan::selectRaw('YEAR(hari_penjadwalan) as year')
+		// Statistik berbasis pengawasan yang terhubung ke data proyek.
+		$years = Pengawasan::selectRaw('YEAR(pengawasan.created_at) as year')
 			->distinct()
 			->orderBy('year', 'desc')
 			->pluck('year');
 		$year = $request->input('year', $years->first() ?? date('Y'));
 
-		$perusahaanPerBulan = Pengawasan::selectRaw('MONTH(hari_penjadwalan) as bulan, COUNT(DISTINCT nib) as jumlah')
-			->whereYear('hari_penjadwalan', $year)
-			->groupByRaw('MONTH(hari_penjadwalan)')
+		$perusahaanPerBulan = DB::table('pengawasan')
+			->leftJoin('proyek', 'proyek.id_proyek', '=', 'pengawasan.nomor_kode_proyek')
+			->selectRaw('MONTH(pengawasan.created_at) as bulan, COUNT(DISTINCT COALESCE(proyek.nib, pengawasan.nomor_kode_proyek)) as jumlah')
+			->whereYear('pengawasan.created_at', $year)
+			->groupByRaw('MONTH(pengawasan.created_at)')
 			->orderBy('bulan')
 			->pluck('jumlah', 'bulan');
 
 		$judul = 'Statistik Pengawasan';
 
 		// Total pengawasan
-		$total = Pengawasan::whereYear('hari_penjadwalan', $year)->count();
+		$total = Pengawasan::whereYear('pengawasan.created_at', $year)->count();
 
 		// Statistik status penanaman modal
-		$statusPenanamanModal = Pengawasan::select('status_penanaman_modal', DB::raw('count(*) as jumlah'))
-			->whereYear('hari_penjadwalan', $year)
-			->groupBy('status_penanaman_modal')
-			->pluck('jumlah', 'status_penanaman_modal');
+		$statusPenanamanModal = DB::table('pengawasan')
+			->leftJoin('proyek', 'proyek.id_proyek', '=', 'pengawasan.nomor_kode_proyek')
+			->selectRaw("COALESCE(proyek.uraian_status_penanaman_modal, 'Tidak Diisi') as label, COUNT(*) as jumlah")
+			->whereYear('pengawasan.created_at', $year)
+			->groupBy('label')
+			->pluck('jumlah', 'label');
 
 		// Statistik KBLI (menampilkan kbli dan uraian_kbli)
-		$kbliStat = Pengawasan::select('kbli', 'uraian_kbli', DB::raw('count(*) as jumlah'))
-			->whereYear('hari_penjadwalan', $year)
+		$kbliStat = DB::table('pengawasan')
+			->leftJoin('proyek', 'proyek.id_proyek', '=', 'pengawasan.nomor_kode_proyek')
+			->selectRaw("COALESCE(proyek.kbli, '-') as kbli, COALESCE(proyek.judul_kbli, 'Tidak Diisi') as uraian_kbli, COUNT(*) as jumlah")
+			->whereYear('pengawasan.created_at', $year)
 			->groupBy('kbli', 'uraian_kbli')
 			->orderBy('jumlah', 'desc')
 			->limit(10)
@@ -221,51 +330,68 @@ class DashboardPengawasanController extends Controller
 			});
 
 		// Tren bulanan (jumlah pengawasan per bulan di tahun berjalan)
-		$trend = Pengawasan::selectRaw('MONTH(hari_penjadwalan) as bulan, COUNT(*) as jumlah')
-			->whereYear('hari_penjadwalan', $year)
-			->groupByRaw('MONTH(hari_penjadwalan)')
+		$trend = Pengawasan::selectRaw('MONTH(pengawasan.created_at) as bulan, COUNT(*) as jumlah')
+			->whereYear('pengawasan.created_at', $year)
+			->groupByRaw('MONTH(pengawasan.created_at)')
 			->orderBy('bulan')
 			->pluck('jumlah', 'bulan');
 
 		// Statistik jumlah investasi (total dan rata-rata)
 		$jumlahInvestasi = [
-			'total' => Pengawasan::whereYear('hari_penjadwalan', $year)->sum('jumlah_investasi'),
-			'rata'  => Pengawasan::whereYear('hari_penjadwalan', $year)->avg('jumlah_investasi'),
+			'total' => (float) DB::table('pengawasan')
+				->leftJoin('proyek', 'proyek.id_proyek', '=', 'pengawasan.nomor_kode_proyek')
+				->whereYear('pengawasan.created_at', $year)
+				->sum('proyek.jumlah_investasi'),
+			'rata'  => (float) DB::table('pengawasan')
+				->leftJoin('proyek', 'proyek.id_proyek', '=', 'pengawasan.nomor_kode_proyek')
+				->whereYear('pengawasan.created_at', $year)
+				->avg('proyek.jumlah_investasi'),
 		];
 
 		// Statistik skala usaha proyek
-		$skalaUsahaProyekStat = Pengawasan::select('skala_usaha_proyek', DB::raw('count(*) as jumlah'))
-			->whereYear('hari_penjadwalan', $year)
-			->groupBy('skala_usaha_proyek')
+		$skalaUsahaProyekStat = DB::table('pengawasan')
+			->leftJoin('proyek', 'proyek.id_proyek', '=', 'pengawasan.nomor_kode_proyek')
+			->selectRaw("COALESCE(proyek.uraian_skala_usaha, 'Tidak Diisi') as label, COUNT(*) as jumlah")
+			->whereYear('pengawasan.created_at', $year)
+			->groupBy('label')
 			->orderBy('jumlah', 'desc')
-			->pluck('jumlah', 'skala_usaha_proyek');
+			->pluck('jumlah', 'label');
 
 		// Statistik skala usaha perusahaan
-		$skalaUsahaPerusahaanStat = Pengawasan::select('skala_usaha_perusahaan', DB::raw('count(*) as jumlah'))
-			->whereYear('hari_penjadwalan', $year)
-			->groupBy('skala_usaha_perusahaan')
+		$skalaUsahaPerusahaanStat = DB::table('pengawasan')
+			->leftJoin('proyek', 'proyek.id_proyek', '=', 'pengawasan.nomor_kode_proyek')
+			->selectRaw("COALESCE(proyek.uraian_jenis_perusahaan, 'Tidak Diisi') as label, COUNT(*) as jumlah")
+			->whereYear('pengawasan.created_at', $year)
+			->groupBy('label')
 			->orderBy('jumlah', 'desc')
-			->pluck('jumlah', 'skala_usaha_perusahaan');
+			->pluck('jumlah', 'label');
 
 		// Statistik resiko
-		$resikoStat = Pengawasan::select('resiko', DB::raw('count(*) as jumlah'))
-			->whereYear('hari_penjadwalan', $year)
-			->groupBy('resiko')
+		$resikoStat = DB::table('pengawasan')
+			->leftJoin('proyek', 'proyek.id_proyek', '=', 'pengawasan.nomor_kode_proyek')
+			->selectRaw("COALESCE(proyek.uraian_risiko_proyek, 'Tidak Diisi') as label, COUNT(*) as jumlah")
+			->whereYear('pengawasan.created_at', $year)
+			->groupBy('label')
 			->orderBy('jumlah', 'desc')
 			->limit(10)
-			->pluck('jumlah', 'resiko');
+			->pluck('jumlah', 'label');
 
 		// Statistik jumlah tenaga kerja (WNI/WNA, L/P)
 		$tenagaKerja = [
-			'tki_l' => Pengawasan::whereYear('hari_penjadwalan', $year)->sum('jumlah_tki_l'),
-			'tki_p' => Pengawasan::whereYear('hari_penjadwalan', $year)->sum('jumlah_tki_p'),
-			'tka_l' => Pengawasan::whereYear('hari_penjadwalan', $year)->sum('jumlah_tka_l'),
-			'tka_p' => Pengawasan::whereYear('hari_penjadwalan', $year)->sum('jumlah_tka_p'),
+			'tki_l' => (int) DB::table('pengawasan')
+				->leftJoin('proyek', 'proyek.id_proyek', '=', 'pengawasan.nomor_kode_proyek')
+				->whereYear('pengawasan.created_at', $year)
+				->sum('proyek.tki'),
+			'tki_p' => 0,
+			'tka_l' => 0,
+			'tka_p' => 0,
 		];
 
 		// Statistik jumlah perusahaan (1 perusahaan 1 NIB)
-		$perusahaanStat = Pengawasan::select('nib', 'nama_perusahaan')
-			->whereYear('hari_penjadwalan', $year)
+		$perusahaanStat = DB::table('pengawasan')
+			->leftJoin('proyek', 'proyek.id_proyek', '=', 'pengawasan.nomor_kode_proyek')
+			->selectRaw("COALESCE(proyek.nib, pengawasan.nomor_kode_proyek) as nib, COALESCE(proyek.nama_perusahaan, pengawasan.nomor_kode_proyek) as nama_perusahaan")
+			->whereYear('pengawasan.created_at', $year)
 			->groupBy('nib', 'nama_perusahaan')
 			->get();
 		$jumlahPerusahaan = $perusahaanStat->count();
@@ -275,12 +401,14 @@ class DashboardPengawasanController extends Controller
 		];
 
 		// Statistik sektor
-		$sektorStat = Pengawasan::select('sektor', DB::raw('count(*) as jumlah'))
-			->whereYear('hari_penjadwalan', $year)
-			->groupBy('sektor')
+		$sektorStat = DB::table('pengawasan')
+			->leftJoin('proyek', 'proyek.id_proyek', '=', 'pengawasan.nomor_kode_proyek')
+			->selectRaw("COALESCE(proyek.kl_sektor_pembina, 'Tidak Diisi') as label, COUNT(*) as jumlah")
+			->whereYear('pengawasan.created_at', $year)
+			->groupBy('label')
 			->orderBy('jumlah', 'desc')
 			->limit(10)
-			->pluck('jumlah', 'sektor');
+			->pluck('jumlah', 'label');
 
 		return view('admin.pengawasanpm.statistik', compact(
 			'judul',

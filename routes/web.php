@@ -265,6 +265,8 @@ Route::middleware('auth')->group(function () {
     //pengawasan
     Route::match(['get','post'], '/pengawasan', [DashboardPengawasanController::class, 'index'])->middleware('permission:pengawasan.view');
     Route::get('/pengawasan/statistik', [DashboardPengawasanController::class, 'statistik'])->middleware('permission:pengawasan.view');
+    Route::get('/pengawasan/arsip', [DashboardPengawasanController::class, 'arsip'])->middleware('permission:pengawasan.view');
+    Route::post('/pengawasan/arsip/{id}/restore', [DashboardPengawasanController::class, 'restoreArsip'])->middleware('permission:pengawasan.view');
     Route::post('/pengawasan/import_excel', [DashboardPengawasanController::class, 'import_excel'])->middleware('permission:pengawasan.import');
     Route::get('/pengawasan/{pengawasan}',[DashboardPengawasanController::class, 'show'])->middleware('permission:pengawasan.view');
     Route::get('/pengawasan/{pengawasan}/edit',[DashboardPengawasanController::class, 'edit'])->middleware('permission:pengawasan.view');

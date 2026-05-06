@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Proyek;
 
 class Pengawasan extends Model
 {
@@ -15,4 +16,10 @@ class Pengawasan extends Model
     protected $primaryKey = 'nomor_kode_proyek';
     public $incrementing = false;
     protected $keyType = 'string';
+
+    // nomor_kode_proyek pada pengawasan mereferensi id_proyek pada proyek
+    public function proyek()
+    {
+        return $this->belongsTo(Proyek::class, 'nomor_kode_proyek', 'id_proyek');
+    }
 }
