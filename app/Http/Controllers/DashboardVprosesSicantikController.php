@@ -21,6 +21,18 @@ use Illuminate\Support\Facades\Storage;
 
 class DashboardVprosesSicantikController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            /** @var \App\Models\User|null $user */
+            $user = $request->user();
+            if ($user && $user->hasRole('guest')) {
+                abort(403, 'Role guest tidak diperkenankan melakukan aksi ini.');
+            }
+            return $next($request);
+        })->only(['create', 'store']);
+    }
+
 	public function index(Request $request)
 	{
 	// Prepare query for listing; read directly from Proses model
