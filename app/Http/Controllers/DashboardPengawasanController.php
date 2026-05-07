@@ -175,7 +175,20 @@ class DashboardPengawasanController extends Controller
 
 		// import data dengan error handling
 		try {
-			Excel::import(new PengawasanImport, base_path('storage/app/public/file_pengawasan/' . $nama_file));
+			$import = new PengawasanImport();
+			Excel::import($import, base_path('storage/app/public/file_pengawasan/' . $nama_file));
+
+			$message = 'Import selesai. Data baru: ' . $import->getCreatedCount()
+				. ', diperbarui: ' . $import->getUpdatedCount()
+				. ', dilewati (kode kosong): ' . $import->getSkippedEmptyKodeCount()
+				. ', dilewati (kode tidak ditemukan di proyek): ' . $import->getSkippedUnknownKodeCount() . '.';
+
+			$unknownExamples = $import->getUnknownKodeExamples();
+			if (!empty($unknownExamples)) {
+				$message .= ' Contoh kode tidak ditemukan: ' . implode(', ', $unknownExamples) . '.';
+			}
+
+			return redirect('/pengawasan')->with('success', $message);
 		} catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
 			$failures = $e->failures();
 			$messages = [];
@@ -186,8 +199,6 @@ class DashboardPengawasanController extends Controller
 		} catch (\Exception $e) {
 			return redirect('/pengawasan')->with('error', 'Gagal import! ' . $e->getMessage());
 		}
-		// alihkan halaman kembali
-		return redirect('/pengawasan')->with('success', 'Data Berhasil Diimport !');
 	}
 
 	public function arsip(Request $request)
