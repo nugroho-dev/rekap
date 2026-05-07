@@ -25,6 +25,10 @@
 
 <div class="card">
   <div class="card-body border-bottom py-3">
+    <form id="bulkRestoreForm" method="POST" action="{{ url('/pengawasan/arsip/restore-bulk') }}" onsubmit="return confirm('Restore semua data yang dipilih ke tabel pengawasan?')">
+      @csrf
+    </form>
+
     <form method="GET" action="{{ url('/pengawasan/arsip') }}" class="row g-2 align-items-end">
       <div class="col-md-4">
         <label class="form-label">Cari</label>
@@ -42,12 +46,23 @@
         <button type="submit" class="btn btn-primary">Filter</button>
       </div>
     </form>
+
+    @if($status !== 'restored')
+      <div class="mt-3">
+        <button type="submit" form="bulkRestoreForm" class="btn btn-success btn-sm">Restore Terpilih</button>
+      </div>
+    @endif
   </div>
 
   <div class="table-responsive">
     <table class="table card-table table-striped">
       <thead>
         <tr>
+          <th>
+            @if($status !== 'restored')
+              <input class="form-check-input" type="checkbox" id="selectAllArsip">
+            @endif
+          </th>
           <th>No.</th>
           <th>Nomor Kode Proyek</th>
           <th>Hasil Pengawasan</th>
@@ -61,6 +76,11 @@
       <tbody>
         @forelse($items as $item)
           <tr>
+            <td>
+              @if(!$item->restored_at)
+                <input class="form-check-input arsip-checkbox" type="checkbox" name="ids[]" value="{{ $item->id }}" form="bulkRestoreForm">
+              @endif
+            </td>
             <td>{{ $loop->iteration + $items->firstItem() - 1 }}</td>
             <td>{{ $item->nomor_kode_proyek }}</td>
             <td>{{ $item->hasil_pengawasan ?: '-' }}</td>
@@ -87,7 +107,7 @@
           </tr>
         @empty
           <tr>
-            <td colspan="8" class="text-center text-muted">Tidak ada data arsip.</td>
+            <td colspan="9" class="text-center text-muted">Tidak ada data arsip.</td>
           </tr>
         @endforelse
       </tbody>
@@ -98,4 +118,21 @@
     {{ $items->links() }}
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const selectAll = document.getElementById('selectAllArsip');
+    const checkboxes = document.querySelectorAll('.arsip-checkbox');
+
+    if (!selectAll || checkboxes.length === 0) {
+      return;
+    }
+
+    selectAll.addEventListener('change', function () {
+      checkboxes.forEach(function (checkbox) {
+        checkbox.checked = selectAll.checked;
+      });
+    });
+  });
+</script>
 @endsection

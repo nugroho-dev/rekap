@@ -281,6 +281,126 @@ class DashboardPengawasanController extends Controller
 		return redirect('/pengawasan/arsip')->with('success', 'Data arsip berhasil direstore ke tabel pengawasan.');
 	}
 
+	public function bulkRestoreArsip(Request $request)
+	{
+		if (!Schema::hasTable('pengawasan_arsip')) {
+			return redirect('/pengawasan')->with('error', 'Tabel arsip pengawasan belum tersedia.');
+		}
+
+		$validated = $request->validate([
+			'ids' => 'required|array|min:1',
+			'ids.*' => 'integer',
+		]);
+
+		$ids = collect($validated['ids'])
+			->map(fn ($id) => (int) $id)
+			->filter(fn ($id) => $id > 0)
+			->unique()
+			->values();
+
+		if ($ids->isEmpty()) {
+			return redirect('/pengawasan/arsip')->with('error', 'Tidak ada data valid yang dipilih untuk direstore.');
+		}
+
+		$arsipItems = DB::table('pengawasan_arsip')
+			->whereIn('id', $ids->all())
+			->orderByDesc('archived_at')
+			->orderByDesc('id')
+			->get();
+
+		if ($arsipItems->isEmpty()) {
+			return redirect('/pengawasan/arsip')->with('error', 'Data arsip yang dipilih tidak ditemukan.');
+		}
+
+		$notRestored = $arsipItems->filter(fn ($item) => $item->restored_at === null)->values();
+		$alreadyRestoredCount = $arsipItems->count() - $notRestored->count();
+
+		if ($notRestored->isEmpty()) {
+			return redirect('/pengawasan/arsip')->with('error', 'Semua data yang dipilih sudah pernah direstore.');
+		}
+
+		$uniqueByKode = [];
+		$duplicateKodeCount = 0;
+		foreach ($notRestored as $item) {
+			$kode = trim((string) $item->nomor_kode_proyek);
+			if ($kode === '') {
+				$duplicateKodeCount++;
+				continue;
+			}
+
+			if (isset($uniqueByKode[$kode])) {
+				$duplicateKodeCount++;
+				continue;
+			}
+
+			$uniqueByKode[$kode] = $item;
+		}
+
+		$toCheckExisting = collect($uniqueByKode)->values();
+		$existingKode = DB::table('pengawasan')
+			->whereIn('nomor_kode_proyek', $toCheckExisting->pluck('nomor_kode_proyek')->all())
+			->pluck('nomor_kode_proyek')
+			->all();
+
+		$existingKodeMap = array_flip($existingKode);
+		$readyToRestore = $toCheckExisting
+			->filter(fn ($item) => !isset($existingKodeMap[$item->nomor_kode_proyek]))
+			->values();
+
+		$conflictCount = $toCheckExisting->count() - $readyToRestore->count();
+
+		if ($readyToRestore->isEmpty()) {
+			return redirect('/pengawasan/arsip')->with('error', 'Restore bulk dibatalkan: semua data bentrok dengan nomor_kode_proyek yang sudah ada di tabel pengawasan.');
+		}
+
+		$now = now();
+		DB::transaction(function () use ($readyToRestore, $now) {
+			$insertRows = [];
+			$restoredIds = [];
+
+			foreach ($readyToRestore as $arsip) {
+				$insertRows[] = [
+					'nomor_kode_proyek' => $arsip->nomor_kode_proyek,
+					'kesesuaian' => $arsip->kesesuaian,
+					'pembinaan' => $arsip->pembinaan,
+					'perbaikan' => $arsip->perbaikan,
+					'sanksi' => $arsip->sanksi,
+					'hasil_pengawasan' => $arsip->hasil_pengawasan,
+					'persyaratan_dasar' => $arsip->persyaratan_dasar,
+					'pemenuhan_pb' => $arsip->pemenuhan_pb,
+					'csr' => $arsip->csr,
+					'lkpm' => $arsip->lkpm,
+					'permasalahan' => $arsip->permasalahan,
+					'rekomendasi' => $arsip->rekomendasi,
+					'file' => $arsip->file,
+					'created_at' => $arsip->original_created_at ?? $now,
+					'updated_at' => $arsip->original_updated_at ?? $now,
+					'deleted_at' => $arsip->original_deleted_at,
+				];
+
+				$restoredIds[] = $arsip->id;
+			}
+
+			DB::table('pengawasan')->insert($insertRows);
+
+			DB::table('pengawasan_arsip')
+				->whereIn('id', $restoredIds)
+				->update([
+					'restored_at' => $now,
+					'updated_at' => $now,
+				]);
+		});
+
+		$message = 'Restore bulk selesai: ' . $readyToRestore->count() . ' data berhasil direstore.';
+		if ($alreadyRestoredCount > 0 || $conflictCount > 0 || $duplicateKodeCount > 0) {
+			$message .= ' Dilewati: sudah direstore=' . $alreadyRestoredCount
+				. ', konflik kode=' . $conflictCount
+				. ', duplikat/kode kosong=' . $duplicateKodeCount . '.';
+		}
+
+		return redirect('/pengawasan/arsip')->with('success', $message);
+	}
+
 	public function statistik(Request $request)
 	{
 		// Statistik berbasis pengawasan yang terhubung ke data proyek.
