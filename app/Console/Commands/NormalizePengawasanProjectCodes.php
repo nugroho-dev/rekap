@@ -125,7 +125,7 @@ class NormalizePengawasanProjectCodes extends Command
         $map = [];
 
         DB::table('proyek')
-            ->select('id_proyek')
+            ->select('id', 'id_proyek')
             ->whereNotNull('id_proyek')
             ->orderBy('id')
             ->chunkById(1000, function ($chunk) use (&$map) {
