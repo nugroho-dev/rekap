@@ -41,8 +41,8 @@ class DashboardController extends Controller
             ->orderBy('bulan')
             ->pluck('total', 'bulan')->toArray();
 
-        $monthlyPengawasan = Pengawasan::selectRaw('MONTH(hari_penjadwalan) as bulan, COUNT(*) as total')
-            ->whereYear('hari_penjadwalan', $year)
+        $monthlyPengawasan = Pengawasan::selectRaw('MONTH(created_at) as bulan, COUNT(*) as total')
+            ->whereYear('created_at', $year)
             ->groupBy('bulan')
             ->orderBy('bulan')
             ->pluck('total', 'bulan')->toArray();
@@ -281,8 +281,8 @@ class DashboardController extends Controller
         $lastUpdateExpo = optional($lastUpdateExpoObj)->updated_at ? Carbon::parse($lastUpdateExpoObj->updated_at)->locale('id')->diffForHumans() : null;
         $lastUpdateExpoDate = optional($lastUpdateExpoObj)->updated_at ? Carbon::parse($lastUpdateExpoObj->updated_at)->locale('id')->isoFormat('D MMMM YYYY, HH:mm') : null;  
         
-        $totalPengawasan = Pengawasan::whereYear('hari_penjadwalan', $year)->count();
-        $lastUpdatePengawasanObj = Pengawasan::whereYear('hari_penjadwalan', $year)->orderByDesc('updated_at')->first();
+        $totalPengawasan = Pengawasan::whereYear('created_at', $year)->count();
+        $lastUpdatePengawasanObj = Pengawasan::whereYear('created_at', $year)->orderByDesc('updated_at')->first();
         $lastUpdatePengawasan = optional($lastUpdatePengawasanObj)->updated_at ? Carbon::parse($lastUpdatePengawasanObj->updated_at)->locale('id')->diffForHumans() : null;
         $lastUpdatePengawasanDate = optional($lastUpdatePengawasanObj)->updated_at ? Carbon::parse($lastUpdatePengawasanObj->updated_at)->locale('id')->isoFormat('D MMMM YYYY, HH:mm') : null;
 
