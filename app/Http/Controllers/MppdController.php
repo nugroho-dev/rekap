@@ -19,6 +19,18 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class MppdController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            /** @var \App\Models\User|null $user */
+            $user = $request->user();
+            if ($user && $user->hasRole('guest')) {
+                abort(403, 'Role guest tidak diperkenankan melakukan aksi ini.');
+            }
+            return $next($request);
+        })->only(['upload_file', 'delete_file']);
+    }
+
     /**
      * Display a listing of the resource.
      */
