@@ -930,6 +930,6 @@
 		// @formatter:on
 	  </script>
 		@stack('scripts')
-	 
+    @include('layouts.guest-restrictions')
   </body>
 </html>

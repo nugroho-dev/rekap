@@ -797,5 +797,6 @@
 		// @formatter:on
 	  </script>
 	 @include('admin.investor.datachart') 
+    @include('layouts.guest-restrictions')
   </body>
 </html>

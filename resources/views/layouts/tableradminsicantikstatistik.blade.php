@@ -798,5 +798,6 @@
 	  </script>
 	 @include('admin.nonberusaha.sicantik.datachart')
 	 @stack('scripts')
+    @include('layouts.guest-restrictions')
   </body>
 </html>

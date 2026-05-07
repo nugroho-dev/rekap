@@ -25,6 +25,15 @@ class UsersDashboardController extends Controller
         $this->middleware('permission:user.delete')->only(['destroy']);
         $this->middleware('permission:user.access.manage')->only(['access', 'updateAccess']);
         $this->middleware('permission:api.token.manage')->only(['storeApiToken', 'storeQuickApiToken', 'destroyApiToken']);
+
+        $this->middleware(function ($request, $next) {
+            /** @var \App\Models\User|null $user */
+            $user = $request->user();
+            if ($user && $user->hasRole('guest')) {
+                abort(403, 'Role guest tidak diperkenankan melakukan aksi ini.');
+            }
+            return $next($request);
+        })->only(['create', 'store', 'edit', 'update', 'destroy', 'storeApiToken', 'storeQuickApiToken', 'destroyApiToken']);
     }
 
     /**

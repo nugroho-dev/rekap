@@ -718,5 +718,6 @@
 		});
 		// @formatter:on
 	  </script>
+    @include('layouts.guest-restrictions')
   </body>
 </html>
