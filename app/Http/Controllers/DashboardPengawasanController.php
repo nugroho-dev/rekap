@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Pengawasan;
+use App\Models\Proyek;
 use App\Imports\PengawasanImport;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
@@ -110,11 +112,107 @@ class DashboardPengawasanController extends Controller
 		
 		return view('admin.pengawasanpm.edit', compact('judul','pengawasan'));
     }
+
+	private function buildDetailQuery(string $nomor_kode_proyek)
+	{
+		return Pengawasan::query()
+			->leftJoin('proyek', 'proyek.id_proyek', '=', 'pengawasan.nomor_kode_proyek')
+			->where('pengawasan.nomor_kode_proyek', $nomor_kode_proyek)
+			->select([
+				'pengawasan.*',
+				DB::raw('proyek.id_proyek as proyek'),
+				'proyek.nama_perusahaan',
+				DB::raw('proyek.alamat_usaha as alamat_perusahaan'),
+				DB::raw('proyek.uraian_status_penanaman_modal as status_penanaman_modal'),
+				DB::raw('proyek.uraian_jenis_perusahaan as jenis_perusahaan'),
+				'proyek.nib',
+				'proyek.kbli',
+				DB::raw('proyek.judul_kbli as uraian_kbli'),
+				DB::raw('proyek.kl_sektor_pembina as sektor'),
+				DB::raw('proyek.alamat_usaha as alamat_proyek'),
+				DB::raw('NULL as propinsi_proyek'),
+				DB::raw('proyek.kab_kota_usaha as daerah_kabupaten_proyek'),
+				DB::raw('proyek.kecamatan_usaha as kecamatan_proyek'),
+				DB::raw('proyek.kelurahan_usaha as kelurahan_proyek'),
+				'proyek.luas_tanah',
+				DB::raw('proyek.satuan_tanah as satuan_luas_tanah'),
+				DB::raw('proyek.tki as jumlah_tki_l'),
+				DB::raw('0 as jumlah_tki_p'),
+				DB::raw('0 as jumlah_tka_l'),
+				DB::raw('0 as jumlah_tka_p'),
+				DB::raw('proyek.uraian_risiko_proyek as resiko'),
+				DB::raw('NULL as sumber_data'),
+				'proyek.jumlah_investasi',
+				DB::raw('proyek.uraian_skala_usaha as skala_usaha_perusahaan'),
+				DB::raw('proyek.uraian_skala_usaha as skala_usaha_proyek'),
+				DB::raw('COALESCE(pengawasan.hari_penjadwalan, proyek.day_of_tanggal_pengajuan_proyek) as hari_penjadwalan'),
+				'pengawasan.kewenangan_koordinator',
+				'pengawasan.kewenangan_pengawasan',
+			]);
+	}
+	public function store(Request $request)
+	{
+		$validatedData = $request->validate([
+			'nomor_kode_proyek' => 'required|string|max:100|exists:proyek,id_proyek|unique:pengawasan,nomor_kode_proyek',
+			'hari_penjadwalan' => 'nullable|date',
+			'kewenangan_koordinator' => 'nullable|string',
+			'kewenangan_pengawasan' => 'nullable|string',
+			'kesesuaian' => 'nullable|in:Sesuai,Tidak Sesuai',
+			'pembinaan' => 'nullable|string',
+			'perbaikan' => 'nullable|string',
+			'sanksi' => 'nullable|string',
+			'hasil_pengawasan' => 'nullable|string',
+			'persyaratan_dasar' => 'nullable|string',
+			'pemenuhan_pb' => 'nullable|string',
+			'csr' => 'nullable|string',
+			'lkpm' => 'nullable|string',
+			'permasalahan' => 'nullable|string',
+			'rekomendasi' => 'nullable|string',
+			'file' => 'nullable|file|mimes:pdf',
+		]);
+
+		if ($request->file('file')) {
+			$validatedData['file'] = $request->file('file')->store('public/pengawasan-files');
+		}
+
+		Pengawasan::create($validatedData);
+
+		return redirect('/pengawasan')->with('success', 'Data pengawasan berhasil ditambahkan.');
+	}
+
+	public function suggestProyek(Request $request)
+	{
+		$keyword = trim((string) $request->input('q', ''));
+		if ($keyword === '' || mb_strlen($keyword) < 2) {
+			return response()->json([]);
+		}
+
+		$items = Proyek::query()
+			->leftJoin('pengawasan', 'pengawasan.nomor_kode_proyek', '=', 'proyek.id_proyek')
+			->whereNull('pengawasan.nomor_kode_proyek')
+			->where(function ($q) use ($keyword) {
+				$q->where('proyek.nama_perusahaan', 'LIKE', "%{$keyword}%")
+					->orWhere('proyek.id_proyek', 'LIKE', "%{$keyword}%")
+					->orWhere('proyek.kbli', 'LIKE', "%{$keyword}%");
+			})
+			->orderBy('proyek.nama_perusahaan')
+			->limit(10)
+			->get([
+				'proyek.id_proyek',
+				'proyek.nama_perusahaan',
+				'proyek.kbli',
+			]);
+
+		return response()->json($items);
+	}
 	public function update(Request $request, Pengawasan $pengawasan)
     {
 		$rules=[
 		'nomor_kode_proyek'=>'required',
-		'kesesuaian'=>'string|nullable',
+		'hari_penjadwalan'=>'nullable|date',
+		'kewenangan_koordinator'=>'nullable|string',
+		'kewenangan_pengawasan'=>'nullable|string',
+		'kesesuaian'=>'nullable|in:Sesuai,Tidak Sesuai',
 		'pembinaan'=>'string|nullable',
 		'perbaikan'=>'string|nullable',
 		'sanksi'=>'string|nullable',
@@ -142,9 +240,20 @@ class DashboardPengawasanController extends Controller
 	}
 	public function show($nomor_kode_proyek)
 	{
-		$judul = 'Edit Data Pengawasan';
-		$item = Pengawasan::where('nomor_kode_proyek', $nomor_kode_proyek)->firstOrFail();
+		$judul = 'Detail Data Pengawasan';
+		$item = $this->buildDetailQuery($nomor_kode_proyek)->firstOrFail();
 		return view('admin.pengawasanpm.show', compact('item','judul'));
+	}
+
+	public function downloadPdf(string $nomor_kode_proyek)
+	{
+		$item = $this->buildDetailQuery($nomor_kode_proyek)->firstOrFail();
+		$judul = 'Detail Pengawasan';
+		$pdf = Pdf::loadView('admin.pengawasanpm.pdf.detail', compact('judul', 'item'))
+			->setPaper('a4', 'landscape');
+
+		$filename = 'pengawasan_' . $item->nomor_kode_proyek . '_' . now()->format('Ymd_His') . '.pdf';
+		return $pdf->download($filename);
 	}
 	public function destroy(Pengawasan $pengawasan)
 	{

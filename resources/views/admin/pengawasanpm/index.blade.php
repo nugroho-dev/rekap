@@ -56,6 +56,13 @@
                           <a href="{{ url('/pengawasan/arsip') }}" class="btn btn-warning d-sm-none btn-icon" title="Arsip Pengawasan">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icon-tabler-archive"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 4m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v2h-18z"/><path d="M5 10v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-8"/><path d="M10 12l4 0"/></svg>
                           </a>
+                          <a href="#" class="btn btn-primary d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#modal-tambah-pengawasan">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icon-tabler-plus"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
+                            Tambah Data
+                          </a>
+                          <a href="#" class="btn btn-primary d-sm-none btn-icon" data-bs-toggle="modal" data-bs-target="#modal-tambah-pengawasan" title="Tambah Data Pengawasan">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icon-tabler-plus"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
+                          </a>
                           @can('pengawasan.import')
                           <a href="#" class="btn btn-primary d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#modal-team">
                             <!-- Download SVG icon from http://tabler-icons.io/i/plus --> 
@@ -192,6 +199,102 @@
               $startYear = 2018;
               $currentYear = date('Y'); // Tahun sekarang
               @endphp
+              <div class="modal fade" id="modal-tambah-pengawasan" tabindex="-1" role="dialog" aria-hidden="true">
+                <form method="post" action="{{ url('/pengawasan/tambah') }}" enctype="multipart/form-data">
+                  @csrf
+                  <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title">Tambah Data Pengawasan</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body">
+                        <div class="mb-3">
+                          <label class="form-label">Nomor Kode Proyek</label>
+                          <input type="text" id="nomor_kode_proyek_input" name="nomor_kode_proyek" required="required" class="form-control" list="proyekSuggestionList" autocomplete="off" value="{{ old('nomor_kode_proyek') }}" placeholder="Ketik nama perusahaan / kode proyek / KBLI">
+                          <datalist id="proyekSuggestionList"></datalist>
+                          <div id="proyekSuggestionHelp" class="form-text">Ketik minimal 2 karakter. Suggestion menampilkan: nomor kode proyek, nama perusahaan, dan KBLI.</div>
+                          @error('nomor_kode_proyek')
+                          <small class="form-hint text-danger">{{ $message }}</small>
+                          @enderror
+                        </div>
+
+                        <div class="row g-2">
+                          <div class="col-md-4">
+                            <label class="form-label">Waktu Penjadwalan</label>
+                            <input type="date" name="hari_penjadwalan" class="form-control" value="{{ old('hari_penjadwalan') }}">
+                          </div>
+                          <div class="col-md-4">
+                            <label class="form-label">Kewenangan Koordinator</label>
+                            <input type="text" name="kewenangan_koordinator" class="form-control" value="{{ old('kewenangan_koordinator') }}">
+                          </div>
+                          <div class="col-md-4">
+                            <label class="form-label">Kewenangan Pengawasan</label>
+                            <input type="text" name="kewenangan_pengawasan" class="form-control" value="{{ old('kewenangan_pengawasan') }}">
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label">Kesesuaian</label>
+                            <select name="kesesuaian" class="form-select">
+                              <option value="">Pilih Kesesuaian</option>
+                              <option value="Sesuai" {{ old('kesesuaian') == 'Sesuai' ? 'selected' : '' }}>Sesuai</option>
+                              <option value="Tidak Sesuai" {{ old('kesesuaian') == 'Tidak Sesuai' ? 'selected' : '' }}>Tidak Sesuai</option>
+                            </select>
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label">File BAP (PDF)</label>
+                            <input type="file" name="file" class="form-control" accept="application/pdf">
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label">Pembinaan</label>
+                            <textarea rows="3" name="pembinaan" class="form-control">{{ old('pembinaan') }}</textarea>
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label">Perbaikan</label>
+                            <textarea rows="3" name="perbaikan" class="form-control">{{ old('perbaikan') }}</textarea>
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label">Sanksi</label>
+                            <textarea rows="3" name="sanksi" class="form-control">{{ old('sanksi') }}</textarea>
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label">Hasil Pengawasan</label>
+                            <textarea rows="3" name="hasil_pengawasan" class="form-control">{{ old('hasil_pengawasan') }}</textarea>
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label">Persyaratan Dasar</label>
+                            <textarea rows="3" name="persyaratan_dasar" class="form-control">{{ old('persyaratan_dasar') }}</textarea>
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label">Pemenuhan PB</label>
+                            <textarea rows="3" name="pemenuhan_pb" class="form-control">{{ old('pemenuhan_pb') }}</textarea>
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label">CSR</label>
+                            <textarea rows="3" name="csr" class="form-control">{{ old('csr') }}</textarea>
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label">LKPM</label>
+                            <textarea rows="3" name="lkpm" class="form-control">{{ old('lkpm') }}</textarea>
+                          </div>
+                          
+                          <div class="col-md-6">
+                            <label class="form-label">Permasalahan</label>
+                            <textarea rows="3" class="form-control" name="permasalahan">{{ old('permasalahan') }}</textarea>
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label">Rekomendasi</label>
+                            <textarea rows="3" class="form-control" name="rekomendasi">{{ old('rekomendasi') }}</textarea>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn me-auto" data-bs-dismiss="modal">Tutup</button>
+                        <button type="submit" class="btn btn-primary">Simpan</button>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              </div>
               @can('pengawasan.import')
               <div class="modal  fade" id="modal-team" tabindex="-1" role="dialog" aria-hidden="true">
                 <form method="post" action="{{ url('/pengawasan/import_excel')}}" enctype="multipart/form-data">
@@ -321,4 +424,104 @@
                   </div>
                 </div>
               </div>
+              <script>
+                (function () {
+                  const input = document.getElementById('nomor_kode_proyek_input');
+                  const list = document.getElementById('proyekSuggestionList');
+                  const help = document.getElementById('proyekSuggestionHelp');
+                  const endpoint = "{{ url('/pengawasan/suggest/proyek') }}";
+                  let timer = null;
+                  let latest = [];
+
+                  if (!input || !list) {
+                    return;
+                  }
+
+                  const updateHelp = function (text) {
+                    if (help) {
+                      help.textContent = text;
+                    }
+                  };
+
+                  const renderOptions = function (items) {
+                    list.innerHTML = '';
+
+                    items.forEach(function (item) {
+                      const option = document.createElement('option');
+                      option.value = item.id_proyek;
+                      option.label = (item.nama_perusahaan || '-') + ' | KBLI: ' + (item.kbli || '-');
+                      list.appendChild(option);
+                    });
+                  };
+
+                  const search = function (keyword) {
+                    const q = keyword.trim();
+
+                    if (q.length < 2) {
+                      latest = [];
+                      list.innerHTML = '';
+                      updateHelp('Ketik minimal 2 karakter. Suggestion menampilkan: nomor kode proyek, nama perusahaan, dan KBLI.');
+                      return;
+                    }
+
+                    fetch(endpoint + '?q=' + encodeURIComponent(q), {
+                      headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                      }
+                    })
+                      .then(function (response) {
+                        return response.json();
+                      })
+                      .then(function (items) {
+                        latest = Array.isArray(items) ? items : [];
+                        renderOptions(latest);
+
+                        if (latest.length === 0) {
+                          updateHelp('Tidak ada suggestion proyek yang cocok atau proyek tersebut sudah ada di data pengawasan.');
+                          return;
+                        }
+
+                        const selected = latest.find(function (item) {
+                          return item.id_proyek === input.value.trim();
+                        });
+
+                        if (selected) {
+                          updateHelp(selected.id_proyek + ' | ' + (selected.nama_perusahaan || '-') + ' | KBLI: ' + (selected.kbli || '-'));
+                        } else {
+                          updateHelp('Ditemukan ' + latest.length + ' suggestion. Pilih kode proyek yang sesuai dari daftar browser.');
+                        }
+                      })
+                      .catch(function () {
+                        updateHelp('Gagal memuat suggestion proyek. Coba ulangi lagi.');
+                      });
+                  };
+
+                  input.addEventListener('input', function () {
+                    clearTimeout(timer);
+                    timer = setTimeout(function () {
+                      search(input.value || '');
+                    }, 250);
+                  });
+
+                  input.addEventListener('change', function () {
+                    const selected = latest.find(function (item) {
+                      return item.id_proyek === input.value.trim();
+                    });
+
+                    if (selected) {
+                      updateHelp(selected.id_proyek + ' | ' + (selected.nama_perusahaan || '-') + ' | KBLI: ' + (selected.kbli || '-'));
+                    }
+                  });
+                })();
+
+                @if($errors->hasAny(['nomor_kode_proyek', 'kesesuaian', 'pembinaan', 'perbaikan', 'sanksi', 'hasil_pengawasan', 'persyaratan_dasar', 'pemenuhan_pb', 'csr', 'lkpm', 'permasalahan', 'rekomendasi', 'file']))
+                (function () {
+                  const modalEl = document.getElementById('modal-tambah-pengawasan');
+                  if (modalEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                    const modal = new bootstrap.Modal(modalEl);
+                    modal.show();
+                  }
+                })();
+                @endif
+              </script>
 @endsection
