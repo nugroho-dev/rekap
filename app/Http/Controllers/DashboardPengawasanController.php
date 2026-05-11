@@ -45,9 +45,9 @@ class DashboardPengawasanController extends Controller
 				'proyek.jumlah_investasi',
 				DB::raw('proyek.uraian_skala_usaha as skala_usaha_perusahaan'),
 				DB::raw('proyek.uraian_skala_usaha as skala_usaha_proyek'),
-				DB::raw('proyek.day_of_tanggal_pengajuan_proyek as hari_penjadwalan'),
-				DB::raw('NULL as kewenangan_koordinator'),
-				DB::raw('NULL as kewenangan_pengawasan'),
+				DB::raw('COALESCE(pengawasan.hari_penjadwalan, proyek.day_of_tanggal_pengajuan_proyek) as hari_penjadwalan'),
+				'pengawasan.kewenangan_koordinator',
+				'pengawasan.kewenangan_pengawasan',
 			]);
 		$search = $request->input('search');
 		$date_start = $request->input('date_start');

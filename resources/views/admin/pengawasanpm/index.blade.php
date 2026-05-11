@@ -163,7 +163,14 @@
                             <div>Resiko: {{ $item->resiko }}</div>
                             <div>Jumlah Investasi: @currency($item->jumlah_investasi)</div>
                             <div>Sumber Data: {{ $item->sumber_data }}</div>
-                            <div>Penjadwalan: {{ Carbon\Carbon::parse($item->hari_penjadwalan)->translatedFormat('d F Y') }}</div>
+                            <div>
+                              Penjadwalan:
+                              @if(!empty($item->hari_penjadwalan))
+                                <span class="badge bg-azure-lt text-azure">{{ Carbon\Carbon::parse($item->hari_penjadwalan)->translatedFormat('d F Y') }}</span>
+                              @else
+                                <span class="badge bg-yellow-lt text-yellow">Belum dijadwalkan</span>
+                              @endif
+                            </div>
                             <div>Kewenangan Koordinator: {{ $item->kewenangan_koordinator }}</div>
                             <div>Kewenangan Pengawasan: {{ $item->kewenangan_pengawasan }}</div>
                           </td>
