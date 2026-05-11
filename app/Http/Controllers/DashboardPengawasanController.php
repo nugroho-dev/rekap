@@ -480,11 +480,11 @@ class DashboardPengawasanController extends Controller
     public function statistik(Request $request)
     {
         $judul = 'Statistik Pengawasan Penanaman Modal';
-        $tanggalAcuan = DB::raw('COALESCE(pengawasan.hari_penjadwalan, pengawasan.created_at)');
+        $tanggalAcuan = 'pengawasan.hari_penjadwalan';
 
         $years = Pengawasan::query()
-            ->selectRaw('YEAR(COALESCE(hari_penjadwalan, created_at)) as year')
-            ->whereNotNull(DB::raw('COALESCE(hari_penjadwalan, created_at)'))
+            ->selectRaw('YEAR(hari_penjadwalan) as year')
+            ->whereNotNull('hari_penjadwalan')
             ->distinct()
             ->orderBy('year', 'desc')
             ->pluck('year');
@@ -545,16 +545,16 @@ class DashboardPengawasanController extends Controller
         ];
 
         $pengawasanPerBulan = (clone $base)
-            ->selectRaw('MONTH(COALESCE(pengawasan.hari_penjadwalan, pengawasan.created_at)) as bulan, COUNT(*) as jumlah')
+            ->selectRaw('MONTH(pengawasan.hari_penjadwalan) as bulan, COUNT(*) as jumlah')
             ->whereYear($tanggalAcuan, $year)
-            ->groupByRaw('MONTH(COALESCE(pengawasan.hari_penjadwalan, pengawasan.created_at))')
+            ->groupByRaw('MONTH(pengawasan.hari_penjadwalan)')
             ->orderBy('bulan')
             ->pluck('jumlah', 'bulan');
 
         $proyekUnikPerBulan = (clone $base)
-            ->selectRaw('MONTH(COALESCE(pengawasan.hari_penjadwalan, pengawasan.created_at)) as bulan, COUNT(DISTINCT pengawasan.nomor_kode_proyek) as jumlah')
+            ->selectRaw('MONTH(pengawasan.hari_penjadwalan) as bulan, COUNT(DISTINCT pengawasan.nomor_kode_proyek) as jumlah')
             ->whereYear($tanggalAcuan, $year)
-            ->groupByRaw('MONTH(COALESCE(pengawasan.hari_penjadwalan, pengawasan.created_at))')
+            ->groupByRaw('MONTH(pengawasan.hari_penjadwalan)')
             ->orderBy('bulan')
             ->pluck('jumlah', 'bulan');
 
