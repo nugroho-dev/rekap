@@ -70,13 +70,13 @@
             </div>
             <div class="col-auto ms-auto d-print-none">
                 <a href="{{ url('/pengawasan') }}" class="btn btn-secondary"><i class="ti ti-arrow-left"></i> Kembali</a>
-                <a href="{{ url('/pengawasan/' . $item->nomor_kode_proyek . '/edit') }}" class="btn btn-warning ms-2"><i class="ti ti-edit"></i> Edit</a>
-                <form action="{{ url('/pengawasan/' . $item->nomor_kode_proyek) }}" method="POST" class="d-inline" onsubmit="return confirm('Yakin ingin menghapus data ini?');">
+                <a href="{{ url('/pengawasan/' . $item->id . '/edit') }}" class="btn btn-warning ms-2"><i class="ti ti-edit"></i> Edit</a>
+                <form action="{{ url('/pengawasan/' . $item->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Yakin ingin menghapus data ini?');">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="btn btn-danger ms-2"><i class="ti ti-trash"></i> Hapus</button>
                 </form>
-                <a href="{{ url('/pengawasan/' . $item->nomor_kode_proyek . '/download-pdf') }}" class="btn btn-primary ms-2"><i class="ti ti-download"></i> Download PDF</a>
+                <a href="{{ url('/pengawasan/' . $item->id . '/download-pdf') }}" class="btn btn-primary ms-2"><i class="ti ti-download"></i> Download PDF</a>
             </div>
         </div>
     </div>

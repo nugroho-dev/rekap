@@ -48,20 +48,6 @@ class PengawasanImport implements ToModel, WithHeadingRow
             'rekomendasi' => $this->readColumn($row, ['rekomendasi']),
         ];
 
-        // Jika sudah ada maka update, jika belum maka insert.
-        $existing = Pengawasan::withTrashed()
-            ->where('nomor_kode_proyek', $kodeProyek)
-            ->first();
-
-        if ($existing) {
-            $existing->update($data);
-            if (method_exists($existing, 'trashed') && $existing->trashed()) {
-                $existing->restore();
-            }
-            $this->updatedCount++;
-            return null;
-        }
-
         $this->createdCount++;
         return new Pengawasan($data);
     }

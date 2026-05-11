@@ -153,7 +153,7 @@
                             <div>Status Penanaman Modal: {{ $item->status_penanaman_modal }}</div>
                           </td>
                           <td class="bg-primary-lt border-end">
-                            <div>Nomor Kode Proyek: <a href="{{ url('/pengawasan/'.$item->nomor_kode_proyek) }}" class="btn btn-sm btn-outline-info btn-pill">{{ $item->nomor_kode_proyek }}</a></div>
+                            <div>Nomor Kode Proyek: <a href="{{ url('/pengawasan/'.$item->id) }}" class="btn btn-sm btn-outline-info btn-pill">{{ $item->nomor_kode_proyek }}</a></div>
                             <div>Kode KBLI: {{ $item->kbli }}</div>
                             <div>Uraian KBLI: {{ $item->uraian_kbli }}</div>
                             <div>Sektor: {{ $item->sektor }}</div>

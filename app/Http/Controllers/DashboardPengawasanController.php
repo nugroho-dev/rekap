@@ -113,11 +113,11 @@ class DashboardPengawasanController extends Controller
 		return view('admin.pengawasanpm.edit', compact('judul','pengawasan'));
     }
 
-	private function buildDetailQuery(string $nomor_kode_proyek)
+	private function buildDetailQuery(int $id)
 	{
 		return Pengawasan::query()
 			->leftJoin('proyek', 'proyek.id_proyek', '=', 'pengawasan.nomor_kode_proyek')
-			->where('pengawasan.nomor_kode_proyek', $nomor_kode_proyek)
+			->where('pengawasan.id', $id)
 			->select([
 				'pengawasan.*',
 				DB::raw('proyek.id_proyek as proyek'),
@@ -153,7 +153,7 @@ class DashboardPengawasanController extends Controller
 	public function store(Request $request)
 	{
 		$validatedData = $request->validate([
-			'nomor_kode_proyek' => 'required|string|max:100|exists:proyek,id_proyek|unique:pengawasan,nomor_kode_proyek',
+			'nomor_kode_proyek' => 'required|string|max:100|exists:proyek,id_proyek',
 			'hari_penjadwalan' => 'nullable|date',
 			'kewenangan_koordinator' => 'nullable|string',
 			'kewenangan_pengawasan' => 'nullable|string',
@@ -188,8 +188,6 @@ class DashboardPengawasanController extends Controller
 		}
 
 		$items = Proyek::query()
-			->leftJoin('pengawasan', 'pengawasan.nomor_kode_proyek', '=', 'proyek.id_proyek')
-			->whereNull('pengawasan.nomor_kode_proyek')
 			->where(function ($q) use ($keyword) {
 				$q->where('proyek.nama_perusahaan', 'LIKE', "%{$keyword}%")
 					->orWhere('proyek.id_proyek', 'LIKE', "%{$keyword}%")
@@ -223,9 +221,6 @@ class DashboardPengawasanController extends Controller
 		'permasalahan'=>'string|nullable',
 		'rekomendasi'=>'string|nullable',
 		'file'=>'file|mimes:pdf|nullable',];
-        if ($request->nomor_kode_proyek != $pengawasan->nomor_kode_proyek) {
-            $rules['nomor_kode_proyek'] = 'required|unique:pengawasan';
-        }
         $validatedData = $request->validate($rules);
         if ($request->file('file')) {
             if ($request->oldFile) {
@@ -235,18 +230,18 @@ class DashboardPengawasanController extends Controller
         }
 
         Pengawasan::where('nomor_kode_proyek', $pengawasan->nomor_kode_proyek)->update($validatedData);
-        return redirect('/pengawasan/'.$pengawasan->nomor_kode_proyek.'')->with('success', 'Berhasil di Ubah !');
+		return redirect('/pengawasan/'.$pengawasan->id.'')->with('success', 'Berhasil di Ubah !');
 	}
-	public function show($nomor_kode_proyek)
+	public function show($id)
 	{
 		$judul = 'Detail Data Pengawasan';
-		$item = $this->buildDetailQuery($nomor_kode_proyek)->firstOrFail();
+		$item = $this->buildDetailQuery((int) $id)->firstOrFail();
 		return view('admin.pengawasanpm.show', compact('item','judul'));
 	}
 
-	public function downloadPdf(string $nomor_kode_proyek)
+	public function downloadPdf(int $id)
 	{
-		$item = $this->buildDetailQuery($nomor_kode_proyek)->firstOrFail();
+		$item = $this->buildDetailQuery($id)->firstOrFail();
 		$judul = 'Detail Pengawasan';
 		$pdf = Pdf::loadView('admin.pengawasanpm.pdf.detail', compact('judul', 'item'))
 			->setPaper('a4', 'landscape');
@@ -361,14 +356,6 @@ class DashboardPengawasanController extends Controller
 			return redirect('/pengawasan/arsip')->with('error', 'Data arsip sudah pernah direstore.');
 		}
 
-		$exists = DB::table('pengawasan')
-			->where('nomor_kode_proyek', $arsip->nomor_kode_proyek)
-			->exists();
-
-		if ($exists) {
-			return redirect('/pengawasan/arsip')->with('error', 'Restore dibatalkan: nomor_kode_proyek sudah ada di tabel pengawasan.');
-		}
-
 		DB::transaction(function () use ($arsip) {
 			DB::table('pengawasan')->insert([
 				'nomor_kode_proyek' => $arsip->nomor_kode_proyek,
@@ -438,39 +425,9 @@ class DashboardPengawasanController extends Controller
 			return redirect('/pengawasan/arsip')->with('error', 'Semua data yang dipilih sudah pernah direstore.');
 		}
 
-		$uniqueByKode = [];
+		$readyToRestore = $notRestored->values();
 		$duplicateKodeCount = 0;
-		foreach ($notRestored as $item) {
-			$kode = trim((string) $item->nomor_kode_proyek);
-			if ($kode === '') {
-				$duplicateKodeCount++;
-				continue;
-			}
-
-			if (isset($uniqueByKode[$kode])) {
-				$duplicateKodeCount++;
-				continue;
-			}
-
-			$uniqueByKode[$kode] = $item;
-		}
-
-		$toCheckExisting = collect($uniqueByKode)->values();
-		$existingKode = DB::table('pengawasan')
-			->whereIn('nomor_kode_proyek', $toCheckExisting->pluck('nomor_kode_proyek')->all())
-			->pluck('nomor_kode_proyek')
-			->all();
-
-		$existingKodeMap = array_flip($existingKode);
-		$readyToRestore = $toCheckExisting
-			->filter(fn ($item) => !isset($existingKodeMap[$item->nomor_kode_proyek]))
-			->values();
-
-		$conflictCount = $toCheckExisting->count() - $readyToRestore->count();
-
-		if ($readyToRestore->isEmpty()) {
-			return redirect('/pengawasan/arsip')->with('error', 'Restore bulk dibatalkan: semua data bentrok dengan nomor_kode_proyek yang sudah ada di tabel pengawasan.');
-		}
+		$conflictCount = 0;
 
 		$now = now();
 		DB::transaction(function () use ($readyToRestore, $now) {

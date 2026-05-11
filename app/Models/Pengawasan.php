@@ -13,9 +13,6 @@ class Pengawasan extends Model
     use SoftDeletes;
     protected $guarded = ['id'];
     public $table = "pengawasan";
-    protected $primaryKey = 'nomor_kode_proyek';
-    public $incrementing = false;
-    protected $keyType = 'string';
 
     // nomor_kode_proyek pada pengawasan mereferensi id_proyek pada proyek
     public function proyek()

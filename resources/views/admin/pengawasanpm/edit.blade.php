@@ -72,7 +72,7 @@
                   </div>
                   <div class="row justify-content-center m-3">
                     <div class="col-lg-9 col-md-12 col-sm-12">
-                      <form class="card" method="post" action="{{ url('/pengawasan/'.$pengawasan->nomor_kode_proyek.'') }}" enctype="multipart/form-data">
+                      <form class="card" method="post" action="{{ url('/pengawasan/'.$pengawasan->id.'') }}" enctype="multipart/form-data">
                         
                         @csrf
                         @method('put')
