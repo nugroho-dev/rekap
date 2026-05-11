@@ -6,7 +6,7 @@
         <div class="row align-items-center">
             <div class="col">
                 <h2 class="page-title">{{ $judul }} Tahun {{ $year }}</h2>
-                <div class="text-muted mt-1">Statistik pengawasan terhubung data proyek (berdasarkan nomor_kode_proyek = id_proyek).</div>
+                <div class="text-muted mt-1">Ringkasan kinerja pengawasan, kepatuhan, dan profil proyek penanaman modal.</div>
             </div>
             <div class="col-auto ms-auto d-print-none">
                 <form method="get" class="mb-3">
@@ -17,7 +17,7 @@
                         <div class="col-auto">
                             <select name="year" id="year" class="form-select" onchange="this.form.submit()">
                                 @foreach($years as $y)
-                                    <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
+                                    <option value="{{ $y }}" {{ (int) $year === (int) $y ? 'selected' : '' }}>{{ $y }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -26,86 +26,155 @@
             </div>
         </div>
     </div>
-    <!-- Row: Card Angka (Total, Investasi, Tenaga Kerja) -->
+
     <div class="row row-cards mb-4 g-3">
-        <div class="col-md-4 col-sm-6">
+        <div class="col-md-3 col-sm-6">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-body text-center">
-                    <span class="avatar bg-primary-lt mb-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-list" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="#206bc4" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><line x1="9" y1="6" x2="20" y2="6" /><line x1="9" y1="12" x2="20" y2="12" /><line x1="9" y1="18" x2="20" y2="18" /><line x1="5" y1="6" x2="5" y2="6.01" /><line x1="5" y1="12" x2="5" y2="12.01" /><line x1="5" y1="18" x2="5" y2="18.01" /></svg>
-                    </span>
-                    <div class="h1 mb-1">{{ number_format($total) }}</div>
-                    <div class="text-muted">Total Data Pengawasan</div>
+                    <div class="text-muted">Total Kegiatan Pengawasan</div>
+                    <div class="h1 mb-0">{{ number_format($total) }}</div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4 col-sm-6">
+        <div class="col-md-3 col-sm-6">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-body text-center">
-                    <div class="fw-bold mb-2">Jumlah Investasi Proyek</div>
-                    <div class="h3 mb-1">Total: Rp{{ number_format($jumlahInvestasi['total'] ?? 0, 0, ',', '.') }}</div>
-                    <div class="h3">Rata-rata: Rp{{ number_format($jumlahInvestasi['rata'] ?? 0, 0, ',', '.') }}</div>
+                    <div class="text-muted">Proyek Unik Diawasi</div>
+                    <div class="h1 mb-0">{{ number_format($proyekUnik) }}</div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4 col-sm-6">
+        <div class="col-md-3 col-sm-6">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-body text-center">
-                    <div class="fw-bold mb-2">Tenaga Kerja Proyek</div>
-                    <div class="h3 mb-1">TKI L: {{ $tenagaKerja['tki_l'] ?? 0 }}, TKI P: {{ $tenagaKerja['tki_p'] ?? 0 }}</div>
-                    <div class="h3">TKA L: {{ $tenagaKerja['tka_l'] ?? 0 }}, TKA P: {{ $tenagaKerja['tka_p'] ?? 0 }}</div>
+                    <div class="text-muted">Perusahaan/NIB Unik</div>
+                    <div class="h1 mb-0">{{ number_format($jumlahPerusahaan) }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body text-center">
+                    <div class="text-muted">Tingkat Kesesuaian</div>
+                    <div class="h1 mb-0">{{ number_format($kesesuaianSummary['persen_sesuai'] ?? 0, 2, ',', '.') }}%</div>
+                    <div class="small text-muted">Sesuai: {{ $kesesuaianSummary['sesuai'] ?? 0 }} dari {{ $total }}</div>
                 </div>
             </div>
         </div>
     </div>
+
     <div class="row row-cards mb-4 g-3">
-        <div class="col-md-12 mb-4">
-                            <div class="card shadow-sm border-0 h-100">
-                                <div class="card-header bg-success-lt d-flex align-items-center justify-content-between">
-                                    <h3 class="card-title mb-0">Jumlah Perusahaan/NIB Terhubung Per Bulan</h3>
-                                </div>
-                                <div class="card-body">
-                                    <div class="table-responsive mb-3">
-                                        <table class="table table-sm table-bordered mb-0">
-                                            <thead class="bg-light">
-                                                <tr>
-                                                    <th class="text-center">Bulan</th>
-                                                    <th class="text-center">Jumlah Perusahaan/NIB</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @foreach($perusahaanPerBulan as $bulan => $jumlah)
-                                                <tr>
-                                                    <td class="text-center">{{ \Carbon\Carbon::create()->month($bulan)->locale('id')->isoFormat('MMMM') }}</td>
-                                                    <td class="text-center">{{ $jumlah }}</td>
-                                                </tr>
-                                                @endforeach
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <div class="fw-bold mb-1">Grafik Perusahaan/NIB Per Bulan</div>
-                                    <div id="perusahaanPerBulanChart" style="height: 220px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-12">
-            <div class="card shadow-lg border-0">
+        <div class="col-md-3 col-sm-6">
+            <div class="card border-0 bg-azure-lt h-100">
+                <div class="card-body text-center">
+                    <div class="text-muted">Ada Pembinaan</div>
+                    <div class="h2 mb-0">{{ number_format($tindakLanjutSummary['pembinaan'] ?? 0) }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="card border-0 bg-teal-lt h-100">
+                <div class="card-body text-center">
+                    <div class="text-muted">Ada Perbaikan</div>
+                    <div class="h2 mb-0">{{ number_format($tindakLanjutSummary['perbaikan'] ?? 0) }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="card border-0 bg-orange-lt h-100">
+                <div class="card-body text-center">
+                    <div class="text-muted">Ada Sanksi</div>
+                    <div class="h2 mb-0">{{ number_format($tindakLanjutSummary['sanksi'] ?? 0) }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="card border-0 bg-indigo-lt h-100">
+                <div class="card-body text-center">
+                    <div class="text-muted">Ada Rekomendasi</div>
+                    <div class="h2 mb-0">{{ number_format($tindakLanjutSummary['rekomendasi'] ?? 0) }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row row-cards mb-4 g-3">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 h-100">
                 <div class="card-header bg-primary-lt">
-                    <h3 class="card-title mb-0">Proyek Yang Diawasi Tahun {{ $year }}</h3>
+                    <h3 class="card-title mb-0">Tren Pengawasan dan Proyek Unik per Bulan</h3>
                 </div>
-                <div class="card-body pb-0">
-                    <div id="trendChart"></div>
+                <div class="card-body">
+                    <div id="trendPengawasanChart" style="height: 280px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-green-lt">
+                    <h3 class="card-title mb-0">Komposisi Kesesuaian</h3>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2 small text-muted">
+                        Sesuai: {{ $kesesuaianSummary['sesuai'] ?? 0 }} | Tidak Sesuai: {{ $kesesuaianSummary['tidak_sesuai'] ?? 0 }} | Belum Diisi: {{ $kesesuaianSummary['belum_diisi'] ?? 0 }}
+                    </div>
+                    <div id="kesesuaianChart" style="height: 280px;"></div>
                 </div>
             </div>
         </div>
     </div>
-    <!-- Row: Semua Grafik Statistik & Tabel KBLI -->
+
     <div class="row row-cards mb-4 g-3">
-        
-        <div class="col-5 mb-4">
+        <div class="col-md-6">
             <div class="card shadow-sm border-0 h-100">
-                <div class="card-header bg-primary-lt d-flex align-items-center justify-content-between">
-                    <h3 class="card-title mb-0">Tabel 10 Sektor Pembina Teratas</h3>
+                <div class="card-header bg-cyan-lt">
+                    <h3 class="card-title mb-0">Kewenangan Pengawasan</h3>
+                </div>
+                <div class="card-body">
+                    <div id="kewenanganPengawasanChart" style="height: 280px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-blue-lt">
+                    <h3 class="card-title mb-0">Kewenangan Koordinator</h3>
+                </div>
+                <div class="card-body">
+                    <div id="kewenanganKoordinatorChart" style="height: 280px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row row-cards mb-4 g-3">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-yellow-lt">
+                    <h3 class="card-title mb-0">Status Penanaman Modal Proyek</h3>
+                </div>
+                <div class="card-body">
+                    <div id="statusPenanamanModalChart" style="height: 280px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-lime-lt">
+                    <h3 class="card-title mb-0">Skala Usaha Proyek</h3>
+                </div>
+                <div class="card-body">
+                    <div id="skalaUsahaChart" style="height: 280px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row row-cards mb-4 g-3">
+        <div class="col-md-5">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-primary-lt">
+                    <h3 class="card-title mb-0">10 Sektor Pembina Teratas</h3>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive mb-3">
@@ -119,25 +188,28 @@
                             </thead>
                             <tbody>
                                 @php $noSektor = 1; @endphp
-                                @foreach($sektorStat as $sektor => $jumlah)
+                                @forelse($sektorStat as $sektor => $jumlah)
                                 <tr>
                                     <td class="text-center">{{ $noSektor++ }}</td>
-                                    <td class="text-center">{{ $sektor }}</td>
+                                    <td>{{ $sektor }}</td>
                                     <td class="text-center">{{ $jumlah }}</td>
                                 </tr>
-                                @endforeach
+                                @empty
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted">Tidak ada data</td>
+                                </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
-                    <div class="fw-bold mb-1">Grafik Sektor Pembina</div>
-                    <div id="sektorChart" style="height: 180px;"></div>
+                    <div id="sektorChart" style="height: 230px;"></div>
                 </div>
             </div>
         </div>
-        <div class="col-7 mb-4">
+        <div class="col-md-7">
             <div class="card shadow-sm border-0 h-100">
-                <div class="card-header bg-primary-lt d-flex align-items-center justify-content-between">
-                    <h3 class="card-title mb-0">Tabel 10 KBLI Proyek Teratas</h3>
+                <div class="card-header bg-primary-lt">
+                    <h3 class="card-title mb-0">10 KBLI Teratas Pada Proyek Diawasi</h3>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive mb-3">
@@ -151,294 +223,171 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @php $no = 1; @endphp
-                                @foreach($kbliStat as $kbli => $data)
+                                @php $noKbli = 1; @endphp
+                                @forelse($kbliStat as $row)
                                 <tr>
-                                    <td class="text-center">{{ $no++ }}</td>
-                                    <td class="text-center">{{ $kbli }}</td>
-                                    <td>
-                                        @if(isset($data['uraian_kbli']) && trim($data['uraian_kbli']) !== '')
-                                            {{ $data['uraian_kbli'] }}
-                                        @else
-                                            <span class="text-muted">-</span>
-                                        @endif
-                                    </td>
-                                    <td class="text-center">{{ $data['jumlah'] }}</td>
+                                    <td class="text-center">{{ $noKbli++ }}</td>
+                                    <td class="text-center">{{ $row->kbli }}</td>
+                                    <td>{{ trim((string) $row->uraian_kbli) !== '' ? $row->uraian_kbli : '-' }}</td>
+                                    <td class="text-center">{{ $row->jumlah }}</td>
                                 </tr>
-                                @endforeach
+                                @empty
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">Tidak ada data</td>
+                                </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
-                    <div class="fw-bold mb-1">Grafik KBLI</div>
-                    <div id="kbliChart" style="height: 180px;"></div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-12 mb-4">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-header bg-primary-lt">
-                    <h3 class="card-title mb-0">Grafik Statistik Pengawasan</h3>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-6 mb-3">
-                            <div class="fw-bold mb-1">Status Penanaman Modal Proyek</div>
-                            <div id="statusPenanamanModalChart" style="height: 180px;"></div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="fw-bold mb-1">Skala Usaha Proyek</div>
-                            <div id="skalaUsahaProyekChart" style="height: 220px;"></div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="fw-bold mb-1">Jenis Perusahaan</div>
-                            <div id="skalaUsahaPerusahaanChart" style="height: 220px;"></div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="fw-bold mb-1">10 Risiko Proyek Teratas</div>
-                            <div id="resikoChart" style="height: 220px;"></div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="fw-bold mb-1">Jumlah Tenaga Kerja Proyek</div>
-                            <div id="tenagaKerjaChart" style="height: 220px;"></div>
-                        </div>
-                    </div>
+                    <div id="kbliChart" style="height: 230px;"></div>
                 </div>
             </div>
         </div>
     </div>
- 
-    
+
+    <div class="row row-cards mb-4 g-3">
+        <div class="col-md-4">
+            <div class="card border-0 bg-secondary-lt h-100">
+                <div class="card-body text-center">
+                    <div class="text-muted">Total Investasi Proyek Diawasi</div>
+                    <div class="h3 mb-0">Rp{{ number_format($jumlahInvestasi['total'] ?? 0, 0, ',', '.') }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 bg-secondary-lt h-100">
+                <div class="card-body text-center">
+                    <div class="text-muted">Rata-Rata Investasi</div>
+                    <div class="h3 mb-0">Rp{{ number_format($jumlahInvestasi['rata'] ?? 0, 0, ',', '.') }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 bg-secondary-lt h-100">
+                <div class="card-body text-center">
+                    <div class="text-muted">Total Tenaga Kerja (TKI)</div>
+                    <div class="h3 mb-0">{{ number_format($tenagaKerjaTotal ?? 0) }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
-        // Grafik Jumlah Perusahaan Per Bulan
-        var perusahaanPerBulanOptions = {
-            chart: {
-                type: 'bar',
-                height: 220,
-                toolbar: { show: false },
-            },
-            series: [{
-                name: 'Jumlah Perusahaan',
-                data: {!! json_encode(array_values($perusahaanPerBulan->toArray())) !!}
-            }],
-            xaxis: {
-                categories: [@foreach($perusahaanPerBulan as $bulan => $jumlah)'{{ \Carbon\Carbon::create()->month($bulan)->locale('id')->isoFormat('MMMM') }}'{{ $loop->last ? '' : ',' }}@endforeach],
-                labels: { rotate: -45 }
-            },
-            colors: ['#43a047'],
-            dataLabels: { enabled: true }
-        };
-        new ApexCharts(document.querySelector("#perusahaanPerBulanChart"), perusahaanPerBulanOptions).render();
-    // Grafik Jumlah Perusahaan (1 perusahaan 1 NIB)
-    var perusahaanChartOptions = {
-        chart: {
-            type: 'bar',
-            height: 220,
-            toolbar: { show: false },
-        },
-        series: [{
-            name: 'Perusahaan',
-            data: {!! json_encode($perusahaanChartData['labels']) !!}
-        }],
-        xaxis: {
-            categories: {!! json_encode($perusahaanChartData['nib']) !!},
-            labels: { rotate: -45 }
-        },
-        colors: ['#009688'],
-        dataLabels: { enabled: true }
-    };
-    new ApexCharts(document.querySelector("#perusahaanChart"), perusahaanChartOptions).render();
 document.addEventListener('DOMContentLoaded', function () {
-    // Status Penanaman Modal Chart
-    var statusPenanamanModalOptions = {
-        chart: {
-            type: 'bar',
-            height: 220,
-            toolbar: { show: false },
-        },
-        series: [{
-            name: 'Jumlah',
-            data: {!! json_encode(array_values($statusPenanamanModal->toArray())) !!}
-        }],
-        xaxis: {
-            categories: {!! json_encode(array_keys($statusPenanamanModal->toArray())) !!},
-            labels: { rotate: -45 }
-        },
-        colors: ['#4caf50'],
-        dataLabels: { enabled: true }
-    };
-    new ApexCharts(document.querySelector("#statusPenanamanModalChart"), statusPenanamanModalOptions).render();
+    function renderChart(selector, options) {
+        var el = document.querySelector(selector);
+        if (!el) {
+            return;
+        }
+        new ApexCharts(el, options).render();
+    }
 
-    // KBLI Chart
+    var bulan = [
+        @for($i = 1; $i <= 12; $i++)
+            '{{ \Carbon\Carbon::create()->month($i)->locale('id')->isoFormat('MMMM') }}'{{ $i < 12 ? ',' : '' }}
+        @endfor
+    ];
+
+    var pengawasanBulanan = [
+        @for($i = 1; $i <= 12; $i++)
+            {{ $pengawasanPerBulan[$i] ?? 0 }}{{ $i < 12 ? ',' : '' }}
+        @endfor
+    ];
+
+    var proyekUnikBulanan = [
+        @for($i = 1; $i <= 12; $i++)
+            {{ $proyekUnikPerBulan[$i] ?? 0 }}{{ $i < 12 ? ',' : '' }}
+        @endfor
+    ];
+
+    renderChart('#trendPengawasanChart', {
+        chart: { type: 'line', height: 280, toolbar: { show: false } },
+        stroke: { curve: 'smooth', width: [3, 2] },
+        series: [
+            { name: 'Kegiatan Pengawasan', data: pengawasanBulanan },
+            { name: 'Proyek Unik', data: proyekUnikBulanan }
+        ],
+        xaxis: { categories: bulan, labels: { rotate: -45 } },
+        colors: ['#206bc4', '#2fb344'],
+        dataLabels: { enabled: true }
+    });
+
+    renderChart('#kesesuaianChart', {
+        chart: { type: 'donut', height: 280 },
+        labels: ['Sesuai', 'Tidak Sesuai', 'Belum Diisi'],
+        series: [
+            {{ $kesesuaianSummary['sesuai'] ?? 0 }},
+            {{ $kesesuaianSummary['tidak_sesuai'] ?? 0 }},
+            {{ $kesesuaianSummary['belum_diisi'] ?? 0 }}
+        ],
+        colors: ['#2fb344', '#f03e3e', '#868e96'],
+        legend: { position: 'bottom' }
+    });
+
+    renderChart('#kewenanganPengawasanChart', {
+        chart: { type: 'bar', height: 280, toolbar: { show: false } },
+        plotOptions: { bar: { horizontal: true } },
+        series: [{ name: 'Jumlah', data: {!! json_encode(array_values($kewenanganPengawasanStat->toArray())) !!} }],
+        xaxis: { categories: {!! json_encode(array_keys($kewenanganPengawasanStat->toArray())) !!} },
+        colors: ['#0ca678'],
+        dataLabels: { enabled: true }
+    });
+
+    renderChart('#kewenanganKoordinatorChart', {
+        chart: { type: 'bar', height: 280, toolbar: { show: false } },
+        plotOptions: { bar: { horizontal: true } },
+        series: [{ name: 'Jumlah', data: {!! json_encode(array_values($kewenanganKoordinatorStat->toArray())) !!} }],
+        xaxis: { categories: {!! json_encode(array_keys($kewenanganKoordinatorStat->toArray())) !!} },
+        colors: ['#1971c2'],
+        dataLabels: { enabled: true }
+    });
+
+    renderChart('#statusPenanamanModalChart', {
+        chart: { type: 'bar', height: 280, toolbar: { show: false } },
+        plotOptions: { bar: { horizontal: true } },
+        series: [{ name: 'Jumlah', data: {!! json_encode(array_values($statusPenanamanModal->toArray())) !!} }],
+        xaxis: { categories: {!! json_encode(array_keys($statusPenanamanModal->toArray())) !!} },
+        colors: ['#fab005'],
+        dataLabels: { enabled: true }
+    });
+
+    renderChart('#skalaUsahaChart', {
+        chart: { type: 'bar', height: 280, toolbar: { show: false } },
+        plotOptions: { bar: { horizontal: true } },
+        series: [{ name: 'Jumlah', data: {!! json_encode(array_values($skalaUsahaStat->toArray())) !!} }],
+        xaxis: { categories: {!! json_encode(array_keys($skalaUsahaStat->toArray())) !!} },
+        colors: ['#94d82d'],
+        dataLabels: { enabled: true }
+    });
+
+    renderChart('#sektorChart', {
+        chart: { type: 'bar', height: 230, toolbar: { show: false } },
+        plotOptions: { bar: { horizontal: true } },
+        series: [{ name: 'Jumlah', data: {!! json_encode(array_values($sektorStat->toArray())) !!} }],
+        xaxis: { categories: {!! json_encode(array_keys($sektorStat->toArray())) !!} },
+        colors: ['#1098ad'],
+        dataLabels: { enabled: true }
+    });
+
     var kbliJumlahData = [];
     var kbliCategories = [];
-    @foreach($kbliStat as $kbli => $data)
-        kbliCategories.push(@json($kbli));
-        kbliJumlahData.push({{ $data['jumlah'] }});
+    @foreach($kbliStat as $row)
+        kbliCategories.push(@json($row->kbli));
+        kbliJumlahData.push({{ $row->jumlah }});
     @endforeach
-    var kbliOptions = {
-        chart: {
-            type: 'bar',
-            height: 220,
-            toolbar: { show: false },
-        },
-        plotOptions: {
-            bar: {
-                horizontal: true
-            }
-        },
-        series: [{
-            name: 'Jumlah',
-            data: kbliJumlahData
-        }],
-        xaxis: {
-            categories: kbliCategories,
-            labels: { rotate: -45 }
-        },
-        colors: ['#ff9800'],
-        dataLabels: { enabled: true }
-    };
-    new ApexCharts(document.querySelector("#kbliChart"), kbliOptions).render();
 
-    // Sektor Chart
-    var sektorOptions = {
-        chart: {
-            type: 'bar',
-            height: 220,
-            toolbar: { show: false },
-        },
-        plotOptions: {
-            bar: {
-                horizontal: true
-            }
-        },
-        series: [{
-            name: 'Jumlah',
-            data: {!! json_encode(array_values($sektorStat->toArray())) !!}
-        }],
-        xaxis: {
-            categories: {!! json_encode(array_keys($sektorStat->toArray())) !!},
-            labels: { rotate: -45 }
-        },
-        colors: ['#00bcd4'],
+    renderChart('#kbliChart', {
+        chart: { type: 'bar', height: 230, toolbar: { show: false } },
+        plotOptions: { bar: { horizontal: true } },
+        series: [{ name: 'Jumlah', data: kbliJumlahData }],
+        xaxis: { categories: kbliCategories },
+        colors: ['#fd7e14'],
         dataLabels: { enabled: true }
-    };
-    new ApexCharts(document.querySelector("#sektorChart"), sektorOptions).render();
-
-    // Skala Usaha Proyek Chart
-    var skalaUsahaProyekOptions = {
-        chart: {
-            type: 'bar',
-            height: 220,
-            toolbar: { show: false },
-        },
-        series: [{
-            name: 'Jumlah',
-            data: {!! json_encode(array_values($skalaUsahaProyekStat->toArray())) !!}
-        }],
-        xaxis: {
-            categories: {!! json_encode(array_keys($skalaUsahaProyekStat->toArray())) !!},
-            labels: { rotate: -45 }
-        },
-        colors: ['#ffc107'],
-        dataLabels: { enabled: true }
-    };
-    new ApexCharts(document.querySelector("#skalaUsahaProyekChart"), skalaUsahaProyekOptions).render();
-
-    // Skala Usaha Perusahaan Chart
-    var skalaUsahaPerusahaanOptions = {
-        chart: {
-            type: 'bar',
-            height: 220,
-            toolbar: { show: false },
-        },
-        series: [{
-            name: 'Jumlah',
-            data: {!! json_encode(array_values($skalaUsahaPerusahaanStat->toArray())) !!}
-        }],
-        xaxis: {
-            categories: {!! json_encode(array_keys($skalaUsahaPerusahaanStat->toArray())) !!},
-            labels: { rotate: -45 }
-        },
-        colors: ['#8bc34a'],
-        dataLabels: { enabled: true }
-    };
-    new ApexCharts(document.querySelector("#skalaUsahaPerusahaanChart"), skalaUsahaPerusahaanOptions).render();
-
-    // Resiko Chart
-    var resikoOptions = {
-        chart: {
-            type: 'bar',
-            height: 220,
-            toolbar: { show: false },
-        },
-        series: [{
-            name: 'Jumlah',
-            data: {!! json_encode(array_values($resikoStat->toArray())) !!}
-        }],
-        xaxis: {
-            categories: {!! json_encode(array_keys($resikoStat->toArray())) !!},
-            labels: { rotate: -45 }
-        },
-        colors: ['#607d8b'],
-        dataLabels: { enabled: true }
-    };
-    new ApexCharts(document.querySelector("#resikoChart"), resikoOptions).render();
-
-    // Tenaga Kerja Chart
-    var tenagaKerjaOptions = {
-        chart: {
-            type: 'bar',
-            height: 220,
-            toolbar: { show: false },
-        },
-        series: [{
-            name: 'Jumlah',
-            data: [
-                {{ $tenagaKerja['tki_l'] ?? 0 }},
-                {{ $tenagaKerja['tki_p'] ?? 0 }},
-                {{ $tenagaKerja['tka_l'] ?? 0 }},
-                {{ $tenagaKerja['tka_p'] ?? 0 }}
-            ]
-        }],
-        xaxis: {
-            categories: ['TKI Laki-laki', 'TKI Perempuan', 'TKA Laki-laki', 'TKA Perempuan'],
-            labels: { rotate: -45 }
-        },
-        colors: ['#2196f3', '#e91e63', '#ff5722', '#9c27b0'],
-        dataLabels: { enabled: true }
-    };
-    new ApexCharts(document.querySelector("#tenagaKerjaChart"), tenagaKerjaOptions).render();
-
-    // Trend Chart
-    var trendOptions = {
-        chart: {
-            type: 'line',
-            height: 250,
-            toolbar: { show: false },
-        },
-        dataLabels: { enabled: true },
-        series: [{
-            name: 'Jumlah Pengawasan',
-            data: [
-                @for($i=1;$i<=12;$i++)
-                    {{ $trend[$i] ?? 0 }}{{ $i<12?',':'' }}
-                @endfor
-            ]
-        }],
-        xaxis: {
-            categories: [@for($i=1;$i<=12;$i++)'{{ \Carbon\Carbon::create()->month($i)->locale('id')->isoFormat('MMMM') }}'{{ $i<12?',':'' }}@endfor],
-            labels: { rotate: -45 }
-        },
-        colors: ['#36a2eb'],
-        stroke: { curve: 'smooth', width: 3 },
-        markers: { size: 4 }
-    };
-    new ApexCharts(document.querySelector("#trendChart"), trendOptions).render();
+    });
 });
 </script>
 @endpush
