@@ -196,7 +196,6 @@ class DashboardPengawasanController extends Controller
 					->orWhere('proyek.kbli', 'LIKE', "%{$keyword}%");
 			})
 			->orderBy('proyek.nama_perusahaan')
-			->limit(10)
 			->get([
 				'proyek.id_proyek',
 				'proyek.nama_perusahaan',
